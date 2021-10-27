@@ -1,0 +1,13 @@
+prefix=D:/vs_repo/kepm_client/ThirdParty/grpc
+exec_prefix=D:/vs_repo/kepm_client/ThirdParty/grpc
+libdir=D:/vs_repo/kepm_client/ThirdParty/grpc/lib
+sharedlibdir=D:/vs_repo/kepm_client/ThirdParty/grpc/lib
+includedir=D:/vs_repo/kepm_client/ThirdParty/grpc/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.11
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}
