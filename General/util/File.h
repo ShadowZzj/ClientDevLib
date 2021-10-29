@@ -8,8 +8,4 @@ long GetFileSize(std::string filename);
 std::string GetExecutablePath();
 std::string GetDynamicLibPath(void *anyAddressInDyLib = nullptr);
 
-// KepmSpecific
-std::string GetInstallFolder();
-std::string GetLogFolder();
-
 #endif
