@@ -15,7 +15,7 @@ int SPDLogHelp::InitLog(std::string cfgPath, std::string fileName, std::string m
     if (_getJson(cfgPath, json) != 0)
         return -1;
 
-    json[WRITEPATH]   = GetLogFolder() + fileName;
+    json[WRITEPATH]   = fileName;
     json[MODULENAME] = moduleName;
     json[LOGMAXFILES] = 3;
     json[LOGMAXSIZE] = 1025 * 5120;
