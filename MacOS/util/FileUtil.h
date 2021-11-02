@@ -1,9 +1,9 @@
 #ifndef _MAC_FILEUTIL_H_
 #define _MAC_FILEUTIL_H_
 
+#include <boost/filesystem.hpp>
 #include <iostream>
 #include <string>
-#include <boost/filesystem.hpp>
 
 namespace zzj
 {
@@ -19,60 +19,51 @@ class File
     static int CopyFilesFromTo(const char *srcPath, const char *dstPath);
     static std::string GetCurrentModulePath();
     static std::string GetExecutablePath();
-    static int MkdirRecursive(std::string dirPath,int mode);
-    static int ChmodIfExe(std::string fileFullPath,mode_t mode);
+    static int MkdirRecursive(std::string dirPath, int mode);
+    static int ChmodIfExe(std::string fileFullPath, mode_t mode);
+    static std::string GetSystemAppDataFolder();
 };
 } // namespace zzj
 
-template<typename UnaryFunc>
-int ForEachFileInDir(std::string dirPath,UnaryFunc func)
+template <typename UnaryFunc> int ForEachFileInDir(std::string dirPath, UnaryFunc func)
 {
     boost::filesystem::path source = dirPath;
-    namespace fs = boost::filesystem;
+    namespace fs                   = boost::filesystem;
     try
     {
         // Check whether the function call is valid
-        if(
-           !fs::exists(source) ||
-           !fs::is_directory(source)
-           )
+        if (!fs::exists(source) || !fs::is_directory(source))
         {
-            std::cerr << "Source directory " << source.string()
-            << " does not exist or is not a directory." << '\n'
-            ;
+            std::cerr << "Source directory " << source.string() << " does not exist or is not a directory." << '\n';
             return -1;
         }
-        
     }
-    catch(fs::filesystem_error const & e)
+    catch (fs::filesystem_error const &e)
     {
         std::cerr << e.what() << '\n';
         return -2;
     }
     // Iterate through the source directory
-    for(
-        fs::directory_iterator file(source);
-        file != fs::directory_iterator(); ++file
-        )
+    for (fs::directory_iterator file(source); file != fs::directory_iterator(); ++file)
     {
         try
         {
             fs::path current(file->path());
-            if(fs::is_directory(current))
+            if (fs::is_directory(current))
             {
                 // Found directory: Recursion
-                if( 0 != ForEachFileInDir(current.c_str(),func))
+                if (0 != ForEachFileInDir(current.c_str(), func))
                     return -3;
             }
             else
             {
-                if( 0 != func(current.generic_string()))
+                if (0 != func(current.generic_string()))
                     return -4;
             }
         }
-        catch(fs::filesystem_error const & e)
+        catch (fs::filesystem_error const &e)
         {
-            std:: cerr << e.what() << '\n';
+            std::cerr << e.what() << '\n';
             return -5;
         }
     }
