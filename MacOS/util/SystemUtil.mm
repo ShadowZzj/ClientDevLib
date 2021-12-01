@@ -103,7 +103,6 @@ std::string zzj::Computer::GetActiveConsoleSessionId()
         SCDynamicStoreRef store;
         CFStringRef name;
         uid_t uid;
-        char buf[256];
         std::string ret;
         
         store = SCDynamicStoreCreate(NULL, CFSTR("GetConsoleUser"), NULL, NULL);
@@ -117,7 +116,7 @@ std::string zzj::Computer::GetActiveConsoleSessionId()
         else
             ret = "";
         
-        return buf;
+        return ret;
     }
 }
 
