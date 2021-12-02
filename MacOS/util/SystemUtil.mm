@@ -96,6 +96,30 @@ std::string zzj::Computer::GetCurrentTimeStamp()
     NSString *timeLocal = [[NSString alloc] initWithFormat:@"%llu", recordTime];
     return [timeLocal UTF8String];
 }
+std::string zzj::Computer::GetActiveConsoleGroupId()
+{
+    @autoreleasepool {
+        
+        SCDynamicStoreRef store;
+        CFStringRef name;
+        gid_t gid;
+        std::string ret;
+        
+        store = SCDynamicStoreCreate(NULL, CFSTR("GetConsoleUser"), NULL, NULL);
+        name  = SCDynamicStoreCopyConsoleUser(store, NULL, &gid);
+        CFRelease(store);
+        if (name != NULL)
+        {
+            CFRelease(name);
+            ret = std::to_string(gid);
+        }
+        else
+            ret = "";
+        
+        return ret;
+    }
+}
+
 std::string zzj::Computer::GetActiveConsoleSessionId()
 {
     @autoreleasepool {

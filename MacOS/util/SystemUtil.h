@@ -13,6 +13,7 @@ class Computer
     static std::string GetUUID();
     static std::string GetCPUBrandString();
     static std::string GetActiveConsoleSessionId();
+    static std::string GetActiveConsoleGroupId();
     static std::string GetCurrentTimeStamp();
     static std::string GetCurrentUserName();
 };
