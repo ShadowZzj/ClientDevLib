@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pwd.h>
 using namespace std;
 
 int zzj::File::ReadFileAtOffset(const char *fileName, char *buf, size_t size, int pos)
@@ -297,4 +298,192 @@ int zzj::File::ChmodIfExe(std::string fileFullPath, mode_t mode)
         return -1;
     else
         return 0;
+}
+
+zzj::File zzj::File::CreateInstance(const std::string fileFullPath)
+{
+    struct stat info;
+    int result = 0;
+    zzj::File ret;
+    result = stat(fileFullPath.c_str(), &info);
+    if (-1 == result)
+        throw std::runtime_error(std::string("stat function fails with ") + std::to_string(errno));
+
+    ret.fileFullPath = fileFullPath;
+    ret.uid = info.st_uid;
+    ret.gid = info.st_gid;
+    if (info.st_mode & S_IFDIR)
+        ret.type = zzj::File::Type::Directory;
+    else if (info.st_mode & S_IFREG)
+        ret.type = zzj::File::Type::File;
+    ret.fileSize = info.st_size;
+    
+    ret._filePermission = info.st_mode;
+
+    zzj::File::Permission permission;
+    permission.canRead = ret._filePermission & S_IRUSR? true:false;
+    permission.canWrite = ret._filePermission & S_IWUSR? true:false;
+    permission.canExecute = ret._filePermission & S_IXUSR? true:false;
+    ret.permissions[zzj::File::PermissionRole::Owner] =permission;
+    
+    permission.canRead = ret._filePermission & S_IRGRP? true:false;
+    permission.canWrite = ret._filePermission & S_IWGRP? true:false;
+    permission.canExecute = ret._filePermission & S_IXGRP? true:false;
+    ret.permissions[zzj::File::PermissionRole::GroupMember] =permission;
+    
+    permission.canRead = ret._filePermission & S_IROTH? true:false;
+    permission.canWrite = ret._filePermission & S_IWOTH? true:false;
+    permission.canExecute = ret._filePermission & S_IXOTH? true:false;
+    ret.permissions[zzj::File::PermissionRole::Others] =permission;
+    
+    
+    return ret;
+}
+
+mode_t zzj::File::GetPosixFilePermission()
+{
+    return _filePermission;
+}
+
+bool zzj::File::IsUserCanRead(uid_t _uid)
+{
+    if(uid == 0)
+        return true;
+    passwd* pw = getpwuid(uid);
+    if(nullptr == pw)
+        throw std::runtime_error("uid invalid!");
+    
+    // If the process owns the file, check if it has read access.
+    if (_uid == uid && _filePermission & S_IRUSR)
+        return true;
+
+    // Check if the group of the process's UID matches the file's group
+    // and if so, check for read/write access.
+    else if (pw->pw_gid == gid && _filePermission & S_IRGRP)
+        return true;
+
+    // The process's UID is neither the owner of the file nor does its GID
+    // match the file's.  Check whether the file is world readable.
+    else if (_filePermission & S_IROTH)
+        return true;
+    return false;
+}
+bool zzj::File::IsUserCanWrite(uid_t _uid)
+{
+    if(uid == 0)
+        return true;
+    passwd* pw = getpwuid(uid);
+    if(nullptr == pw)
+        throw std::runtime_error("uid invalid!");
+    
+    // If the process owns the file, check if it has read access.
+    if (_uid == uid && _filePermission & S_IWUSR)
+        return true;
+
+    // Check if the group of the process's UID matches the file's group
+    // and if so, check for read/write access.
+    else if (pw->pw_gid == gid && _filePermission & S_IWGRP)
+        return true;
+
+    // The process's UID is neither the owner of the file nor does its GID
+    // match the file's.  Check whether the file is world readable.
+    else if (_filePermission & S_IWOTH)
+        return true;
+    return false;
+}
+bool zzj::File::IsUserCanExecute(uid_t _uid)
+{
+    if(uid == 0)
+        return true;
+    passwd* pw = getpwuid(uid);
+    if(nullptr == pw)
+        throw std::runtime_error("uid invalid!");
+    
+    // If the process owns the file, check if it has read access.
+    if (_uid == uid && _filePermission & S_IXUSR)
+        return true;
+
+    // Check if the group of the process's UID matches the file's group
+    // and if so, check for read/write access.
+    else if (pw->pw_gid == gid && _filePermission & S_IXGRP)
+        return true;
+
+    // The process's UID is neither the owner of the file nor does its GID
+    // match the file's.  Check whether the file is world readable.
+    else if (_filePermission & S_IXOTH)
+        return true;
+    return false;
+}
+bool zzj::File::IsGroupCanRead(gid_t _gid)
+{
+    
+    // Check if the group of the process's UID matches the file's group
+    // and if so, check for read/write access.
+    if (_gid == gid && _filePermission & S_IRGRP)
+        return true;
+
+    // The process's UID is neither the owner of the file nor does its GID
+    // match the file's.  Check whether the file is world readable.
+    else if (_filePermission & S_IROTH)
+        return true;
+    return false;
+}
+bool zzj::File::IsGroupCanWrite(gid_t _gid)
+{
+    // Check if the group of the process's UID matches the file's group
+    // and if so, check for read/write access.
+    if (_gid == gid && _filePermission & S_IWGRP)
+        return true;
+
+    // The process's UID is neither the owner of the file nor does its GID
+    // match the file's.  Check whether the file is world readable.
+    else if (_filePermission & S_IWOTH)
+        return true;
+    return false;
+}
+bool zzj::File::IsGroupCanExecute(gid_t _gid)
+{
+    // Check if the group of the process's UID matches the file's group
+    // and if so, check for read/write access.
+    if (_gid == gid && _filePermission & S_IXGRP)
+        return true;
+
+    // The process's UID is neither the owner of the file nor does its GID
+    // match the file's.  Check whether the file is world readable.
+    else if (_filePermission & S_IXOTH)
+        return true;
+    return false;
+}
+
+bool zzj::File::IsUserCanChangePermission(uid_t _uid)
+{
+    if(uid == 0 || uid == _uid)
+        return true;
+    
+    return false;
+}
+
+int zzj::File::ChangeOwner(uid_t _uid)
+{
+    passwd* pw = getpwuid(uid);
+    if(nullptr == pw)
+        return -1;
+    
+    int result = chown(fileFullPath.c_str(), _uid, gid);
+    if(0 != result)
+        return -2;
+    
+    return 0;
+}
+int zzj::File::ChangeGroup(gid_t _gid)
+{
+    int result = chown(fileFullPath.c_str(), uid, _gid);
+    if(0 != result)
+        return -2;
+    
+    return 0;
+}
+int zzj::File::SetPermission(mode_t _permission)
+{
+    return chmod(fileFullPath.c_str(), _permission);
 }
