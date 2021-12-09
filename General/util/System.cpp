@@ -39,6 +39,8 @@ std::string GetActiveUserSid()
     return str::Wstr2Str(explorerInfo.UserSid);
 #else
     std::string activeUserName = GetActiveConsoleUserName();
+    if(activeUserName.empty())
+        return "";
     if (G_UserNameToUUid.find(activeUserName) != G_UserNameToUUid.end())
         return G_UserNameToUUid[activeUserName];
     std::vector<std::string> args;

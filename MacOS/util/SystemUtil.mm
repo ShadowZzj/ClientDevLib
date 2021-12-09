@@ -136,6 +136,8 @@ std::string zzj::Computer::GetActiveConsoleSessionId()
         {
             CFRelease(name);
             ret = std::to_string(uid);
+            if(ret == "0")
+            ret = "";
         }
         else
             ret = "";
@@ -148,6 +150,9 @@ std::string zzj::Computer::GetCurrentUserName()
 {
     @autoreleasepool {
         
+        if(zzj::Computer::GetActiveConsoleSessionId().empty())
+            return "";
+            
         SCDynamicStoreRef store;
         CFStringRef name;
         uid_t uid;
