@@ -27,7 +27,6 @@ std::string GetActiveConsoleSessionId()
     return zzj::Computer::GetActiveConsoleSessionId();
 #endif // _WIN32
 }
-std::map<std::string, std::string> G_UserNameToUUid;
 
 std::string GetActiveUserSid()
 {
@@ -41,14 +40,11 @@ std::string GetActiveUserSid()
     std::string activeUserName = GetActiveConsoleUserName();
     if(activeUserName.empty())
         return "";
-    if (G_UserNameToUUid.find(activeUserName) != G_UserNameToUUid.end())
-        return G_UserNameToUUid[activeUserName];
+
     std::vector<std::string> args;
     args.push_back("localhost");
     args.push_back("-read");
     args.push_back("/Search/Users/" + activeUserName);
-    args.push_back("|");
-    args.push_back("grep");
     args.push_back("GeneratedUID");
     args.push_back("|");
     args.push_back("cut");
@@ -63,7 +59,6 @@ std::string GetActiveUserSid()
     std::string ret = WstrToUTF8Str(out);
     // libconfig must begin with letter.
     ret                              = std::string("p-") + ret;
-    G_UserNameToUUid[activeUserName] = ret;
     return ret;
 #endif // _WIN32
 }
