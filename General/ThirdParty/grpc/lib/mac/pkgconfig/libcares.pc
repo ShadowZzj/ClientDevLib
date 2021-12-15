@@ -4,7 +4,7 @@
 #              | (_|_____| (_| | | |  __/\__ \
 #               \___|     \__,_|_|  \___||___/
 #
-prefix=/Users/zhuzhengjia/Desktop/grpc_install
+prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir
 exec_prefix=${prefix}/bin
 libdir=${prefix}/lib
 includedir=${prefix}/include

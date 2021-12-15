@@ -1,8 +1,8 @@
-prefix=D:/vs_repo/kepm_client/ThirdParty/grpc
-exec_prefix=D:/vs_repo/kepm_client/ThirdParty/grpc
-libdir=D:/vs_repo/kepm_client/ThirdParty/grpc/lib
-sharedlibdir=D:/vs_repo/kepm_client/ThirdParty/grpc/lib
-includedir=D:/vs_repo/kepm_client/ThirdParty/grpc/include
+prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir
+exec_prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir
+libdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir/lib
+sharedlibdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir/lib
+includedir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir/include
 
 Name: zlib
 Description: zlib compression library
