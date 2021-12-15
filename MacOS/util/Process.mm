@@ -102,6 +102,7 @@ int zzj::Process::CreateUserProcess(const char *fullPath, const char *userName, 
     std::string strOutPut;
     char buf[1000]{0};
     FILE* fp = NULL;
+    char* retGet = NULL;
     std::string cmd = "sudo -u ";
     cmd+=userName;
     cmd+=" ";
@@ -129,8 +130,12 @@ int zzj::Process::CreateUserProcess(const char *fullPath, const char *userName, 
         goto exit;
     }
     
-    while(NULL != fgets(buf, sizeof(buf), fp))
-        strOutPut+=buf;
+    do
+    {
+        retGet = fgets(buf, sizeof(buf), fp);
+    }
+    while(NULL != retGet && EOF != atoi(retGet) && !strOutPut.append(buf).empty());
+    
     
     if(strOutPut.empty())
     {
