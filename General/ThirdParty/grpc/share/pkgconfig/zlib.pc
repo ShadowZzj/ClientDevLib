@@ -1,8 +1,8 @@
-prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir
-exec_prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir
-libdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir/lib
-sharedlibdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir/lib
-includedir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/installdir/include
+prefix=C:/Program Files (x86)/grpc
+exec_prefix=C:/Program Files (x86)/grpc
+libdir=C:/Program Files (x86)/grpc/lib
+sharedlibdir=C:/Program Files (x86)/grpc/lib
+includedir=C:/Program Files (x86)/grpc/include
 
 Name: zlib
 Description: zlib compression library

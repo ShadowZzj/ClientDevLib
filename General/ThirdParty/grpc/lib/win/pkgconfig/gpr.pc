@@ -1,12 +1,12 @@
-prefix=C:/Users/Administrator/Desktop/grpc_out
+prefix=C:/Program Files (x86)/grpc
 exec_prefix=${prefix}
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
 
 Name: gpr
 Description: gRPC platform support library
-Version: 18.0.0
+Version: 20.0.0
 Cflags: -I${includedir}
-Requires: absl_base absl_memory absl_optional absl_status absl_str_format absl_strings absl_synchronization absl_time
+Requires: absl_base absl_cord absl_core_headers absl_memory absl_optional absl_status absl_str_format absl_strings absl_synchronization absl_time
 Libs: -L${libdir} -lgpr
 Libs.private: 

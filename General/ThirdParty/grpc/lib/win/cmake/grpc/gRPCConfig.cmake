@@ -6,7 +6,9 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
 
 
 
-
+if(NOT TARGET absl::strings)
+  find_package(absl CONFIG)
+endif()
 
 
 # Targets

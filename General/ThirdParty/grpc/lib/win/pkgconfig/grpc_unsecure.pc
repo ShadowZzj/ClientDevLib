@@ -1,12 +1,12 @@
-prefix=C:/Users/Administrator/Desktop/grpc_out
+prefix=C:/Program Files (x86)/grpc
 exec_prefix=${prefix}
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
 
 Name: gRPC unsecure
 Description: high performance general RPC framework without SSL
-Version: 18.0.0
+Version: 20.0.0
 Cflags: -I${includedir}
-Requires: gpr absl_base absl_bind_front absl_flat_hash_map absl_inlined_vector absl_memory absl_optional absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time
+Requires: gpr absl_base absl_bind_front absl_cord absl_core_headers absl_flat_hash_map absl_inlined_vector absl_memory absl_optional absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_utility absl_variant
 Libs: -L${libdir} -lgrpc_unsecure
 Libs.private: 
