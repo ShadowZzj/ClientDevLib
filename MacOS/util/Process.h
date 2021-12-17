@@ -17,6 +17,7 @@ class Process
         int returnVal;
     };
     static TaskRetInfo CreateProcess(const char *fullPath, std::vector<std::string> args,bool waitFinish = false);
+    static std::pair<bool,std::string> CreateProcess(const std::string & cmd);
     static int CreateUserProcess(const char *fullPath, const char *userName, std::vector<std::string> args,std::wstring &outPut);
     static int CreateUserProcess(const char *fullPath, const char *userName, std::vector<std::string> args,bool waitForExit);
     static std::string GetProcessExePath();

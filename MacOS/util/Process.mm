@@ -10,6 +10,9 @@
 #include <sys/sysctl.h>
 #include <General/util/File.h>
 
+auto CLOSEFILE = [](FILE *fp) { if(fp)fclose(fp); };
+using FILEPTR  = std::unique_ptr<FILE, decltype(CLOSEFILE)>;
+
 zzj::Process::TaskRetInfo zzj::Process::CreateProcess(const char *fullPath, std::vector<std::string> args,bool waitFinish)
 {
     @autoreleasepool {
@@ -51,6 +54,32 @@ zzj::Process::TaskRetInfo zzj::Process::CreateProcess(const char *fullPath, std:
         return ret;
     }
 }
+
+std::pair<bool,std::string> CreateProcess(const std::string & cmd)
+{
+    std::string strOutPut;
+    char buf[1000]{0};
+
+    FILEPTR FILEPtr(popen(cmd.c_str(), "r"), CLOSEFILE);
+    if(FILEPtr.get() == NULL)
+    {
+        return {false,"Failed to run cmd!"};
+    }
+    
+    while(fread(buf, sizeof(char), sizeof(buf), FILEPtr.get()) > 0)
+    {
+        strOutPut.append(buf);
+    }
+    
+    if(strOutPut.empty())
+    {
+        return {false,"Failed,return is null"};
+    }
+        
+    return {true, strOutPut};
+}
+
+
 int zzj::Process::CreateProcess(const char *fullPath, std::vector<std::string> args, std::wstring &output,
                                 bool waitForExit)
 {
@@ -102,7 +131,6 @@ int zzj::Process::CreateUserProcess(const char *fullPath, const char *userName, 
     std::string strOutPut;
     char buf[1000]{0};
     FILE* fp = NULL;
-    char* retGet = NULL;
     std::string cmd = "sudo -u ";
     cmd+=userName;
     cmd+=" ";
