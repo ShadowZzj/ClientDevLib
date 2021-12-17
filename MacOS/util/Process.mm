@@ -55,7 +55,7 @@ zzj::Process::TaskRetInfo zzj::Process::CreateProcess(const char *fullPath, std:
     }
 }
 
-std::pair<bool,std::string> CreateProcess(const std::string & cmd)
+std::pair<bool,std::string> zzj::Process::CreateProcess(const std::string & cmd)
 {
     std::string strOutPut;
     char buf[1000]{0};
@@ -66,9 +66,11 @@ std::pair<bool,std::string> CreateProcess(const std::string & cmd)
         return {false,"Failed to run cmd!"};
     }
     
-    while(fread(buf, sizeof(char), sizeof(buf), FILEPtr.get()) > 0)
+    while(NULL != fgets(buf, sizeof(buf),  FILEPtr.get()))
     {
         strOutPut.append(buf);
+        if(feof(FILEPtr.get())||ferror(FILEPtr.get()))
+            break;
     }
     
     if(strOutPut.empty())
@@ -160,7 +162,7 @@ int zzj::Process::CreateUserProcess(const char *fullPath, const char *userName, 
     
     while(NULL != fgets(buf, sizeof(buf), fp))
     {
-        strOutPut+=buf;
+        strOutPut.append(buf);
         if(feof(fp)||ferror(fp))
             break;
     }

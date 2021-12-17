@@ -150,15 +150,22 @@ int zzj::Service::IsServiceRunning(bool &isRunning)
         args.push_back("list");
         args.push_back(serviceName);
         result = zzj::Process::CreateProcess("/bin/launchctl", args, standardOut, true);
-        if (0 != result)
+        if (0 != result || standardOut.empty())
         {
             spdlog::error("Protect launchctl error {}", result);
-            result = -1;
-            goto exit;
+            return result;
         }
-        // is running
-        isRunning = (!standardOut.empty()) && (standardOut.find(L"PID") != std::wstring::npos);
-    exit:
+        if(standardOut.find(L"\"OnDemand\" = true") != std::wstring::npos)
+        {
+            isRunning = true;
+            return result;
+        }
+        else if(standardOut.find(L"PID") != std::wstring::npos)
+        {
+            isRunning = true;
+            return result;
+        }
+        isRunning = false;
         return result;
     }
 }
