@@ -8,6 +8,8 @@
 void zzj::PcapInterface::StopCapture()
 {
     requestStop = true;
+    pcap_breakloop(m_SessionHandle);
+    return;
 }
 
 
