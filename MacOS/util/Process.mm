@@ -130,11 +130,12 @@ int zzj::Process::CreateUserProcess(const char *fullPath, const char *userName, 
         goto exit;
     }
     
-    do
+    while(NULL != fgets(buf, sizeof(buf), fp))
     {
-        retGet = fgets(buf, sizeof(buf), fp);
+        strOutPut+=buf;
+        if(feof(fp)||ferror(fp))
+            break;
     }
-    while(NULL != retGet && EOF != atoi(retGet) && !strOutPut.append(buf).empty());
     
     
     if(strOutPut.empty())
