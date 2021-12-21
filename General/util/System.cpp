@@ -49,6 +49,7 @@ std::string GetActiveUserSid()
     args.push_back("|");
     args.push_back("cut");
     args.push_back("-c15-");
+    args.push_back("\r\n");
     std::wstring out;
     int result = zzj::Process::CreateUserProcess("/usr/bin/dscl", activeUserName.c_str(), args, out);
     if (0 != result)
