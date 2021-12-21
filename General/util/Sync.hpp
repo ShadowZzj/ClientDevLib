@@ -8,9 +8,9 @@ class StopSyncWrapper
   public:
     struct SyncParam
     {
-        std::mutex &mutex;
-        std::condition_variable &threadCondition;
-        bool &requestStop;
+        std::mutex mutex;
+        std::condition_variable threadCondition;
+        bool requestStop = false;
     };
     enum class ControlStatus : int
     {
@@ -18,9 +18,11 @@ class StopSyncWrapper
         Timeout,
         Error
     };
-    StopSyncWrapper(SyncParam &_mutex) : m_param(_mutex)
+
+    StopSyncWrapper()
     {
     }
+
     void NotifyStop()
     {
         std::unique_lock<std::mutex> lck(m_param.mutex);
@@ -34,12 +36,9 @@ class StopSyncWrapper
                                                     [this]() { return this->m_param.requestStop; });
         return res == false ? ControlStatus::Timeout : ControlStatus::RequestStop;
     }
-    StopSyncWrapper(const StopSyncWrapper &other) : m_param(other.m_param)
-    {
 
-    }
   protected:
-    SyncParam &m_param;
+    SyncParam m_param;
 };
 }; // namespace zzj
 
