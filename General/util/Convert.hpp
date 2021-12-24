@@ -6,10 +6,10 @@
 inline std::string IntIPToStr(uint32_t ip)
 {
     std::string ret;
-    char *p = (char*)&ip;
+    unsigned char *p = (unsigned char*)&ip;
     for (int i = 0; i < 4; i++)
     {
-        ret += std::to_string((int)*p);
+        ret += std::to_string((unsigned int)*p);
         p++;
         if (i < 3)
             ret += ".";
