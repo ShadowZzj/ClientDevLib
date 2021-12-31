@@ -59,17 +59,18 @@ std::pair<bool,std::string> zzj::Process::CreateProcess(const std::string & cmd)
 {
     std::string strOutPut;
     char buf[1000]{0};
-
-    FILEPTR FILEPtr(popen(cmd.c_str(), "r"), CLOSEFILE);
-    if(FILEPtr.get() == NULL)
+    FILE* fp = NULL;
+    
+    fp = popen(cmd.c_str(), "r+");
+    if(fp == NULL)
     {
         return {false,"Failed to run cmd!"};
     }
     
-    while(NULL != fgets(buf, sizeof(buf),  FILEPtr.get()))
+    while(NULL != fgets(buf, sizeof(buf),  fp))
     {
         strOutPut.append(buf);
-        if(feof(FILEPtr.get())||ferror(FILEPtr.get()))
+        if(feof(fp)||ferror(fp))
             break;
     }
     
@@ -78,6 +79,8 @@ std::pair<bool,std::string> zzj::Process::CreateProcess(const std::string & cmd)
         return {false,"Failed,return is null"};
     }
         
+    if(fp)
+        pclose(fp);
     return {true, strOutPut};
 }
 
