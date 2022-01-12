@@ -1,0 +1,104 @@
+type = "x86"
+arch = "Windows"
+author = "Tomi Ollila, Guido Draheim"
+depends = {
+[[zlib >=1.2]],
+}
+
+desc = "The zziplib provides read access to zipped files in a zip-archive."
+version = "0.13.58"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[bin\libzziplib.dll]],
+}
+,
+Header = {
+[[include\zzip\zzip.h]],
+[[include\zzip\types.h]],
+[[include\zzip\conf.h]],
+[[include\zzip\_msvc.h]],
+[[include\zzip\_config.h]],
+}
+,
+Documentation = {
+[[share\libzzip\doc\\64on32.htm]],
+[[share\libzzip\doc\\body.htm]],
+[[share\libzzip\doc\\configs.htm]],
+[[share\libzzip\doc\\copying.htm]],
+[[share\libzzip\doc\\COPYING.LIB]],
+[[share\libzzip\doc\\COPYING.MPL]],
+[[share\libzzip\doc\\COPYING.ZLIB]],
+[[share\libzzip\doc\\developer.htm]],
+[[share\libzzip\doc\\download.htm]],
+[[share\libzzip\doc\\faq.htm]],
+[[share\libzzip\doc\\fseeko.htm]],
+[[share\libzzip\doc\\functions.htm]],
+[[share\libzzip\doc\\future.htm]],
+[[share\libzzip\doc\\history.htm]],
+[[share\libzzip\doc\\make-dbk.pl]],
+[[share\libzzip\doc\\make-doc.pl]],
+[[share\libzzip\doc\\make-doc.py]],
+[[share\libzzip\doc\\makedocs.py]],
+[[share\libzzip\doc\\Makefile.am]],
+[[share\libzzip\doc\\Makefile.in]],
+[[share\libzzip\doc\\memdisk.htm]],
+[[share\libzzip\doc\\mksite.pl]],
+[[share\libzzip\doc\\mksite.sh]],
+[[share\libzzip\doc\\mmapped.htm]],
+[[share\libzzip\doc\\notes.htm]],
+[[share\libzzip\doc\\README.MSVC6]],
+[[share\libzzip\doc\\README.SDL]],
+[[share\libzzip\doc\\referentials.htm]],
+[[share\libzzip\doc\\sdocbook.css]],
+[[share\libzzip\doc\\sfx-make.htm]],
+[[share\libzzip\doc\\zip-php.htm]],
+[[share\libzzip\doc\\zzip-api.htm]],
+[[share\libzzip\doc\\zzip-basics.htm]],
+[[share\libzzip\doc\\zzip-crypt.htm]],
+[[share\libzzip\doc\\zzip-cryptoid.htm]],
+[[share\libzzip\doc\\zzip-extio.htm]],
+[[share\libzzip\doc\\zzip-extras.htm]],
+[[share\libzzip\doc\\zzip-file.htm]],
+[[share\libzzip\doc\\zzip-index.htm]],
+[[share\libzzip\doc\\zzip-parse.htm]],
+[[share\libzzip\doc\\zzip-sdl-rwops.htm]],
+[[share\libzzip\doc\\zzip-xor.htm]],
+[[share\libzzip\doc\\zzip-zip.htm]],
+[[share\libzzip\doc\\zzipdoc\commentmarkup.py]],
+[[share\libzzip\doc\\zzipdoc\dbk2htm.py]],
+[[share\libzzip\doc\\zzipdoc\docbookdocument.py]],
+[[share\libzzip\doc\\zzipdoc\functionheader.py]],
+[[share\libzzip\doc\\zzipdoc\functionlisthtmlpage.py]],
+[[share\libzzip\doc\\zzipdoc\functionlistreference.py]],
+[[share\libzzip\doc\\zzipdoc\functionprototype.py]],
+[[share\libzzip\doc\\zzipdoc\htm2dbk.py]],
+[[share\libzzip\doc\\zzipdoc\htmldocument.py]],
+[[share\libzzip\doc\\zzipdoc\match.py]],
+[[share\libzzip\doc\\zzipdoc\options.py]],
+[[share\libzzip\doc\\zzipdoc\textfile.py]],
+[[share\libzzip\doc\\zzipdoc\textfileheader.py]],
+[[share\libzzip\doc\\zzipdoc\__init__.py]],
+[[share\libzzip\doc\\zzipfseeko.html]],
+[[share\libzzip\doc\\zziplib-manpages.dbk]],
+[[share\libzzip\doc\\zziplib-manpages.tar]],
+[[share\libzzip\doc\\zziplib-master.dbk]],
+[[share\libzzip\doc\\zziplib.html]],
+[[share\libzzip\doc\\zzipmmapped.html]],
+}
+,
+Data = {
+[[share\libzzip\ChangeLog]],
+[[share\libzzip\README]],
+[[share\libzzip\TODO]],
+}
+,
+Library = {
+[[lib\libzziplib.dll.a]],
+}
+,
+}
+
+license = "LGPL/Mozilla Public"
+url = "http://zziplib.sf.net"
+name = "libzzip"

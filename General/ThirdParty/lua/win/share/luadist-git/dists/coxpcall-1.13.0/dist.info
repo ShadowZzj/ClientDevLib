@@ -1,0 +1,30 @@
+type = "x86"
+arch = "Windows"
+author = "Roberto Ierusalimschy, André Carregal, Thomas Harning Jr., Ignacio Burgueño, Gary NG, Fábio Mascarenhas"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Coroutine safe xpcall and pcall"
+version = "1.13.0"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\coxpcall.lua]],
+}
+,
+Documentation = {
+[[share\coxpcall\doc\\us\coxpcall.png]],
+[[share\coxpcall\doc\\us\index.html]],
+[[share\coxpcall\doc\\us\license.html]],
+}
+,
+Data = {
+[[share\coxpcall\README]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://coxpcall.luaforge.net"
+name = "coxpcall"

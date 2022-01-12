@@ -1,0 +1,25 @@
+type = "x86"
+arch = "Windows"
+author = "Reuben Thomas, Shmuel Zeigerman"
+depends = {
+[[lua >= 5.1]],
+[[lrexlib == 2.7.1]],
+Windows = {
+[[regex >= 3.8a]],
+}
+,
+}
+
+desc = "a Lua 5.1 and 5.2 binding of posix regex library API"
+version = "2.7.1"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\rex_posix.dll]],
+}
+,
+}
+
+license = "MIT"
+url = "https://github.com/rrthomas/lrexlib"
+name = "lrexlib-posix"

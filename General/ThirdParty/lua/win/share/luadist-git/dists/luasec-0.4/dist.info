@@ -1,0 +1,58 @@
+type = "x86"
+arch = "Windows"
+author = "Bruno Silvestre"
+depends = {
+[[luasocket~>2.0]],
+[[openssl ~>1.0]],
+[[lua ~>5.1]],
+}
+
+desc = "LuaSec is a binding for OpenSSL library to provide TLS/SSL communication. It takes an already established TCP connection and creates a secure session between the peers."
+version = "0.4"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\ssl.dll]],
+[[lib\lua\ssl.lua]],
+[[lib\lua\ssl\https.lua]],
+}
+,
+Example = {
+[[share\luasec\example\\certs\clientA.cnf]],
+[[share\luasec\example\\certs\clientA.sh]],
+[[share\luasec\example\\certs\clientB.cnf]],
+[[share\luasec\example\\certs\clientB.sh]],
+[[share\luasec\example\\certs\rootA.cnf]],
+[[share\luasec\example\\certs\rootA.sh]],
+[[share\luasec\example\\certs\rootB.cnf]],
+[[share\luasec\example\\certs\rootB.sh]],
+[[share\luasec\example\\certs\serverA.cnf]],
+[[share\luasec\example\\certs\serverA.sh]],
+[[share\luasec\example\\certs\serverB.cnf]],
+[[share\luasec\example\\certs\serverB.sh]],
+[[share\luasec\example\\key\genkey.sh]],
+[[share\luasec\example\\key\loadkey.lua]],
+[[share\luasec\example\\loop\client.lua]],
+[[share\luasec\example\\loop\server.lua]],
+[[share\luasec\example\\loop-gc\client.lua]],
+[[share\luasec\example\\loop-gc\server.lua]],
+[[share\luasec\example\\oneshot\client.lua]],
+[[share\luasec\example\\oneshot\server.lua]],
+[[share\luasec\example\\README]],
+[[share\luasec\example\\want\client.lua]],
+[[share\luasec\example\\want\server.lua]],
+[[share\luasec\example\\wantread\client.lua]],
+[[share\luasec\example\\wantread\server.lua]],
+[[share\luasec\example\\wantwrite\client.lua]],
+[[share\luasec\example\\wantwrite\server.lua]],
+}
+,
+Data = {
+[[share\luasec\LICENSE]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.inf.puc-rio.br/~brunoos/luasec/"
+name = "luasec"

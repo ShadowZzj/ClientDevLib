@@ -1,0 +1,45 @@
+type = "x86"
+arch = "Windows"
+author = "K.Kosako"
+desc = "Oniguruma is a regular expressions library."
+name = "onig"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[bin\libonig.dll]],
+}
+,
+Header = {
+[[include\oniguruma.h]],
+[[include\regint.h]],
+[[include\regparse.h]],
+[[include\regenc.h]],
+[[include\st.h]],
+[[include\onigposix.h]],
+}
+,
+Documentation = {
+[[share\onig\doc\\API]],
+[[share\onig\doc\\API.ja]],
+[[share\onig\doc\\FAQ]],
+[[share\onig\doc\\FAQ.ja]],
+[[share\onig\doc\\RE]],
+[[share\onig\doc\\RE.ja]],
+}
+,
+Data = {
+[[share\onig\AUTHORS]],
+[[share\onig\COPYING]],
+[[share\onig\HISTORY]],
+[[share\onig\README]],
+}
+,
+Library = {
+[[lib\libonig.dll.a]],
+}
+,
+}
+
+license = "BSD"
+version = "5.9.1"
+url = "http://www.geocities.jp/kosako3/oniguruma/"

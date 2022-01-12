@@ -1,0 +1,25 @@
+type = "x86"
+arch = "Windows"
+author = "Ville Laurikari"
+desc = "TRE is a lightweight, robust, and efficient POSIX compliant regexp matching library with some exciting features such as approximate (fuzzy) matching."
+name = "tre"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[bin\libtre.dll]],
+}
+,
+Library = {
+[[lib\libtre.dll.a]],
+}
+,
+Header = {
+[[include\tre\tre.h]],
+[[include\tre\tre-config.h]],
+}
+,
+}
+
+license = "BSD"
+version = "0.8.0"
+url = "http://laurikari.net/tre/about/"

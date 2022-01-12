@@ -1,0 +1,69 @@
+type = "x86"
+arch = "Windows"
+author = "Ben Kelly"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Packing and unpacking binary data in pure Lua"
+version = "1.1"
+maintainer = "David Manura"
+files = {
+Runtime = {
+[[lib\lua\vstruct.lua]],
+[[lib\lua\vstruct\ast.lua]],
+[[lib\lua\vstruct\ast\Bitpack.lua]],
+[[lib\lua\vstruct\ast\Generator.lua]],
+[[lib\lua\vstruct\ast\IO.lua]],
+[[lib\lua\vstruct\ast\List.lua]],
+[[lib\lua\vstruct\ast\Name.lua]],
+[[lib\lua\vstruct\ast\Repeat.lua]],
+[[lib\lua\vstruct\ast\Root.lua]],
+[[lib\lua\vstruct\ast\Table.lua]],
+[[lib\lua\vstruct\cursor.lua]],
+[[lib\lua\vstruct\io.lua]],
+[[lib\lua\vstruct\io\a.lua]],
+[[lib\lua\vstruct\io\b.lua]],
+[[lib\lua\vstruct\io\c.lua]],
+[[lib\lua\vstruct\io\f.lua]],
+[[lib\lua\vstruct\io\i.lua]],
+[[lib\lua\vstruct\io\m.lua]],
+[[lib\lua\vstruct\io\p.lua]],
+[[lib\lua\vstruct\io\s.lua]],
+[[lib\lua\vstruct\io\u.lua]],
+[[lib\lua\vstruct\io\x.lua]],
+[[lib\lua\vstruct\io\z.lua]],
+[[lib\lua\vstruct\io\bigendian.lua]],
+[[lib\lua\vstruct\io\defaults.lua]],
+[[lib\lua\vstruct\io\endianness.lua]],
+[[lib\lua\vstruct\io\hostendian.lua]],
+[[lib\lua\vstruct\io\littleendian.lua]],
+[[lib\lua\vstruct\io\seekb.lua]],
+[[lib\lua\vstruct\io\seekf.lua]],
+[[lib\lua\vstruct\io\seekto.lua]],
+[[lib\lua\vstruct\lexer.lua]],
+[[lib\lua\vstruct\pack.lua]],
+[[lib\lua\vstruct\test.lua]],
+[[lib\lua\vstruct\test\basic.lua]],
+[[lib\lua\vstruct\test\common.lua]],
+[[lib\lua\vstruct\test\fp-bigendian.lua]],
+[[lib\lua\vstruct\test\struct-test-gen.lua]],
+[[lib\lua\vstruct\test\fp-littleendian.lua]],
+[[lib\lua\vstruct\unpack.lua]],
+}
+,
+Documentation = {
+[[share\vstruct\doc\README]],
+[[share\vstruct\doc\CHANGES]],
+[[share\vstruct\doc\TODO]],
+}
+,
+Data = {
+[[share\vstruct\COPYING]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "https://github.com/ToxicFrog/vstruct"
+name = "vstruct"

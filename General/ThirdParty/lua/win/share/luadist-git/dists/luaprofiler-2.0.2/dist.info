@@ -1,0 +1,36 @@
+type = "x86"
+arch = "Windows"
+author = "Fábio Mascarenhas, André Carregal, Tomás Guisasola, Danilo Tuler"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "LuaProfiler is a time profiler designed to help finding bottlenecks on your Lua program."
+version = "2.0.2"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\profiler.dll]],
+[[bin\summary.exe]],
+}
+,
+Documentation = {
+[[share\luaprofiler\doc\\us\index.html]],
+[[share\luaprofiler\doc\\us\license.html]],
+[[share\luaprofiler\doc\\us\luaprofiler.png]],
+[[share\luaprofiler\doc\\us\manual.html]],
+}
+,
+Data = {
+[[share\luaprofiler\README]],
+}
+,
+Other = {
+[[share\luaprofiler\etc\summary.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.keplerproject.org/luaprofiler/"
+name = "luaprofiler"

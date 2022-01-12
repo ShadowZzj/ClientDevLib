@@ -1,0 +1,41 @@
+type = "x86"
+arch = "Windows"
+author = "Petr Stetiar"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Multiplatform library for serial communications over RS-232 (serial port)"
+version = "1.0.3"
+maintainer = "David Manura"
+files = {
+Runtime = {
+[[bin\librs232.dll]],
+[[lib\lua\luars232.dll]],
+}
+,
+Header = {
+[[include\librs232\rs232.h]],
+[[include\librs232\rs232_posix.h]],
+}
+,
+Example = {
+[[share\librs232\example\example.lua]],
+}
+,
+Data = {
+[[share\librs232\AUTHORS]],
+[[share\librs232\ChangeLog]],
+[[share\librs232\COPYING]],
+[[share\librs232\TODO]],
+}
+,
+Library = {
+[[lib\librs232.dll.a]],
+}
+,
+}
+
+license = "MIT"
+url = "https://github.com/ynezz/librs232"
+name = "librs232"

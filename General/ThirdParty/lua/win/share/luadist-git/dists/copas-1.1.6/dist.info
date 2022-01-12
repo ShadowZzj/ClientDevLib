@@ -1,0 +1,39 @@
+type = "x86"
+arch = "Windows"
+author = "André Carregal, Javier Guerra"
+depends = {
+[[lua ~> 5.1]],
+[[luasocket >= 2.0]],
+[[coxpcall >=1.13]],
+}
+
+desc = "Coroutine Oriented Portable Asynchronous Services"
+version = "1.1.6"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\copas.lua]],
+}
+,
+Documentation = {
+[[share\copas\doc\\us\copas.png]],
+[[share\copas\doc\\us\index.html]],
+[[share\copas\doc\\us\license.html]],
+[[share\copas\doc\\us\manual.html]],
+[[share\copas\doc\\us\reference.html]],
+}
+,
+Data = {
+[[share\copas\README]],
+}
+,
+Test = {
+[[share\copas\test\\cosocket.lua]],
+[[share\copas\test\\test.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.keplerproject.org/copas/"
+name = "copas"

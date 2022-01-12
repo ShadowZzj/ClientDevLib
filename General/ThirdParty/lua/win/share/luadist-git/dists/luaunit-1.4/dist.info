@@ -1,0 +1,33 @@
+type = "x86"
+arch = "Windows"
+author = "Philippe Fremy"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "A xUnit tests module for Lua."
+version = "1.4"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\luaunit.lua]],
+}
+,
+Example = {
+[[share\luaunit\example\example_with_luaunit.lua]],
+}
+,
+Data = {
+[[share\luaunit\LICENSE.txt]],
+[[share\luaunit\README.txt]],
+}
+,
+Test = {
+[[share\luaunit\test\test_luaunit.lua]],
+}
+,
+}
+
+license = "BSD"
+url = "http://luaforge.net/projects/luaunit"
+name = "luaunit"

@@ -1,0 +1,87 @@
+type = "x86"
+arch = "Windows"
+author = "Danilo Tuler, Thiago Ponte"
+depends = {
+[[lua ~> 5.1]],
+[[luasocket >= 2.0]],
+}
+
+desc = "A simple API to use logging features"
+version = "1.2.0"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\logging.lua]],
+[[lib\lua\logging\console.lua]],
+[[lib\lua\logging\file.lua]],
+[[lib\lua\logging\rolling_file.lua]],
+[[lib\lua\logging\email.lua]],
+[[lib\lua\logging\sql.lua]],
+[[lib\lua\logging\socket.lua]],
+}
+,
+Documentation = {
+[[share\lualogging\doc\\doc\br\console.tpl]],
+[[share\lualogging\doc\\doc\br\email.tpl]],
+[[share\lualogging\doc\\doc\br\file.tpl]],
+[[share\lualogging\doc\\doc\br\footer.tpl]],
+[[share\lualogging\doc\\doc\br\header.tpl]],
+[[share\lualogging\doc\\doc\br\index.tpl]],
+[[share\lualogging\doc\\doc\br\license.tpl]],
+[[share\lualogging\doc\\doc\br\lualogging-128.png]],
+[[share\lualogging\doc\\doc\br\manual.tpl]],
+[[share\lualogging\doc\\doc\br\menu.lua]],
+[[share\lualogging\doc\\doc\br\socket.tpl]],
+[[share\lualogging\doc\\doc\br\sql.tpl]],
+[[share\lualogging\doc\\doc\build.lua]],
+[[share\lualogging\doc\\doc\html\br\console.html]],
+[[share\lualogging\doc\\doc\html\br\email.html]],
+[[share\lualogging\doc\\doc\html\br\file.html]],
+[[share\lualogging\doc\\doc\html\br\index.html]],
+[[share\lualogging\doc\\doc\html\br\license.html]],
+[[share\lualogging\doc\\doc\html\br\manual.html]],
+[[share\lualogging\doc\\doc\html\br\socket.html]],
+[[share\lualogging\doc\\doc\html\br\sql.html]],
+[[share\lualogging\doc\\doc\html\console.html]],
+[[share\lualogging\doc\\doc\html\email.html]],
+[[share\lualogging\doc\\doc\html\file.html]],
+[[share\lualogging\doc\\doc\html\images\lualogging-128.png]],
+[[share\lualogging\doc\\doc\html\index.html]],
+[[share\lualogging\doc\\doc\html\license.html]],
+[[share\lualogging\doc\\doc\html\manual.html]],
+[[share\lualogging\doc\\doc\html\rolling_file.html]],
+[[share\lualogging\doc\\doc\html\socket.html]],
+[[share\lualogging\doc\\doc\html\sql.html]],
+[[share\lualogging\doc\\doc\us\console.tpl]],
+[[share\lualogging\doc\\doc\us\email.tpl]],
+[[share\lualogging\doc\\doc\us\file.tpl]],
+[[share\lualogging\doc\\doc\us\footer.tpl]],
+[[share\lualogging\doc\\doc\us\header.tpl]],
+[[share\lualogging\doc\\doc\us\index.tpl]],
+[[share\lualogging\doc\\doc\us\license.tpl]],
+[[share\lualogging\doc\\doc\us\manual.tpl]],
+[[share\lualogging\doc\\doc\us\menu.lua]],
+[[share\lualogging\doc\\doc\us\rolling_file.tpl]],
+[[share\lualogging\doc\\doc\us\socket.tpl]],
+[[share\lualogging\doc\\doc\us\sql.tpl]],
+}
+,
+Data = {
+[[share\lualogging\README]],
+}
+,
+Test = {
+[[share\lualogging\test\\test.lua]],
+[[share\lualogging\test\\testConsole.lua]],
+[[share\lualogging\test\\testFile.lua]],
+[[share\lualogging\test\\testMail.lua]],
+[[share\lualogging\test\\testRollingFile.lua]],
+[[share\lualogging\test\\testSocket.lua]],
+[[share\lualogging\test\\testSQL.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.keplerproject.org/lualogging/"
+name = "lualogging"

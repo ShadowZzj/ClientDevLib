@@ -1,0 +1,30 @@
+type = "x86"
+arch = "Windows"
+author = "Henry Spencer"
+desc = "Henry Spencer's regular expressions library"
+name = "regex"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[bin\librxspencer.dll]],
+}
+,
+Header = {
+[[include\regex.h]],
+}
+,
+Data = {
+[[share\regex\COPYRIGHT]],
+[[share\regex\README]],
+[[share\regex\WHATSNEW]],
+}
+,
+Library = {
+[[lib\librxspencer.dll.a]],
+}
+,
+}
+
+license = "see COPYRIGHT"
+version = "3.8a"
+url = "http://arglist.com/regex/"

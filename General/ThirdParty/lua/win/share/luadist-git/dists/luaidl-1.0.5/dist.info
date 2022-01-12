@@ -1,0 +1,23 @@
+type = "x86"
+arch = "Windows"
+author = "Ricardo Cosme"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "LuaIDL is an OMG IDL (Interface Definition Language) compiler front end, written in the Lua programming language."
+version = "1.0.5"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\luaidl.lua]],
+[[lib\lua\luaidl\lex.lua]],
+[[lib\lua\luaidl\pre.lua]],
+[[lib\lua\luaidl\sin.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://luaforge.net/projects/oil/"
+name = "luaidl"

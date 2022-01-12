@@ -1,0 +1,36 @@
+type = "x86"
+arch = "Windows"
+author = "Roberto Ierusalimschy, André Carregal, Tomás Guisasola"
+depends = {
+[[lua >= 5.1]],
+}
+
+desc = "File System Library for the Lua Programming Language"
+version = "1.6.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\lfs.dll]],
+}
+,
+Documentation = {
+[[share\luafilesystem\doc\\us\examples.html]],
+[[share\luafilesystem\doc\\us\index.html]],
+[[share\luafilesystem\doc\\us\license.html]],
+[[share\luafilesystem\doc\\us\luafilesystem.png]],
+[[share\luafilesystem\doc\\us\manual.html]],
+}
+,
+Data = {
+[[share\luafilesystem\README]],
+}
+,
+Test = {
+[[share\luafilesystem\test\\test.lua]],
+}
+,
+}
+
+license = "Kepler"
+url = "http://www.keplerproject.org/luafilesystem/"
+name = "luafilesystem"

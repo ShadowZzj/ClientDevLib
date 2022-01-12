@@ -1,0 +1,28 @@
+type = "x86"
+arch = "Windows"
+author = "Mark Edgar"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Implementation of 'ex' API - portable os and io extension functions"
+version = "20091019"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\ex.dll]],
+}
+,
+Data = {
+[[share\luaex\COPYRIGHT]],
+[[share\luaex\Changelog]],
+[[share\luaex\JUST]],
+[[share\luaex\TODO]],
+[[share\luaex\README]],
+}
+,
+}
+
+url = "http://lua-users.org/wiki/ExtensionProposal"
+name = "luaex"
+license = "MIT"

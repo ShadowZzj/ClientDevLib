@@ -1,0 +1,41 @@
+type = "x86"
+arch = "Windows"
+author = "Fabio Mascarenhas"
+depends = {
+[[lua ~> 5.1]],
+[[libffi >=1.0]],
+}
+
+desc = "Alien - Pure Lua extensions."
+version = "0.5.1"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\alien\core.dll]],
+[[lib\lua\alien\struct.dll]],
+[[lib\lua\alien.lua]],
+}
+,
+Documentation = {
+[[share\alien\doc\\.git-darcs-dir]],
+[[share\alien\doc\\alien.md]],
+[[share\alien\doc\\index.html]],
+}
+,
+Example = {
+[[share\alien\example\\.git-darcs-dir]],
+[[share\alien\example\\gtk.lua]],
+[[share\alien\example\\libc.lua]],
+[[share\alien\example\\string_array.lua]],
+}
+,
+Test = {
+[[share\alien\test\libalientest.dll]],
+[[share\alien\test\test_alien.lua]],
+}
+,
+}
+
+license = "MIT"
+url = "http://alien.luaforge.net"
+name = "alien"

@@ -1,0 +1,31 @@
+type = "x86"
+arch = "Windows"
+author = "Paul Kulchenko"
+depends = {
+[[lua >= 5.1]],
+[[luasocket >= 2.0]],
+}
+
+desc = "MobDebug allows you control the execution of another Lua program remotely, set breakpoints, and inspect the current state of the program."
+version = "0.51"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\mobdebug.lua]],
+}
+,
+Example = {
+[[share\mobdebug\example\\auto\test.lua]],
+[[share\mobdebug\example\\autotest.lua]],
+[[share\mobdebug\example\\load.lua]],
+[[share\mobdebug\example\\loop.lua]],
+[[share\mobdebug\example\\README]],
+[[share\mobdebug\example\\server.lua]],
+[[share\mobdebug\example\\start.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://github.com/pkulchenko/MobDebug"
+name = "mobdebug"

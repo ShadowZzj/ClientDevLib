@@ -1,0 +1,49 @@
+type = "x86"
+arch = "Windows"
+author = "Roberto Ierusalimschy, André Carregal, Tomás Guisasola"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Database connectivity for Lua"
+version = "2.3.0"
+maintainer = "Peter Kapec"
+files = {
+Test = {
+[[share\luasql\test\\ado.lua]],
+[[share\luasql\test\\example.lua]],
+[[share\luasql\test\\firebird.lua]],
+[[share\luasql\test\\mysql.lua]],
+[[share\luasql\test\\oci8.lua]],
+[[share\luasql\test\\odbc.lua]],
+[[share\luasql\test\\performance.lua]],
+[[share\luasql\test\\postgres.lua]],
+[[share\luasql\test\\sqlite.lua]],
+[[share\luasql\test\\sqlite3.lua]],
+[[share\luasql\test\\test.lua]],
+}
+,
+Documentation = {
+[[share\luasql\doc\\br\examples.html]],
+[[share\luasql\doc\\br\history.html]],
+[[share\luasql\doc\\br\index.html]],
+[[share\luasql\doc\\br\license.html]],
+[[share\luasql\doc\\br\luasql.png]],
+[[share\luasql\doc\\br\manual.html]],
+[[share\luasql\doc\\us\examples.html]],
+[[share\luasql\doc\\us\history.html]],
+[[share\luasql\doc\\us\index.html]],
+[[share\luasql\doc\\us\license.html]],
+[[share\luasql\doc\\us\luasql.png]],
+[[share\luasql\doc\\us\manual.html]],
+}
+,
+Data = {
+[[share\luasql\README]],
+}
+,
+}
+
+license = "Kepler"
+url = "http://www.keplerproject.org/luasql/"
+name = "luasql"

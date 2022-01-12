@@ -1,0 +1,100 @@
+type = "x86"
+arch = "Windows"
+author = "Hisham Muhammad"
+depends = {
+[[lua ~> 5.1]],
+[[md5 >= 1.1]],
+[[lzlib >= 0.3]],
+[[luazip >= 1.2.3]],
+[[luasocket >= 2.0.2]],
+[[luasec >= 0.4]],
+[[unzip >= 6.0]],
+[[zip >= 3.0]],
+}
+
+desc = "LuaRocks is a deployment and management system for Lua modules."
+version = "2.0.10"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\luarocks\add.lua]],
+[[lib\lua\luarocks\admin_remove.lua]],
+[[lib\lua\luarocks\build\builtin.lua]],
+[[lib\lua\luarocks\build\cmake.lua]],
+[[lib\lua\luarocks\build\command.lua]],
+[[lib\lua\luarocks\build\make.lua]],
+[[lib\lua\luarocks\build.lua]],
+[[lib\lua\luarocks\cache.lua]],
+[[lib\lua\luarocks\cfg.lua]],
+[[lib\lua\luarocks\command_line.lua]],
+[[lib\lua\luarocks\deps.lua]],
+[[lib\lua\luarocks\dir.lua]],
+[[lib\lua\luarocks\download.lua]],
+[[lib\lua\luarocks\fetch\cvs.lua]],
+[[lib\lua\luarocks\fetch\git.lua]],
+[[lib\lua\luarocks\fetch\git_file.lua]],
+[[lib\lua\luarocks\fetch\hg.lua]],
+[[lib\lua\luarocks\fetch\sscm.lua]],
+[[lib\lua\luarocks\fetch\svn.lua]],
+[[lib\lua\luarocks\fetch.lua]],
+[[lib\lua\luarocks\fs\lua.lua]],
+[[lib\lua\luarocks\fs\unix\tools.lua]],
+[[lib\lua\luarocks\fs\unix.lua]],
+[[lib\lua\luarocks\fs\win32\tools.lua]],
+[[lib\lua\luarocks\fs\win32.lua]],
+[[lib\lua\luarocks\fs.lua]],
+[[lib\lua\luarocks\help.lua]],
+[[lib\lua\luarocks\index.lua]],
+[[lib\lua\luarocks\install.lua]],
+[[lib\lua\luarocks\list.lua]],
+[[lib\lua\luarocks\loader.lua]],
+[[lib\lua\luarocks\make.lua]],
+[[lib\lua\luarocks\make_manifest.lua]],
+[[lib\lua\luarocks\manif.lua]],
+[[lib\lua\luarocks\manif_core.lua]],
+[[lib\lua\luarocks\new_version.lua]],
+[[lib\lua\luarocks\pack.lua]],
+[[lib\lua\luarocks\path.lua]],
+[[lib\lua\luarocks\persist.lua]],
+[[lib\lua\luarocks\refresh_cache.lua]],
+[[lib\lua\luarocks\remove.lua]],
+[[lib\lua\luarocks\rep.lua]],
+[[lib\lua\luarocks\require.lua]],
+[[lib\lua\luarocks\search.lua]],
+[[lib\lua\luarocks\show.lua]],
+[[lib\lua\luarocks\site_config.lua]],
+[[lib\lua\luarocks\tools\patch.lua]],
+[[lib\lua\luarocks\tools\tar.lua]],
+[[lib\lua\luarocks\tools\zip.lua]],
+[[lib\lua\luarocks\type_check.lua]],
+[[lib\lua\luarocks\unpack.lua]],
+[[lib\lua\luarocks\util.lua]],
+[[lib\lua\luarocks\validate.lua]],
+[[bin\luarocks.exe]],
+[[bin\luarocks-admin.exe]],
+}
+,
+Test = {
+[[share\luarocks\test\\run_tests.sh]],
+[[share\luarocks\test\\test_deps.lua]],
+[[share\luarocks\test\\test_require.lua]],
+}
+,
+Data = {
+[[share\luarocks\COPYING]],
+[[share\luarocks\COPYING_7z]],
+[[share\luarocks\COPYING_lua]],
+[[share\luarocks\README.md]],
+[[share\luarocks\rocks\COPYING]],
+}
+,
+Other = {
+[[share\luarocks\etc\luarocks]],
+[[share\luarocks\etc\luarocks-admin]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.luarocks.org"
+name = "luarocks"
