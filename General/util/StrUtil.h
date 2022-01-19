@@ -4,8 +4,8 @@
 #include <codecvt>
 #include <iostream>
 #include <locale>
-#include <string>
 #include <sstream>
+#include <string>
 
 using std::string;
 class Base64Help
@@ -162,6 +162,10 @@ inline std::string WstrToUTF8Str(const std::wstring &wstr)
     std::string ret = converter.to_bytes(wstr.c_str());
     return ret;
 }
+inline std::string StrToUTF8(const std::string &str)
+{
+    return WstrToUTF8Str(UTF8Str2Wstr(str));
+}
 inline int HexStrToDecStr(std::string inStr, std::string &outStr)
 {
     int result             = 0;
@@ -195,7 +199,7 @@ template <class T> inline std::string ToHex(const T &data, bool addPrefix)
             ret = ret.substr(ret.length() - 2, 2);
         }
         else if (ret.length() == 1)
-            ret = u8"0"+ret;
+            ret = u8"0" + ret;
     }
     else
     {
