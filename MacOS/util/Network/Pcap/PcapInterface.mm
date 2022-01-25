@@ -123,8 +123,10 @@ int zzj::PcapInterface::InterfaceInfo::GetInterfaceInfo(const pcap_if_t * pcapIf
             interfaceInfo.m_ifName = macTmp.substr(0,sockAddr->sdl_nlen);
         }
     }
-    pcap_t *handle = pcap_open_live(interfaceInfo.m_ifName.c_str(), BUFSIZ, 0, 1000, NULL);
+    char errBuf[PCAP_ERRBUF_SIZE]{0};
+    pcap_t *handle = pcap_open_live(interfaceInfo.m_ifName.c_str(), BUFSIZ, 0, 1000, errBuf);
     if (handle == NULL) {
+        std::cout<<"pcap_open_live error "<<errBuf<<std::endl;
         return -1;
     }
     interfaceInfo.m_DataLinkType=pcap_datalink(handle);
