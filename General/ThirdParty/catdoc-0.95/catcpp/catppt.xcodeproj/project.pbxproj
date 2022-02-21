@@ -1,0 +1,371 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BAA771BD279157820003695B /* catcpp.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BAA771BC279157820003695B /* catcpp.hpp */; };
+		BAA771BF279157820003695B /* catcppPriv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BAA771BE279157820003695B /* catcppPriv.hpp */; };
+		BAA771C1279157820003695B /* catcpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BAA771C0279157820003695B /* catcpp.cpp */; };
+		BAA771D02791583C0003695B /* catppt.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771C82791583C0003695B /* catppt.c */; };
+		BAA771D12791583C0003695B /* charsets.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771C92791583C0003695B /* charsets.c */; };
+		BAA771D22791583C0003695B /* numutils.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771CA2791583C0003695B /* numutils.c */; };
+		BAA771D32791583C0003695B /* substmap.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771CB2791583C0003695B /* substmap.c */; };
+		BAA771D42791583C0003695B /* confutil.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771CC2791583C0003695B /* confutil.c */; };
+		BAA771D52791583C0003695B /* ole.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771CD2791583C0003695B /* ole.c */; };
+		BAA771D62791583C0003695B /* pptparse.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771CE2791583C0003695B /* pptparse.c */; };
+		BAA771D72791583C0003695B /* fileutil.c in Sources */ = {isa = PBXBuildFile; fileRef = BAA771CF2791583C0003695B /* fileutil.c */; };
+		BAA771DC279158F10003695B /* CPptParser.h in Headers */ = {isa = PBXBuildFile; fileRef = BAA771DA279158F10003695B /* CPptParser.h */; };
+		BAA771DD279158F10003695B /* CPptParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BAA771DB279158F10003695B /* CPptParser.cpp */; };
+		BAA771E027915EFE0003695B /* CStrCvt.h in Headers */ = {isa = PBXBuildFile; fileRef = BAA771DE27915EFE0003695B /* CStrCvt.h */; };
+		BAA771E127915EFE0003695B /* CStrCvt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BAA771DF27915EFE0003695B /* CStrCvt.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		BAA771B9279157820003695B /* libcatppt.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libcatppt.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BAA771BC279157820003695B /* catcpp.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = catcpp.hpp; sourceTree = "<group>"; };
+		BAA771BE279157820003695B /* catcppPriv.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = catcppPriv.hpp; sourceTree = "<group>"; };
+		BAA771C0279157820003695B /* catcpp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = catcpp.cpp; sourceTree = "<group>"; };
+		BAA771C82791583C0003695B /* catppt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = catppt.c; path = ../src/catppt.c; sourceTree = "<group>"; };
+		BAA771C92791583C0003695B /* charsets.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = charsets.c; path = ../src/charsets.c; sourceTree = "<group>"; };
+		BAA771CA2791583C0003695B /* numutils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = numutils.c; path = ../src/numutils.c; sourceTree = "<group>"; };
+		BAA771CB2791583C0003695B /* substmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = substmap.c; path = ../src/substmap.c; sourceTree = "<group>"; };
+		BAA771CC2791583C0003695B /* confutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = confutil.c; path = ../src/confutil.c; sourceTree = "<group>"; };
+		BAA771CD2791583C0003695B /* ole.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ole.c; path = ../src/ole.c; sourceTree = "<group>"; };
+		BAA771CE2791583C0003695B /* pptparse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pptparse.c; path = ../src/pptparse.c; sourceTree = "<group>"; };
+		BAA771CF2791583C0003695B /* fileutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fileutil.c; path = ../src/fileutil.c; sourceTree = "<group>"; };
+		BAA771DA279158F10003695B /* CPptParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CPptParser.h; path = ../../../../../MacOS/TerminalManager/DocsScanPlugin/Parser/CPptParser.h; sourceTree = "<group>"; };
+		BAA771DB279158F10003695B /* CPptParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CPptParser.cpp; path = ../../../../../MacOS/TerminalManager/DocsScanPlugin/Parser/CPptParser.cpp; sourceTree = "<group>"; };
+		BAA771DE27915EFE0003695B /* CStrCvt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CStrCvt.h; path = ../../../../../General/TerminalManager/DocsScanPlugin/CStrCvt.h; sourceTree = "<group>"; };
+		BAA771DF27915EFE0003695B /* CStrCvt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CStrCvt.cpp; path = ../../../../../General/TerminalManager/DocsScanPlugin/CStrCvt.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BAA771B7279157820003695B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BAA771B0279157820003695B = {
+			isa = PBXGroup;
+			children = (
+				BAA771D8279158AE0003695B /* PARSER */,
+				BAA771C7279157920003695B /* GENERAL */,
+				BAA771BB279157820003695B /* catcpp */,
+				BAA771BA279157820003695B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BAA771BA279157820003695B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BAA771B9279157820003695B /* libcatppt.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BAA771BB279157820003695B /* catcpp */ = {
+			isa = PBXGroup;
+			children = (
+				BAA771BC279157820003695B /* catcpp.hpp */,
+				BAA771BE279157820003695B /* catcppPriv.hpp */,
+				BAA771C0279157820003695B /* catcpp.cpp */,
+			);
+			path = catcpp;
+			sourceTree = "<group>";
+		};
+		BAA771C7279157920003695B /* GENERAL */ = {
+			isa = PBXGroup;
+			children = (
+				BAA771C82791583C0003695B /* catppt.c */,
+				BAA771C92791583C0003695B /* charsets.c */,
+				BAA771CC2791583C0003695B /* confutil.c */,
+				BAA771CF2791583C0003695B /* fileutil.c */,
+				BAA771CA2791583C0003695B /* numutils.c */,
+				BAA771CD2791583C0003695B /* ole.c */,
+				BAA771CE2791583C0003695B /* pptparse.c */,
+				BAA771CB2791583C0003695B /* substmap.c */,
+			);
+			name = GENERAL;
+			sourceTree = "<group>";
+		};
+		BAA771D8279158AE0003695B /* PARSER */ = {
+			isa = PBXGroup;
+			children = (
+				BAA771DF27915EFE0003695B /* CStrCvt.cpp */,
+				BAA771DE27915EFE0003695B /* CStrCvt.h */,
+				BAA771DB279158F10003695B /* CPptParser.cpp */,
+				BAA771DA279158F10003695B /* CPptParser.h */,
+			);
+			name = PARSER;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		BAA771B5279157820003695B /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BAA771E027915EFE0003695B /* CStrCvt.h in Headers */,
+				BAA771BF279157820003695B /* catcppPriv.hpp in Headers */,
+				BAA771DC279158F10003695B /* CPptParser.h in Headers */,
+				BAA771BD279157820003695B /* catcpp.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		BAA771B8279157820003695B /* catcpp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BAA771C4279157820003695B /* Build configuration list for PBXNativeTarget "catcpp" */;
+			buildPhases = (
+				BAA771B5279157820003695B /* Headers */,
+				BAA771B6279157820003695B /* Sources */,
+				BAA771B7279157820003695B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = catcpp;
+			productName = catcpp;
+			productReference = BAA771B9279157820003695B /* libcatppt.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BAA771B1279157820003695B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1310;
+				TargetAttributes = {
+					BAA771B8279157820003695B = {
+						CreatedOnToolsVersion = 13.1;
+					};
+				};
+			};
+			buildConfigurationList = BAA771B4279157820003695B /* Build configuration list for PBXProject "catppt" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = BAA771B0279157820003695B;
+			productRefGroup = BAA771BA279157820003695B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BAA771B8279157820003695B /* catcpp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BAA771B6279157820003695B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BAA771D22791583C0003695B /* numutils.c in Sources */,
+				BAA771DD279158F10003695B /* CPptParser.cpp in Sources */,
+				BAA771D42791583C0003695B /* confutil.c in Sources */,
+				BAA771E127915EFE0003695B /* CStrCvt.cpp in Sources */,
+				BAA771D62791583C0003695B /* pptparse.c in Sources */,
+				BAA771D52791583C0003695B /* ole.c in Sources */,
+				BAA771C1279157820003695B /* catcpp.cpp in Sources */,
+				BAA771D02791583C0003695B /* catppt.c in Sources */,
+				BAA771D72791583C0003695B /* fileutil.c in Sources */,
+				BAA771D32791583C0003695B /* substmap.c in Sources */,
+				BAA771D12791583C0003695B /* charsets.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		BAA771C2279157820003695B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"CATDOC_VERSION=\"0.95\"",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		BAA771C3279157820003695B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "CATDOC_VERSION=\"0.95\"";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		BAA771C5279157820003695B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				HEADER_SEARCH_PATHS = (
+					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin,
+					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin/Parser,
+				);
+				PRODUCT_NAME = catppt;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		BAA771C6279157820003695B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				HEADER_SEARCH_PATHS = (
+					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin,
+					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin/Parser,
+				);
+				PRODUCT_NAME = catppt;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BAA771B4279157820003695B /* Build configuration list for PBXProject "catppt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BAA771C2279157820003695B /* Debug */,
+				BAA771C3279157820003695B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BAA771C4279157820003695B /* Build configuration list for PBXNativeTarget "catcpp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BAA771C5279157820003695B /* Debug */,
+				BAA771C6279157820003695B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BAA771B1279157820003695B /* Project object */;
+}

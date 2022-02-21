@@ -1,0 +1,526 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ADDIN	xltypes.h	16;"	d
+ADDMENU	xltypes.h	17;"	d
+ARRAY	xltypes.h	18;"	d
+AUTOFILTER	xltypes.h	19;"	d
+AUTOFILTERINFO	xltypes.h	20;"	d
+BACKUP	xltypes.h	21;"	d
+BBD	ole.c	/^unsigned char *BBD=NULL;$/;"	v
+BBD_BLOCK_SIZE	ole.h	16;"	d
+BLANK	xltypes.h	22;"	d
+BOF	xltypes.h	23;"	d
+BOOKBOOL	xltypes.h	24;"	d
+BOOLERR	xltypes.h	25;"	d
+BOTTOMMARGIN	xltypes.h	26;"	d
+BOUNDSHEET	xltypes.h	27;"	d
+BuiltInDateFormatIdx	xlsparse.c	/^int BuiltInDateFormatIdx (int index) {$/;"	f
+CALCCOUNT	xltypes.h	28;"	d
+CALCMODE	xltypes.h	29;"	d
+CATDOC_H	catdoc.h	8;"	d
+CHARSET	catdoc.h	/^typedef short int  ** CHARSET;$/;"	t
+CHARSETPATH	catdoc.h	44;"	d
+CHARSETPATH	catdoc.h	66;"	d
+CHARSET_EXT	catdoc.h	81;"	d
+CODEPAGE	xltypes.h	30;"	d
+COLINFO	xltypes.h	31;"	d
+COLOR_SCHEME_ATOM	ppttypes.h	36;"	d
+CONSTANT_STRING	xltypes.h	154;"	d
+CONTINUE	xltypes.h	32;"	d
+COORDLIST	xltypes.h	33;"	d
+COUNTRY	xltypes.h	34;"	d
+CRN	xltypes.h	35;"	d
+CSTRING	ppttypes.h	45;"	d
+CleanUpFormatIdxUsed	xlsparse.c	/^void CleanUpFormatIdxUsed() {$/;"	f
+DATE_FORMAT	xltypes.h	13;"	d
+DBCELL	xltypes.h	36;"	d
+DCON	xltypes.h	37;"	d
+DCONNAME	xltypes.h	38;"	d
+DCONREF	xltypes.h	39;"	d
+DEFAULTROWHEIGHT	xltypes.h	40;"	d
+DEFCOLWIDTH	xltypes.h	41;"	d
+DELMENU	xltypes.h	42;"	d
+DELTA	xltypes.h	43;"	d
+DIMENSIONS	xltypes.h	44;"	d
+DIR_SEP	catdoc.h	54;"	d
+DIR_SEP	catdoc.h	76;"	d
+DOCROUTE	xltypes.h	45;"	d
+DOCUMENT	ppttypes.h	17;"	d
+DOCUMENT_ATOM	ppttypes.h	18;"	d
+DOCUMENT_END	ppttypes.h	19;"	d
+DOUBLE_STREAM_FILE	xltypes.h	62;"	d
+EDG	xltypes.h	46;"	d
+END_FILE	pptparse.c	/^enum {START_FILE,START_SLIDE,TEXTOUT,END_FILE} slide_state ;$/;"	e	enum:__anon3	file:
+ENVIRONMENT	ppttypes.h	27;"	d
+EXTERNCOUNT	xltypes.h	48;"	d
+EXTERNNAME	xltypes.h	49;"	d
+EXTERNSHEET	xltypes.h	50;"	d
+EXTSST	xltypes.h	157;"	d
+EX_OBJ_LIST	ppttypes.h	32;"	d
+EX_OLE_OBJ_STG	ppttypes.h	44;"	d
+FEOF	ole.c	614;"	d	file:
+FEOF	ole.c	616;"	d	file:
+FILEPASS	xltypes.h	51;"	d
+FILESHARING	xltypes.h	52;"	d
+FILESHARING2	xltypes.h	53;"	d
+FILE_BUFFER	catdoc.h	121;"	d
+FILE_BUFFER	catdoc.h	126;"	d
+FILTERMODE	xltypes.h	54;"	d
+FLT_FORMAT	xlsparse.c	29;"	d	file:
+FNGROUPCOUNT	xltypes.h	55;"	d
+FNGROUPNAME	xltypes.h	56;"	d
+FONT	xltypes.h	57;"	d
+FONT2	xltypes.h	58;"	d
+FOOTER	xltypes.h	59;"	d
+FORMAT	xltypes.h	60;"	d
+FORMULA	xltypes.h	64;"	d
+FORMULA_RELATED	xltypes.h	61;"	d
+FormatIdxUsed	xlsparse.c	/^static char FormatIdxUsed[NUMOFDATEFORMATS];$/;"	v	file:
+GCW	xltypes.h	65;"	d
+GRIDSET	xltypes.h	66;"	d
+GUTS	xltypes.h	68;"	d
+GetBuiltInDateFormat	xlsparse.c	/^char *GetBuiltInDateFormat(int dateindex) {$/;"	f
+HANDOUT	ppttypes.h	46;"	d
+HAVE_LANGINFO	config.h	32;"	d
+HAVE_STRDUP	config.h	20;"	d
+HAVE_STRFTIME	config.h	23;"	d
+HAVE_STRTOL	config.h	26;"	d
+HAVE_UNISTD_H	config.h	29;"	d
+HCENTER	xltypes.h	69;"	d
+HEADER	xltypes.h	70;"	d
+HEADERS_FOOTERS	ppttypes.h	47;"	d
+HEADERS_FOOTERS_ATOM	ppttypes.h	48;"	d
+HIDEOBJ	xltypes.h	71;"	d
+HORIZONTALPAGEBREAKS	xltypes.h	72;"	d
+IMDATA	xltypes.h	73;"	d
+INDEX	xltypes.h	74;"	d
+INTEGER_CELL	xltypes.h	159;"	d
+INTERFACEEND	xltypes.h	75;"	d
+INTERFACEHDR	xltypes.h	76;"	d
+ITERATION	xltypes.h	77;"	d
+IsFormatIdxUsed	xlsparse.c	/^char IsFormatIdxUsed(int format_code) {$/;"	f
+LABEL	xltypes.h	78;"	d
+LEFTMARGIN	xltypes.h	79;"	d
+LHNGRAPH	xltypes.h	80;"	d
+LHRECORD	xltypes.h	81;"	d
+LINE_BUF_SIZE	catdoc.h	132;"	d
+LIST	ppttypes.h	35;"	d
+LIST_SEP	catdoc.h	52;"	d
+LIST_SEP	catdoc.h	74;"	d
+LPR	xltypes.h	82;"	d
+MAIN_MASTER	ppttypes.h	29;"	d
+MAXFONTNAME	rtfread.c	119;"	d	file:
+MAX_MS_RECSIZE	xltypes.h	9;"	d
+MK_FORMAT	xlsparse.c	30;"	d	file:
+MMS	xltypes.h	83;"	d
+MS1904	xltypes.h	15;"	d
+MSAT_ORIG_SIZE	ole.h	20;"	d
+MSEOF	xltypes.h	47;"	d
+MS_UNIX_DATE_DIFF	xltypes.h	11;"	d
+MULBLANK	xltypes.h	84;"	d
+MULRK	xltypes.h	85;"	d
+NAME	xltypes.h	86;"	d
+NOTE	xltypes.h	87;"	d
+NOTES	ppttypes.h	25;"	d
+NOTES_ATOM	ppttypes.h	26;"	d
+NUMBER	xltypes.h	88;"	d
+NUMOFDATEFORMATS	xlsparse.c	559;"	d	file:
+OBJ	xltypes.h	89;"	d
+OBJPROTECT	xltypes.h	90;"	d
+OBPROJ	xltypes.h	91;"	d
+OLENAMELENGHT	ole.h	19;"	d
+OLESIZE	xltypes.h	92;"	d
+PALETTE	xltypes.h	93;"	d
+PANE	xltypes.h	94;"	d
+PARAGRAPH_BUFFER	catdoc.h	120;"	d
+PARAGRAPH_BUFFER	catdoc.h	125;"	d
+PASSWORD	xltypes.h	95;"	d
+PATH_BUF_SIZE	catdoc.h	122;"	d
+PATH_BUF_SIZE	catdoc.h	127;"	d
+PERSIST_PTR_INCREMENTAL_BLOCK	ppttypes.h	55;"	d
+PLS	xltypes.h	96;"	d
+PPDRAWING	ppttypes.h	34;"	d
+PPDRAWING_GROUP	ppttypes.h	33;"	d
+PRECISION	xltypes.h	97;"	d
+PRINTGRIDLINES	xltypes.h	98;"	d
+PRINTHEADERS	xltypes.h	99;"	d
+PROG_BINARY_TAG	ppttypes.h	54;"	d
+PROG_STRING_TAG	ppttypes.h	53;"	d
+PROG_TAGS	ppttypes.h	52;"	d
+PROP_BLOCK_SIZE	ole.h	18;"	d
+PROT4REVPASS	xltypes.h	67;"	d
+PROTECT	xltypes.h	100;"	d
+PUB	xltypes.h	101;"	d
+QUOTE_ALL_STRINGS	xls.h	16;"	d
+QUOTE_EVERYTHING	xls.h	17;"	d
+QUOTE_NEVER	xls.h	14;"	d
+QUOTE_SPACES_ONLY	xls.h	15;"	d
+RECIPNAME	xltypes.h	102;"	d
+REFMODE	xltypes.h	103;"	d
+REFRESHALL	xltypes.h	155;"	d
+REPL_EXT	catdoc.h	106;"	d
+REPL_EXT	catdoc.h	115;"	d
+REPL_EXT	config.h	44;"	d
+RIGHTMARGIN	xltypes.h	104;"	d
+RK	xltypes.h	105;"	d
+ROW	xltypes.h	106;"	d
+RSTRING	xltypes.h	107;"	d
+RTFARGSMAXLEN	rtfread.c	105;"	d	file:
+RTFFont	rtfread.c	/^} RTFFont;$/;"	t	typeref:struct:__anon7	file:
+RTFGroupData	rtfread.c	/^} RTFGroupData;$/;"	t	typeref:struct:__anon9	file:
+RTFNAMEMAXLEN	rtfread.c	104;"	d	file:
+RTFStyle	rtfread.c	/^} RTFStyle;$/;"	t	typeref:struct:__anon8	file:
+RTFTypeMap	rtfread.c	/^} RTFTypeMap;$/;"	t	typeref:struct:__anon5	file:
+RTFTypes	rtfread.c	/^} RTFTypes;$/;"	t	typeref:enum:__anon4	file:
+RTF_AUTHOR	rtfread.c	/^	RTF_AUTHOR,$/;"	e	enum:__anon4	file:
+RTF_BULLET	rtfread.c	/^ 	RTF_BULLET, $/;"	e	enum:__anon4	file:
+RTF_CELL	rtfread.c	/^	RTF_CELL,$/;"	e	enum:__anon4	file:
+RTF_CHAR	rtfread.c	/^	RTF_CHAR,$/;"	e	enum:__anon4	file:
+RTF_CODEPAGE	rtfread.c	/^	RTF_CODEPAGE,$/;"	e	enum:__anon4	file:
+RTF_COLORTBL	rtfread.c	/^	RTF_COLORTBL,$/;"	e	enum:__anon4	file:
+RTF_DATAFIELD	rtfread.c	/^	RTF_DATAFIELD,$/;"	e	enum:__anon4	file:
+RTF_EMDASH	rtfread.c	/^	RTF_EMDASH,$/;"	e	enum:__anon4	file:
+RTF_EMSPACE	rtfread.c	/^	RTF_EMSPACE,$/;"	e	enum:__anon4	file:
+RTF_ENDASH	rtfread.c	/^	RTF_ENDASH,$/;"	e	enum:__anon4	file:
+RTF_ENSPACE	rtfread.c	/^	RTF_ENSPACE,$/;"	e	enum:__anon4	file:
+RTF_F	rtfread.c	/^	RTF_F,$/;"	e	enum:__anon4	file:
+RTF_FONTTBL	rtfread.c	/^	RTF_FONTTBL,$/;"	e	enum:__anon4	file:
+RTF_FONT_CHARSET	rtfread.c	/^	RTF_FONT_CHARSET,$/;"	e	enum:__anon4	file:
+RTF_GENERATOR	rtfread.c	/^	RTF_GENERATOR,$/;"	e	enum:__anon4	file:
+RTF_INFO	rtfread.c	/^	RTF_INFO,$/;"	e	enum:__anon4	file:
+RTF_LANG	rtfread.c	/^	RTF_LANG,$/;"	e	enum:__anon4	file:
+RTF_LDBLQUOTE	rtfread.c	/^	RTF_LDBLQUOTE,$/;"	e	enum:__anon4	file:
+RTF_LISTOVERRIDETABLE	rtfread.c	/^	RTF_LISTOVERRIDETABLE,$/;"	e	enum:__anon4	file:
+RTF_LISTTABLE	rtfread.c	/^	RTF_LISTTABLE,$/;"	e	enum:__anon4	file:
+RTF_LQUOTE	rtfread.c	/^ 	RTF_LQUOTE,$/;"	e	enum:__anon4	file:
+RTF_OVERLAY	rtfread.c	/^	RTF_OVERLAY,$/;"	e	enum:__anon4	file:
+RTF_PARA	rtfread.c	/^	RTF_PARA,$/;"	e	enum:__anon4	file:
+RTF_PARD	rtfread.c	/^	RTF_PARD,$/;"	e	enum:__anon4	file:
+RTF_PICT	rtfread.c	/^	RTF_PICT,$/;"	e	enum:__anon4	file:
+RTF_RDBLQUOTE	rtfread.c	/^	RTF_RDBLQUOTE,$/;"	e	enum:__anon4	file:
+RTF_ROW	rtfread.c	/^	RTF_ROW,$/;"	e	enum:__anon4	file:
+RTF_RQUOTE	rtfread.c	/^	RTF_RQUOTE,$/;"	e	enum:__anon4	file:
+RTF_RSIDTBL	rtfread.c	/^	RTF_RSIDTBL,$/;"	e	enum:__anon4	file:
+RTF_SPEC_CHAR	rtfread.c	/^	RTF_SPEC_CHAR,$/;"	e	enum:__anon4	file:
+RTF_STYLESHEET	rtfread.c	/^	RTF_STYLESHEET,$/;"	e	enum:__anon4	file:
+RTF_TAB	rtfread.c	/^	RTF_TAB,$/;"	e	enum:__anon4	file:
+RTF_TABLE_END	rtfread.c	/^	RTF_TABLE_END,$/;"	e	enum:__anon4	file:
+RTF_TABLE_START	rtfread.c	/^	RTF_TABLE_START,$/;"	e	enum:__anon4	file:
+RTF_UC	rtfread.c	/^	RTF_UC,$/;"	e	enum:__anon4	file:
+RTF_UNICODE_CHAR	rtfread.c	/^	RTF_UNICODE_CHAR,$/;"	e	enum:__anon4	file:
+RTF_UNKNOWN	rtfread.c	/^	RTF_UNKNOWN,$/;"	e	enum:__anon4	file:
+RTF_ZWNONJOINER	rtfread.c	/^	RTF_ZWNONJOINER,$/;"	e	enum:__anon4	file:
+RTFcommand	rtfread.c	/^} RTFcommand;$/;"	t	typeref:struct:__anon6	file:
+SAVERECALC	xltypes.h	108;"	d
+SBD	ole.c	/^unsigned char *SBD=NULL;$/;"	v
+SBD_BLOCK_SIZE	ole.h	17;"	d
+SCENARIO	xltypes.h	109;"	d
+SCENMAN	xltypes.h	110;"	d
+SCENPROTECT	xltypes.h	111;"	d
+SCL	xltypes.h	112;"	d
+SELECTION	xltypes.h	113;"	d
+SETUP	xltypes.h	114;"	d
+SHRFMLA	xltypes.h	115;"	d
+SLIDE	ppttypes.h	23;"	d
+SLIDE_ATOM	ppttypes.h	24;"	d
+SLIDE_BASE	ppttypes.h	21;"	d
+SLIDE_BASE_ATOM	ppttypes.h	22;"	d
+SLIDE_LIST	ppttypes.h	50;"	d
+SLIDE_LIST_WITH_TEXT	ppttypes.h	49;"	d
+SLIDE_PERSIST	ppttypes.h	20;"	d
+SLIDE_PERSIST_ATOM	ppttypes.h	28;"	d
+SORT	xltypes.h	116;"	d
+SOUND	xltypes.h	117;"	d
+SOURCE_CHARSET	catdoc.h	94;"	d
+SOURCE_CHARSET	config.h	35;"	d
+SPEC_EXT	catdoc.h	103;"	d
+SPEC_EXT	catdoc.h	112;"	d
+SPEC_EXT	config.h	41;"	d
+SSDOC_INFO_ATOM	ppttypes.h	31;"	d
+SSSLIDE_INFO_ATOM	ppttypes.h	30;"	d
+SST	xltypes.h	153;"	d
+STANDARDWIDTH	xltypes.h	118;"	d
+START_FILE	pptparse.c	/^enum {START_FILE,START_SLIDE,TEXTOUT,END_FILE} slide_state ;$/;"	e	enum:__anon3	file:
+START_SLIDE	pptparse.c	/^enum {START_FILE,START_SLIDE,TEXTOUT,END_FILE} slide_state ;$/;"	e	enum:__anon3	file:
+STDC_HEADERS	config.h	13;"	d
+STRING	xltypes.h	119;"	d
+STYLE	xltypes.h	120;"	d
+STYLE_TEXT_PROP_ATOM	ppttypes.h	39;"	d
+SUB	xltypes.h	121;"	d
+SUBSTMAP	catdoc.h	/^typedef char *** SUBSTMAP;$/;"	t
+SXDI	xltypes.h	122;"	d
+SXEXT	xltypes.h	123;"	d
+SXIDSTM	xltypes.h	124;"	d
+SXIVD	xltypes.h	125;"	d
+SXLI	xltypes.h	126;"	d
+SXPI	xltypes.h	127;"	d
+SXSTRING	xltypes.h	128;"	d
+SXTBL	xltypes.h	129;"	d
+SXTBPG	xltypes.h	130;"	d
+SXTBRGIITM	xltypes.h	131;"	d
+SXVD	xltypes.h	132;"	d
+SXVI	xltypes.h	133;"	d
+SXVIEW	xltypes.h	134;"	d
+SXVS	xltypes.h	135;"	d
+SYSTEMRC	catdoc.h	41;"	d
+SYSTEMRC	catdoc.h	62;"	d
+SetFormatIdxUsed	xlsparse.c	/^void SetFormatIdxUsed(int format_code) {$/;"	f
+TABID	xltypes.h	136;"	d
+TABIDCONF	xltypes.h	137;"	d
+TABLE	xltypes.h	138;"	d
+TARGET_CHARSET	catdoc.h	87;"	d
+TARGET_CHARSET	catdoc.h	89;"	d
+TARGET_CHARSET	config.h	38;"	d
+TEMPLATE	xltypes.h	139;"	d
+TEXTOUT	pptparse.c	/^enum {START_FILE,START_SLIDE,TEXTOUT,END_FILE} slide_state ;$/;"	e	enum:__anon3	file:
+TEXT_BYTES_ATOM	ppttypes.h	41;"	d
+TEXT_CHARS_ATOM	ppttypes.h	38;"	d
+TEXT_CISTYLE_ATOM	ppttypes.h	42;"	d
+TEXT_HEADER_ATOM	ppttypes.h	37;"	d
+TEXT_SPEC_INFO	ppttypes.h	43;"	d
+TOPMARGIN	xltypes.h	140;"	d
+TX_MASTER_STYLE_ATOM	ppttypes.h	40;"	d
+UDDESC	xltypes.h	141;"	d
+UNCALCED	xltypes.h	142;"	d
+UNKNOWN	ppttypes.h	16;"	d
+UNKNOWN_CHAR	catdoc.h	98;"	d
+UNKNOWN_CHAR	config.h	47;"	d
+USERRC	catdoc.h	36;"	d
+USERRC	catdoc.h	58;"	d
+USER_EDIT_ATOM	ppttypes.h	51;"	d
+USESELFS	xltypes.h	156;"	d
+VCENTER	xltypes.h	143;"	d
+VERTICALPAGEBREAKS	xltypes.h	144;"	d
+WINDOW1	xltypes.h	145;"	d
+WINDOW2	xltypes.h	146;"	d
+WINDOWPROTECT	xltypes.h	147;"	d
+WRAP_MARGIN	catdoc.h	135;"	d
+WRITEACCESS	xltypes.h	148;"	d
+WRITEPROT	xltypes.h	149;"	d
+WSBOOL	xltypes.h	150;"	d
+XCT	xltypes.h	151;"	d
+XF	xltypes.h	152;"	d
+XLS_H	xls.h	9;"	d
+_OLE_H	ole.h	14;"	d
+_PPTTYPES_H	ppttypes.h	14;"	d
+_PPT_H	ppt.h	14;"	d
+__MSDOS__	fileutil.c	17;"	d	file:
+__unix	catdoc.h	16;"	d
+_argc	catdoc.c	/^int _argc;$/;"	v
+_argv	catdoc.c	/^char **_argv;$/;"	v
+add_exe_path	catdoc.h	72;"	d
+add_exe_path	fileutil.c	/^char *add_exe_path(const char *name) {$/;"	f
+add_to_buffer	rtfread.c	/^void add_to_buffer(int *bufptr,unsigned short int c) {$/;"	f
+allocate	sheet.c	/^unsigned char **allocate (int row,int col) {$/;"	f
+analyze_format	analyze.c	/^int analyze_format(FILE *f) {$/;"	f
+bad_char	charsets.c	/^char bad_char[]=UNKNOWN_CHAR;$/;"	v
+bbdNumBlocks	ole.c	/^long int  bbdNumBlocks;$/;"	v
+biff_version	xlsparse.c	/^int biff_version=0;$/;"	v
+blocks	ole.h	/^	long int *blocks;			\/**< array of blocks numbers *\/$/;"	m	struct:__anon2
+buf_is_unicode	reader.c	/^static int buf_is_unicode;$/;"	v	file:
+buffer	reader.c	/^unsigned short int buffer[PARAGRAPH_BUFFER];$/;"	v
+calcFileBlockOffset	ole.c	/^long int calcFileBlockOffset(oleEntry *e, long int blk) {$/;"	f
+catdoc_eof	ole.c	/^int (*catdoc_eof)(FILE *stream);$/;"	v
+catdoc_read	ole.c	/^size_t (*catdoc_read)(void *ptr, size_t size, size_t nmemb, FILE *stream);$/;"	v
+catdoc_seek	ole.c	/^int (*catdoc_seek)(FILE *stream, long offset, int whence);$/;"	v
+catdoc_tell	ole.c	/^long (*catdoc_tell)(FILE *stream);$/;"	v
+cell_separator	sheet.c	/^char cell_separator = ',';$/;"	v
+cells	xls.h	/^	unsigned char **cells;$/;"	m	struct:rowdescr
+charset_from_codepage	charsets.c	/^const char *charset_from_codepage(unsigned int codepage) {$/;"	f
+charset_name	charsets.c	/^	char *charset_name;$/;"	m	struct:cp_map	file:
+charset_path	charsets.c	/^char *charset_path=CHARSETPATH;$/;"	v
+check_charset	fileutil.c	/^int check_charset(char **filename,const char *charset) {$/;"	f
+codepage	charsets.c	/^	int codepage;$/;"	m	struct:cp_map	file:
+codepage	rtfread.c	/^	int codepage;$/;"	m	struct:__anon8	file:
+codepage	xlsparse.c	/^int codepage=1251; \/*default*\/$/;"	v
+convert_char	charsets.c	/^char *convert_char(int uc) {$/;"	f
+copy_out	reader.c	/^void copy_out (FILE *f,char *header) {$/;"	f
+copy_unicode_string	xlsparse.c	/^char *copy_unicode_string (unsigned char **src) {$/;"	f
+cp_map	charsets.c	/^struct cp_map {$/;"	s	file:
+cp_to_charset	charsets.c	/^struct cp_map cp_to_charset [] = {$/;"	v	typeref:struct:cp_map
+curBlock	ole.h	/^	long int curBlock;$/;"	m	struct:__anon2
+current_charset	rtfread.c	/^short int *current_charset;$/;"	v
+date_shift	xlsparse.c	/^double date_shift = 25569.0;$/;"	v
+dest_csname	charsets.c	/^char *source_csname=SOURCE_CHARSET, *dest_csname=TARGET_CHARSET;$/;"	v
+dirPos	ole.h	/^	unsigned char *dirPos;$/;"	m	struct:__anon2
+do_ppt	pptparse.c	/^void do_ppt(FILE *input,char *filename) {$/;"	f
+do_table	xlsparse.c	/^void do_table(FILE *input,char *filename) {    $/;"	f
+end	xls.h	/^	int last, end;$/;"	m	struct:rowdescr
+end_paragraph	rtfread.c	/^void end_paragraph(int *bufptr) {$/;"	f
+exe_dir	fileutil.c	/^char *exe_dir(void) {$/;"	f
+fComplex	analyze.c	82;"	d	file:
+fDot	analyze.c	80;"	d	file:
+fEncrypted	analyze.c	84;"	d	file:
+fExtChar	analyze.c	87;"	d	file:
+fGlsy	analyze.c	81;"	d	file:
+fPictures	analyze.c	83;"	d	file:
+fReadOnly	analyze.c	85;"	d	file:
+fReserved	analyze.c	86;"	d	file:
+file	ole.h	/^	FILE *file;$/;"	m	struct:__anon2
+fileLength	ole.c	/^long int fileLength=0;$/;"	v
+file_offset	ole.h	/^	long int file_offset;$/;"	m	struct:__anon2
+find_file	fileutil.c	/^char *find_file(char *name, const char *path)$/;"	f
+float2date	xlsparse.c	/^time_t float2date(double f) { $/;"	f
+fontname	rtfread.c	/^	char fontname[MAXFONTNAME+1];$/;"	m	struct:__anon7	file:
+forced_charset	catdoc.c	/^int forced_charset = 0; \/* Flag which disallow rtf parser override charset*\/$/;"	v
+forced_date_format	xlsparse.c	/^char *forced_date_format = NULL;$/;"	v
+formatTable	xlsparse.c	/^short int *formatTable=NULL;$/;"	v
+formatTableIndex	xlsparse.c	/^size_t formatTableIndex = 0;$/;"	v
+formatTableSize	xlsparse.c	/^size_t formatTableSize = 0;$/;"	v
+format_double	xlsparse.c	/^char *format_double(char *rec,int offset,int format_code) {	$/;"	f
+format_int	xlsparse.c	/^char *format_int(int value,int format_code) {$/;"	f
+format_name	confutil.c	/^char *format_name="ascii";$/;"	v
+format_rk	xlsparse.c	/^char* format_rk(char *rec,short int format_code) {$/;"	f
+free_sheet	sheet.c	/^void free_sheet(void) {$/;"	f
+from_unicode	charsets.c	/^int from_unicode (CHARSET charset, int u) {$/;"	f
+getCharCode	rtfread.c	/^signed int getCharCode(FILE *f) {$/;"	f
+getCommandType	rtfread.c	/^RTFTypes getCommandType(char *name) {$/;"	f
+getNumber	rtfread.c	/^signed long getNumber(FILE *f) {$/;"	f
+getOleType	ole.c	/^oleType getOleType(unsigned char *oleBuf) {$/;"	f
+getRtfCommand	rtfread.c	/^int getRtfCommand(FILE *f, RTFcommand *command ) {$/;"	f
+get_8bit_char	charsets.c	/^int get_8bit_char (FILE *f,long *offset,long fileend)$/;"	f
+get_locale_charset	confutil.c	/^void get_locale_charset() {$/;"	f
+get_unicode_char	catdoc.c	/^int (*get_unicode_char)(FILE *f,long *offset,long fileend) =NULL;$/;"	v
+get_utf16lsb	charsets.c	/^int get_utf16lsb (FILE *f,long *offset,long fileend) {$/;"	f
+get_utf16msb	charsets.c	/^int get_utf16msb (FILE *f,long *offset,long fileend) {$/;"	f
+get_utf8	charsets.c	/^int get_utf8 (FILE *f,long *offset,long fileend) {$/;"	f
+get_word8_char	reader.c	/^int get_word8_char(FILE *f,long *offset,long fileend) {$/;"	f
+getlong	numutils.c	/^long int getlong(unsigned char *buffer,int offset) {$/;"	f
+getshort	numutils.c	/^unsigned int getshort(unsigned char *buffer,int offset) {$/;"	f
+getulong	numutils.c	/^unsigned long int getulong(unsigned char *buffer,int offset) {$/;"	f
+help	catdoc.c	/^void help (void) {$/;"	f
+help	catppt.c	/^void help (void) {$/;"	f
+help	xls2csv.c	/^void help (void) {$/;"	f
+input_buffer	catdoc.c	/^char *input_buffer, *output_buffer;$/;"	v
+input_buffer	catppt.c	/^char *input_buffer, *output_buffer;$/;"	v
+input_buffer	xls2csv.c	/^char *input_buffer, *output_buffer;$/;"	v
+isBigBlock	ole.h	/^	int isBigBlock;$/;"	m	struct:__anon2
+isDateFormat	xlsparse.c	/^char *isDateFormat(int format_code) {$/;"	f
+isspace	catdoc.h	146;"	d
+isspace	catdoc.h	147;"	d
+isstop	substmap.c	/^int isstop(char  c, char stop) {$/;"	f
+last	xls.h	/^	int last, end;$/;"	m	struct:rowdescr
+lastrow	sheet.c	/^int startrow=0,lastrow=0;$/;"	v
+length	ole.h	/^	unsigned long int length;$/;"	m	struct:__anon2
+list_charsets	fileutil.c	/^void list_charsets(void) {$/;"	f
+locale_charset	confutil.c	/^static char *locale_charset = NULL;$/;"	v	file:
+longest_sequence	substmap.c	/^int longest_sequence=6;\/* six is longest character sequence which can be$/;"	v
+main	catdoc.c	/^int main(int argc, char **argv) {$/;"	f
+main	catppt.c	/^int main(int argc, char *argv[]) {$/;"	f
+main	xls2csv.c	/^int main(int argc, char *argv[])$/;"	f
+make_reverse_map	charsets.c	/^CHARSET make_reverse_map(short int *charset) {$/;"	f
+map_insert	substmap.c	/^void map_insert(SUBSTMAP map, int uc, const char *s) {$/;"	f
+map_path	substmap.c	/^char *map_path=CHARSETPATH;$/;"	v
+map_subst	substmap.c	/^char * map_subst ( SUBSTMAP map, int uc) {$/;"	f
+min	ole.c	25;"	d	file:
+min	pptparse.c	29;"	d	file:
+my_feof	ole.c	/^int my_feof(FILE *f) {$/;"	f
+name	ole.h	/^	char name[OLENAMELENGHT+1];$/;"	m	struct:__anon2
+name	rtfread.c	/^	char *name;$/;"	m	struct:__anon5	file:
+name	rtfread.c	/^	char name[RTFNAMEMAXLEN+1];$/;"	m	struct:__anon6	file:
+name	rtfread.c	/^	int name;$/;"	m	struct:__anon7	file:
+numOfBlocks	ole.h	/^	long int numOfBlocks;$/;"	m	struct:__anon2
+numarg	rtfread.c	/^	signed int numarg;$/;"	m	struct:__anon6	file:
+number2string	xlsparse.c	/^char *number2string(double d,short int format_code) { $/;"	f
+number_format	xlsparse.c	/^char number_format[8]=MK_FORMAT(DBL_DIG);$/;"	v
+old_word_sign	analyze.c	/^char old_word_sign[]={0xdb,0xa5,0};$/;"	v
+oleDir	ole.h	/^	oleDir=1,$/;"	e	enum:__anon1
+oleEntry	ole.h	/^} oleEntry;$/;"	t	typeref:struct:__anon2
+oleRootDir	ole.h	/^	oleRootDir=5,$/;"	e	enum:__anon1
+oleStream	ole.h	/^	oleStream=2,$/;"	e	enum:__anon1
+oleType	ole.h	/^} oleType;$/;"	t	typeref:enum:__anon1
+oleUnknown	ole.h	/^	oleUnknown=3$/;"	e	enum:__anon1
+ole_close	ole.c	/^int ole_close(FILE *stream) {$/;"	f
+ole_eof	ole.c	/^int ole_eof(FILE *stream) {$/;"	f
+ole_finish	ole.c	/^void ole_finish(void) {$/;"	f
+ole_init	ole.c	/^FILE* ole_init(FILE *f, void *buffer, size_t bufSize)  {$/;"	f
+ole_offset	ole.h	/^	long int ole_offset;$/;"	m	struct:__anon2
+ole_open	ole.c	/^int ole_open(FILE *stream) {$/;"	f
+ole_read	ole.c	/^size_t ole_read(void *ptr, size_t size, size_t nmemb, FILE *stream) {$/;"	f
+ole_readdir	ole.c	/^FILE *ole_readdir(FILE *f) {$/;"	f
+ole_seek	ole.c	/^int ole_seek(FILE *stream, long offset, int whence) {$/;"	f
+ole_sign	analyze.c	/^char ole_sign[]={0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1,0};$/;"	v
+ole_sign	ole.c	/^static unsigned char ole_sign[]={0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1,0};$/;"	v	file:
+ole_tell	ole.c	/^long ole_tell(FILE *stream) {$/;"	f
+out_char	writer.c	/^void out_char(const char *chunk) {$/;"	f
+output_buffer	catdoc.c	/^char *input_buffer, *output_buffer;$/;"	v
+output_buffer	catppt.c	/^char *input_buffer, *output_buffer;$/;"	v
+output_buffer	xls2csv.c	/^char *input_buffer, *output_buffer;$/;"	v
+output_paragraph	writer.c	/^void output_paragraph(unsigned short int *buffer) {$/;"	f
+outputbuffer	writer.c	/^static char outputbuffer[LINE_BUF_SIZE]="";$/;"	v	file:
+parse_rtf	rtfread.c	/^int parse_rtf(FILE *f) {$/;"	f
+parse_sst	xlsparse.c	/^void parse_sst(char *sstbuf,int bufsize) {$/;"	f
+parse_word_header	analyze.c	/^int parse_word_header(unsigned char * buffer,FILE *f,int offset,long curpos) {$/;"	f
+prepare_path_buf	fileutil.c	/^int prepare_path_buf(char *path_buf, const char *start, const char *end) {$/;"	f
+prev_rectype	xlsparse.c	/^int prev_rectype=0;$/;"	v
+print_sheet	sheet.c	/^void print_sheet(void) {$/;"	f
+print_value	sheet.c	/^void print_value(unsigned char *value) $/;"	f
+process_file	reader.c	/^int process_file(FILE *f,long stop) {$/;"	f
+process_item	pptparse.c	/^static void process_item (int rectype, long reclen, FILE* input) {$/;"	f	file:
+process_item	xlsparse.c	/^void process_item (int rectype, int reclen, char *rec) {$/;"	f
+propCurNumber	ole.c	/^long propCurNumber, propLen, propNumber, propStart;$/;"	v
+propLen	ole.c	/^long propCurNumber, propLen, propNumber, propStart;$/;"	v
+propNumber	ole.c	/^long propCurNumber, propLen, propNumber, propStart;$/;"	v
+propStart	ole.c	/^long propCurNumber, propLen, propNumber, propStart;$/;"	v
+properties	ole.c	/^unsigned char *properties=NULL;$/;"	v
+quote_mode	sheet.c	/^int quote_mode = QUOTE_ALL_STRINGS;$/;"	v
+read_buf	reader.c	/^static unsigned char read_buf[256];$/;"	v	file:
+read_charset	charsets.c	/^short int * read_charset(const char *filename) {$/;"	f
+read_config_file	confutil.c	/^void read_config_file(const char* filename) { $/;"	f
+read_substmap	substmap.c	/^SUBSTMAP read_substmap(char* filename) {$/;"	f
+rec	xlsparse.c	/^static unsigned char rec[MAX_MS_RECSIZE];$/;"	v	file:
+replacements	substmap.c	/^SUBSTMAP spec_chars, replacements;$/;"	v
+rightOleType	ole.c	/^int rightOleType(unsigned char *oleBuf) {$/;"	f
+rint	xls.h	51;"	d
+rootEntry	ole.c	/^oleEntry *rootEntry=NULL;$/;"	v
+rowdescr	xls.h	/^struct rowdescr {$/;"	s
+rowptr	sheet.c	/^struct rowdescr *rowptr=NULL;$/;"	v	typeref:struct:rowdescr
+rtfSetCharset	rtfread.c	/^void rtfSetCharset(short int **charset_ptr,unsigned int codepage)$/;"	f
+rtf_level	rtfread.c	/^int rtf_level=0;$/;"	v
+rtf_sign	analyze.c	/^char rtf_sign[]="{\\\\rtf";$/;"	v
+rtf_to_unicode	rtfread.c	/^unsigned short int rtf_to_unicode(int code) {$/;"	f
+rtf_types	rtfread.c	/^RTFTypeMap rtf_types[]={$/;"	v
+runtime_locale_check	confutil.c	/^static int runtime_locale_check=1;$/;"	v	file:
+saved_reference	xlsparse.c	/^unsigned char **saved_reference = NULL;$/;"	v
+sbdLen	ole.c	/^long int sbdNumber, sbdStart, sbdLen;$/;"	v
+sbdNumber	ole.c	/^long int sbdNumber, sbdStart, sbdLen;$/;"	v
+sbdStart	ole.c	/^long int sbdNumber, sbdStart, sbdLen;$/;"	v
+sectorSize	ole.c	/^long int sectorSize, shortSectorSize;$/;"	v
+set_ole_func	ole.c	/^void set_ole_func(void) {$/;"	f
+set_std_func	ole.c	/^void set_std_func(void) {$/;"	f
+set_time_locale	confutil.c	/^void set_time_locale() {$/;"	f
+sheet_separator	sheet.c	/^char *sheet_separator = "\\f";$/;"	v
+shortSectorSize	ole.c	/^long int sectorSize, shortSectorSize;$/;"	v
+signature_check	catdoc.c	/^int signature_check = 1;$/;"	v
+slide_separator	pptparse.c	/^char *slide_separator = "\\f"; $/;"	v
+slide_state	pptparse.c	/^enum {START_FILE,START_SLIDE,TEXTOUT,END_FILE} slide_state ;$/;"	v	typeref:enum:__anon3
+source_charset	charsets.c	/^short int * source_charset;$/;"	v
+source_csname	charsets.c	/^char *source_csname=SOURCE_CHARSET, *dest_csname=TARGET_CHARSET;$/;"	v
+spec_chars	substmap.c	/^SUBSTMAP spec_chars, replacements;$/;"	v
+sst	xlsparse.c	/^unsigned char **sst=NULL;\/* Shared string table parsed into array of strings in$/;"	v
+sstBuffer	xlsparse.c	/^unsigned char *sstBuffer=NULL; \/*Unparsed sst to accumulate all its parts*\/$/;"	v
+sstBytes	xlsparse.c	/^int sstBytes = 0; \/*Size of SST Data, already accumulated in the buffer *\/$/;"	v
+sstsize	xlsparse.c	/^int sstsize = 0; \/*Number of strings in SST*\/$/;"	v
+startBlock	ole.h	/^	long int startBlock;$/;"	m	struct:__anon2
+start_text_out	pptparse.c	/^static void start_text_out(void) {$/;"	f	file:
+startrow	sheet.c	/^int startrow=0,lastrow=0;$/;"	v
+stradd	fileutil.c	/^char *stradd(const char *s1,const char *s2) $/;"	f
+strcasecmp	catppt.c	29;"	d	file:
+strcasecmp	xls2csv.c	25;"	d	file:
+strdup	confutil.c	/^char *strdup(const char *s) {$/;"	f
+style	rtfread.c	/^	RTFStyle* style;			\/**< curren style *\/$/;"	m	struct:__anon9	file:
+target_charset	charsets.c	/^CHARSET target_charset;$/;"	v
+to_unicode	charsets.c	/^int to_unicode (short int *charset, int c) {$/;"	f
+to_utf8	charsets.c	/^char *to_utf8(unsigned int uc) {$/;"	f
+type	ole.h	/^	oleType type;$/;"	m	struct:__anon2
+type	rtfread.c	/^	RTFTypes type;$/;"	m	struct:__anon5	file:
+type	rtfread.c	/^	RTFTypes type;$/;"	m	struct:__anon6	file:
+uc	rtfread.c	/^	int uc;						\/**< How much symbols to skip *\/$/;"	m	struct:__anon9	file:
+unknown_as_hex	charsets.c	/^int unknown_as_hex=0;$/;"	v
+verbose	analyze.c	/^int verbose=0;$/;"	v
+wrap_margin	catdoc.c	/^int wrap_margin = WRAP_MARGIN;$/;"	v
+write_sign	analyze.c	/^char write_sign[]={0x31,0xBE,0};$/;"	v
