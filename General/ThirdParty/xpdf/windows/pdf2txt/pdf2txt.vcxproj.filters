@@ -1,0 +1,228 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{06c9d657-c6f0-417a-962c-df4c3d9e8fa6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fofi">
+      <UniqueIdentifier>{5b2eea9e-0fc8-4be0-8e06-2583330597f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="goo">
+      <UniqueIdentifier>{213f9682-057c-4596-88bb-999ad19e9532}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="parser">
+      <UniqueIdentifier>{d5921979-0448-46a2-bfc1-7b9e31a7b60b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\xpdf\TextOutputDev.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\AcroForm.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Annot.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Array.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\BuiltinFont.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\BuiltinFontTables.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Catalog.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\CharCodeToUnicode.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\CMap.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Decrypt.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Dict.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Error.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\FontEncodingTables.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Function.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Gfx.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\GfxFont.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\GfxState.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\GlobalParams.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\JArithmeticDecoder.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\JBIG2Stream.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\JPXStream.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Lexer.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Link.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\NameToCharCode.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Object.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\OptionalContent.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Outline.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\OutputDev.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Page.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Parser.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\PDF417Barcode.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\PDFDoc.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\PDFDocEncoding.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\PSTokenizer.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\SecurityHandler.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Stream.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\TextString.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\UnicodeMap.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\UnicodeRemapping.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\UnicodeTypeTable.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\UTF8.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\XFAScanner.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\XRef.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\Zoox.cc">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fofi\FoFiBase.cc">
+      <Filter>fofi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fofi\FoFiEncodings.cc">
+      <Filter>fofi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fofi\FoFiIdentifier.cc">
+      <Filter>fofi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fofi\FoFiTrueType.cc">
+      <Filter>fofi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fofi\FoFiType1.cc">
+      <Filter>fofi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fofi\FoFiType1C.cc">
+      <Filter>fofi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\parseargs.c">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\FixedPoint.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\gfile.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\GHash.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\GList.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\gmem.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\gmempp.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\GString.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\goo\Trace.cc">
+      <Filter>goo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\CStrCvt.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xpdf\CPdfParser.cpp">
+      <Filter>parser</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\xpdf\CParser.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xpdf\CPdfParser.h">
+      <Filter>parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xpdf\CStrCvt.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
