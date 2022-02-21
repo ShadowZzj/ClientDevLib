@@ -126,5 +126,3 @@ include(GNUInstallDirs)
 configure_file(${LIBYARA_SOURCE_PATH}/yara.pc.in
         ${LIBYARA_SOURCE_PATH}/yara.pc @ONLY)
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
-
-file(COPY  ${OutputDirectory}/libyara.lib DESTINATION  ${OutputDirectory}/../../lib)
