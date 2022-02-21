@@ -1,0 +1,7 @@
+Target dependency graph (3 targets)
+ZERO_CHECK in antiword, no dependencies
+antiword in antiword, depends on:
+ZERO_CHECK in antiword (explicit)
+ALL_BUILD in antiword, depends on:
+antiword in antiword (explicit)
+ZERO_CHECK in antiword (explicit)

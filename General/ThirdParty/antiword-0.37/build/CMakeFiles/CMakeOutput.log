@@ -1,0 +1,600 @@
+The system is: Darwin - 20.5.0 - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler:  
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild
+
+User defaults from command line:
+    IDEPackageSupportUseBuiltinSCM = YES
+
+note: Using new build system
+note: Planning
+Analyze workspace
+
+Create build description
+Build description signature: f46ff721f5ce07df2624cc18ff81885a
+Build description path: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/./XCBuildData/f46ff721f5ce07df2624cc18ff81885a-desc.xcbuild
+
+note: Build preparation complete
+warning: Building targets in manual order is deprecated - check "Parallelize build for command-line builds" in the project editor, or set DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING in any of the targets in the current build to suppress this warning
+CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.xcodeproj
+    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+
+warning: Traditional headermap style is no longer supported; please migrate to using separate headermaps and set 'ALWAYS_SEARCH_USER_PATHS' to NO. (in target 'CompilerIdC' from project 'CompilerIdC')
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-project-headers.hmap (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-project-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-all-non-framework-target-headers.hmap (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-all-target-headers.hmap (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-generated-files.hmap (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-generated-files.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-own-target-headers.hmap (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC.hmap (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/all-product-headers.yaml (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CompilerIdC.LinkFileList (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CompilerIdC.LinkFileList
+
+CompileC /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CMakeCCompilerId.o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CMakeCCompilerId.c normal x86_64 c com.apple.compilers.llvm.clang.1_0.compiler (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    export LANG\=en_US.US-ASCII
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c -target x86_64-apple-macos11.4 -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -Wno-trigraphs -fpascal-strings -Os -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wpointer-sign -Wno-newline-eof -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -g -fvisibility\=hidden -Wno-sign-conversion -Wno-infinite-recursion -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-semicolon-before-method-body -iquote /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-generated-files.hmap -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-own-target-headers.hmap -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-all-target-headers.hmap -iquote /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/CompilerIdC-project-headers.hmap -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/include -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/DerivedSources-normal/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/DerivedSources/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC -MMD -MT dependencies -MF /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CMakeCCompilerId.d --serialize-diagnostics /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CMakeCCompilerId.dia -c /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CMakeCCompilerId.c -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CMakeCCompilerId.o
+
+Ld /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC normal (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target x86_64-apple-macos11.4 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CompilerIdC.LinkFileList -Xlinker -object_path_lto -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CompilerIdC_lto.o -Xlinker -dependency_info -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Objects-normal/x86_64/CompilerIdC_dependency_info.dat -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh
+
+PhaseScriptExecution Run\ Script /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    /bin/sh -c /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC.build/Debug/CompilerIdC.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh
+GCC_VERSION=com.apple.compilers.llvm.clang.1_0
+ARCHS=x86_64
+
+RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC (in target 'CompilerIdC' from project 'CompilerIdC')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC
+    builtin-RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC
+
+** BUILD SUCCEEDED **
+
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC"
+
+The C compiler identification is AppleClang, found in "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdC/CompilerIdC"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler:  
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild
+
+User defaults from command line:
+    IDEPackageSupportUseBuiltinSCM = YES
+
+note: Using new build system
+note: Planning
+Analyze workspace
+
+Create build description
+Build description signature: 530214635d2a5215a3338de7098cba52
+Build description path: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/./XCBuildData/530214635d2a5215a3338de7098cba52-desc.xcbuild
+
+note: Build preparation complete
+warning: Building targets in manual order is deprecated - check "Parallelize build for command-line builds" in the project editor, or set DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING in any of the targets in the current build to suppress this warning
+CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.xcodeproj
+    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+
+warning: Traditional headermap style is no longer supported; please migrate to using separate headermaps and set 'ALWAYS_SEARCH_USER_PATHS' to NO. (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-all-target-headers.hmap (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-project-headers.hmap (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-project-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-generated-files.hmap (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-generated-files.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-all-non-framework-target-headers.hmap (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX.hmap (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-own-target-headers.hmap (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/all-product-headers.yaml (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/all-product-headers.yaml
+
+CompileC /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CMakeCXXCompilerId.o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CMakeCXXCompilerId.cpp normal x86_64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    export LANG\=en_US.US-ASCII
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c++ -target x86_64-apple-macos11.4 -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -Wno-trigraphs -fpascal-strings -Os -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -g -fvisibility\=hidden -fvisibility-inlines-hidden -Wno-sign-conversion -Wno-infinite-recursion -Wno-move -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-range-loop-analysis -Wno-semicolon-before-method-body -iquote /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-generated-files.hmap -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-own-target-headers.hmap -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-all-target-headers.hmap -iquote /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/CompilerIdCXX-project-headers.hmap -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/include -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/DerivedSources-normal/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/DerivedSources/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX -MMD -MT dependencies -MF /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CMakeCXXCompilerId.d --serialize-diagnostics /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CMakeCXXCompilerId.dia -c /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CMakeCXXCompilerId.cpp -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CMakeCXXCompilerId.o
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CompilerIdCXX.LinkFileList (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CompilerIdCXX.LinkFileList
+
+Ld /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX normal (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -target x86_64-apple-macos11.4 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CompilerIdCXX.LinkFileList -Xlinker -object_path_lto -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CompilerIdCXX_lto.o -Xlinker -dependency_info -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Objects-normal/x86_64/CompilerIdCXX_dependency_info.dat -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh
+
+PhaseScriptExecution Run\ Script /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    /bin/sh -c /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX.build/Debug/CompilerIdCXX.build/Script-2C8FEB8E15DC1A1A00E56A5D.sh
+GCC_VERSION=com.apple.compilers.llvm.clang.1_0
+ARCHS=x86_64
+
+RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX (in target 'CompilerIdCXX' from project 'CompilerIdCXX')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX
+    builtin-RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX
+
+** BUILD SUCCEEDED **
+
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX"
+
+The CXX compiler identification is AppleClang, found in "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/3.21.3/CompilerIdCXX/CompilerIdCXX"
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_5609b -parallelizeTargets -configuration Debug -hideShellScriptEnvironment && Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_5609b -parallelizeTargets -configuration Debug -hideShellScriptEnvironment
+
+User defaults from command line:
+    HideShellScriptEnvironment = YES
+    IDEPackageSupportUseBuiltinSCM = YES
+
+note: Using new build system
+note: Planning
+Analyze workspace
+
+Create build description
+Build description signature: 2f8952791f72289c086d7939b1af8873
+Build description path: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/build/XCBuildData/2f8952791f72289c086d7939b1af8873-desc.xcbuild
+
+note: Build preparation complete
+note: Building targets in parallel
+CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj
+    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+
+CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj
+    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList
+
+CompileC /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.o /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCCompilerABI.c normal x86_64 c com.apple.compilers.llvm.clang.1_0.compiler (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c -target x86_64-apple-macos11.4 -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -Wno-trigraphs -fpascal-strings -O0 -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wpointer-sign -Wno-newline-eof -DCMAKE_INTDIR\=\"Debug\" -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -g -Wno-sign-conversion -Wno-infinite-recursion -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-semicolon-before-method-body -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources-normal/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -v -Wl,-v -MMD -MT dependencies -MF /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.d --serialize-diagnostics /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.dia -c /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCCompilerABI.c -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.o
+Apple clang version 13.0.0 (clang-1300.0.29.3)
+Target: x86_64-apple-macos11.4
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx11.4.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -fno-rounding-math -munwind-tables -target-sdk-version=12.0 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=lldb -target-linker-version 711 -v -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0 -dependency-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.d -skip-unused-modulemap-deps -MT dependencies -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -D "CMAKE_INTDIR=\"Debug\"" -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources-normal/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O0 -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wpointer-sign -Wno-newline-eof -Wdeprecated-declarations -Wno-sign-conversion -Wno-infinite-recursion -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-semicolon-before-method-body -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -fdebug-compilation-dir /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmacro-backtrace-limit 0 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fpascal-strings -fmax-type-align=16 -fcommon -fdiagnostics-show-note-include-stack -fasm-blocks -serialize-diagnostic-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.dia -clang-vendor-feature=+nullptrToBoolConversion -clang-vendor-feature=+messageToSelfInClassMethodIdReturnType -clang-vendor-feature=+disableInferNewAvailabilityFromInit -clang-vendor-feature=+disableNeonImmediateRangeCheck -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+revert09abecef7bbf -mllvm -disable-aligned-alloc-awareness=1 -mllvm -enable-dse-memoryssa=0 -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.o -x c /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCCompilerABI.c
+clang -cc1 version 13.0.0 (clang-1300.0.29.3) default target x86_64-apple-darwin20.5.0
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include"
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources-normal/x86_64"
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources/x86_64"
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/Library/Frameworks"
+#include "..." search starts here:
+#include <...> search starts here:
+ /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug (framework directory)
+ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include
+ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks (framework directory)
+End of search list.
+
+Ld /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b normal (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target x86_64-apple-macos11.4 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList -Xlinker -object_path_lto -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o -Xlinker -no_deduplicate -v -Wl,-v -Wl,-search_paths_first -Wl,-headerpad_max_install_names -Xlinker -dependency_info -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b
+Apple clang version 13.0.0 (clang-1300.0.29.3)
+Target: x86_64-apple-macos11.4
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+@(#)PROGRAM:ld  PROJECT:ld64-711
+BUILD 18:11:15 Aug  3 2021
+configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+Library search paths:
+	/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib
+Framework search paths:
+	/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/
+
+RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    builtin-RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b
+
+** BUILD SUCCEEDED **
+
+
+
+
+Parsed C implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include]
+    add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include]
+    add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+  end of search list found
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+  implicit include dirs: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_5609b -parallelizeTargets -configuration Debug -hideShellScriptEnvironment && Command line invocation:]
+  ignore line: [    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_5609b -parallelizeTargets -configuration Debug -hideShellScriptEnvironment]
+  ignore line: []
+  ignore line: [User defaults from command line:]
+  ignore line: [    HideShellScriptEnvironment = YES]
+  ignore line: [    IDEPackageSupportUseBuiltinSCM = YES]
+  ignore line: []
+  ignore line: [note: Using new build system]
+  ignore line: [note: Planning]
+  ignore line: [Analyze workspace]
+  ignore line: []
+  ignore line: [Create build description]
+  ignore line: [Build description signature: 2f8952791f72289c086d7939b1af8873]
+  ignore line: [Build description path: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/build/XCBuildData/2f8952791f72289c086d7939b1af8873-desc.xcbuild]
+  ignore line: []
+  ignore line: [note: Build preparation complete]
+  ignore line: [note: Building targets in parallel]
+  ignore line: [CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj]
+  ignore line: [    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj]
+  ignore line: [    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug]
+  ignore line: []
+  ignore line: [WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList]
+  ignore line: []
+  ignore line: [CompileC /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.o /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCCompilerABI.c normal x86_64 c com.apple.compilers.llvm.clang.1_0.compiler (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c -target x86_64-apple-macos11.4 -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -Wno-trigraphs -fpascal-strings -O0 -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wpointer-sign -Wno-newline-eof -DCMAKE_INTDIR\=\"Debug\" -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -g -Wno-sign-conversion -Wno-infinite-recursion -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-semicolon-before-method-body -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources-normal/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -v -Wl -v -MMD -MT dependencies -MF /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.d --serialize-diagnostics /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.dia -c /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCCompilerABI.c -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.o]
+  ignore line: [Apple clang version 13.0.0 (clang-1300.0.29.3)]
+  ignore line: [Target: x86_64-apple-macos11.4]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+  ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+  ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx11.4.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -fno-rounding-math -munwind-tables -target-sdk-version=12.0 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=lldb -target-linker-version 711 -v -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0 -dependency-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.d -skip-unused-modulemap-deps -MT dependencies -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -D "CMAKE_INTDIR=\"Debug\"" -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources-normal/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O0 -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wpointer-sign -Wno-newline-eof -Wdeprecated-declarations -Wno-sign-conversion -Wno-infinite-recursion -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-semicolon-before-method-body -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -fdebug-compilation-dir /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmacro-backtrace-limit 0 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fpascal-strings -fmax-type-align=16 -fcommon -fdiagnostics-show-note-include-stack -fasm-blocks -serialize-diagnostic-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.dia -clang-vendor-feature=+nullptrToBoolConversion -clang-vendor-feature=+messageToSelfInClassMethodIdReturnType -clang-vendor-feature=+disableInferNewAvailabilityFromInit -clang-vendor-feature=+disableNeonImmediateRangeCheck -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+revert09abecef7bbf -mllvm -disable-aligned-alloc-awareness=1 -mllvm -enable-dse-memoryssa=0 -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/CMakeCCompilerABI.o -x c /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCCompilerABI.c]
+  ignore line: [clang -cc1 version 13.0.0 (clang-1300.0.29.3) default target x86_64-apple-darwin20.5.0]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include"]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources-normal/x86_64"]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources/x86_64"]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/DerivedSources"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/Library/Frameworks"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug (framework directory)]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks (framework directory)]
+  ignore line: [End of search list.]
+  ignore line: []
+  ignore line: [Ld /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b normal (in target 'cmTC_5609b' from project 'CMAKE_TRY_COMPILE')]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -target x86_64-apple-macos11.4 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList -Xlinker -object_path_lto -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o -Xlinker -no_deduplicate -v -Wl -v -Wl -search_paths_first -Wl -headerpad_max_install_names -Xlinker -dependency_info -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b]
+  ignore line: [Apple clang version 13.0.0 (clang-1300.0.29.3)]
+  ignore line: [Target: x86_64-apple-macos11.4]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+  reduced line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug]
+            to: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a ]
+  link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a ]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+    arg [-demangle] ==> ignore
+    arg [-lto_library] ==> ignore, skip following value
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
+    arg [-dynamic] ==> ignore
+    arg [-arch] ==> ignore
+    arg [x86_64] ==> ignore
+    arg [-platform_version] ==> ignore
+    arg [macos] ==> ignore
+    arg [11.4.0] ==> ignore
+    arg [12.0] ==> ignore
+    arg [-syslibroot] ==> ignore
+    arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk] ==> ignore
+    arg [-o] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_5609b] ==> ignore
+    arg [-filelist] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b.LinkFileList] ==> ignore
+    arg [-object_path_lto] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o] ==> obj [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o]
+    arg [-no_deduplicate] ==> ignore
+    arg [-v] ==> ignore
+    arg [-search_paths_first] ==> ignore
+    arg [-headerpad_max_install_names] ==> ignore
+    arg [-dependency_info] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_dependency_info.dat] ==> ignore
+    arg [-lSystem] ==> lib [System]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a]
+  Library search paths: [;/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib]
+  Framework search paths: [;/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/]
+  remove lib [System]
+  remove lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a]
+  collapse library dir [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug] ==> [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug], skipping non-system directory
+  collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib]
+  collapse framework dir [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug] ==> [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug], skipping non-system directory
+  collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks]
+  implicit libs: []
+  implicit objs: [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_5609b.build/Objects-normal/x86_64/cmTC_5609b_lto.o]
+  implicit dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib]
+  implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks]
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_b0322 -parallelizeTargets -configuration Debug -hideShellScriptEnvironment && Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_b0322 -parallelizeTargets -configuration Debug -hideShellScriptEnvironment
+
+User defaults from command line:
+    HideShellScriptEnvironment = YES
+    IDEPackageSupportUseBuiltinSCM = YES
+
+note: Using new build system
+note: Planning
+Analyze workspace
+
+Create build description
+Build description signature: 7e65534b15f1d01e30704828efaa55cf
+Build description path: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/build/XCBuildData/7e65534b15f1d01e30704828efaa55cf-desc.xcbuild
+
+note: Build preparation complete
+note: Building targets in parallel
+CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj
+    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+
+CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj
+    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+
+WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList
+
+CompileC /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.o /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCXXCompilerABI.cpp normal x86_64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c++ -target x86_64-apple-macos11.4 -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -Wno-trigraphs -fpascal-strings -O0 -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -DCMAKE_INTDIR\=\"Debug\" -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -g -Wno-sign-conversion -Wno-infinite-recursion -Wno-move -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-range-loop-analysis -Wno-semicolon-before-method-body -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources-normal/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -v -Wl,-v -MMD -MT dependencies -MF /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.d --serialize-diagnostics /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.dia -c /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCXXCompilerABI.cpp -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.o
+Apple clang version 13.0.0 (clang-1300.0.29.3)
+Target: x86_64-apple-macos11.4
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx11.4.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -fno-rounding-math -munwind-tables -target-sdk-version=12.0 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=lldb -target-linker-version 711 -v -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0 -dependency-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.d -skip-unused-modulemap-deps -MT dependencies -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -D "CMAKE_INTDIR=\"Debug\"" -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources-normal/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -stdlib=libc++ -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O0 -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Wno-infinite-recursion -Wno-move -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-range-loop-analysis -Wno-semicolon-before-method-body -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -fdeprecated-macro -fdebug-compilation-dir /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmacro-backtrace-limit 0 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fpascal-strings -fmax-type-align=16 -fcommon -fdiagnostics-show-note-include-stack -fasm-blocks -serialize-diagnostic-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.dia -clang-vendor-feature=+nullptrToBoolConversion -clang-vendor-feature=+messageToSelfInClassMethodIdReturnType -clang-vendor-feature=+disableInferNewAvailabilityFromInit -clang-vendor-feature=+disableNeonImmediateRangeCheck -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+revert09abecef7bbf -mllvm -disable-aligned-alloc-awareness=1 -mllvm -enable-dse-memoryssa=0 -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.o -x c++ /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCXXCompilerABI.cpp
+clang -cc1 version 13.0.0 (clang-1300.0.29.3) default target x86_64-apple-darwin20.5.0
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include"
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources-normal/x86_64"
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources/x86_64"
+ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include"
+ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/Library/Frameworks"
+#include "..." search starts here:
+#include <...> search starts here:
+ /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug (framework directory)
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1
+ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include
+ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include
+ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks (framework directory)
+End of search list.
+
+Ld /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 normal (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -target x86_64-apple-macos11.4 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList -Xlinker -object_path_lto -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o -Xlinker -no_deduplicate -v -Wl,-v -Wl,-search_paths_first -Wl,-headerpad_max_install_names -Xlinker -dependency_info -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322
+Apple clang version 13.0.0 (clang-1300.0.29.3)
+Target: x86_64-apple-macos11.4
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+@(#)PROGRAM:ld  PROJECT:ld64-711
+BUILD 18:11:15 Aug  3 2021
+configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em
+Library search paths:
+	/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib
+Framework search paths:
+	/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/
+
+RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')
+    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp
+    builtin-RegisterExecutionPolicyException /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322
+
+** BUILD SUCCEEDED **
+
+
+
+
+Parsed CXX implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1]
+    add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include]
+    add: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include]
+    add: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+  end of search list found
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include]
+  collapse include dir [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include] ==> [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+  implicit include dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_b0322 -parallelizeTargets -configuration Debug -hideShellScriptEnvironment && Command line invocation:]
+  ignore line: [    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project CMAKE_TRY_COMPILE.xcodeproj build -target cmTC_b0322 -parallelizeTargets -configuration Debug -hideShellScriptEnvironment]
+  ignore line: []
+  ignore line: [User defaults from command line:]
+  ignore line: [    HideShellScriptEnvironment = YES]
+  ignore line: [    IDEPackageSupportUseBuiltinSCM = YES]
+  ignore line: []
+  ignore line: [note: Using new build system]
+  ignore line: [note: Planning]
+  ignore line: [Analyze workspace]
+  ignore line: []
+  ignore line: [Create build description]
+  ignore line: [Build description signature: 7e65534b15f1d01e30704828efaa55cf]
+  ignore line: [Build description path: /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/build/XCBuildData/7e65534b15f1d01e30704828efaa55cf-desc.xcbuild]
+  ignore line: []
+  ignore line: [note: Build preparation complete]
+  ignore line: [note: Building targets in parallel]
+  ignore line: [CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj]
+  ignore line: [    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [CreateBuildDirectory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.xcodeproj]
+  ignore line: [    builtin-create-build-directory /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug]
+  ignore line: []
+  ignore line: [WriteAuxiliaryFile /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    write-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList]
+  ignore line: []
+  ignore line: [CompileC /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.o /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCXXCompilerABI.cpp normal x86_64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c++ -target x86_64-apple-macos11.4 -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -Wno-trigraphs -fpascal-strings -O0 -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -DCMAKE_INTDIR\=\"Debug\" -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -fasm-blocks -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -g -Wno-sign-conversion -Wno-infinite-recursion -Wno-move -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-range-loop-analysis -Wno-semicolon-before-method-body -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources-normal/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources/x86_64 -I/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -v -Wl -v -MMD -MT dependencies -MF /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.d --serialize-diagnostics /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.dia -c /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCXXCompilerABI.cpp -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.o]
+  ignore line: [Apple clang version 13.0.0 (clang-1300.0.29.3)]
+  ignore line: [Target: x86_64-apple-macos11.4]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+  ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
+  ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple x86_64-apple-macosx11.4.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -mrelax-all --mrelax-relocations -disable-free -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -mframe-pointer=all -fno-strict-return -fno-rounding-math -munwind-tables -target-sdk-version=12.0 -fvisibility-inlines-hidden-static-local-var -target-cpu penryn -tune-cpu generic -debug-info-kind=standalone -dwarf-version=4 -debugger-tuning=lldb -target-linker-version 711 -v -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0 -dependency-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.d -skip-unused-modulemap-deps -MT dependencies -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -D "CMAKE_INTDIR=\"Debug\"" -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources-normal/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources/x86_64 -I /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -stdlib=libc++ -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1 -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -O0 -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Wno-return-type -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wno-unused-variable -Wunused-value -Wno-empty-body -Wno-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-constant-conversion -Wno-int-conversion -Wno-bool-conversion -Wno-enum-conversion -Wno-float-conversion -Wno-non-literal-null-conversion -Wno-objc-literal-conversion -Wno-shorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Wno-infinite-recursion -Wno-move -Wno-comma -Wno-block-capture-autoreleasing -Wno-strict-prototypes -Wno-range-loop-analysis -Wno-semicolon-before-method-body -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -fdeprecated-macro -fdebug-compilation-dir /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp -ferror-limit 19 -fmacro-backtrace-limit 0 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fno-cxx-modules -fcxx-exceptions -fexceptions -fpascal-strings -fmax-type-align=16 -fcommon -fdiagnostics-show-note-include-stack -fasm-blocks -serialize-diagnostic-file /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.dia -clang-vendor-feature=+nullptrToBoolConversion -clang-vendor-feature=+messageToSelfInClassMethodIdReturnType -clang-vendor-feature=+disableInferNewAvailabilityFromInit -clang-vendor-feature=+disableNeonImmediateRangeCheck -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+revert09abecef7bbf -mllvm -disable-aligned-alloc-awareness=1 -mllvm -enable-dse-memoryssa=0 -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/CMakeCXXCompilerABI.o -x c++ /Applications/CMake.app/Contents/share/cmake-3.21/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [clang -cc1 version 13.0.0 (clang-1300.0.29.3) default target x86_64-apple-darwin20.5.0]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/include"]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources-normal/x86_64"]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources/x86_64"]
+  ignore line: [ignoring nonexistent directory "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/DerivedSources"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/local/include"]
+  ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/Library/Frameworks"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug (framework directory)]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include/c++/v1]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include]
+  ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks (framework directory)]
+  ignore line: [End of search list.]
+  ignore line: []
+  ignore line: [Ld /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 normal (in target 'cmTC_b0322' from project 'CMAKE_TRY_COMPILE')]
+  ignore line: [    cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp]
+  ignore line: [    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -target x86_64-apple-macos11.4 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList -Xlinker -object_path_lto -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o -Xlinker -no_deduplicate -v -Wl -v -Wl -search_paths_first -Wl -headerpad_max_install_names -Xlinker -dependency_info -Xlinker /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322]
+  ignore line: [Apple clang version 13.0.0 (clang-1300.0.29.3)]
+  ignore line: [Target: x86_64-apple-macos11.4]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+  reduced line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 -L/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a -F/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug]
+            to: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a ]
+  link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -platform_version macos 11.4.0 12.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk -o /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322 -filelist /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList -object_path_lto /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o -no_deduplicate -v -search_paths_first -headerpad_max_install_names -dependency_info /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a ]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+    arg [-demangle] ==> ignore
+    arg [-lto_library] ==> ignore, skip following value
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> skip value of -lto_library
+    arg [-dynamic] ==> ignore
+    arg [-arch] ==> ignore
+    arg [x86_64] ==> ignore
+    arg [-platform_version] ==> ignore
+    arg [macos] ==> ignore
+    arg [11.4.0] ==> ignore
+    arg [12.0] ==> ignore
+    arg [-syslibroot] ==> ignore
+    arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk] ==> ignore
+    arg [-o] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug/cmTC_b0322] ==> ignore
+    arg [-filelist] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322.LinkFileList] ==> ignore
+    arg [-object_path_lto] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o] ==> obj [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o]
+    arg [-no_deduplicate] ==> ignore
+    arg [-v] ==> ignore
+    arg [-search_paths_first] ==> ignore
+    arg [-headerpad_max_install_names] ==> ignore
+    arg [-dependency_info] ==> ignore
+    arg [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_dependency_info.dat] ==> ignore
+    arg [-lc++] ==> lib [c++]
+    arg [-lSystem] ==> lib [System]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a]
+  Library search paths: [;/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib]
+  Framework search paths: [;/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/]
+  remove lib [System]
+  remove lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/13.0.0/lib/darwin/libclang_rt.osx.a]
+  collapse library dir [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug] ==> [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug], skipping non-system directory
+  collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib]
+  collapse framework dir [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug] ==> [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/Debug], skipping non-system directory
+  collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks]
+  implicit libs: [c++]
+  implicit objs: [/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/CMakeTmp/CMAKE_TRY_COMPILE.build/Debug/cmTC_b0322.build/Objects-normal/x86_64/cmTC_b0322_lto.o]
+  implicit dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/usr/lib]
+  implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks]
+
+

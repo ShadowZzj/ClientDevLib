@@ -1,0 +1,905 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		398C829DF81B408AAAD44716 /* ZERO_CHECK */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 4BDBE0F69A1C4CDE8941805F /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
+			buildPhases = (
+				0F94B6B2F5EB2779502FA9CE /* Generate CMakeFiles/ZERO_CHECK */,
+			);
+			dependencies = (
+			);
+			name = ZERO_CHECK;
+			productName = ZERO_CHECK;
+		};
+		68B1043D42C84A779BDDC889 /* ALL_BUILD */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 6CB3E73D6A344128991B2937 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildPhases = (
+				6BB38B4BB7C50411AED1F19B /* Generate CMakeFiles/ALL_BUILD */,
+			);
+			dependencies = (
+				836D1523F0B14693A08E1243 /* PBXTargetDependency */,
+				68883002FE4647379E2C6E86 /* PBXTargetDependency */,
+			);
+			name = ALL_BUILD;
+			productName = ALL_BUILD;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		02697F8E86D34E3AA65C00EF /* asc85enc.c in Sources */ = {isa = PBXBuildFile; fileRef = 4D86252E06BC46D1A60FD05F /* asc85enc.c */; };
+		09D69FEE16A54BF6B7865236 /* imgtrans.c in Sources */ = {isa = PBXBuildFile; fileRef = 08B167F27C19461392220DAC /* imgtrans.c */; };
+		15070D95A2F5467AAFA6D605 /* xml.c in Sources */ = {isa = PBXBuildFile; fileRef = 70A246020C334FE2AB93497E /* xml.c */; };
+		1671A5DCCF6041558A280CA3 /* prop8.c in Sources */ = {isa = PBXBuildFile; fileRef = D8D5324161FE4A7A8A4B2E8D /* prop8.c */; };
+		1CC9A5F8A1D446F793A2B850 /* CDocParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8233D107C0D749A984EF6502 /* CDocParser.cpp */; };
+		1DB14EF85FCD46C9A4F26D69 /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 7D5DABFE57444745B0C9612F /* text.c */; };
+		215C99C2B49849338B796B79 /* postscript.c in Sources */ = {isa = PBXBuildFile; fileRef = DD9DFCB260FC491A836E46E5 /* postscript.c */; };
+		255ECDDF4EBB4187AFD6C987 /* properties.c in Sources */ = {isa = PBXBuildFile; fileRef = 50B9587011C042DDA3835E91 /* properties.c */; };
+		256E31A36727446C8DE49578 /* summary.c in Sources */ = {isa = PBXBuildFile; fileRef = 77A6724DE51F48AABD4D36D5 /* summary.c */; };
+		34064638AA4B41A0912E5E73 /* fonts.c in Sources */ = {isa = PBXBuildFile; fileRef = 01CC279B930E4C898799FDE9 /* fonts.c */; };
+		3CB01660B0754CD092CEC7C7 /* fmt_text.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B8E5672301D4BD18B30D0A7 /* fmt_text.c */; };
+		3CB654517D054D8DB766E562 /* wordlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 3792A89757844A86B249562C /* wordlib.c */; };
+		43FEBE431AF04FD3B57209A3 /* imgexam.c in Sources */ = {isa = PBXBuildFile; fileRef = 435A6527710B4B17854873E3 /* imgexam.c */; };
+		449C697887B64182B254626D /* sectlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 6C6C7AEC9B5C4FF88DCA3ECB /* sectlist.c */; };
+		46EFDE08606C466A93F30209 /* finddata.c in Sources */ = {isa = PBXBuildFile; fileRef = 178C19F442724097BD5BD2DB /* finddata.c */; };
+		4D9E3B5E1AA04034A1904480 /* fontlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E328B1A85E41ECA1EEBE5E /* fontlist.c */; };
+		51E9890B33934F94B3F08730 /* prop6.c in Sources */ = {isa = PBXBuildFile; fileRef = 64CEC52CC88941DAB59AB6C1 /* prop6.c */; };
+		57CB1799F34D4027AB766C5B /* worddos.c in Sources */ = {isa = PBXBuildFile; fileRef = 8913E6CC03AB47A99A5108E7 /* worddos.c */; };
+		5AE1F8E850194D00B0716339 /* chartrans.c in Sources */ = {isa = PBXBuildFile; fileRef = DE386B603C82478EB6B1E876 /* chartrans.c */; };
+		5C76804F2C1B4420A010084C /* listlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 51FC96383B1C4195B12C827D /* listlist.c */; };
+		5FEE2E5F54E246CCABA043BC /* CStrCvt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4675888EBC084FD787861F52 /* CStrCvt.cpp */; };
+		60B301D27271432782A29E17 /* hdrftrlist.c in Sources */ = {isa = PBXBuildFile; fileRef = B3A707770F9446AC95AD99C1 /* hdrftrlist.c */; };
+		6424A054A74449B8AC0B591B /* doclist.c in Sources */ = {isa = PBXBuildFile; fileRef = 2FFA24253EDC44439DCF7335 /* doclist.c */; };
+		706FFB488FE942B6AFE5CF7D /* output.c in Sources */ = {isa = PBXBuildFile; fileRef = 149B756A8F5F4C6EAFDCF820 /* output.c */; };
+		71CD963D1E294F499574F57E /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 8DD9AB36C0F9476C871762CB /* misc.c */; };
+		77C7C0660EA843308912C6FE /* wordwin.c in Sources */ = {isa = PBXBuildFile; fileRef = 949E3C6AF8CB419080F38B27 /* wordwin.c */; };
+		7D784E2438D7481A99BD5487 /* pictlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 0C2ACC16BC4C4C9D8DDCAA72 /* pictlist.c */; };
+		830CE5A613FC45E38F37DCB1 /* stylesheet.c in Sources */ = {isa = PBXBuildFile; fileRef = 2176AAA3AD834D1294BB687B /* stylesheet.c */; };
+		84978D0FF3CD415ABD63F343 /* depot.c in Sources */ = {isa = PBXBuildFile; fileRef = 4A5F2BAB853B4DFAA95C8727 /* depot.c */; };
+		8B0C208ECED8414D9D83F857 /* png2eps.c in Sources */ = {isa = PBXBuildFile; fileRef = B719C56839BE42F5B3DF8322 /* png2eps.c */; };
+		8BEF2357F08A40B292CD43CC /* fonts_u.c in Sources */ = {isa = PBXBuildFile; fileRef = 5714A6905ADB4ECDA83E6921 /* fonts_u.c */; };
+		8E68C66EF5D948F2BD222205 /* findtext.c in Sources */ = {isa = PBXBuildFile; fileRef = 13087E42CC5A43ACB0384E23 /* findtext.c */; };
+		937355AE967F40C39B2986E5 /* rowlist.c in Sources */ = {isa = PBXBuildFile; fileRef = 75DEDDD5FDE145A2BBB767E4 /* rowlist.c */; };
+		943F1388BC48431FACF57B75 /* stylelist.c in Sources */ = {isa = PBXBuildFile; fileRef = C1677C7B1BA945D6A8507DEA /* stylelist.c */; };
+		957310CC741E49FDAD7ADEC9 /* out2window.c in Sources */ = {isa = PBXBuildFile; fileRef = E4E31A80F60947CC9B8D371F /* out2window.c */; };
+		9B0DE8953789464582D03073 /* jpeg2eps.c in Sources */ = {isa = PBXBuildFile; fileRef = 101AA3046CCA40859830A61A /* jpeg2eps.c */; };
+		9D160DB930554E25BF4504B9 /* wordole.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FC14214CCBF43DBBBFC794E /* wordole.c */; };
+		A261937297294C60BFB6423C /* utf8.c in Sources */ = {isa = PBXBuildFile; fileRef = A2DEBF76AA1F489DA3C23A1A /* utf8.c */; };
+		AAEF0F58E8534BA59754EB35 /* word2text.c in Sources */ = {isa = PBXBuildFile; fileRef = 4B0261DF66D1409D9F648B84 /* word2text.c */; };
+		AEC9A69FE33144C4ACEEBFAE /* prop0.c in Sources */ = {isa = PBXBuildFile; fileRef = 44387E4A6F954F579A3297A4 /* prop0.c */; };
+		B4937DD9EBFF402DBC6598E7 /* main_u.c in Sources */ = {isa = PBXBuildFile; fileRef = 7C223B3A278849F6B87C75C7 /* main_u.c */; };
+		B7B26A3CCF3649C0BE9FF54D /* options.c in Sources */ = {isa = PBXBuildFile; fileRef = 9BDA4D0670254D7AA1FCBF7B /* options.c */; };
+		B7DB8675F3CE4BD58FF53D7F /* xmalloc.c in Sources */ = {isa = PBXBuildFile; fileRef = A62B816578E94270A4864421 /* xmalloc.c */; };
+		C8AA720F4D2B460BAE795CA1 /* wordmac.c in Sources */ = {isa = PBXBuildFile; fileRef = 42250BB002E54CB683485819 /* wordmac.c */; };
+		CAC8F108C88A48918EA7D425 /* notes.c in Sources */ = {isa = PBXBuildFile; fileRef = 1BF9AD6185D7460AB927B987 /* notes.c */; };
+		CC1EEC58224B42FBB8C196DE /* blocklist.c in Sources */ = {isa = PBXBuildFile; fileRef = BAF9EBEF6D86477D8D0A55E5 /* blocklist.c */; };
+		CE63C3D8DB3C4DB59AB00B90 /* datalist.c in Sources */ = {isa = PBXBuildFile; fileRef = 2D461E2E57A54714A0274022 /* datalist.c */; };
+		DFE11445A4B14FB6B3087A92 /* tabstop.c in Sources */ = {isa = PBXBuildFile; fileRef = C7CAE6C11C4D432FA4E147B7 /* tabstop.c */; };
+		E6B0AE1CF32140888F8FB0C8 /* propmod.c in Sources */ = {isa = PBXBuildFile; fileRef = FC02D8074CD944ADA48952CF /* propmod.c */; };
+		E7CE760F9ACA44EC8AF3CA04 /* prop2.c in Sources */ = {isa = PBXBuildFile; fileRef = FD7861A69AD24B2BBA851072 /* prop2.c */; };
+		F3A1324F2D4F4ECDAFCBD6AB /* pdf.c in Sources */ = {isa = PBXBuildFile; fileRef = E4703541567044FEB188031C /* pdf.c */; };
+		F523B1678864423F844AB8EC /* fail.c in Sources */ = {isa = PBXBuildFile; fileRef = 57B0C3A24E9241BAB2439FA5 /* fail.c */; };
+		F5BA7195E83B498CA3CECEFB /* unix.c in Sources */ = {isa = PBXBuildFile; fileRef = FC349CE37F194B7B824021A2 /* unix.c */; };
+		F888489EDEE14C41997B80EF /* dib2eps.c in Sources */ = {isa = PBXBuildFile; fileRef = 4C5D5AED25F6403FBBC80DB9 /* dib2eps.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		29A87AD6DAD44CE28DB014E8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C50C3471598D485CAB673DD6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 398C829DF81B408AAAD44716;
+			remoteInfo = ZERO_CHECK;
+		};
+		73EB416C8FA3416B8DAF0869 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C50C3471598D485CAB673DD6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 398C829DF81B408AAAD44716;
+			remoteInfo = ZERO_CHECK;
+		};
+		8EA80B90FA9F4E97B7C56A9A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C50C3471598D485CAB673DD6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7C1130DAAF734315BDCA6950;
+			remoteInfo = antiword;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		01CC279B930E4C898799FDE9 /* fonts.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = fonts.c; sourceTree = SOURCE_ROOT; };
+		08B167F27C19461392220DAC /* imgtrans.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = imgtrans.c; sourceTree = SOURCE_ROOT; };
+		0C2ACC16BC4C4C9D8DDCAA72 /* pictlist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = pictlist.c; sourceTree = SOURCE_ROOT; };
+		101AA3046CCA40859830A61A /* jpeg2eps.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = jpeg2eps.c; sourceTree = SOURCE_ROOT; };
+		13087E42CC5A43ACB0384E23 /* findtext.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = findtext.c; sourceTree = SOURCE_ROOT; };
+		149B756A8F5F4C6EAFDCF820 /* output.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = output.c; sourceTree = SOURCE_ROOT; };
+		178C19F442724097BD5BD2DB /* finddata.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = finddata.c; sourceTree = SOURCE_ROOT; };
+		1BF9AD6185D7460AB927B987 /* notes.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = notes.c; sourceTree = SOURCE_ROOT; };
+		2176AAA3AD834D1294BB687B /* stylesheet.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = stylesheet.c; sourceTree = SOURCE_ROOT; };
+		22FE9A1090474DD0B253CBCD /* libantiword.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libantiword.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D461E2E57A54714A0274022 /* datalist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = datalist.c; sourceTree = SOURCE_ROOT; };
+		2FFA24253EDC44439DCF7335 /* doclist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = doclist.c; sourceTree = SOURCE_ROOT; };
+		3792A89757844A86B249562C /* wordlib.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = wordlib.c; sourceTree = SOURCE_ROOT; };
+		42250BB002E54CB683485819 /* wordmac.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = wordmac.c; sourceTree = SOURCE_ROOT; };
+		435A6527710B4B17854873E3 /* imgexam.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = imgexam.c; sourceTree = SOURCE_ROOT; };
+		43769EA076C84D86A683FD4C /* CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		44387E4A6F954F579A3297A4 /* prop0.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = prop0.c; sourceTree = SOURCE_ROOT; };
+		4675888EBC084FD787861F52 /* CStrCvt.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = CStrCvt.cpp; path = ../../../../General/TerminalManager/DocsScanPlugin/CStrCvt.cpp; sourceTree = SOURCE_ROOT; };
+		4A5F2BAB853B4DFAA95C8727 /* depot.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = depot.c; sourceTree = SOURCE_ROOT; };
+		4B0261DF66D1409D9F648B84 /* word2text.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = word2text.c; sourceTree = SOURCE_ROOT; };
+		4C5D5AED25F6403FBBC80DB9 /* dib2eps.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = dib2eps.c; sourceTree = SOURCE_ROOT; };
+		4D86252E06BC46D1A60FD05F /* asc85enc.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = asc85enc.c; sourceTree = SOURCE_ROOT; };
+		50B9587011C042DDA3835E91 /* properties.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = properties.c; sourceTree = SOURCE_ROOT; };
+		51FC96383B1C4195B12C827D /* listlist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = listlist.c; sourceTree = SOURCE_ROOT; };
+		55C1D7C2004D442FBFB224B2 /* CDocParser.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = CDocParser.h; path = ../../../../MacOS/TerminalManager/DocsScanPlugin/Parser/CDocParser.h; sourceTree = SOURCE_ROOT; };
+		5714A6905ADB4ECDA83E6921 /* fonts_u.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = fonts_u.c; sourceTree = SOURCE_ROOT; };
+		57B0C3A24E9241BAB2439FA5 /* fail.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = fail.c; sourceTree = SOURCE_ROOT; };
+		64CEC52CC88941DAB59AB6C1 /* prop6.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = prop6.c; sourceTree = SOURCE_ROOT; };
+		6C6C7AEC9B5C4FF88DCA3ECB /* sectlist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = sectlist.c; sourceTree = SOURCE_ROOT; };
+		6FC14214CCBF43DBBBFC794E /* wordole.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = wordole.c; sourceTree = SOURCE_ROOT; };
+		70A246020C334FE2AB93497E /* xml.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = xml.c; sourceTree = SOURCE_ROOT; };
+		75DEDDD5FDE145A2BBB767E4 /* rowlist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = rowlist.c; sourceTree = SOURCE_ROOT; };
+		77A6724DE51F48AABD4D36D5 /* summary.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = summary.c; sourceTree = SOURCE_ROOT; };
+		7C223B3A278849F6B87C75C7 /* main_u.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = main_u.c; sourceTree = SOURCE_ROOT; };
+		7D5DABFE57444745B0C9612F /* text.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = text.c; sourceTree = SOURCE_ROOT; };
+		8233D107C0D749A984EF6502 /* CDocParser.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = CDocParser.cpp; path = ../../../../MacOS/TerminalManager/DocsScanPlugin/Parser/CDocParser.cpp; sourceTree = SOURCE_ROOT; };
+		8913E6CC03AB47A99A5108E7 /* worddos.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = worddos.c; sourceTree = SOURCE_ROOT; };
+		8B8E5672301D4BD18B30D0A7 /* fmt_text.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = fmt_text.c; sourceTree = SOURCE_ROOT; };
+		8DD9AB36C0F9476C871762CB /* misc.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = misc.c; sourceTree = SOURCE_ROOT; };
+		949E3C6AF8CB419080F38B27 /* wordwin.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = wordwin.c; sourceTree = SOURCE_ROOT; };
+		96E328B1A85E41ECA1EEBE5E /* fontlist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = fontlist.c; sourceTree = SOURCE_ROOT; };
+		9BDA4D0670254D7AA1FCBF7B /* options.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = options.c; sourceTree = SOURCE_ROOT; };
+		A2DEBF76AA1F489DA3C23A1A /* utf8.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = utf8.c; sourceTree = SOURCE_ROOT; };
+		A62B816578E94270A4864421 /* xmalloc.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = xmalloc.c; sourceTree = SOURCE_ROOT; };
+		B2898160B4DD47F68733153E /* CStrCvt.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = CStrCvt.h; path = ../../../../General/TerminalManager/DocsScanPlugin/CStrCvt.h; sourceTree = SOURCE_ROOT; };
+		B3A707770F9446AC95AD99C1 /* hdrftrlist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = hdrftrlist.c; sourceTree = SOURCE_ROOT; };
+		B719C56839BE42F5B3DF8322 /* png2eps.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = png2eps.c; sourceTree = SOURCE_ROOT; };
+		BAF9EBEF6D86477D8D0A55E5 /* blocklist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = blocklist.c; sourceTree = SOURCE_ROOT; };
+		BBE31DA9C1B046C7B85E2630 /* CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		C1677C7B1BA945D6A8507DEA /* stylelist.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = stylelist.c; sourceTree = SOURCE_ROOT; };
+		C7CAE6C11C4D432FA4E147B7 /* tabstop.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = tabstop.c; sourceTree = SOURCE_ROOT; };
+		D8D5324161FE4A7A8A4B2E8D /* prop8.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = prop8.c; sourceTree = SOURCE_ROOT; };
+		DD9DFCB260FC491A836E46E5 /* postscript.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = postscript.c; sourceTree = SOURCE_ROOT; };
+		DE386B603C82478EB6B1E876 /* chartrans.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = chartrans.c; sourceTree = SOURCE_ROOT; };
+		E4703541567044FEB188031C /* pdf.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = pdf.c; sourceTree = SOURCE_ROOT; };
+		E4E31A80F60947CC9B8D371F /* out2window.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = out2window.c; sourceTree = SOURCE_ROOT; };
+		FC02D8074CD944ADA48952CF /* propmod.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = propmod.c; sourceTree = SOURCE_ROOT; };
+		FC349CE37F194B7B824021A2 /* unix.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = unix.c; sourceTree = SOURCE_ROOT; };
+		FD7861A69AD24B2BBA851072 /* prop2.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; path = prop2.c; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AF189C64E7B44AEC8D1B8A20 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2224E2147EAE4A2B9D2B1678 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				22FE9A1090474DD0B253CBCD /* libantiword.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		47F445C002A148A4985AF8EA /* General */ = {
+			isa = PBXGroup;
+			children = (
+				4D86252E06BC46D1A60FD05F /* asc85enc.c */,
+				BAF9EBEF6D86477D8D0A55E5 /* blocklist.c */,
+				DE386B603C82478EB6B1E876 /* chartrans.c */,
+				2D461E2E57A54714A0274022 /* datalist.c */,
+				4A5F2BAB853B4DFAA95C8727 /* depot.c */,
+				4C5D5AED25F6403FBBC80DB9 /* dib2eps.c */,
+				2FFA24253EDC44439DCF7335 /* doclist.c */,
+				57B0C3A24E9241BAB2439FA5 /* fail.c */,
+				178C19F442724097BD5BD2DB /* finddata.c */,
+				13087E42CC5A43ACB0384E23 /* findtext.c */,
+				8B8E5672301D4BD18B30D0A7 /* fmt_text.c */,
+				96E328B1A85E41ECA1EEBE5E /* fontlist.c */,
+				01CC279B930E4C898799FDE9 /* fonts.c */,
+				5714A6905ADB4ECDA83E6921 /* fonts_u.c */,
+				B3A707770F9446AC95AD99C1 /* hdrftrlist.c */,
+				435A6527710B4B17854873E3 /* imgexam.c */,
+				08B167F27C19461392220DAC /* imgtrans.c */,
+				101AA3046CCA40859830A61A /* jpeg2eps.c */,
+				51FC96383B1C4195B12C827D /* listlist.c */,
+				7C223B3A278849F6B87C75C7 /* main_u.c */,
+				8DD9AB36C0F9476C871762CB /* misc.c */,
+				1BF9AD6185D7460AB927B987 /* notes.c */,
+				9BDA4D0670254D7AA1FCBF7B /* options.c */,
+				E4E31A80F60947CC9B8D371F /* out2window.c */,
+				149B756A8F5F4C6EAFDCF820 /* output.c */,
+				E4703541567044FEB188031C /* pdf.c */,
+				0C2ACC16BC4C4C9D8DDCAA72 /* pictlist.c */,
+				B719C56839BE42F5B3DF8322 /* png2eps.c */,
+				DD9DFCB260FC491A836E46E5 /* postscript.c */,
+				44387E4A6F954F579A3297A4 /* prop0.c */,
+				FD7861A69AD24B2BBA851072 /* prop2.c */,
+				64CEC52CC88941DAB59AB6C1 /* prop6.c */,
+				D8D5324161FE4A7A8A4B2E8D /* prop8.c */,
+				50B9587011C042DDA3835E91 /* properties.c */,
+				FC02D8074CD944ADA48952CF /* propmod.c */,
+				75DEDDD5FDE145A2BBB767E4 /* rowlist.c */,
+				6C6C7AEC9B5C4FF88DCA3ECB /* sectlist.c */,
+				C1677C7B1BA945D6A8507DEA /* stylelist.c */,
+				2176AAA3AD834D1294BB687B /* stylesheet.c */,
+				77A6724DE51F48AABD4D36D5 /* summary.c */,
+				C7CAE6C11C4D432FA4E147B7 /* tabstop.c */,
+				7D5DABFE57444745B0C9612F /* text.c */,
+				FC349CE37F194B7B824021A2 /* unix.c */,
+				A2DEBF76AA1F489DA3C23A1A /* utf8.c */,
+				4B0261DF66D1409D9F648B84 /* word2text.c */,
+				8913E6CC03AB47A99A5108E7 /* worddos.c */,
+				3792A89757844A86B249562C /* wordlib.c */,
+				42250BB002E54CB683485819 /* wordmac.c */,
+				6FC14214CCBF43DBBBFC794E /* wordole.c */,
+				949E3C6AF8CB419080F38B27 /* wordwin.c */,
+				A62B816578E94270A4864421 /* xmalloc.c */,
+				70A246020C334FE2AB93497E /* xml.c */,
+			);
+			name = General;
+			sourceTree = "<group>";
+		};
+		494C43E5CD3F40DDBD60F6EC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		85C9782A37E547B6BBEB8482 /* Parser */ = {
+			isa = PBXGroup;
+			children = (
+				4675888EBC084FD787861F52 /* CStrCvt.cpp */,
+				B2898160B4DD47F68733153E /* CStrCvt.h */,
+				8233D107C0D749A984EF6502 /* CDocParser.cpp */,
+				55C1D7C2004D442FBFB224B2 /* CDocParser.h */,
+			);
+			name = Parser;
+			sourceTree = "<group>";
+		};
+		CC37D7E4B7D94280ADC4D660 /* antiword */ = {
+			isa = PBXGroup;
+			children = (
+				47F445C002A148A4985AF8EA /* General */,
+				85C9782A37E547B6BBEB8482 /* Parser */,
+				43769EA076C84D86A683FD4C /* CMakeLists.txt */,
+			);
+			name = antiword;
+			sourceTree = "<group>";
+		};
+		E7508124550B4595B834A3CF = {
+			isa = PBXGroup;
+			children = (
+				CC37D7E4B7D94280ADC4D660 /* antiword */,
+				F06927D056D74F8492893AAB /* ALL_BUILD */,
+				2224E2147EAE4A2B9D2B1678 /* Products */,
+				494C43E5CD3F40DDBD60F6EC /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		EEC50B4CB81446019118A175 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		F06927D056D74F8492893AAB /* ALL_BUILD */ = {
+			isa = PBXGroup;
+			children = (
+				EEC50B4CB81446019118A175 /* CMake Rules */,
+				BBE31DA9C1B046C7B85E2630 /* CMakeLists.txt */,
+			);
+			name = ALL_BUILD;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7C1130DAAF734315BDCA6950 /* antiword */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7F98901AB94E4720B05FADD1 /* Build configuration list for PBXNativeTarget "antiword" */;
+			buildPhases = (
+				8119C2454AF14A358CB3226F /* Sources */,
+				AF189C64E7B44AEC8D1B8A20 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4FAA9FDD207A4EC0913B8906 /* PBXTargetDependency */,
+			);
+			name = antiword;
+			productName = antiword;
+			productReference = 22FE9A1090474DD0B253CBCD /* libantiword.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C50C3471598D485CAB673DD6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1310;
+			};
+			buildConfigurationList = 66A937489B5646438D075A27 /* Build configuration list for PBXProject "antiword" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E7508124550B4595B834A3CF;
+			projectDirPath = ../;
+			projectRoot = "";
+			targets = (
+				68B1043D42C84A779BDDC889 /* ALL_BUILD */,
+				398C829DF81B408AAAD44716 /* ZERO_CHECK */,
+				7C1130DAAF734315BDCA6950 /* antiword */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0F94B6B2F5EB2779502FA9CE /* Generate CMakeFiles/ZERO_CHECK */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ZERO_CHECK";
+			outputPaths = (
+				"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/ZERO_CHECK",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nif test \"$CONFIGURATION\" = \"Debug\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  make -f /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeScripts/ReRunCMake.make\nfi\nif test \"$CONFIGURATION\" = \"Release\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  make -f /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeScripts/ReRunCMake.make\nfi\nif test \"$CONFIGURATION\" = \"MinSizeRel\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  make -f /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeScripts/ReRunCMake.make\nfi\nif test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  make -f /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeScripts/ReRunCMake.make\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		6BB38B4BB7C50411AED1F19B /* Generate CMakeFiles/ALL_BUILD */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ALL_BUILD";
+			outputPaths = (
+				"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/ALL_BUILD",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nif test \"$CONFIGURATION\" = \"Debug\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  echo Build\\ all\\ projects\nfi\nif test \"$CONFIGURATION\" = \"Release\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  echo Build\\ all\\ projects\nfi\nif test \"$CONFIGURATION\" = \"MinSizeRel\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  echo Build\\ all\\ projects\nfi\nif test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :\n  cd /Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build\n  echo Build\\ all\\ projects\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8119C2454AF14A358CB3226F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				02697F8E86D34E3AA65C00EF /* asc85enc.c in Sources */,
+				CC1EEC58224B42FBB8C196DE /* blocklist.c in Sources */,
+				5AE1F8E850194D00B0716339 /* chartrans.c in Sources */,
+				CE63C3D8DB3C4DB59AB00B90 /* datalist.c in Sources */,
+				84978D0FF3CD415ABD63F343 /* depot.c in Sources */,
+				F888489EDEE14C41997B80EF /* dib2eps.c in Sources */,
+				6424A054A74449B8AC0B591B /* doclist.c in Sources */,
+				F523B1678864423F844AB8EC /* fail.c in Sources */,
+				46EFDE08606C466A93F30209 /* finddata.c in Sources */,
+				8E68C66EF5D948F2BD222205 /* findtext.c in Sources */,
+				3CB01660B0754CD092CEC7C7 /* fmt_text.c in Sources */,
+				4D9E3B5E1AA04034A1904480 /* fontlist.c in Sources */,
+				34064638AA4B41A0912E5E73 /* fonts.c in Sources */,
+				8BEF2357F08A40B292CD43CC /* fonts_u.c in Sources */,
+				60B301D27271432782A29E17 /* hdrftrlist.c in Sources */,
+				43FEBE431AF04FD3B57209A3 /* imgexam.c in Sources */,
+				09D69FEE16A54BF6B7865236 /* imgtrans.c in Sources */,
+				9B0DE8953789464582D03073 /* jpeg2eps.c in Sources */,
+				5C76804F2C1B4420A010084C /* listlist.c in Sources */,
+				B4937DD9EBFF402DBC6598E7 /* main_u.c in Sources */,
+				71CD963D1E294F499574F57E /* misc.c in Sources */,
+				CAC8F108C88A48918EA7D425 /* notes.c in Sources */,
+				B7B26A3CCF3649C0BE9FF54D /* options.c in Sources */,
+				957310CC741E49FDAD7ADEC9 /* out2window.c in Sources */,
+				706FFB488FE942B6AFE5CF7D /* output.c in Sources */,
+				F3A1324F2D4F4ECDAFCBD6AB /* pdf.c in Sources */,
+				7D784E2438D7481A99BD5487 /* pictlist.c in Sources */,
+				8B0C208ECED8414D9D83F857 /* png2eps.c in Sources */,
+				215C99C2B49849338B796B79 /* postscript.c in Sources */,
+				AEC9A69FE33144C4ACEEBFAE /* prop0.c in Sources */,
+				E7CE760F9ACA44EC8AF3CA04 /* prop2.c in Sources */,
+				51E9890B33934F94B3F08730 /* prop6.c in Sources */,
+				1671A5DCCF6041558A280CA3 /* prop8.c in Sources */,
+				255ECDDF4EBB4187AFD6C987 /* properties.c in Sources */,
+				E6B0AE1CF32140888F8FB0C8 /* propmod.c in Sources */,
+				937355AE967F40C39B2986E5 /* rowlist.c in Sources */,
+				449C697887B64182B254626D /* sectlist.c in Sources */,
+				943F1388BC48431FACF57B75 /* stylelist.c in Sources */,
+				830CE5A613FC45E38F37DCB1 /* stylesheet.c in Sources */,
+				256E31A36727446C8DE49578 /* summary.c in Sources */,
+				DFE11445A4B14FB6B3087A92 /* tabstop.c in Sources */,
+				1DB14EF85FCD46C9A4F26D69 /* text.c in Sources */,
+				F5BA7195E83B498CA3CECEFB /* unix.c in Sources */,
+				A261937297294C60BFB6423C /* utf8.c in Sources */,
+				AAEF0F58E8534BA59754EB35 /* word2text.c in Sources */,
+				57CB1799F34D4027AB766C5B /* worddos.c in Sources */,
+				3CB654517D054D8DB766E562 /* wordlib.c in Sources */,
+				C8AA720F4D2B460BAE795CA1 /* wordmac.c in Sources */,
+				9D160DB930554E25BF4504B9 /* wordole.c in Sources */,
+				77C7C0660EA843308912C6FE /* wordwin.c in Sources */,
+				B7DB8675F3CE4BD58FF53D7F /* xmalloc.c in Sources */,
+				15070D95A2F5467AAFA6D605 /* xml.c in Sources */,
+				5FEE2E5F54E246CCABA043BC /* CStrCvt.cpp in Sources */,
+				1CC9A5F8A1D446F793A2B850 /* CDocParser.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4FAA9FDD207A4EC0913B8906 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 398C829DF81B408AAAD44716 /* ZERO_CHECK */;
+			targetProxy = 29A87AD6DAD44CE28DB014E8 /* PBXContainerItemProxy */;
+		};
+		68883002FE4647379E2C6E86 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 398C829DF81B408AAAD44716 /* ZERO_CHECK */;
+			targetProxy = 73EB416C8FA3416B8DAF0869 /* PBXContainerItemProxy */;
+		};
+		836D1523F0B14693A08E1243 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7C1130DAAF734315BDCA6950 /* antiword */;
+			targetProxy = 8EA80B90FA9F4E97B7C56A9A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		07D7140FA79344FA95A02356 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					DEBUG,
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin/Parser",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../MacOS/TerminalManager/DocsScanPlugin/Parser",
+					"$(inherited)",
+				);
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = "    $(inherited)";
+				OTHER_CPLUSPLUSFLAGS = "   ";
+				OTHER_LIBTOOLFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = antiword;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = Debug;
+		};
+		2D342DD34EAA4B47A6AB5D6E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk;
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/build";
+			};
+			name = Release;
+		};
+		41F40C48B83F452C9C46CE32 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk;
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/build";
+			};
+			name = RelWithDebInfo;
+		};
+		41FB26888C4B4671A4540C25 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = Release;
+		};
+		5178A9B5B3ED462D9EC1ABB8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					NDEBUG,
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin/Parser",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../MacOS/TerminalManager/DocsScanPlugin/Parser",
+					"$(inherited)",
+				);
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = (
+					"-DNDEBUG",
+					"$(inherited)",
+				);
+				OTHER_CPLUSPLUSFLAGS = "-DNDEBUG";
+				OTHER_LIBTOOLFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = antiword;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = Release;
+		};
+		5BEF74586CCD4C99934F22F5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = Debug;
+		};
+		6EE4C768C937478F9E023077 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = RelWithDebInfo;
+		};
+		9959C5AB037E4A33B5CF586A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = Release;
+		};
+		AE1B605916DB401C8EE13E1D /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = RelWithDebInfo;
+		};
+		AF8C8C83AB6449C9A9038530 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = MinSizeRel;
+		};
+		B80E62706248450C9A892DF2 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = MinSizeRel;
+		};
+		BED78897C3A0404597A6C0A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk;
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/build";
+			};
+			name = Debug;
+		};
+		E0B3668510BB45FFAD0E68C4 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk;
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/build";
+			};
+			name = MinSizeRel;
+		};
+		E63A72E97D7444D699C4A7EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = " $(inherited)";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = Debug;
+		};
+		F36337A1A25E4C2EA835A5FC /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					DEBUG,
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin/Parser",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../MacOS/TerminalManager/DocsScanPlugin/Parser",
+					"$(inherited)",
+				);
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = (
+					"-DNDEBUG",
+					"$(inherited)",
+				);
+				OTHER_CPLUSPLUSFLAGS = "       -DNDEBUG ";
+				OTHER_LIBTOOLFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = antiword;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = RelWithDebInfo;
+		};
+		F6221203ED4741B4A6FF46E4 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .a;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					DEBUG,
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../General/TerminalManager/DocsScanPlugin/Parser",
+					"/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/../../../../MacOS/TerminalManager/DocsScanPlugin/Parser",
+					"$(inherited)",
+				);
+				INSTALL_PATH = "";
+				LIBRARY_STYLE = STATIC;
+				OTHER_CFLAGS = (
+					"-DNDEBUG",
+					"$(inherited)",
+				);
+				OTHER_CPLUSPLUSFLAGS = "    -DNDEBUG ";
+				OTHER_LIBTOOLFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = antiword;
+				SECTORDER_FLAGS = "";
+				SYMROOT = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = "$(inherited)";
+			};
+			name = MinSizeRel;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4BDBE0F69A1C4CDE8941805F /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5BEF74586CCD4C99934F22F5 /* Debug */,
+				9959C5AB037E4A33B5CF586A /* Release */,
+				AF8C8C83AB6449C9A9038530 /* MinSizeRel */,
+				AE1B605916DB401C8EE13E1D /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		66A937489B5646438D075A27 /* Build configuration list for PBXProject "antiword" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BED78897C3A0404597A6C0A7 /* Debug */,
+				2D342DD34EAA4B47A6AB5D6E /* Release */,
+				E0B3668510BB45FFAD0E68C4 /* MinSizeRel */,
+				41F40C48B83F452C9C46CE32 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6CB3E73D6A344128991B2937 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E63A72E97D7444D699C4A7EA /* Debug */,
+				41FB26888C4B4671A4540C25 /* Release */,
+				B80E62706248450C9A892DF2 /* MinSizeRel */,
+				6EE4C768C937478F9E023077 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7F98901AB94E4720B05FADD1 /* Build configuration list for PBXNativeTarget "antiword" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				07D7140FA79344FA95A02356 /* Debug */,
+				5178A9B5B3ED462D9EC1ABB8 /* Release */,
+				F6221203ED4741B4A6FF46E4 /* MinSizeRel */,
+				F36337A1A25E4C2EA835A5FC /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = C50C3471598D485CAB673DD6 /* Project object */;
+}
