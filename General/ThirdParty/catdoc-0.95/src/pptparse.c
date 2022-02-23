@@ -89,7 +89,7 @@ static void process_item (int rectype, long reclen, FILE* input) {
 	static unsigned char buf[2];
     
     static int num = 1;
-	fprintf(stderr,"%d : Processing record %d length %d\n",num++, rectype,reclen);
+	//fprintf(stderr,"%d : Processing record %d length %d\n",num++, rectype,reclen);
     
     if(num == 1660)
     {

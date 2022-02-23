@@ -1,0 +1,599 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BA385A102750F46D004A9A0D /* pdf2txt.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BA385A0F2750F46D004A9A0D /* pdf2txt.hpp */; };
+		BA385A122750F46D004A9A0D /* pdf2txtPriv.hpp in Headers */ = {isa = PBXBuildFile; fileRef = BA385A112750F46D004A9A0D /* pdf2txtPriv.hpp */; };
+		BA385A142750F46D004A9A0D /* pdf2txt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BA385A132750F46D004A9A0D /* pdf2txt.cpp */; };
+		BA385A462750F55B004A9A0D /* XRef.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A1B2750F55A004A9A0D /* XRef.cc */; };
+		BA385A472750F55B004A9A0D /* BuiltinFont.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A1C2750F55A004A9A0D /* BuiltinFont.cc */; };
+		BA385A482750F55B004A9A0D /* Annot.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A1D2750F55A004A9A0D /* Annot.cc */; };
+		BA385A492750F55B004A9A0D /* Object.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A1E2750F55A004A9A0D /* Object.cc */; };
+		BA385A4A2750F55B004A9A0D /* Array.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A1F2750F55A004A9A0D /* Array.cc */; };
+		BA385A4B2750F55B004A9A0D /* Error.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A202750F55A004A9A0D /* Error.cc */; };
+		BA385A4C2750F55B004A9A0D /* OutputDev.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A212750F55A004A9A0D /* OutputDev.cc */; };
+		BA385A4D2750F55B004A9A0D /* Stream.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A222750F55A004A9A0D /* Stream.cc */; };
+		BA385A4E2750F55B004A9A0D /* Zoox.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A232750F55A004A9A0D /* Zoox.cc */; };
+		BA385A4F2750F55B004A9A0D /* GlobalParams.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A242750F55A004A9A0D /* GlobalParams.cc */; };
+		BA385A502750F55B004A9A0D /* JBIG2Stream.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A252750F55A004A9A0D /* JBIG2Stream.cc */; };
+		BA385A512750F55B004A9A0D /* Decrypt.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A262750F55A004A9A0D /* Decrypt.cc */; };
+		BA385A522750F55B004A9A0D /* OptionalContent.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A272750F55A004A9A0D /* OptionalContent.cc */; };
+		BA385A532750F55B004A9A0D /* Parser.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A282750F55A004A9A0D /* Parser.cc */; };
+		BA385A542750F55B004A9A0D /* Catalog.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A292750F55A004A9A0D /* Catalog.cc */; };
+		BA385A552750F55B004A9A0D /* JPXStream.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A2A2750F55A004A9A0D /* JPXStream.cc */; };
+		BA385A562750F55B004A9A0D /* PDF417Barcode.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A2B2750F55A004A9A0D /* PDF417Barcode.cc */; };
+		BA385A572750F55B004A9A0D /* FontEncodingTables.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A2C2750F55A004A9A0D /* FontEncodingTables.cc */; };
+		BA385A582750F55B004A9A0D /* PDFDocEncoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A2D2750F55A004A9A0D /* PDFDocEncoding.cc */; };
+		BA385A592750F55B004A9A0D /* PSTokenizer.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A2E2750F55A004A9A0D /* PSTokenizer.cc */; };
+		BA385A5A2750F55B004A9A0D /* GfxState.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A2F2750F55B004A9A0D /* GfxState.cc */; };
+		BA385A5B2750F55B004A9A0D /* UnicodeMap.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A302750F55B004A9A0D /* UnicodeMap.cc */; };
+		BA385A5C2750F55B004A9A0D /* XFAScanner.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A312750F55B004A9A0D /* XFAScanner.cc */; };
+		BA385A5D2750F55B004A9A0D /* CharCodeToUnicode.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A322750F55B004A9A0D /* CharCodeToUnicode.cc */; };
+		BA385A5E2750F55B004A9A0D /* Lexer.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A332750F55B004A9A0D /* Lexer.cc */; };
+		BA385A5F2750F55B004A9A0D /* GfxFont.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A342750F55B004A9A0D /* GfxFont.cc */; };
+		BA385A602750F55B004A9A0D /* UTF8.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A352750F55B004A9A0D /* UTF8.cc */; };
+		BA385A612750F55B004A9A0D /* TextString.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A362750F55B004A9A0D /* TextString.cc */; };
+		BA385A622750F55B004A9A0D /* Function.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A372750F55B004A9A0D /* Function.cc */; };
+		BA385A632750F55B004A9A0D /* Gfx.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A382750F55B004A9A0D /* Gfx.cc */; };
+		BA385A642750F55B004A9A0D /* JArithmeticDecoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A392750F55B004A9A0D /* JArithmeticDecoder.cc */; };
+		BA385A652750F55B004A9A0D /* SecurityHandler.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A3A2750F55B004A9A0D /* SecurityHandler.cc */; };
+		BA385A662750F55B004A9A0D /* Dict.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A3B2750F55B004A9A0D /* Dict.cc */; };
+		BA385A672750F55B004A9A0D /* NameToCharCode.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A3C2750F55B004A9A0D /* NameToCharCode.cc */; };
+		BA385A682750F55B004A9A0D /* UnicodeRemapping.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A3D2750F55B004A9A0D /* UnicodeRemapping.cc */; };
+		BA385A692750F55B004A9A0D /* CMap.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A3E2750F55B004A9A0D /* CMap.cc */; };
+		BA385A6A2750F55B004A9A0D /* Link.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A3F2750F55B004A9A0D /* Link.cc */; };
+		BA385A6B2750F55B004A9A0D /* BuiltinFontTables.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A402750F55B004A9A0D /* BuiltinFontTables.cc */; };
+		BA385A6C2750F55B004A9A0D /* UnicodeTypeTable.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A412750F55B004A9A0D /* UnicodeTypeTable.cc */; };
+		BA385A6D2750F55B004A9A0D /* AcroForm.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A422750F55B004A9A0D /* AcroForm.cc */; };
+		BA385A6E2750F55B004A9A0D /* Page.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A432750F55B004A9A0D /* Page.cc */; };
+		BA385A6F2750F55B004A9A0D /* Outline.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A442750F55B004A9A0D /* Outline.cc */; };
+		BA385A702750F55B004A9A0D /* PDFDoc.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A452750F55B004A9A0D /* PDFDoc.cc */; };
+		BA385A782750F595004A9A0D /* FoFiIdentifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A722750F595004A9A0D /* FoFiIdentifier.cc */; };
+		BA385A792750F595004A9A0D /* FoFiType1.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A732750F595004A9A0D /* FoFiType1.cc */; };
+		BA385A7A2750F595004A9A0D /* FoFiType1C.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A742750F595004A9A0D /* FoFiType1C.cc */; };
+		BA385A7B2750F595004A9A0D /* FoFiEncodings.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A752750F595004A9A0D /* FoFiEncodings.cc */; };
+		BA385A7C2750F595004A9A0D /* FoFiBase.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A762750F595004A9A0D /* FoFiBase.cc */; };
+		BA385A7D2750F595004A9A0D /* FoFiTrueType.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A772750F595004A9A0D /* FoFiTrueType.cc */; };
+		BA385A882750F5EF004A9A0D /* gmem.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A7F2750F5EF004A9A0D /* gmem.cc */; };
+		BA385A892750F5EF004A9A0D /* GString.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A802750F5EF004A9A0D /* GString.cc */; };
+		BA385A8A2750F5EF004A9A0D /* parseargs.c in Sources */ = {isa = PBXBuildFile; fileRef = BA385A812750F5EF004A9A0D /* parseargs.c */; };
+		BA385A8B2750F5EF004A9A0D /* Trace.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A822750F5EF004A9A0D /* Trace.cc */; };
+		BA385A8C2750F5EF004A9A0D /* GList.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A832750F5EF004A9A0D /* GList.cc */; };
+		BA385A8D2750F5EF004A9A0D /* gmempp.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A842750F5EF004A9A0D /* gmempp.cc */; };
+		BA385A8E2750F5EF004A9A0D /* GHash.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A852750F5EF004A9A0D /* GHash.cc */; };
+		BA385A8F2750F5EF004A9A0D /* FixedPoint.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A862750F5EF004A9A0D /* FixedPoint.cc */; };
+		BA385A902750F5EF004A9A0D /* gfile.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A872750F5EF004A9A0D /* gfile.cc */; };
+		BA385A922750F61E004A9A0D /* TextOutputDev.cc in Sources */ = {isa = PBXBuildFile; fileRef = BA385A912750F61E004A9A0D /* TextOutputDev.cc */; };
+		BA385A992750F718004A9A0D /* CPdfParser.h in Headers */ = {isa = PBXBuildFile; fileRef = BA385A942750F718004A9A0D /* CPdfParser.h */; };
+		BA385A9A2750F718004A9A0D /* CParser.h in Headers */ = {isa = PBXBuildFile; fileRef = BA385A952750F718004A9A0D /* CParser.h */; };
+		BA385A9B2750F718004A9A0D /* CStrCvt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BA385A962750F718004A9A0D /* CStrCvt.cpp */; };
+		BA385A9C2750F718004A9A0D /* CStrCvt.h in Headers */ = {isa = PBXBuildFile; fileRef = BA385A972750F718004A9A0D /* CStrCvt.h */; };
+		BA385A9D2750F718004A9A0D /* CPdfParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BA385A982750F718004A9A0D /* CPdfParser.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		BA385A0C2750F46D004A9A0D /* libpdf2txt.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libpdf2txt.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA385A0F2750F46D004A9A0D /* pdf2txt.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pdf2txt.hpp; sourceTree = "<group>"; };
+		BA385A112750F46D004A9A0D /* pdf2txtPriv.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = pdf2txtPriv.hpp; sourceTree = "<group>"; };
+		BA385A132750F46D004A9A0D /* pdf2txt.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pdf2txt.cpp; sourceTree = "<group>"; };
+		BA385A1B2750F55A004A9A0D /* XRef.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = XRef.cc; path = ../xpdf/XRef.cc; sourceTree = "<group>"; };
+		BA385A1C2750F55A004A9A0D /* BuiltinFont.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BuiltinFont.cc; path = ../xpdf/BuiltinFont.cc; sourceTree = "<group>"; };
+		BA385A1D2750F55A004A9A0D /* Annot.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Annot.cc; path = ../xpdf/Annot.cc; sourceTree = "<group>"; };
+		BA385A1E2750F55A004A9A0D /* Object.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Object.cc; path = ../xpdf/Object.cc; sourceTree = "<group>"; };
+		BA385A1F2750F55A004A9A0D /* Array.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Array.cc; path = ../xpdf/Array.cc; sourceTree = "<group>"; };
+		BA385A202750F55A004A9A0D /* Error.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Error.cc; path = ../xpdf/Error.cc; sourceTree = "<group>"; };
+		BA385A212750F55A004A9A0D /* OutputDev.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OutputDev.cc; path = ../xpdf/OutputDev.cc; sourceTree = "<group>"; };
+		BA385A222750F55A004A9A0D /* Stream.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Stream.cc; path = ../xpdf/Stream.cc; sourceTree = "<group>"; };
+		BA385A232750F55A004A9A0D /* Zoox.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Zoox.cc; path = ../xpdf/Zoox.cc; sourceTree = "<group>"; };
+		BA385A242750F55A004A9A0D /* GlobalParams.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GlobalParams.cc; path = ../xpdf/GlobalParams.cc; sourceTree = "<group>"; };
+		BA385A252750F55A004A9A0D /* JBIG2Stream.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JBIG2Stream.cc; path = ../xpdf/JBIG2Stream.cc; sourceTree = "<group>"; };
+		BA385A262750F55A004A9A0D /* Decrypt.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Decrypt.cc; path = ../xpdf/Decrypt.cc; sourceTree = "<group>"; };
+		BA385A272750F55A004A9A0D /* OptionalContent.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionalContent.cc; path = ../xpdf/OptionalContent.cc; sourceTree = "<group>"; };
+		BA385A282750F55A004A9A0D /* Parser.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Parser.cc; path = ../xpdf/Parser.cc; sourceTree = "<group>"; };
+		BA385A292750F55A004A9A0D /* Catalog.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Catalog.cc; path = ../xpdf/Catalog.cc; sourceTree = "<group>"; };
+		BA385A2A2750F55A004A9A0D /* JPXStream.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JPXStream.cc; path = ../xpdf/JPXStream.cc; sourceTree = "<group>"; };
+		BA385A2B2750F55A004A9A0D /* PDF417Barcode.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PDF417Barcode.cc; path = ../xpdf/PDF417Barcode.cc; sourceTree = "<group>"; };
+		BA385A2C2750F55A004A9A0D /* FontEncodingTables.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FontEncodingTables.cc; path = ../xpdf/FontEncodingTables.cc; sourceTree = "<group>"; };
+		BA385A2D2750F55A004A9A0D /* PDFDocEncoding.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PDFDocEncoding.cc; path = ../xpdf/PDFDocEncoding.cc; sourceTree = "<group>"; };
+		BA385A2E2750F55A004A9A0D /* PSTokenizer.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PSTokenizer.cc; path = ../xpdf/PSTokenizer.cc; sourceTree = "<group>"; };
+		BA385A2F2750F55B004A9A0D /* GfxState.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GfxState.cc; path = ../xpdf/GfxState.cc; sourceTree = "<group>"; };
+		BA385A302750F55B004A9A0D /* UnicodeMap.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnicodeMap.cc; path = ../xpdf/UnicodeMap.cc; sourceTree = "<group>"; };
+		BA385A312750F55B004A9A0D /* XFAScanner.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = XFAScanner.cc; path = ../xpdf/XFAScanner.cc; sourceTree = "<group>"; };
+		BA385A322750F55B004A9A0D /* CharCodeToUnicode.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CharCodeToUnicode.cc; path = ../xpdf/CharCodeToUnicode.cc; sourceTree = "<group>"; };
+		BA385A332750F55B004A9A0D /* Lexer.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Lexer.cc; path = ../xpdf/Lexer.cc; sourceTree = "<group>"; };
+		BA385A342750F55B004A9A0D /* GfxFont.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GfxFont.cc; path = ../xpdf/GfxFont.cc; sourceTree = "<group>"; };
+		BA385A352750F55B004A9A0D /* UTF8.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UTF8.cc; path = ../xpdf/UTF8.cc; sourceTree = "<group>"; };
+		BA385A362750F55B004A9A0D /* TextString.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextString.cc; path = ../xpdf/TextString.cc; sourceTree = "<group>"; };
+		BA385A372750F55B004A9A0D /* Function.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Function.cc; path = ../xpdf/Function.cc; sourceTree = "<group>"; };
+		BA385A382750F55B004A9A0D /* Gfx.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Gfx.cc; path = ../xpdf/Gfx.cc; sourceTree = "<group>"; };
+		BA385A392750F55B004A9A0D /* JArithmeticDecoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JArithmeticDecoder.cc; path = ../xpdf/JArithmeticDecoder.cc; sourceTree = "<group>"; };
+		BA385A3A2750F55B004A9A0D /* SecurityHandler.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SecurityHandler.cc; path = ../xpdf/SecurityHandler.cc; sourceTree = "<group>"; };
+		BA385A3B2750F55B004A9A0D /* Dict.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Dict.cc; path = ../xpdf/Dict.cc; sourceTree = "<group>"; };
+		BA385A3C2750F55B004A9A0D /* NameToCharCode.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NameToCharCode.cc; path = ../xpdf/NameToCharCode.cc; sourceTree = "<group>"; };
+		BA385A3D2750F55B004A9A0D /* UnicodeRemapping.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnicodeRemapping.cc; path = ../xpdf/UnicodeRemapping.cc; sourceTree = "<group>"; };
+		BA385A3E2750F55B004A9A0D /* CMap.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CMap.cc; path = ../xpdf/CMap.cc; sourceTree = "<group>"; };
+		BA385A3F2750F55B004A9A0D /* Link.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Link.cc; path = ../xpdf/Link.cc; sourceTree = "<group>"; };
+		BA385A402750F55B004A9A0D /* BuiltinFontTables.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BuiltinFontTables.cc; path = ../xpdf/BuiltinFontTables.cc; sourceTree = "<group>"; };
+		BA385A412750F55B004A9A0D /* UnicodeTypeTable.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnicodeTypeTable.cc; path = ../xpdf/UnicodeTypeTable.cc; sourceTree = "<group>"; };
+		BA385A422750F55B004A9A0D /* AcroForm.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AcroForm.cc; path = ../xpdf/AcroForm.cc; sourceTree = "<group>"; };
+		BA385A432750F55B004A9A0D /* Page.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Page.cc; path = ../xpdf/Page.cc; sourceTree = "<group>"; };
+		BA385A442750F55B004A9A0D /* Outline.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Outline.cc; path = ../xpdf/Outline.cc; sourceTree = "<group>"; };
+		BA385A452750F55B004A9A0D /* PDFDoc.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PDFDoc.cc; path = ../xpdf/PDFDoc.cc; sourceTree = "<group>"; };
+		BA385A722750F595004A9A0D /* FoFiIdentifier.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FoFiIdentifier.cc; path = ../fofi/FoFiIdentifier.cc; sourceTree = "<group>"; };
+		BA385A732750F595004A9A0D /* FoFiType1.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FoFiType1.cc; path = ../fofi/FoFiType1.cc; sourceTree = "<group>"; };
+		BA385A742750F595004A9A0D /* FoFiType1C.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FoFiType1C.cc; path = ../fofi/FoFiType1C.cc; sourceTree = "<group>"; };
+		BA385A752750F595004A9A0D /* FoFiEncodings.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FoFiEncodings.cc; path = ../fofi/FoFiEncodings.cc; sourceTree = "<group>"; };
+		BA385A762750F595004A9A0D /* FoFiBase.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FoFiBase.cc; path = ../fofi/FoFiBase.cc; sourceTree = "<group>"; };
+		BA385A772750F595004A9A0D /* FoFiTrueType.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FoFiTrueType.cc; path = ../fofi/FoFiTrueType.cc; sourceTree = "<group>"; };
+		BA385A7F2750F5EF004A9A0D /* gmem.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gmem.cc; path = ../goo/gmem.cc; sourceTree = "<group>"; };
+		BA385A802750F5EF004A9A0D /* GString.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GString.cc; path = ../goo/GString.cc; sourceTree = "<group>"; };
+		BA385A812750F5EF004A9A0D /* parseargs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = parseargs.c; path = ../goo/parseargs.c; sourceTree = "<group>"; };
+		BA385A822750F5EF004A9A0D /* Trace.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Trace.cc; path = ../goo/Trace.cc; sourceTree = "<group>"; };
+		BA385A832750F5EF004A9A0D /* GList.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GList.cc; path = ../goo/GList.cc; sourceTree = "<group>"; };
+		BA385A842750F5EF004A9A0D /* gmempp.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gmempp.cc; path = ../goo/gmempp.cc; sourceTree = "<group>"; };
+		BA385A852750F5EF004A9A0D /* GHash.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GHash.cc; path = ../goo/GHash.cc; sourceTree = "<group>"; };
+		BA385A862750F5EF004A9A0D /* FixedPoint.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FixedPoint.cc; path = ../goo/FixedPoint.cc; sourceTree = "<group>"; };
+		BA385A872750F5EF004A9A0D /* gfile.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gfile.cc; path = ../goo/gfile.cc; sourceTree = "<group>"; };
+		BA385A912750F61E004A9A0D /* TextOutputDev.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TextOutputDev.cc; path = ../../xpdf/TextOutputDev.cc; sourceTree = "<group>"; };
+		BA385A942750F718004A9A0D /* CPdfParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CPdfParser.h; path = ../parse/CPdfParser.h; sourceTree = "<group>"; };
+		BA385A952750F718004A9A0D /* CParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CParser.h; path = ../parse/CParser.h; sourceTree = "<group>"; };
+		BA385A962750F718004A9A0D /* CStrCvt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CStrCvt.cpp; path = ../parse/CStrCvt.cpp; sourceTree = "<group>"; };
+		BA385A972750F718004A9A0D /* CStrCvt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CStrCvt.h; path = ../parse/CStrCvt.h; sourceTree = "<group>"; };
+		BA385A982750F718004A9A0D /* CPdfParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CPdfParser.cpp; path = ../parse/CPdfParser.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BA385A0A2750F46D004A9A0D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BA385A032750F46D004A9A0D = {
+			isa = PBXGroup;
+			children = (
+				BA385A932750F705004A9A0D /* parse */,
+				BA385A7E2750F59D004A9A0D /* goo */,
+				BA385A712750F56B004A9A0D /* fofi */,
+				BA385A1A2750F486004A9A0D /* xpdf */,
+				BA385A0E2750F46D004A9A0D /* pdf2txt */,
+				BA385A0D2750F46D004A9A0D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BA385A0D2750F46D004A9A0D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BA385A0C2750F46D004A9A0D /* libpdf2txt.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BA385A0E2750F46D004A9A0D /* pdf2txt */ = {
+			isa = PBXGroup;
+			children = (
+				BA385A912750F61E004A9A0D /* TextOutputDev.cc */,
+				BA385A0F2750F46D004A9A0D /* pdf2txt.hpp */,
+				BA385A112750F46D004A9A0D /* pdf2txtPriv.hpp */,
+				BA385A132750F46D004A9A0D /* pdf2txt.cpp */,
+			);
+			path = pdf2txt;
+			sourceTree = "<group>";
+		};
+		BA385A1A2750F486004A9A0D /* xpdf */ = {
+			isa = PBXGroup;
+			children = (
+				BA385A422750F55B004A9A0D /* AcroForm.cc */,
+				BA385A1D2750F55A004A9A0D /* Annot.cc */,
+				BA385A1F2750F55A004A9A0D /* Array.cc */,
+				BA385A1C2750F55A004A9A0D /* BuiltinFont.cc */,
+				BA385A402750F55B004A9A0D /* BuiltinFontTables.cc */,
+				BA385A292750F55A004A9A0D /* Catalog.cc */,
+				BA385A322750F55B004A9A0D /* CharCodeToUnicode.cc */,
+				BA385A3E2750F55B004A9A0D /* CMap.cc */,
+				BA385A262750F55A004A9A0D /* Decrypt.cc */,
+				BA385A3B2750F55B004A9A0D /* Dict.cc */,
+				BA385A202750F55A004A9A0D /* Error.cc */,
+				BA385A2C2750F55A004A9A0D /* FontEncodingTables.cc */,
+				BA385A372750F55B004A9A0D /* Function.cc */,
+				BA385A382750F55B004A9A0D /* Gfx.cc */,
+				BA385A342750F55B004A9A0D /* GfxFont.cc */,
+				BA385A2F2750F55B004A9A0D /* GfxState.cc */,
+				BA385A242750F55A004A9A0D /* GlobalParams.cc */,
+				BA385A392750F55B004A9A0D /* JArithmeticDecoder.cc */,
+				BA385A252750F55A004A9A0D /* JBIG2Stream.cc */,
+				BA385A2A2750F55A004A9A0D /* JPXStream.cc */,
+				BA385A332750F55B004A9A0D /* Lexer.cc */,
+				BA385A3F2750F55B004A9A0D /* Link.cc */,
+				BA385A3C2750F55B004A9A0D /* NameToCharCode.cc */,
+				BA385A1E2750F55A004A9A0D /* Object.cc */,
+				BA385A272750F55A004A9A0D /* OptionalContent.cc */,
+				BA385A442750F55B004A9A0D /* Outline.cc */,
+				BA385A212750F55A004A9A0D /* OutputDev.cc */,
+				BA385A432750F55B004A9A0D /* Page.cc */,
+				BA385A282750F55A004A9A0D /* Parser.cc */,
+				BA385A2B2750F55A004A9A0D /* PDF417Barcode.cc */,
+				BA385A452750F55B004A9A0D /* PDFDoc.cc */,
+				BA385A2D2750F55A004A9A0D /* PDFDocEncoding.cc */,
+				BA385A2E2750F55A004A9A0D /* PSTokenizer.cc */,
+				BA385A3A2750F55B004A9A0D /* SecurityHandler.cc */,
+				BA385A222750F55A004A9A0D /* Stream.cc */,
+				BA385A362750F55B004A9A0D /* TextString.cc */,
+				BA385A302750F55B004A9A0D /* UnicodeMap.cc */,
+				BA385A3D2750F55B004A9A0D /* UnicodeRemapping.cc */,
+				BA385A412750F55B004A9A0D /* UnicodeTypeTable.cc */,
+				BA385A352750F55B004A9A0D /* UTF8.cc */,
+				BA385A312750F55B004A9A0D /* XFAScanner.cc */,
+				BA385A1B2750F55A004A9A0D /* XRef.cc */,
+				BA385A232750F55A004A9A0D /* Zoox.cc */,
+			);
+			name = xpdf;
+			sourceTree = "<group>";
+		};
+		BA385A712750F56B004A9A0D /* fofi */ = {
+			isa = PBXGroup;
+			children = (
+				BA385A762750F595004A9A0D /* FoFiBase.cc */,
+				BA385A752750F595004A9A0D /* FoFiEncodings.cc */,
+				BA385A722750F595004A9A0D /* FoFiIdentifier.cc */,
+				BA385A772750F595004A9A0D /* FoFiTrueType.cc */,
+				BA385A732750F595004A9A0D /* FoFiType1.cc */,
+				BA385A742750F595004A9A0D /* FoFiType1C.cc */,
+			);
+			name = fofi;
+			sourceTree = "<group>";
+		};
+		BA385A7E2750F59D004A9A0D /* goo */ = {
+			isa = PBXGroup;
+			children = (
+				BA385A862750F5EF004A9A0D /* FixedPoint.cc */,
+				BA385A872750F5EF004A9A0D /* gfile.cc */,
+				BA385A852750F5EF004A9A0D /* GHash.cc */,
+				BA385A832750F5EF004A9A0D /* GList.cc */,
+				BA385A7F2750F5EF004A9A0D /* gmem.cc */,
+				BA385A842750F5EF004A9A0D /* gmempp.cc */,
+				BA385A802750F5EF004A9A0D /* GString.cc */,
+				BA385A812750F5EF004A9A0D /* parseargs.c */,
+				BA385A822750F5EF004A9A0D /* Trace.cc */,
+			);
+			name = goo;
+			sourceTree = "<group>";
+		};
+		BA385A932750F705004A9A0D /* parse */ = {
+			isa = PBXGroup;
+			children = (
+				BA385A952750F718004A9A0D /* CParser.h */,
+				BA385A982750F718004A9A0D /* CPdfParser.cpp */,
+				BA385A942750F718004A9A0D /* CPdfParser.h */,
+				BA385A962750F718004A9A0D /* CStrCvt.cpp */,
+				BA385A972750F718004A9A0D /* CStrCvt.h */,
+			);
+			name = parse;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		BA385A082750F46D004A9A0D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA385A122750F46D004A9A0D /* pdf2txtPriv.hpp in Headers */,
+				BA385A992750F718004A9A0D /* CPdfParser.h in Headers */,
+				BA385A102750F46D004A9A0D /* pdf2txt.hpp in Headers */,
+				BA385A9A2750F718004A9A0D /* CParser.h in Headers */,
+				BA385A9C2750F718004A9A0D /* CStrCvt.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		BA385A0B2750F46D004A9A0D /* pdf2txt */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BA385A172750F46D004A9A0D /* Build configuration list for PBXNativeTarget "pdf2txt" */;
+			buildPhases = (
+				BA385A082750F46D004A9A0D /* Headers */,
+				BA385A092750F46D004A9A0D /* Sources */,
+				BA385A0A2750F46D004A9A0D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = pdf2txt;
+			productName = pdf2txt;
+			productReference = BA385A0C2750F46D004A9A0D /* libpdf2txt.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BA385A042750F46D004A9A0D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1310;
+				TargetAttributes = {
+					BA385A0B2750F46D004A9A0D = {
+						CreatedOnToolsVersion = 13.1;
+					};
+				};
+			};
+			buildConfigurationList = BA385A072750F46D004A9A0D /* Build configuration list for PBXProject "pdf2txt" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = BA385A032750F46D004A9A0D;
+			productRefGroup = BA385A0D2750F46D004A9A0D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BA385A0B2750F46D004A9A0D /* pdf2txt */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BA385A092750F46D004A9A0D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA385A882750F5EF004A9A0D /* gmem.cc in Sources */,
+				BA385A4C2750F55B004A9A0D /* OutputDev.cc in Sources */,
+				BA385A4E2750F55B004A9A0D /* Zoox.cc in Sources */,
+				BA385A8E2750F5EF004A9A0D /* GHash.cc in Sources */,
+				BA385A7A2750F595004A9A0D /* FoFiType1C.cc in Sources */,
+				BA385A892750F5EF004A9A0D /* GString.cc in Sources */,
+				BA385A5C2750F55B004A9A0D /* XFAScanner.cc in Sources */,
+				BA385A662750F55B004A9A0D /* Dict.cc in Sources */,
+				BA385A8C2750F5EF004A9A0D /* GList.cc in Sources */,
+				BA385A482750F55B004A9A0D /* Annot.cc in Sources */,
+				BA385A5A2750F55B004A9A0D /* GfxState.cc in Sources */,
+				BA385A8B2750F5EF004A9A0D /* Trace.cc in Sources */,
+				BA385A4F2750F55B004A9A0D /* GlobalParams.cc in Sources */,
+				BA385A602750F55B004A9A0D /* UTF8.cc in Sources */,
+				BA385A6D2750F55B004A9A0D /* AcroForm.cc in Sources */,
+				BA385A8F2750F5EF004A9A0D /* FixedPoint.cc in Sources */,
+				BA385A502750F55B004A9A0D /* JBIG2Stream.cc in Sources */,
+				BA385A522750F55B004A9A0D /* OptionalContent.cc in Sources */,
+				BA385A5D2750F55B004A9A0D /* CharCodeToUnicode.cc in Sources */,
+				BA385A532750F55B004A9A0D /* Parser.cc in Sources */,
+				BA385A4B2750F55B004A9A0D /* Error.cc in Sources */,
+				BA385A5B2750F55B004A9A0D /* UnicodeMap.cc in Sources */,
+				BA385A582750F55B004A9A0D /* PDFDocEncoding.cc in Sources */,
+				BA385A782750F595004A9A0D /* FoFiIdentifier.cc in Sources */,
+				BA385A6B2750F55B004A9A0D /* BuiltinFontTables.cc in Sources */,
+				BA385A922750F61E004A9A0D /* TextOutputDev.cc in Sources */,
+				BA385A5F2750F55B004A9A0D /* GfxFont.cc in Sources */,
+				BA385A492750F55B004A9A0D /* Object.cc in Sources */,
+				BA385A572750F55B004A9A0D /* FontEncodingTables.cc in Sources */,
+				BA385A652750F55B004A9A0D /* SecurityHandler.cc in Sources */,
+				BA385A542750F55B004A9A0D /* Catalog.cc in Sources */,
+				BA385A672750F55B004A9A0D /* NameToCharCode.cc in Sources */,
+				BA385A562750F55B004A9A0D /* PDF417Barcode.cc in Sources */,
+				BA385A902750F5EF004A9A0D /* gfile.cc in Sources */,
+				BA385A6E2750F55B004A9A0D /* Page.cc in Sources */,
+				BA385A642750F55B004A9A0D /* JArithmeticDecoder.cc in Sources */,
+				BA385A6F2750F55B004A9A0D /* Outline.cc in Sources */,
+				BA385A512750F55B004A9A0D /* Decrypt.cc in Sources */,
+				BA385A692750F55B004A9A0D /* CMap.cc in Sources */,
+				BA385A472750F55B004A9A0D /* BuiltinFont.cc in Sources */,
+				BA385A462750F55B004A9A0D /* XRef.cc in Sources */,
+				BA385A7D2750F595004A9A0D /* FoFiTrueType.cc in Sources */,
+				BA385A612750F55B004A9A0D /* TextString.cc in Sources */,
+				BA385A9D2750F718004A9A0D /* CPdfParser.cpp in Sources */,
+				BA385A7B2750F595004A9A0D /* FoFiEncodings.cc in Sources */,
+				BA385A5E2750F55B004A9A0D /* Lexer.cc in Sources */,
+				BA385A9B2750F718004A9A0D /* CStrCvt.cpp in Sources */,
+				BA385A592750F55B004A9A0D /* PSTokenizer.cc in Sources */,
+				BA385A142750F46D004A9A0D /* pdf2txt.cpp in Sources */,
+				BA385A6C2750F55B004A9A0D /* UnicodeTypeTable.cc in Sources */,
+				BA385A4A2750F55B004A9A0D /* Array.cc in Sources */,
+				BA385A8A2750F5EF004A9A0D /* parseargs.c in Sources */,
+				BA385A702750F55B004A9A0D /* PDFDoc.cc in Sources */,
+				BA385A622750F55B004A9A0D /* Function.cc in Sources */,
+				BA385A6A2750F55B004A9A0D /* Link.cc in Sources */,
+				BA385A632750F55B004A9A0D /* Gfx.cc in Sources */,
+				BA385A682750F55B004A9A0D /* UnicodeRemapping.cc in Sources */,
+				BA385A8D2750F5EF004A9A0D /* gmempp.cc in Sources */,
+				BA385A552750F55B004A9A0D /* JPXStream.cc in Sources */,
+				BA385A4D2750F55B004A9A0D /* Stream.cc in Sources */,
+				BA385A792750F595004A9A0D /* FoFiType1.cc in Sources */,
+				BA385A7C2750F595004A9A0D /* FoFiBase.cc in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		BA385A152750F46D004A9A0D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../,
+					../,
+					../goo,
+					../splash,
+					../fofi,
+					../xpdf,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		BA385A162750F46D004A9A0D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../,
+					../,
+					../goo,
+					../splash,
+					../fofi,
+					../xpdf,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		BA385A182750F46D004A9A0D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		BA385A192750F46D004A9A0D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BA385A072750F46D004A9A0D /* Build configuration list for PBXProject "pdf2txt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA385A152750F46D004A9A0D /* Debug */,
+				BA385A162750F46D004A9A0D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BA385A172750F46D004A9A0D /* Build configuration list for PBXNativeTarget "pdf2txt" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BA385A182750F46D004A9A0D /* Debug */,
+				BA385A192750F46D004A9A0D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BA385A042750F46D004A9A0D /* Project object */;
+}

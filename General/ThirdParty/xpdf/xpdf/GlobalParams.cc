@@ -283,9 +283,15 @@ void SysFontInfo::mungeName3(GString *name, GBool *bold, GBool *italic) {
 // higher score is better.  Zero indicates a non-match.
 int SysFontInfo::match(GString *nameA) {
   // fast fail: check if the first two letters match
+#ifdef _WIN32
   if (_stricmp(name->getCString(), nameA->getCString())) {
     return 0;
   }
+#else
+    if (strncasecmp(name->getCString(), nameA->getCString(), 2)) {
+        return 0;
+      }
+#endif
 
   GString *pdfName1 = mungeName1(nameA);
   GString *sysName1 = mungeName1(name);

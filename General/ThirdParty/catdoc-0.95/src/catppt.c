@@ -39,6 +39,7 @@ char szKempDataDir[PATH_MAX+1];
  */
 void help (void) {
 	printf("Usage:\n catppt [-lV] [-b string] [-s charset] [-d charset] files\n");
+    printf("over.\n");
 }
 
 extern char *slide_separator;
@@ -80,27 +81,37 @@ int ppt_main_unused(int argc, char *argv[], const char* kepmDataDir) {
 	
 	check_charset(&dest_csname,dest_csname); 
 
-	while ((c=getopt(argc,argv,"Vls:d:b:"))!=-1) {
-		switch(c)  {
-		case 'l':
-			list_charsets(); exit(0);
-		case 's':
-			check_charset(&source_csname,optarg);
-			source_charset=read_charset(source_csname);
-			break;
-		case 'd':
-			check_charset(&dest_csname,optarg);
-			break;
-		case 'b':
-			slide_separator = strdup(optarg);
-			break;
-		case 'V': printf("Catdoc Version %s\n",CATDOC_VERSION);
-			exit(0);
-		default:
-			help();
-			exit(1);
-		}	
-	}
+//    for(int i=0; i<argc; i++)
+//    {
+//        printf("argv[%d] : \"%s\"\n", i, argv[i]);
+//    }
+//    
+//    printf("optind = %d\n", optind);
+//    
+//	while ((c=getopt(argc,argv,"Vls:d:b:"))!=-1) {
+//		switch(c)  {
+//		case 'l':
+//			list_charsets(); exit(0);
+//		case 's':
+//			check_charset(&source_csname,optarg);
+//			source_charset=read_charset(source_csname);
+//			break;
+//		case 'd':
+//			check_charset(&dest_csname,optarg);
+//			break;
+//		case 'b':
+//			slide_separator = strdup(optarg);
+//			break;
+//		case 'V': printf("Catdoc Version %s\n",CATDOC_VERSION);
+//			exit(0);
+//		default:
+//            printf("%c %d\n", c, (int)c);
+//			help();
+//			exit(1);
+//		}	
+//	}
+//    
+//    printf("over getopt\n");
 	/* If we are using system strftime, we need to  set LC_TIME locale
 	 * category unless choosen charset is not same as system locale
 	 */ 
@@ -131,15 +142,19 @@ int ppt_main_unused(int argc, char *argv[], const char* kepmDataDir) {
 		fprintf(stderr,"Cannod read substitution map ascii%s\n",
 						REPL_EXT);
 		exit(1);
-	}  
-	if (optind>=argc) {
-		if (isatty(fileno(stdin))) {
-			help();
-			exit(0);
-		}    
-		do_ppt(stdin,"STDIN");
-		exit (0);
-	}	
+	}
+    
+//    printf("optind = %d\n", optind);
+//    
+//	if (optind>=argc) {
+//		if (isatty(fileno(stdin))) {
+//            printf("hit\n");
+//			help();
+//			exit(0);
+//		}    
+//		do_ppt(stdin,"STDIN");
+//		exit (0);
+//	}	
 	for (i=optind;i<argc;i++) {
 		filename = argv[i];
 		input=fopen(filename,"rb");
