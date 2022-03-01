@@ -149,23 +149,96 @@ class StrCoding
 
 bool HasEnding(std::string const &fullString, std::string const &ending);
 
-inline std::wstring UTF8Str2Wstr(const std::string &str)
+namespace str
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::wstring wide = converter.from_bytes(str.c_str());
-    return wide;
+inline bool IsUTF8(const char *string)
+{
+    if (!string)
+        return true;
+
+    const unsigned char *bytes = (const unsigned char *)string;
+    unsigned int cp;
+    int num;
+
+    while (*bytes != 0x00)
+    {
+        if ((*bytes & 0x80) == 0x00)
+        {
+            // U+0000 to U+007F
+            cp  = (*bytes & 0x7F);
+            num = 1;
+        }
+        else if ((*bytes & 0xE0) == 0xC0)
+        {
+            // U+0080 to U+07FF
+            cp  = (*bytes & 0x1F);
+            num = 2;
+        }
+        else if ((*bytes & 0xF0) == 0xE0)
+        {
+            // U+0800 to U+FFFF
+            cp  = (*bytes & 0x0F);
+            num = 3;
+        }
+        else if ((*bytes & 0xF8) == 0xF0)
+        {
+            // U+10000 to U+10FFFF
+            cp  = (*bytes & 0x07);
+            num = 4;
+        }
+        else
+            return false;
+
+        bytes += 1;
+        for (int i = 1; i < num; ++i)
+        {
+            if ((*bytes & 0xC0) != 0x80)
+                return false;
+            cp = (cp << 6) | (*bytes & 0x3F);
+            bytes += 1;
+        }
+
+        if ((cp > 0x10FFFF) || ((cp >= 0xD800) && (cp <= 0xDFFF)) || ((cp <= 0x007F) && (num != 1)) ||
+            ((cp >= 0x0080) && (cp <= 0x07FF) && (num != 2)) || ((cp >= 0x0800) && (cp <= 0xFFFF) && (num != 3)) ||
+            ((cp >= 0x10000) && (cp <= 0x1FFFFF) && (num != 4)))
+            return false;
+    }
+
+    return true;
+}
+inline std::string w2utf8(const std::wstring &str)
+{
+    static std::wstring_convert<std::codecvt_utf8<wchar_t>> strCnv;
+    return strCnv.to_bytes(str);
 }
 
-inline std::string WstrToUTF8Str(const std::wstring &wstr)
+inline std::wstring utf82w(const std::string &str)
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::string ret = converter.to_bytes(wstr.c_str());
-    return ret;
+    static std::wstring_convert<std::codecvt_utf8<wchar_t>> strCnv;
+    return strCnv.from_bytes(str);
+}
+
+inline std::string w2ansi(const std::wstring &str, const std::string &locale = "chs")
+{
+    typedef std::codecvt_byname<wchar_t, char, std::mbstate_t> F;
+    static std::wstring_convert<F> strCnv(new F(locale));
+    return strCnv.to_bytes(str);
+}
+
+inline std::wstring ansi2w(const std::string &str, const std::string &locale = "chs")
+{
+    typedef std::codecvt_byname<wchar_t, char, std::mbstate_t> F;
+    static std::wstring_convert<F> strCnv(new F(locale));
+    return strCnv.from_bytes(str);
 }
 inline std::string StrToUTF8(const std::string &str)
 {
-    return WstrToUTF8Str(UTF8Str2Wstr(str));
+    if (!str::IsUTF8(str.c_str()))
+        return str::w2utf8(str::ansi2w(str));
+    return str;
 }
+}; // namespace str
+
 inline int HexStrToDecStr(std::string inStr, std::string &outStr)
 {
     int result             = 0;
