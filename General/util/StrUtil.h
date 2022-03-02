@@ -212,10 +212,12 @@ inline std::string w2utf8(const std::wstring &str)
     return strCnv.to_bytes(str);
 }
 
+std::string StrToUTF8(const std::string &str);
 inline std::wstring utf82w(const std::string &str)
 {
+    std::string tmp = StrToUTF8(str);
     static std::wstring_convert<std::codecvt_utf8<wchar_t>> strCnv;
-    return strCnv.from_bytes(str);
+    return strCnv.from_bytes(tmp);
 }
 
 inline std::string w2ansi(const std::wstring &str, const std::string &locale = "chs")
