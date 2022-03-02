@@ -1,6 +1,6 @@
 #include "System.h"
-#include "StrUtil.h"
 #include <map>
+#include "StrUtil.h"
 #ifdef _WIN32
 #include <Windows/WinUtilLib/WindowsUtilLib/ProcessHelper.h>
 #include <Windows/WinUtilLib/WindowsUtilLib/StrUtil.h>
@@ -64,7 +64,7 @@ std::string GetActiveUserSid()
 
         if (auto iter = out.find(L"\n"); iter != std::wstring::npos)
             out.erase(iter);
-        std::string ret = WstrToUTF8Str(out);
+        std::string ret = str::w2utf8(out);
         ret = std::string("p-") + ret;
         
         
