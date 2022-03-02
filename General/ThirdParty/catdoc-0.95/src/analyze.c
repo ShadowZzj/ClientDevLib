@@ -17,6 +17,9 @@ char rtf_sign[]="{\\rtf";
 char old_word_sign[]={0xdb,0xa5,0};
 char write_sign[]={0x31,0xBE,0};
 int verbose=0;
+
+void aw_SetEncryptedFlag(int bEncrypt);
+
 /********************************************************************* 
  * Determines format of input file and calls parse_word_header or 
  * process_file if
@@ -149,6 +152,7 @@ int parse_word_header(unsigned char * buffer,FILE *f,int offset,long curpos) {
 	if (flags & fEncrypted) {
 		fprintf(stderr,"[File is encrypted. Encryption key = %08lx]\n",
 				getlong(buffer,14));
+        aw_SetEncryptedFlag(1);
 		return 69;
 	}
 	if (verbose) {

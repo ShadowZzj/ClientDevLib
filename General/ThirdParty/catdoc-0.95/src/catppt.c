@@ -37,13 +37,12 @@ char szKempDataDir[PATH_MAX+1];
  * Displays  help message
  * 
  */
-void help (void) {
+static void help (void) {
 	printf("Usage:\n catppt [-lV] [-b string] [-s charset] [-d charset] files\n");
     printf("over.\n");
 }
 
 extern char *slide_separator;
-char *input_buffer, *output_buffer;
 
 /** 
  * 
@@ -119,7 +118,7 @@ int ppt_main_unused(int argc, char *argv[], const char* kepmDataDir) {
 	set_time_locale();
 #endif	
 	/* charset conversion init*/
-	input_buffer=malloc(FILE_BUFFER);
+
 	if (strcmp(dest_csname,"utf-8")) {
 		tmp_charset=read_charset(dest_csname);
 		if (!tmp_charset) {
@@ -155,7 +154,7 @@ int ppt_main_unused(int argc, char *argv[], const char* kepmDataDir) {
 //		do_ppt(stdin,"STDIN");
 //		exit (0);
 //	}	
-	for (i=optind;i<argc;i++) {
+	for (i=1;i<argc;i++) {
 		filename = argv[i];
 		input=fopen(filename,"rb");
 		if (!input) {

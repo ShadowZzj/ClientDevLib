@@ -484,11 +484,8 @@ void rtfSetCharset(short int **charset_ptr,unsigned int codepage)
 {
 	/* Do not override charset if it is specified in the command line */
 	const char *charset_name;
-	char *save_buf = input_buffer;
 	if (forced_charset) return;
 	charset_name = charset_from_codepage(codepage);
 	check_charset(&source_csname,charset_name);
-	input_buffer=NULL;
 	*charset_ptr = read_charset(source_csname);	
-	input_buffer = save_buf;
 }

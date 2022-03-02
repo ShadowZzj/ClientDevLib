@@ -55,8 +55,6 @@ SUBSTMAP read_substmap(char* filename) {
 		free(map);
 		return NULL;
 	}
-	if (input_buffer)
-		setvbuf(f,input_buffer,_IOFBF,FILE_BUFFER);
 
 	while (!feof(f)) {
 		if (!fgets(line,1024,f)) continue;

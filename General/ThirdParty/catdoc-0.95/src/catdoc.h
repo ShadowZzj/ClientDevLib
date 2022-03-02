@@ -104,7 +104,7 @@ char *add_exe_path(const char* name);
 #if defined(__MSDOS__) || defined(_WIN32)
 #define TARGET_CHARSET "cp866"
 #else
-#define TARGET_CHARSET "koi8-r"
+#define TARGET_CHARSET "utf-8"
 #endif
 #endif
 

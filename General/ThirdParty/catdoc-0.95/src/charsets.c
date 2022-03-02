@@ -87,8 +87,6 @@ uint16_t * read_charset(const char *filename) {
 		perror(path); 
 		return NULL;
 	}
-	if (input_buffer)
-		setvbuf(f,input_buffer,_IOFBF,FILE_BUFFER);
 	/* defaults */
 	new = calloc(sizeof(short int),256);
 	for (c=0;c<32;c++) {

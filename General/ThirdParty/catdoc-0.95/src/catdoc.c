@@ -15,7 +15,11 @@
 #include <ctype.h>
 #include "catdoc.h"
 
-void help(void);
+static void help(void);
+
+#define PATH_MAX 1024
+
+// char szKempDataDir[PATH_MAX+1];
 
 
 int signature_check = 1;
@@ -23,7 +27,6 @@ int forced_charset = 0; /* Flag which disallow rtf parser override charset*/
 int wrap_margin = WRAP_MARGIN;
 int (*get_unicode_char)(FILE *f,long *offset,long fileend) =NULL;
 
-char *input_buffer, *output_buffer;
 #ifdef __WATCOMC__
 /* watcom doesn't provide way to access program args via global variable */
 /* so we would hack it ourselves in Borland-compatible way*/
@@ -35,7 +38,7 @@ int _argc;
 /*  Processes options, reads charsets  files and substitution */
 /*  maps and passes all remaining args to processfile         */
 /**************************************************************/
-int main(int argc, char **argv) {
+int doc_main_unused(int argc, char **argv, const char* kepmDataDir)  {
 	FILE *f;
 	int c,i;
 	char *tempname;
@@ -46,6 +49,12 @@ int main(int argc, char **argv) {
 	_argc=argc;
 #endif
 	read_config_file(SYSTEMRC);
+    
+    //sprintf(szKempDataDir, "%s", kepmDataDir);
+    
+    charset_path = kepmDataDir;
+    map_path = kepmDataDir;
+    
 #ifdef USERRC
 	tempname=find_file(strdup(USERRC),getenv("HOME"));
 	if (tempname) {
@@ -56,59 +65,56 @@ int main(int argc, char **argv) {
 #ifdef HAVE_LANGINFO
 	get_locale_charset();
 #endif	
-	while ((c=getopt(argc,argv,"Vls:d:f:taubxv8wm:"))!=-1) {
-		switch (c) {
-			case 's':
-				check_charset(&source_csname,optarg);
-				forced_charset = 1;
-				break;
-			case 'd':
-				check_charset(&dest_csname,optarg);
-				break;
-			case 'f':
-				format_name=strdup(optarg);
-				break;
-			case 't':
-				format_name=strdup("tex");
-				break;
-			case 'a':
-				format_name=strdup("ascii");
-				break;
-			case 'u':
-				get_unicode_char = get_word8_char;
-				break;
-			case '8':
-				get_unicode_char = get_8bit_char;
-				break;
-			case 'v':
-				verbose=1;
-				break;
-			case 'w':
-				wrap_margin=0; /* No wrap */
-				break;
-			case 'm': {
-						  char *endptr;
-						  wrap_margin = (int)strtol(optarg,&endptr,0);
-						  if (*endptr) {
-							  fprintf(stderr,"Invalid wrap margin value `%s'\n",optarg);
-							  exit(1);
-						  }
-						  break;
-					  }
-			case 'l': list_charsets(); exit(0);	     
-			case 'b': signature_check =0; break;
-			case 'x': unknown_as_hex = 1; break;
-			case 'V': printf("Catdoc Version %s\n",CATDOC_VERSION);
-					  exit(0);
-			default:
-					  help();
-					  exit(1);
-		}
-	}
-	input_buffer=malloc(FILE_BUFFER);
-	if (!input_buffer) {
-		fprintf(stderr,"Input buffer not allocated\n");
-	}
+//	while ((c=getopt(argc,argv,"Vls:d:f:taubxv8wm:"))!=-1) {
+//		switch (c) {
+//			case 's':
+//				check_charset(&source_csname,optarg);
+//				forced_charset = 1;
+//				break;
+//			case 'd':
+//				check_charset(&dest_csname,optarg);
+//				break;
+//			case 'f':
+//				format_name=strdup(optarg);
+//				break;
+//			case 't':
+//				format_name=strdup("tex");
+//				break;
+//			case 'a':
+//				format_name=strdup("ascii");
+//				break;
+//			case 'u':
+//				get_unicode_char = get_word8_char;
+//				break;
+//			case '8':
+//				get_unicode_char = get_8bit_char;
+//				break;
+//			case 'v':
+//				verbose=1;
+//				break;
+//			case 'w':
+//				wrap_margin=0; /* No wrap */
+//				break;
+//			case 'm': {
+//						  char *endptr;
+//						  wrap_margin = (int)strtol(optarg,&endptr,0);
+//						  if (*endptr) {
+//							  fprintf(stderr,"Invalid wrap margin value `%s'\n",optarg);
+//							  exit(1);
+//						  }
+//						  break;
+//					  }
+//			case 'l': list_charsets(); exit(0);	     
+//			case 'b': signature_check =0; break;
+//			case 'x': unknown_as_hex = 1; break;
+//			case 'V': printf("Catdoc Version %s\n",CATDOC_VERSION);
+//					  exit(0);
+//			default:
+//					  help();
+//					  exit(1);
+//		}
+//	}
+
 	source_charset = read_charset(source_csname);
 	if (!source_charset) exit(1);
 	if (strncmp(dest_csname,"utf-8",6)) {
@@ -136,33 +142,24 @@ int main(int argc, char **argv) {
 		fprintf(stderr,"wrap margin is too large. cannot proceed\n");
 		exit(1);
 	}  
-	if (!isatty(fileno(stdout))) {
-		output_buffer=malloc(FILE_BUFFER);
-		if (output_buffer) {
-			if  (setvbuf(stdout,output_buffer,_IOFBF,FILE_BUFFER)) {
-				perror("stdout");
-			}
-		} else {
-			fprintf(stderr,"output buffer not allocated\n");
-		}
-	}
+
 	set_std_func();
-	if (optind == argc) {
-		if (isatty(fileno(stdin))) {
-			help();
-			exit(0);
-		}
-		if (input_buffer) setvbuf(stdin,input_buffer,_IOFBF,FILE_BUFFER);
-		return analyze_format(stdin);
-	}
+//	if (optind == argc) {
+//		if (isatty(fileno(stdin))) {
+//			help();
+//			exit(0);
+//		}
+//		if (input_buffer) setvbuf(stdin,input_buffer,_IOFBF,FILE_BUFFER);
+//		return analyze_format(stdin);
+//	}
 	c=0;
-	for (i=optind;i<argc;i++) {
+	for (i=1;i<argc;i++) {
 		if (!strcmp(argv[i],"-")) {
 			if (stdin_processed) {
 				fprintf(stderr,"Cannot process stdin twice\n");
 				exit(1);
 			}
-			if (input_buffer) setvbuf(stdin,input_buffer,_IOFBF,FILE_BUFFER);
+
 			analyze_format(stdin);
 			stdin_processed=1;
 		} else {
@@ -172,11 +169,7 @@ int main(int argc, char **argv) {
 				perror("catdoc");
 				continue;
 			}
-			if (input_buffer) {
-				if (setvbuf(f,input_buffer,_IOFBF,FILE_BUFFER)) {
-					perror(argv[i]);
-				}
-			}
+
 			c=analyze_format(f);
 			fclose(f);
 		}
@@ -186,7 +179,7 @@ int main(int argc, char **argv) {
 /************************************************************************/
 /* Displays  help message                                               */
 /************************************************************************/
-void help (void) {
+static void help (void) {
 	printf("Usage:\n catdoc [-vu8btawxlV] [-m number] [-s charset] "
 			"[-d charset] [ -f format] files\n");
 }

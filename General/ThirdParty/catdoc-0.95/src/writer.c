@@ -24,12 +24,15 @@ static char outputbuffer[LINE_BUF_SIZE]="";
 
 int para_double_newline = 1;
 
+void aw_AppendChar(char* c);
+
 void out_char(const char *chunk) {
 	static int bufpos=0;
 	int eol_flag=0;
 	const char *p; char *q;
 	if (!wrap_margin) {
 		fputs(chunk,stdout);
+        aw_AppendChar(chunk);
 		return;
 	}
 
@@ -47,13 +50,16 @@ void out_char(const char *chunk) {
 		/* End of paragraph */
 		char *q = map_subst(spec_chars,'\n');
 		fputs(outputbuffer,stdout);
+        aw_AppendChar(outputbuffer);
 		*outputbuffer=0;
 		bufpos=0;
 		if (para_double_newline) {
 			if (q) {
 				 fputs(q,stdout);
+                aw_AppendChar(q);
 			} else {
 				fputc('\n',stdout);
+                aw_AppendChar("\n");
 			}
 		}
 	} else if (bufpos>wrap_margin) {
@@ -76,6 +82,9 @@ void out_char(const char *chunk) {
 			*p=0;p++;
 			fputs(outputbuffer,stdout);
 			fputc('\n',stdout);
+            
+            aw_AppendChar(outputbuffer);
+            aw_AppendChar("\n");
 		}
 		for(q=outputbuffer;*p;p++,q++) *q=*p;
 		bufpos=q-outputbuffer;

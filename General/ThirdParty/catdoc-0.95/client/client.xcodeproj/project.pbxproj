@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BA6433F527BDF9420056BCD1 /* libcatppt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BA6433F427BDF9420056BCD1 /* libcatppt.a */; };
+		BA5BE2DC27CE3E1200C153C2 /* libcatppt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BA5BE2DB27CE3E1200C153C2 /* libcatppt.a */; };
+		BA5BE2DF27CE40CC00C153C2 /* CStrCvt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BA5BE2DE27CE40CC00C153C2 /* CStrCvt.cpp */; };
 		BAA771EF279161020003695B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BAA771EE279161020003695B /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -24,6 +25,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BA5BE2DB27CE3E1200C153C2 /* libcatppt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcatppt.a; path = ../catppt/Build/Products/Debug/libcatppt.a; sourceTree = "<group>"; };
+		BA5BE2DD27CE40CC00C153C2 /* CStrCvt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CStrCvt.h; path = ../../../../../../General/TerminalManager/DocsScanPlugin/CStrCvt.h; sourceTree = "<group>"; };
+		BA5BE2DE27CE40CC00C153C2 /* CStrCvt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CStrCvt.cpp; path = ../../../../../../General/TerminalManager/DocsScanPlugin/CStrCvt.cpp; sourceTree = "<group>"; };
 		BA6433F427BDF9420056BCD1 /* libcatppt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcatppt.a; path = ../catcpp/Build/Products/Debug/libcatppt.a; sourceTree = "<group>"; };
 		BAA771EB279161020003695B /* client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = client; sourceTree = BUILT_PRODUCTS_DIR; };
 		BAA771EE279161020003695B /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -35,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BA6433F527BDF9420056BCD1 /* libcatppt.a in Frameworks */,
+				BA5BE2DC27CE3E1200C153C2 /* libcatppt.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,6 +66,8 @@
 		BAA771ED279161020003695B /* client */ = {
 			isa = PBXGroup;
 			children = (
+				BA5BE2DE27CE40CC00C153C2 /* CStrCvt.cpp */,
+				BA5BE2DD27CE40CC00C153C2 /* CStrCvt.h */,
 				BAA771EE279161020003695B /* main.cpp */,
 			);
 			path = client;
@@ -71,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				BA6433F427BDF9420056BCD1 /* libcatppt.a */,
+				BA5BE2DB27CE3E1200C153C2 /* libcatppt.a */,
 				BAA771F6279161880003695B /* libcatcpp.a */,
 			);
 			name = Frameworks;
@@ -134,6 +141,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BAA771EF279161020003695B /* main.cpp in Sources */,
+				BA5BE2DF27CE40CC00C153C2 /* CStrCvt.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,8 +267,9 @@
 					/Users/bixiangyang/projects/kepm_client/MacOS/TerminalManager/DocsScanPlugin/Parser,
 					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin/Parser,
 					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin,
+					/Users/bixiangyang/kepm/kepm_client/General/TerminalManager/DocsScanPlugin,
 				);
-				LIBRARY_SEARCH_PATHS = "/Users/bixiangyang/projects/kepm_client/ClientDevLib/General/ThirdParty/catdoc-0.95/catcpp/Build/Products/Debug";
+				LIBRARY_SEARCH_PATHS = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/catdoc-0.95/catppt/Build/Products/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -273,7 +282,7 @@
 					/Users/bixiangyang/projects/kepm_client/MacOS/TerminalManager/DocsScanPlugin/Parser,
 					/Users/bixiangyang/projects/kepm_client/General/TerminalManager/DocsScanPlugin/Parser,
 				);
-				LIBRARY_SEARCH_PATHS = "/Users/bixiangyang/projects/kepm_client/ClientDevLib/General/ThirdParty/catdoc-0.95/catcpp/Build/Products/Debug";
+				LIBRARY_SEARCH_PATHS = "/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/catdoc-0.95/catppt/Build/Products/Debug";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

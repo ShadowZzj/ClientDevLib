@@ -31,7 +31,7 @@ static void process_item (int rectype, long reclen, FILE* input);
 
 static void start_text_out(void);
 
-void AppendChar(char c);
+void AppendChar(const char* str);
 
 /** 
  * 
@@ -45,6 +45,7 @@ enum {START_FILE,START_SLIDE,TEXTOUT,END_FILE} slide_state ;
 static void start_text_out(void) {
 	if (slide_state == START_SLIDE) {
 		fputs(slide_separator,stdout);
+        AppendChar(slide_separator);
 	}
 	slide_state = TEXTOUT;
 }	
@@ -102,6 +103,7 @@ static void process_item (int rectype, long reclen, FILE* input) {
 		catdoc_seek(input, reclen, SEEK_CUR);
 		if (slide_state == TEXTOUT) {
 			fputs(slide_separator,stdout);
+            AppendChar(slide_separator);
 			slide_state = END_FILE;
 		}	
 		break;
@@ -166,16 +168,16 @@ static void process_item (int rectype, long reclen, FILE* input) {
                 {
                     char* c = convert_char((unsigned char)*buf);
 					fputs(c,stdout);
-                    AppendChar(*c);
+                    AppendChar(c);
                 }
 				else
                 {
 					fputc('\n',stdout);
-                    AppendChar('\n');
+                    AppendChar("\n");
                 }
 			}
 			fputc('\n',stdout);
-            AppendChar('\n');
+            AppendChar("\n");
 		}
 		break;
 		
@@ -193,16 +195,16 @@ static void process_item (int rectype, long reclen, FILE* input) {
                 {
                     char* c = convert_char(u);
                     fputs(c,stdout);
-                    AppendChar(*c);
+                    AppendChar(c);
                 }
 				else
                 {
 					fputc('\n',stdout);
-                    AppendChar('\n');
+                    AppendChar("\n");
                 }
 			}
 			fputc('\n',stdout);
-            AppendChar('\n');
+            AppendChar("\n");
 		}
 		break;
 		

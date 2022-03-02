@@ -14,6 +14,7 @@ unsigned short int buffer[PARAGRAPH_BUFFER];
 static unsigned char read_buf[256];
 static int buf_is_unicode;
 
+void aw_AppendChar(char* c);
 /**************************************************************************/
 /* Just prints out content of input file. Called when file is not OLE     */
 /* stream                                                                 */
@@ -74,13 +75,18 @@ void copy_out (FILE *f,char *header) {
 		}    
 	} else {
 		for (i=0;i<8;i++) {
-			fputs(convert_char(to_unicode(source_charset,(unsigned char)header[i])),stdout);
+            char* str = convert_char(to_unicode(source_charset,(unsigned char)header[i]));
+			fputs(str, stdout);
+            aw_AppendChar(str);
 		}			 
 		/* Assuming 8-bit input text */
 		while ((count = catdoc_read(buf,1,PARAGRAPH_BUFFER,f))) {
-			for (i=0;i<count;i++) {
-				fputs(convert_char(to_unicode(source_charset,
-								(unsigned char)buf[i])),stdout);
+			for (i=0;i<count;i++)
+            {
+                char* str = convert_char(to_unicode(source_charset,
+                                                    (unsigned char)buf[i]));
+				fputs(str, stdout);
+                aw_AppendChar(str);
 			}		       
 		}
 	} 
