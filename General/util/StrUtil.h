@@ -8,6 +8,17 @@
 #include <string>
 
 using std::string;
+
+template <class Facet> struct deletable_facet : Facet
+{
+    template <class... Args> deletable_facet(Args &&...args) : Facet(std::forward<Args>(args)...)
+    {
+    }
+    ~deletable_facet()
+    {
+    }
+};
+
 class Base64Help
 {
   public:
@@ -222,17 +233,18 @@ inline std::wstring utf82w(const std::string &str)
 
 inline std::string w2ansi(const std::wstring &str, const std::string &locale = "chs")
 {
-    typedef std::codecvt_byname<wchar_t, char, std::mbstate_t> F;
+    typedef deletable_facet<std::codecvt_byname<wchar_t, char, std::mbstate_t>> F;
     static std::wstring_convert<F> strCnv(new F(locale));
     return strCnv.to_bytes(str);
 }
 
 inline std::wstring ansi2w(const std::string &str, const std::string &locale = "chs")
 {
-    typedef std::codecvt_byname<wchar_t, char, std::mbstate_t> F;
+    typedef deletable_facet<std::codecvt_byname<wchar_t, char, std::mbstate_t>> F;
     static std::wstring_convert<F> strCnv(new F(locale));
     return strCnv.from_bytes(str);
 }
+
 inline std::string StrToUTF8(const std::string &str)
 {
     if (!str::IsUTF8(str.c_str()))
@@ -282,5 +294,10 @@ template <class T> inline std::string ToHex(const T &data, bool addPrefix)
         ret = sstream.str();
     }
     return (addPrefix ? u8"0x" : u8"") + ret;
+}
+
+inline std::string WstrToUTF8Str(const std::wstring &wstr)
+{
+    return str::w2utf8(wstr);
 }
 #endif
