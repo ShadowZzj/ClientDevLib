@@ -300,4 +300,9 @@ inline std::string WstrToUTF8Str(const std::wstring &wstr)
 {
     return str::w2utf8(wstr);
 }
+
+inline std::wstring UTF8Str2Wstr(const std::string &str)
+{
+    return str::utf82w(str);
+}
 #endif
