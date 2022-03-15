@@ -29,6 +29,7 @@ class ThreadPool
 
     template <class F, class... Args>
     auto enqueueWithTaskId(int id, F &&f, Args &&...args) -> std::future<typename std::result_of<F(Args...)>::type>;
+    void Stop();
     bool isTaskInQueue(int taskId);
     bool isTaskRunning(int taskId);
     ~ThreadPool();
@@ -110,8 +111,8 @@ auto ThreadPool::enqueueWithTaskId(int id, F &&f, Args &&...args)
     condition.notify_one();
     return res;
 }
-// the destructor joins all threads
-inline ThreadPool::~ThreadPool()
+
+inline void ThreadPool::Stop()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
@@ -120,6 +121,12 @@ inline ThreadPool::~ThreadPool()
     condition.notify_all();
     for (std::thread &worker : workers)
         worker.join();
+    workers.clear();
+}
+// the destructor joins all threads
+inline ThreadPool::~ThreadPool()
+{
+    Stop();
 }
 
 inline bool ThreadPool::isTaskInQueue(int taskId)
