@@ -186,7 +186,7 @@ int zzj::Http::Get(const char *apiPath, std::string &ret)
     auto curl = curl_easy_init();
     long response_code;
     CURLcode res;
-    int result;
+    int result = 0;
     std::string response_string;
     std::string header_string;
     if (!curl)
