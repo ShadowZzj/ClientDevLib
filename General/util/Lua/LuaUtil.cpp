@@ -11,7 +11,7 @@ nlohmann::json LuaUtil::TableToJson(const sol::table &table)
     {
         std::string keyy  = key.as<std::string>();
         sol::type valType = val.get_type();
-        if (valType == sol::type::nil)
+        if (valType == sol::type::lua_nil)
             ret[keyy] = "";
         else if (valType == sol::type::table)
         {
@@ -26,6 +26,77 @@ nlohmann::json LuaUtil::TableToJson(const sol::table &table)
             ret[keyy] = val.as<int>();
         else if (valType == sol::type::string)
             ret[keyy] = val.as<std::string>();
+    }
+    return ret;
+}
+sol::table zzj::LuaUtil::JsonToTable(sol::state& lua, const nlohmann::json& input)
+{
+    sol::table ret = lua.create_table();
+    using namespace nlohmann;
+    for(auto& [key,val]:input.items())
+    {
+        switch (val.type()) {
+            case json::value_t::number_integer:
+                ret[key] = val.get<int>();
+                break;
+            case json::value_t::number_unsigned:
+                ret[key] = val.get<unsigned int>();
+                break;
+            case json::value_t::number_float:
+                ret[key] = val.get<float>();
+                break;
+            case json::value_t::boolean:
+                ret[key] = val.get<bool>();
+                break;
+            case json::value_t::string:
+                ret[key] = val.get<std::string>();
+                break;
+            case json::value_t::array:
+                ret[key] = JsonArrayToTable(lua,val);
+                break;
+            case json::value_t::object:
+                ret[key] = JsonToTable(lua,val);
+                break;
+            default:
+                break;
+        }
+    }
+    return ret;
+}
+
+sol::table zzj::LuaUtil::JsonArrayToTable(sol::state& lua,const nlohmann::json& input)
+{
+    sol::table ret = lua.create_table();
+    int index = 1;
+    using namespace nlohmann;
+    for(auto iter = input.begin();iter != input.end();iter++,index++)
+    {
+        
+        switch (iter->type()) {
+            case json::value_t::number_integer:
+                ret[index] = iter->get<int>();
+                break;
+            case json::value_t::number_unsigned:
+                ret[index] = iter->get<unsigned int>();
+                break;
+            case json::value_t::number_float:
+                ret[index] = iter->get<float>();
+                break;
+            case json::value_t::boolean:
+                ret[index] = iter->get<bool>();
+                break;
+            case json::value_t::string:
+                ret[index] = iter->get<std::string>();
+                break;
+            case json::value_t::array:
+                ret[index] = JsonArrayToTable(lua,*iter);
+                break;
+            case json::value_t::object:
+                ret[index] = JsonToTable(lua,*iter);
+                break;
+            default:
+                break;
+        }
     }
     return ret;
 }
