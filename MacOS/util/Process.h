@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <General/util/LuaExport.hpp>
 namespace zzj
 {
 class Process
@@ -27,6 +28,7 @@ class Process
     static int CloseApplication(std::string applicationBundleName);
     static int ActivateApplication(const std::string& applicationBundleName);
     static bool IsCurrentProcessBeingDebugged();
+    DECLARE_LUA_EXPORT(Process);
 };
 class Thread
 {
