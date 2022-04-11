@@ -3,7 +3,7 @@
 #include <arpa/inet.h>
 #include <net/if_dl.h>
 #include <pcap.h>
-
+#include <spdlog/spdlog.h>
 
 void zzj::PcapInterface::StopCapture()
 {
@@ -37,7 +37,7 @@ int zzj::PcapInterface::OpenForCapture(bool promisc,uint32_t captureLength)
     char errBuf[1024] = {0};
     m_SessionHandle = pcap_open_live(m_InterfaceInfo.m_ifName.c_str(), captureLength, promisc, 1000, errBuf);
     if(m_SessionHandle == nullptr){
-        std::cout<<errBuf<<std::endl;
+        spdlog::error("openforcapture fails with {}",errBuf);
         return -1;
     }
     return 0;
@@ -50,11 +50,11 @@ int zzj::PcapInterface::SetFilter(const std::string& filterExp)
     struct bpf_program fp;        /* The compiled filter expression */
     
     if (pcap_compile(m_SessionHandle, &fp, filterExp.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filterExp.c_str(), pcap_geterr(m_SessionHandle));
+        spdlog::error("Couldn't parse filter {}: {}\n", filterExp.c_str(), pcap_geterr(m_SessionHandle));
         return(-2);
     }
     if (pcap_setfilter(m_SessionHandle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filterExp.c_str(), pcap_geterr(m_SessionHandle));
+        spdlog::error("Couldn't install filter {}: {}\n", filterExp.c_str(), pcap_geterr(m_SessionHandle));
         return(-3);
     }
     return 0;
@@ -125,7 +125,7 @@ int zzj::PcapInterface::InterfaceInfo::GetInterfaceInfo(const pcap_if_t * pcapIf
     char errBuf[PCAP_ERRBUF_SIZE]{0};
     pcap_t *handle = pcap_open_live(interfaceInfo.m_ifName.c_str(), BUFSIZ, 0, 1000, errBuf);
     if (handle == NULL) {
-        std::cout<<"pcap_open_live error "<<errBuf<<std::endl;
+        spdlog::error("pcap_open_live error:{}",errBuf);
         return -1;
     }
     interfaceInfo.m_DataLinkType=pcap_datalink(handle);
@@ -141,7 +141,10 @@ int zzj::PcapInterface::GetAllInterfaces(std::vector<PcapInterface> &interfaces)
     int index = 0;
     
     if (-1 == pcap_findalldevs(&alldevs, errbuf))
+    {
+        spdlog::error("pcap_findalldevs error with {}",errbuf);
         return -1;
+    }
     
     interfaces.clear();
     for (d = alldevs; d != NULL; d = d->next, index++){
@@ -149,6 +152,8 @@ int zzj::PcapInterface::GetAllInterfaces(std::vector<PcapInterface> &interfaces)
         int res = InterfaceInfo::GetInterfaceInfo(d, tmp.m_InterfaceInfo);
         if(0 == res)
             interfaces.push_back(std::move(tmp));
+        else
+            spdlog::error("GerInterfaceInfo error with {}",res);
     }
     pcap_freealldevs(alldevs);
     return 0;
