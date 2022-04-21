@@ -3,7 +3,7 @@
 
 #define CONCAT_INTERNAL(x, y) x##y
 #define CONCAT(x, y) CONCAT_INTERNAL(x, y)
-#define defer const auto &CONCAT(defer__, __LINE__) = zzj::ExitScopeHelp() + [&]()
+#define DEFER const auto &CONCAT(defer__, __LINE__) = zzj::ExitScopeHelp() + [&]()
 namespace zzj
 {
 // simulate Golang defer keyword??wrap ExitScope with lambda function??when exits its scope, the deconstruct function is
