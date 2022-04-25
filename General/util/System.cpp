@@ -5,6 +5,7 @@
 #include <Windows/WinUtilLib/WindowsUtilLib/ProcessHelper.h>
 #include <Windows/WinUtilLib/WindowsUtilLib/StrUtil.h>
 #include <Windows/WinUtilLib/WindowsUtilLib/SystemHelper.h>
+#include <Windows/util/UserInfo.h>
 #else
 #include <MacOS/util/SystemUtil.h>
 #include <MacOS/util/Process.h>
@@ -31,11 +32,8 @@ std::string GetActiveConsoleSessionId()
 std::string GetActiveUserSid()
 {
 #ifdef _WIN32
-    zzj::ActiveExplorerInfo explorerInfo;
-    bool res = zzj::Process::GetActiveExplorerInfo(&explorerInfo);
-    if (!res)
-        return "";
-    return str::Wstr2Str(explorerInfo.UserSid);
+    zzj::UserInfo userInfo = zzj::UserInfo::GetActiveUserInfo();
+    return userInfo.sid;
 #else
     
     static std::mutex lck;
