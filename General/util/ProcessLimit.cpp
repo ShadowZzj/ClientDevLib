@@ -2,6 +2,7 @@
 #include "Process.h"
 #include <map>
 #include <tuple>
+#include <iostream>
 using namespace zzj;
 
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(int pid) : ProcessLimitAgentInterface(std::set<int>{pid})
@@ -52,6 +53,7 @@ void ProcessLimitAgentInterface::RefreshStatistic(
     std::chrono::milliseconds &preTimePoint,
     std::map<int, std::tuple<ProcessV2::StatisticTimePoint, ProcessV2::StatisticCycle>> &arg)
 {
+    static const auto processor_count = std::thread::hardware_concurrency();
     auto nowTimePoint =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     auto deltaTime = nowTimePoint - preTimePoint;
@@ -80,10 +82,16 @@ void ProcessLimitAgentInterface::RefreshStatistic(
             process.GetStatistic(nowStatisticTimePoint);
             if (!preStatisticTimePoint.cpuUsed || !nowStatisticTimePoint.cpuUsed)
                 continue;
+            
+            #ifdef __WIN32
             double directCpuPercentage =
-                (nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
-                deltaTime.count();
-
+                (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
+                (deltaTime.count() * processor_count);
+            #else
+            double directCpuPercentage =
+                (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
+                (deltaTime.count());
+            #endif
             if (!preStatisticCycle.cpuPercentage)
                 preStatisticCycle.cpuPercentage = directCpuPercentage;
             else
@@ -93,6 +101,7 @@ void ProcessLimitAgentInterface::RefreshStatistic(
             preStatisticTimePoint = nowStatisticTimePoint;
         }
     }
+    preTimePoint = nowTimePoint;
     return;
 }
 
@@ -106,6 +115,7 @@ void ProcessLimitAgentInterface::Run()
     RefreshPids();
     std::map<int, std::tuple<ProcessV2::StatisticTimePoint, ProcessV2::StatisticCycle>> pidToStatictic;
     const std::chrono::milliseconds timeSlot(100);
+    double workingRate = -1;
 
     while (1)
     {
@@ -134,7 +144,6 @@ void ProcessLimitAgentInterface::Run()
         RefreshStatistic(timePointPre, pidToStatictic);
 
         double pcpu        = -1;
-        double workingRate = -1;
         for (auto &[pid, tup] : pidToStatictic)
         {
             ProcessV2::StatisticCycle &staticCycle = std::get<1>(tup);
@@ -145,10 +154,10 @@ void ProcessLimitAgentInterface::Run()
             pcpu += staticCycle.cpuPercentage.value();
         }
 
-        if (!processLimitParameters->singleCoreCpuPercent)
+        if (!processLimitParameters->cpuPercentInTaskManager)
             break;
 
-        double limit = processLimitParameters->singleCoreCpuPercent.value();
+        double limit = processLimitParameters->cpuPercentInTaskManager.value();
         std::chrono::milliseconds workTime;
         std::chrono::milliseconds sleepTime;
         if (pcpu < 0)
@@ -167,6 +176,9 @@ void ProcessLimitAgentInterface::Run()
         }
         sleepTime = timeSlot - workTime;
 
+        std::cout << "worktime: " << workTime.count() << std::endl;
+        std::cout << "sleeptime: " << sleepTime.count() << std::endl;
+        std::cout << "working rate: " << workingRate<< std::endl;
         ResumeAll();
         std::this_thread::sleep_for(workTime);
         SuspendAll();

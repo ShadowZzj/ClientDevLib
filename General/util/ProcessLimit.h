@@ -20,7 +20,7 @@ class ProcessLimitParameters
      * @brief as name
      *
      */
-    std::optional<double> singleCoreCpuPercent;
+    std::optional<double> cpuPercentInTaskManager;
 };
 class ProcessLimitAgentInterface
 {

@@ -41,7 +41,7 @@ std::vector<ThreadV2> ProcessV2::GetProcessThreads(int pid)
     auto it  = ret.begin();
     while (it != ret.end())
     {
-        if (it->processInfo || it->processInfo->pid != pid)
+        if (!it->processInfo || it->processInfo->pid != pid)
         {
             it = ret.erase(it);
         }
