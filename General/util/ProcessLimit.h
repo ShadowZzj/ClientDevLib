@@ -4,6 +4,8 @@
 #include <set>
 #include <string>
 #include <tuple>
+#include <map>
+#include "Process.h"
 namespace zzj
 {
 /**

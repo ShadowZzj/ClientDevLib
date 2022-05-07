@@ -4,11 +4,11 @@
 #include <tuple>
 using namespace zzj;
 
-ProcessLimitAgentInterface::ProcessLimitAgentInterface(int pid) : ProcessLimitAgentInterface({pid})
+ProcessLimitAgentInterface::ProcessLimitAgentInterface(int pid) : ProcessLimitAgentInterface(std::set<int>{pid})
 {
 }
-ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::string &processName, bool constantly = false)
-    : ProcessLimitAgentInterface({processName})
+ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::string &processName, bool constantly)
+    : ProcessLimitAgentInterface(std::set<std::string>{processName})
 {
 }
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<int> &pids)
@@ -17,7 +17,7 @@ ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<int> &pids
     constantly = false;
 }
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<std::string> processNames,
-                                                       bool constantly = false)
+                                                       bool constantly)
 {
     this->processNames = processNames;
     constantly         = constantly;

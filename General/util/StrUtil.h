@@ -245,11 +245,16 @@ inline std::wstring ansi2w(const std::string &str, const std::string &locale = "
     return strCnv.from_bytes(str);
 }
 
-inline std::string StrToUTF8(const std::string &str)
+inline std::string ansi2utf8(const std::string &str)
 {
     if (!str::IsUTF8(str.c_str()))
         return str::w2utf8(str::ansi2w(str));
     return str;
+}
+
+inline std::string StrToUTF8(const std::string &str)
+{
+    return ansi2utf8(str);
 }
 }; // namespace str
 

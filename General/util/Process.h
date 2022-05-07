@@ -3,18 +3,20 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <vector>
 int IsProcessWithIdRunning(const char *id);
 int AddCrashHandler();
 
 namespace zzj
 {
-
+class ThreadV2;
 /**
  * @brief new process class with object oriented
  *
  */
 class ProcessV2
 {
+
   public:
     /**
      * @brief cycle statistic such as cpu precentage
@@ -91,6 +93,25 @@ class ProcessV2
      */
     static int GetProcessIdByName(const std::string &name);
     /**
+     * @brief Get the Process Threads
+     *
+     * @return std::vector<ThreadV2>
+     */
+    std::vector<ThreadV2> GetProcessThreads();
+    /**
+     * @brief Get the Process Threads object
+     *
+     * @param pid
+     * @return std::vector<ThreadV2>
+     */
+    static std::vector<ThreadV2> GetProcessThreads(int pid);
+    /**
+     * @brief Get the Running Processes object
+     *
+     * @return std::vector<ProcessV2>
+     */
+    static std::vector<ProcessV2> GetRunningProcesses();
+    /**
      * @brief if process alive
      *
      * @param processName
@@ -122,6 +143,13 @@ class ProcessV2
      * @return false
      */
     static bool ResumePid(int pid);
+
+  private:
+    ProcessV2()
+    {
+    }
+    int pid;
+    std::string processName;
 };
 }; // namespace zzj
 #endif

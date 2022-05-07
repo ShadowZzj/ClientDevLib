@@ -1,6 +1,6 @@
 #ifdef _WIN32
-#include <Windows.h>
 #include "../../Windows/WinUtilLib/WindowsUtilLib/CRTdbgHeader.h"
+#include <Windows.h>
 #else
 #include <errno.h>
 #include <sys/file.h>
@@ -22,14 +22,14 @@ int IsProcessWithIdRunning(const char *id)
     }
     return -1;
 #else
-    int rc = 0;
+    int rc       = 0;
     int pid_file = open(id, O_CREAT | O_RDWR, 0666);
-    if(-1 == pid_file)
+    if (-1 == pid_file)
     {
         result = -1;
         goto exit;
     }
-    rc       = flock(pid_file, LOCK_EX | LOCK_NB);
+    rc = flock(pid_file, LOCK_EX | LOCK_NB);
     if (rc)
     {
         if (EWOULDBLOCK == errno)
@@ -46,16 +46,16 @@ int IsProcessWithIdRunning(const char *id)
         goto exit;
     }
 #endif
-    
-    exit:
+
+exit:
     return result;
 }
 
 int AddCrashHandler()
 {
-    #ifdef _WIN32
+#ifdef _WIN32
     ::SetUnhandledExceptionFilter(WriteDumpHandler);
-    #else
-    #endif
+#else
+#endif
     return 0;
 }
