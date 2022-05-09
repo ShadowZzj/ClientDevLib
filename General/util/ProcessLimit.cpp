@@ -9,7 +9,7 @@ ProcessLimitAgentInterface::ProcessLimitAgentInterface(int pid) : ProcessLimitAg
 {
 }
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::string &processName, bool constantly)
-    : ProcessLimitAgentInterface(std::set<std::string>{processName})
+    : ProcessLimitAgentInterface(std::set<std::string>{processName},constantly)
 {
 }
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<int> &pids)
@@ -21,7 +21,7 @@ ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<std::strin
                                                        bool constantly)
 {
     this->processNames = processNames;
-    constantly         = constantly;
+    this->constantly         = constantly;
 }
 
 void ProcessLimitAgentInterface::SetLimit(const ProcessLimitParameters &params)
@@ -83,7 +83,7 @@ void ProcessLimitAgentInterface::RefreshStatistic(
             if (!preStatisticTimePoint.cpuUsed || !nowStatisticTimePoint.cpuUsed)
                 continue;
             
-            #ifdef __WIN32
+            #ifdef _WIN32
             double directCpuPercentage =
                 (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
                 (deltaTime.count() * processor_count);
@@ -114,7 +114,7 @@ void ProcessLimitAgentInterface::Run()
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     RefreshPids();
     std::map<int, std::tuple<ProcessV2::StatisticTimePoint, ProcessV2::StatisticCycle>> pidToStatictic;
-    const std::chrono::milliseconds timeSlot(100);
+    const std::chrono::milliseconds timeSlot(1000);
     double workingRate = -1;
 
     while (1)
