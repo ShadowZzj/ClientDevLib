@@ -1,15 +1,17 @@
 #include "ProcessLimit.h"
 #include "Process.h"
+#include <functional>
+#include <iostream>
 #include <map>
 #include <tuple>
-#include <iostream>
+
 using namespace zzj;
 
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(int pid) : ProcessLimitAgentInterface(std::set<int>{pid})
 {
 }
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::string &processName, bool constantly)
-    : ProcessLimitAgentInterface(std::set<std::string>{processName},constantly)
+    : ProcessLimitAgentInterface(std::set<std::string>{processName}, constantly)
 {
 }
 ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<int> &pids)
@@ -17,16 +19,19 @@ ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<int> &pids
     this->pids = pids;
     constantly = false;
 }
-ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<std::string> processNames,
-                                                       bool constantly)
+ProcessLimitAgentInterface::ProcessLimitAgentInterface(const std::set<std::string> processNames, bool constantly)
 {
     this->processNames = processNames;
-    this->constantly         = constantly;
+    this->constantly   = constantly;
 }
 
 void ProcessLimitAgentInterface::SetLimit(const ProcessLimitParameters &params)
 {
     processLimitParameters = params;
+}
+void zzj::ProcessLimitAgentInterface::SetWorkingMode(const WorkingMode &workingMode)
+{
+    this->workingMode.store(workingMode);
 }
 void ProcessLimitAgentInterface::RemoveDeadPid()
 {
@@ -82,16 +87,16 @@ void ProcessLimitAgentInterface::RefreshStatistic(
             process.GetStatistic(nowStatisticTimePoint);
             if (!preStatisticTimePoint.cpuUsed || !nowStatisticTimePoint.cpuUsed)
                 continue;
-            
-            #ifdef _WIN32
+
+#ifdef _WIN32
             double directCpuPercentage =
                 (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
                 (deltaTime.count() * processor_count);
-            #else
+#else
             double directCpuPercentage =
                 (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
                 (deltaTime.count());
-            #endif
+#endif
             if (!preStatisticCycle.cpuPercentage)
                 preStatisticCycle.cpuPercentage = directCpuPercentage;
             else
@@ -119,9 +124,21 @@ void ProcessLimitAgentInterface::Run()
 
     while (1)
     {
+        std::function<int(void)> resumeFunc;
+        std::function<int(void)> suspendFunc;
+
+        if (workingMode.load() == WorkingMode::Limit)
+        {
+            resumeFunc = [this](){return this->ResumeAll();};
+            suspendFunc = [this](){return this->SuspendAll();};
+        }
+        else
+        {
+            resumeFunc = suspendFunc = [this](){return this->DoNoting();};
+        }
         if (isStop.load())
         {
-            ResumeAll();
+            resumeFunc();
             break;
         }
 
@@ -143,7 +160,7 @@ void ProcessLimitAgentInterface::Run()
 
         RefreshStatistic(timePointPre, pidToStatictic);
 
-        double pcpu        = -1;
+        double pcpu = -1;
         for (auto &[pid, tup] : pidToStatictic)
         {
             ProcessV2::StatisticCycle &staticCycle = std::get<1>(tup);
@@ -178,10 +195,10 @@ void ProcessLimitAgentInterface::Run()
 
         std::cout << "worktime: " << workTime.count() << std::endl;
         std::cout << "sleeptime: " << sleepTime.count() << std::endl;
-        std::cout << "working rate: " << workingRate<< std::endl;
-        ResumeAll();
+        std::cout << "working rate: " << workingRate << std::endl;
+        resumeFunc();
         std::this_thread::sleep_for(workTime);
-        SuspendAll();
+        suspendFunc();
         std::this_thread::sleep_for(sleepTime);
     }
 }

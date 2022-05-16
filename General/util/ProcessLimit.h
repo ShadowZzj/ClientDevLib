@@ -1,11 +1,12 @@
+#include "Process.h"
 #include "Sync.hpp"
 #include <atomic>
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
 #include <tuple>
-#include <map>
-#include "Process.h"
+
 namespace zzj
 {
 /**
@@ -25,12 +26,18 @@ class ProcessLimitParameters
 class ProcessLimitAgentInterface
 {
   public:
+    enum class WorkingMode
+    {
+        Monitor,
+        Limit
+    };
     ProcessLimitAgentInterface(int pid);
     ProcessLimitAgentInterface(const std::string &processName, bool constantly = false);
     ProcessLimitAgentInterface(const std::set<int> &pids);
     ProcessLimitAgentInterface(const std::set<std::string> processNames, bool constantly = false);
 
     void SetLimit(const ProcessLimitParameters &params);
+    void SetWorkingMode(const WorkingMode &workingMode);
     // Sync
     void Run();
     void Stop();
@@ -42,12 +49,16 @@ class ProcessLimitAgentInterface
     int SuspendAll();
     int ResumeAll();
     void RemoveDeadPid();
-
-
+    
+    int DoNoting()
+    {
+        return 0;
+    };
     std::set<int> pids;
     std::set<std::string> processNames;
     std::optional<ProcessLimitParameters> processLimitParameters;
     std::atomic<bool> isStop = false;
+    std::atomic<WorkingMode> workingMode = WorkingMode::Limit;
     bool constantly;
 };
 }; // namespace zzj
