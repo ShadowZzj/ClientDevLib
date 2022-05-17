@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <tuple>
+#include <thread>
 
 using namespace zzj;
 
@@ -58,7 +59,6 @@ void ProcessLimitAgentInterface::RefreshStatistic(
     std::chrono::milliseconds &preTimePoint,
     std::map<int, std::tuple<ProcessV2::StatisticTimePoint, ProcessV2::StatisticCycle>> &arg)
 {
-    static const auto processor_count = std::thread::hardware_concurrency();
     auto nowTimePoint =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     auto deltaTime = nowTimePoint - preTimePoint;
@@ -89,6 +89,7 @@ void ProcessLimitAgentInterface::RefreshStatistic(
                 continue;
 
 #ifdef _WIN32
+            static const auto processor_count = std::thread::hardware_concurrency();
             double directCpuPercentage =
                 (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
                 (deltaTime.count() * processor_count);
