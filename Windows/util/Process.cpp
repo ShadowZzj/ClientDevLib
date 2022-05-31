@@ -52,19 +52,19 @@ std::vector<ThreadV2> ProcessV2::GetProcessThreads(int pid)
 }
 std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
 {
-    PROCESSENTRY32 entry;
-    entry.dwSize = sizeof(PROCESSENTRY32);
+    PROCESSENTRY32W entry;
+    entry.dwSize = sizeof(PROCESSENTRY32W);
     std::vector<ProcessV2> ret;
 
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 
-    if (Process32First(snapshot, &entry) == TRUE)
+    if (Process32FirstW(snapshot, &entry) == TRUE)
     {
-        while (Process32Next(snapshot, &entry) == TRUE)
+        while (Process32NextW(snapshot, &entry) == TRUE)
         {
             ProcessV2 process;
             process.pid         = entry.th32ProcessID;
-            process.processName = str::ansi2utf8(entry.szExeFile);
+            process.processName = str::w2utf8(entry.szExeFile);
             ret.push_back(process);
         }
     }
@@ -152,7 +152,7 @@ bool ProcessV2::SuspendPid(int pid)
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
         if (NULL == handle)
             return false;
-        SuspendThread(handle);
+            (handle);
         CloseHandle(handle);
     }
     return true;

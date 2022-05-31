@@ -5,6 +5,10 @@
 #include <map>
 #include <tuple>
 #include <thread>
+#include <iostream> 
+#include <sstream> 
+#include <iomanip>   
+#include <ctime>  
 
 using namespace zzj;
 
@@ -34,6 +38,12 @@ void zzj::ProcessLimitAgentInterface::SetWorkingMode(const WorkingMode &workingM
 {
     this->workingMode.store(workingMode);
 }
+
+void ProcessLimitAgentInterface::SetInterface(LimitInerface *limitInterface)
+{
+    m_interface = limitInterface;
+}
+
 void ProcessLimitAgentInterface::RemoveDeadPid()
 {
     auto tmp = pids;
@@ -120,11 +130,17 @@ void ProcessLimitAgentInterface::Run()
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     RefreshPids();
     std::map<int, std::tuple<ProcessV2::StatisticTimePoint, ProcessV2::StatisticCycle>> pidToStatictic;
-    const std::chrono::milliseconds timeSlot(1000);
     double workingRate = -1;
+    auto timeSlot      = std::chrono::milliseconds(processLimitParameters->timeSlot);
 
     while (1)
     {
+        if (!processLimitParameters->IsWorkTime())
+        {
+            std::this_thread::sleep_for(timeSlot);
+            continue;
+        }
+            
         std::function<int(void)> resumeFunc;
         std::function<int(void)> suspendFunc;
 
@@ -139,6 +155,9 @@ void ProcessLimitAgentInterface::Run()
         }
         if (isStop.load())
         {
+            if (m_interface)
+                delete m_interface;
+
             resumeFunc();
             break;
         }
@@ -194,9 +213,12 @@ void ProcessLimitAgentInterface::Run()
         }
         sleepTime = timeSlot - workTime;
 
-        std::cout << "worktime: " << workTime.count() << std::endl;
-        std::cout << "sleeptime: " << sleepTime.count() << std::endl;
-        std::cout << "working rate: " << workingRate << std::endl;
+        if (m_interface)
+            m_interface->LimitReportEvent(workingRate);
+        //std::cout << "worktime: " << workTime.count() << std::endl;
+        //std::cout << "sleeptime: " << sleepTime.count() << std::endl;
+        //std::cout << "working rate: " << workingRate << std::endl;
+
         resumeFunc();
         std::this_thread::sleep_for(workTime);
         suspendFunc();
@@ -219,4 +241,64 @@ int ProcessLimitAgentInterface::ResumeAll()
     for (auto &pid : pids)
         ProcessV2::ResumePid(pid);
     return 0;
+}
+
+bool ProcessLimitParameters::IsWorkTime()
+{
+    auto tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::tm *ptm = localtime(&tt);
+    std::int32_t curruntTTime = ptm->tm_hour * 60 + ptm->tm_min;
+    
+    for (auto it : worktime)
+    {
+        if (it.first < curruntTTime && it.second > curruntTTime)
+            return true;
+    }
+    return false;
+}
+
+void ProcessLimitParameters::SetWorkTime(std::set<std::vector<std::string>> worktimeVct)
+{
+    for (auto it : worktimeVct)
+    {
+        std::tm tm = {};
+        std::stringstream ss(it.at(0));
+        ss >> std::get_time(&tm, "%b %d %Y %H:%M:%S");
+        std::int32_t startTime = tm.tm_hour * 60 + tm.tm_min;
+
+        std::tm tm1 = {};
+        std::stringstream ss1(it.at(1));
+        ss1 >> std::get_time(&tm1, "%b %d %Y %H:%M:%S");
+        std::int32_t stopTime = tm1.tm_hour * 60 + tm1.tm_min;
+
+
+        worktime.emplace(std::make_pair(startTime, stopTime));
+    }
+}
+
+
+
+void ProcessLimitParameters::SetTimeSlot(std::int32_t time)
+{
+    timeSlot = time;
+}
+
+void ProcessLimitParameters::SetResourceName(std::string name)
+{
+    resourceName = name;
+}
+
+void ProcessLimitParameters::SetReportTimeSLot(std::int32_t time)
+{
+    reportTimeSlot = time;
+}
+
+LimitInerface::LimitInerface()
+{
+    m_slot = 0;
+    m_reportSlot = 0;
+}
+
+LimitInerface::~LimitInerface()
+{
 }
