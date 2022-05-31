@@ -31,7 +31,7 @@ class StopSyncWrapper
     }
     ControlStatus CheckForStop(int seconds)
     {
-        CheckForStop(std::chrono::milliseconds(1000*seconds));
+        return CheckForStop(std::chrono::milliseconds(1000*seconds));
     }
     ControlStatus CheckForStop(std::chrono::milliseconds ms)
     {

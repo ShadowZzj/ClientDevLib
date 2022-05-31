@@ -52,19 +52,19 @@ std::vector<ThreadV2> ProcessV2::GetProcessThreads(int pid)
 }
 std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
 {
-    PROCESSENTRY32 entry;
-    entry.dwSize = sizeof(PROCESSENTRY32);
+    PROCESSENTRY32W entry;
+    entry.dwSize = sizeof(PROCESSENTRY32W);
     std::vector<ProcessV2> ret;
 
     HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 
-    if (Process32First(snapshot, &entry) == TRUE)
+    if (Process32FirstW(snapshot, &entry) == TRUE)
     {
-        while (Process32Next(snapshot, &entry) == TRUE)
+        while (Process32NextW(snapshot, &entry) == TRUE)
         {
             ProcessV2 process;
             process.pid         = entry.th32ProcessID;
-            process.processName = str::ansi2utf8(entry.szExeFile);
+            process.processName = str::w2utf8(entry.szExeFile);
             ret.push_back(process);
         }
     }
@@ -72,6 +72,26 @@ std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
     CloseHandle(snapshot);
     return ret;
 }
+
+BOOL EnableDebugPrivilege()
+{
+    HANDLE hToken;
+    BOOL fOk = FALSE;
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+    {
+        TOKEN_PRIVILEGES tp;
+        tp.PrivilegeCount = 1;
+        LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &tp.Privileges[0].Luid);
+
+        tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(tp), NULL, NULL);
+
+        fOk = (GetLastError() == ERROR_SUCCESS);
+        CloseHandle(hToken);
+    }
+    return fOk;
+}
+
 int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
 {
     int tmpPid = -1;
@@ -82,7 +102,7 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
 
     if (tmpPid < 0)
         return -1;
-
+    EnableDebugPrivilege();
     auto handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
     if (NULL == handle)
         return -2;
@@ -152,7 +172,7 @@ bool ProcessV2::SuspendPid(int pid)
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
         if (NULL == handle)
             return false;
-        SuspendThread(handle);
+            (handle);
         CloseHandle(handle);
     }
     return true;
