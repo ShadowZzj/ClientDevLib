@@ -1,7 +1,8 @@
 #include "SoftWare.h"
 #include <windows.h>
-int zzj::SoftInfoManager::GetInstalledSoftware(std::vector<SoftInfo> &softInfos)
+std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSoftware()
 {
+    std::vector<SoftInfo> softInfos;
     HKEY RootKey;         // A primary key
     HKEY hkResult = NULL; // Handle to the key to be opened
     HKEY hkRKey;
@@ -23,13 +24,16 @@ int zzj::SoftInfoManager::GetInstalledSoftware(std::vector<SoftInfo> &softInfos)
         DWORD index = 0;
         lReturn     = RegOpenKeyExA(RootKey, key.c_str(), 0, KEY_READ, &hkResult);
         if (lReturn != ERROR_SUCCESS)
-            return -1;
+            return {-1, {}};
         while (1)
         {
             SoftInfo softinfo;
             DWORD ret = RegEnumKeyExA(hkResult, index, szKeyName, &dwKeyLen, 0, NULL, NULL, NULL);
+            if (ERROR_SUCCESS != ret)
+                break;
             index++;
             strBuffer = szKeyName;
+            dwKeyLen  = 255;
             if (strBuffer.empty())
                 continue;
 
@@ -85,5 +89,5 @@ int zzj::SoftInfoManager::GetInstalledSoftware(std::vector<SoftInfo> &softInfos)
         }
         RegCloseKey(hkResult);
     }
-    return 0;
+    return {0, softInfos};
 }

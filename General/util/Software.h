@@ -26,7 +26,7 @@ class SoftInfo
 class SoftInfoManagerInterface
 {
   public:
-    virtual int GetInstalledSoftware(std::vector<SoftInfo> &softInfos) = 0;
+    virtual std::tuple <int, std::vector<SoftInfo>> GetInstalledSoftware() = 0;
     SoftInfoManagerInterface()
     {
     }

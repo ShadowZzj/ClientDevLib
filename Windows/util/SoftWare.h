@@ -5,10 +5,7 @@ namespace zzj
 class SoftInfoManager : SoftInfoManagerInterface
 {
   public:
-    virtual int GetInstalledSoftware(std::vector<SoftInfo> &softInfos);
-    SoftInfoManager()
-    {
-    }
+    virtual std::tuple < int, std::vector<SoftInfo>> GetInstalledSoftware() override;
     ~SoftInfoManager()
     {
     }
