@@ -1,4 +1,5 @@
 #include "LuaUtil.h"
+#include <General/util/StrUtil.h>
 
 using namespace zzj;
 
@@ -10,6 +11,7 @@ nlohmann::json LuaUtil::TableToJson(const sol::table &table)
     for (auto [key, val] : table)
     {
         std::string keyy  = key.as<std::string>();
+        keyy              = str::ansi2utf8(keyy);
         sol::type valType = val.get_type();
         if (valType == sol::type::lua_nil)
             ret[keyy] = "";
@@ -25,7 +27,7 @@ nlohmann::json LuaUtil::TableToJson(const sol::table &table)
         else if (valType == sol::type::number)
             ret[keyy] = val.as<int>();
         else if (valType == sol::type::string)
-            ret[keyy] = val.as<std::string>();
+            ret[keyy] = str::ansi2utf8(val.as<std::string>());
     }
     return ret;
 }
@@ -145,7 +147,7 @@ nlohmann::json zzj::LuaUtil::ArrayTableToJson(const sol::table &table)
         else if (valType == sol::type::number)
             numberArray.push_back(val.as<int>());
         else if (valType == sol::type::string)
-            stringArray.push_back(val.as<std::string>());
+            stringArray.push_back(str::ansi2utf8(val.as<std::string>()));
     }
 
     if (!jsonArray.empty())
