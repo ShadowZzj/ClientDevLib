@@ -172,7 +172,7 @@ bool ProcessV2::SuspendPid(int pid)
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
         if (NULL == handle)
             return false;
-            (handle);
+        SuspendThread(handle);
         CloseHandle(handle);
     }
     return true;
