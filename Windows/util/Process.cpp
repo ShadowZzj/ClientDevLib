@@ -50,6 +50,39 @@ std::vector<ThreadV2> ProcessV2::GetProcessThreads(int pid)
     }
     return ret;
 }
+
+std::vector<zzj::ThreadV2> zzj::ProcessV2::GetProcessThreadsCache(int pid)
+{
+    static std::mutex m_lck;
+    static std::chrono::milliseconds preTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    static auto threads = ThreadV2::EnumAllThreads();
+    std::lock_guard<std::mutex> lck(m_lck);
+
+    std::chrono::milliseconds curTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    if (curTime - preTime > std::chrono::milliseconds(1000))
+    {
+        threads = ThreadV2::EnumAllThreads();
+        preTime = curTime;
+    }
+
+    std::vector<ThreadV2> tempThreads;
+
+    auto it = threads.begin();
+    while (it != threads.end())
+    {
+        if (it->processInfo && it->processInfo->pid == pid)
+        {
+            tempThreads.push_back(*it);
+        }
+        ++it;
+    }
+    return tempThreads;
+}
+
+
+
 std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
 {
     PROCESSENTRY32W entry;
@@ -166,7 +199,7 @@ bool ProcessV2::IsProcessAlive(int pid)
 }
 bool ProcessV2::SuspendPid(int pid)
 {
-    auto threads = GetProcessThreads(pid);
+    auto threads = GetProcessThreadsCache(pid);
     for (auto &t : threads)
     {
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
@@ -179,7 +212,7 @@ bool ProcessV2::SuspendPid(int pid)
 }
 bool ProcessV2::ResumePid(int pid)
 {
-    auto threads = GetProcessThreads(pid);
+    auto threads = GetProcessThreadsCache(pid);
     for (auto &t : threads)
     {
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);

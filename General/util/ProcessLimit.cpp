@@ -220,10 +220,11 @@ void ProcessLimitAgentInterface::Run()
         //std::cout << "sleeptime: " << sleepTime.count() << std::endl;
         //std::cout << "working rate: " << workingRate << std::endl;
 
-        resumeFunc();
-        std::this_thread::sleep_for(workTime);
         suspendFunc();
         std::this_thread::sleep_for(sleepTime);
+        resumeFunc();
+        std::this_thread::sleep_for(workTime);
+
     }
 }
 void ProcessLimitAgentInterface::Stop()

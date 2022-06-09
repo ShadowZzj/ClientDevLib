@@ -12,11 +12,12 @@ class ThreadV2
     ThreadV2()
     {
     }
+
     ThreadV2(int tid);
     static std::vector<ThreadV2> EnumAllThreads();
 
   private:
     int tid = -1;
-    std::unique_ptr<ProcessV2> processInfo;
+    std::shared_ptr<ProcessV2> processInfo;
 };
 }; // namespace zzj

@@ -4,6 +4,9 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <mutex>
+#include <chrono>
+
 int IsProcessWithIdRunning(const char *id);
 int AddCrashHandler();
 
@@ -104,6 +107,8 @@ class ProcessV2
      * @param pid
      * @return std::vector<ThreadV2>
      */
+    static std::vector<ThreadV2> GetProcessThreadsCache(int pid);
+
     static std::vector<ThreadV2> GetProcessThreads(int pid);
     /**
      * @brief Get the Running Processes object
@@ -150,6 +155,9 @@ class ProcessV2
     }
     int pid;
     std::string processName;
+
+
+
 };
 }; // namespace zzj
 #endif

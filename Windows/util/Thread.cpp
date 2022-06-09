@@ -39,7 +39,7 @@ std::vector<ThreadV2> ThreadV2::EnumAllThreads()
         {
             ThreadV2 thread;
             thread.tid         = (int)pte32->th32ThreadID;
-            thread.processInfo = std::make_unique<ProcessV2>(pte32->th32OwnerProcessID);
+            thread.processInfo = std::make_shared<ProcessV2>(pte32->th32OwnerProcessID);
             ret.push_back(std::move(thread));
         } while (Thread32Next(hSnapThread, pte32));
     }
