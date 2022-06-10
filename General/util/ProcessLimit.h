@@ -44,7 +44,7 @@ class LimitInerface
   public:
     LimitInerface();
     ~LimitInerface();
-    virtual void LimitReportEvent(double workingRate) = 0;
+    virtual void LimitReportEvent(double workingRate, std::map<std::string, double>) = 0;
 
     void SetParameters(ProcessLimitParameters* param)
     {
@@ -97,6 +97,7 @@ class ProcessLimitAgentInterface
     };
     std::set<int> pids;
     std::set<std::string> processNames;
+    std::map<int, std::string> processMap;
     std::optional<ProcessLimitParameters> processLimitParameters;
     std::atomic<bool> isStop = false;
     std::atomic<WorkingMode> workingMode = WorkingMode::Limit;

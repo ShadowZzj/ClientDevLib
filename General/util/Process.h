@@ -100,6 +100,8 @@ class ProcessV2
      *
      * @return std::vector<ThreadV2>
      */
+    static std::string GetProcessNameById(const int &pid);
+
     std::vector<ThreadV2> GetProcessThreads();
     /**
      * @brief Get the Process Threads object

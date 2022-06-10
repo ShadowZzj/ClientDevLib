@@ -49,7 +49,10 @@ void ProcessLimitAgentInterface::RemoveDeadPid()
     auto tmp = pids;
     for (auto &pid : tmp)
         if (!ProcessV2::IsProcessAlive(pid))
+        {
             pids.erase(pid);
+            processMap.erase(pid);
+        }
 }
 
 void ProcessLimitAgentInterface::RefreshPids()
@@ -60,9 +63,25 @@ void ProcessLimitAgentInterface::RefreshPids()
         {
             int pid = ProcessV2::GetProcessIdByName(processName);
             if (pid > 0)
+            {
                 pids.insert(pid);
+                processMap.emplace(pid, processName);
+            }   
         }
     }
+    else if (!pids.empty())
+    {
+        for (auto &pid : pids)
+        {
+            auto name = ProcessV2::GetProcessNameById(pid);
+            if (name != "")
+            {
+                pids.insert(pid);
+                processMap.emplace(pid, name);
+            }
+        }
+    }
+
     RemoveDeadPid();
 }
 void ProcessLimitAgentInterface::RefreshStatistic(
@@ -182,14 +201,23 @@ void ProcessLimitAgentInterface::Run()
         RefreshStatistic(timePointPre, pidToStatictic);
 
         double pcpu = -1;
+        std::map<std::string, double> processCPUMap;
         for (auto &[pid, tup] : pidToStatictic)
         {
             ProcessV2::StatisticCycle &staticCycle = std::get<1>(tup);
             if (!staticCycle.cpuPercentage)
                 continue;
+
             if (pcpu < 0)
                 pcpu = 0;
             pcpu += staticCycle.cpuPercentage.value();
+
+            if (processMap.find(pid) != processMap.end())
+            {
+                auto processName = processMap[pid];
+                processCPUMap.emplace(processName, staticCycle.cpuPercentage.value());
+            }
+
         }
 
         if (!processLimitParameters->cpuPercentInTaskManager)
@@ -215,16 +243,15 @@ void ProcessLimitAgentInterface::Run()
         sleepTime = timeSlot - workTime;
 
         if (m_interface)
-            m_interface->LimitReportEvent(pcpu);
+            m_interface->LimitReportEvent(pcpu, processCPUMap);
         //std::cout << "worktime: " << workTime.count() << std::endl;
         //std::cout << "sleeptime: " << sleepTime.count() << std::endl;
         //std::cout << "working rate: " << workingRate << std::endl;
 
-        suspendFunc();
-        std::this_thread::sleep_for(sleepTime);
         resumeFunc();
         std::this_thread::sleep_for(workTime);
-
+        suspendFunc();
+        std::this_thread::sleep_for(sleepTime);
     }
 }
 void ProcessLimitAgentInterface::Stop()
