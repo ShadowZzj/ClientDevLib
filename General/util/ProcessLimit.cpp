@@ -242,8 +242,15 @@ void ProcessLimitAgentInterface::Run()
         }
         sleepTime = timeSlot - workTime;
 
+        
         if (m_interface)
-            m_interface->LimitReportEvent(pcpu, processCPUMap);
+        {
+            if(int(pcpu * 10000) == int(limit * 10000))
+                m_interface->LimitReportEvent(0, {});
+            else
+                m_interface->LimitReportEvent(pcpu, processCPUMap);
+                
+        }
         //std::cout << "worktime: " << workTime.count() << std::endl;
         //std::cout << "sleeptime: " << sleepTime.count() << std::endl;
         //std::cout << "working rate: " << workingRate << std::endl;

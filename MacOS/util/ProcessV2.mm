@@ -102,6 +102,18 @@ int ProcessV2::GetProcessIdByName(const std::string &name)
     }
     return -1;
 }
+
+std::string ProcessV2::GetProcessNameById(const int &pid)
+{
+    auto ret      = GetRunningProcesses();
+    for (auto &p : ret)
+    {
+        if (p.pid == pid)
+            return p.processName;
+    }
+    return "";
+}
+
 bool ProcessV2::IsProcessAlive(const std::string &name)
 {
     pid_t pid = -1;

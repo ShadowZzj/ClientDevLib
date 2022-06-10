@@ -43,7 +43,7 @@ class LimitInerface
 {
   public:
     LimitInerface();
-    ~LimitInerface();
+    virtual ~LimitInerface();
     virtual void LimitReportEvent(double workingRate, std::map<std::string, double>) = 0;
 
     void SetParameters(ProcessLimitParameters* param)
