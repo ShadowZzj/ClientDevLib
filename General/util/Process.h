@@ -151,15 +151,13 @@ class ProcessV2
      */
     static bool ResumePid(int pid);
 
+    int pid;
+    std::string processName;
+
   private:
     ProcessV2()
     {
     }
-    int pid;
-    std::string processName;
-
-
-
 };
 }; // namespace zzj
 #endif
