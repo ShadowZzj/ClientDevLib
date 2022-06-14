@@ -25,6 +25,7 @@ int ProcessV2::GetPid()
     else
         return pid;
 }
+
 bool ProcessV2::IsProcessAlive()
 {
     if (!processName.empty())

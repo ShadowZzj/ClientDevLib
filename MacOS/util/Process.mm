@@ -262,6 +262,15 @@ void zzj::Process::TerminateProcess(const char* processName, const char* arg)
     system(command);
 }
 
+
+void zzj::Process::TerminateProcessById(int pid)
+{
+    char command[1024] = { 0 };
+    
+    sprintf(command, "sudo kill %d ", pid);
+    system(command);
+}
+
 #include<semaphore.h>
 #include <fcntl.h>
 #include <stdio.h>

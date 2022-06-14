@@ -24,6 +24,7 @@ class Process
     static std::string GetProcessExePath();
     static bool ProcessIsState(const char* processName);
     static void TerminateProcess(const char* processName, const char* arg);
+    static void TerminateProcessById(int pid);
     //osstatus
     static int CloseApplication(std::string applicationBundleName);
     static int ActivateApplication(const std::string& applicationBundleName);
