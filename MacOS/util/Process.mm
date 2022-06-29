@@ -247,11 +247,18 @@ bool zzj::Process::ProcessIsState(const char* processName)
     {
         count = atoi(buf);
         if(count  <= 0)
+        {
+            pclose(fp);
             return false;
+        }
         else
+        {
+            pclose(fp);
             return true;
+        }
     }
     pclose(fp);
+    return true;
 }
 
 void zzj::Process::TerminateProcess(const char* processName, const char* arg)
