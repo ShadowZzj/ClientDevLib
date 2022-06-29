@@ -8,7 +8,7 @@ namespace zzj
 class Http
 {
   public:
-    static std::string DownloadFromUrl(std::string url, std::string path);
+    static std::string DownloadFromUrl(std::string url, std::string path,int connectionTimeOut = 60,int timeout = 300);
     static int Post(const char* apiPath,const char* str,std::string& ret,bool setSSL = false);
     static int PostMutualAuth(const char *apiPath, const char *str, std::string &ret,
                               std::string personalCertificateFile,std::string passwd);

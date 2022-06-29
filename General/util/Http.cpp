@@ -1,7 +1,7 @@
 #include "Http.h"
+#include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
-#include <spdlog/spdlog.h>
 size_t WriteDataFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t written = fwrite(ptr, size, nmemb, stream);
@@ -15,7 +15,7 @@ size_t WriteData(void *ptr, size_t size, size_t nmemb, void *stream)
     return size * nmemb;
 }
 
-std::string zzj::Http::DownloadFromUrl(std::string url, std::string path)
+std::string zzj::Http::DownloadFromUrl(std::string url, std::string path,int connectionTimeOut,int timeout)
 {
     CURL *curl;
     FILE *fp;
@@ -36,6 +36,8 @@ std::string zzj::Http::DownloadFromUrl(std::string url, std::string path)
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteDataFile);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connectionTimeOut);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         // curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, setSSL);
         res = curl_easy_perform(curl);
         /* always cleanup */
@@ -92,7 +94,7 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
 
     if (res != CURLE_OK)
     {
-        //ret = "";
+        // ret = "";
         switch (res)
         {
         case CURLE_UNSUPPORTED_PROTOCOL:
@@ -110,15 +112,15 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
     }
 
 exit:
-    if(0 != result)
-        spdlog::error("Http post result {},ret :{} ", result,ret);
+    if (0 != result)
+        spdlog::error("Http post result {},ret :{} ", result, ret);
     curl_slist_free_all(http_headers);
     curl_easy_cleanup(curl);
     return result;
 }
 
 int zzj::Http::PostMutualAuth(const char *apiPath, const char *str, std::string &ret,
-                              std::string personalCertificateFile,std::string passwd)
+                              std::string personalCertificateFile, std::string passwd)
 {
     CURL *curl = curl_easy_init();
     CURLcode res;
