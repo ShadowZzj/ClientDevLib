@@ -13,6 +13,7 @@ class Http
     static int PostMutualAuth(const char *apiPath, const char *str, std::string &ret,
                               std::string personalCertificateFile,std::string passwd);
     static int Get(const char* apiPath,std::string& ret);
+    static int Put(const char* apiPath,const char* str,std::string& ret);
   private:
 };
 }; // namespace zzj

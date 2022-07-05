@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
+
 size_t WriteDataFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t written = fwrite(ptr, size, nmemb, stream);
@@ -15,7 +16,28 @@ size_t WriteData(void *ptr, size_t size, size_t nmemb, void *stream)
     return size * nmemb;
 }
 
-std::string zzj::Http::DownloadFromUrl(std::string url, std::string path,int connectionTimeOut,int timeout)
+int zzj::Http::Put(const char *apiPath, const char *str, std::string &ret)
+{
+    CURL *curl;
+    CURLcode res;
+    curl = curl_easy_init();
+    if (curl)
+    {
+        curl_easy_setopt(curl, CURLOPT_URL, apiPath);
+        curl_easy_setopt(curl, CURLOPT_PUT, 1L);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, str);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
+        res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+    }
+    return res;
+}
+
+std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int connectionTimeOut, int timeout)
 {
     CURL *curl;
     FILE *fp;
