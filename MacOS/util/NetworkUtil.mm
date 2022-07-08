@@ -160,7 +160,6 @@ char *getMacAddress(char *macAddress, const char *ifName)
         cursor = addrs;
         while (cursor != 0)
         {
-
             if ((cursor->ifa_addr->sa_family == AF_LINK) &&
                 (((const struct sockaddr_dl *)cursor->ifa_addr)->sdl_type == IFT_ETHER))
             {
@@ -184,70 +183,4 @@ char *getMacAddress(char *macAddress, const char *ifName)
         freeifaddrs(addrs);
     }
     return macAddress;
-}
-
-int zzj::NetworkHelper::GetOutputIpAddress(std::string &outIpAddress)
-{
-    int result = 0;
-    const char *destination_address;
-    sockaddr_in Addr;
-    unsigned long addr;
-    char *source_address;
-    int sockHandle = 0;
-    int AddrLen;
-
-    destination_address  = "8.8.8.8";
-    Addr                 = {0};
-    addr                 = inet_addr(destination_address);
-    Addr.sin_addr.s_addr = addr;
-    Addr.sin_family      = AF_INET;
-    Addr.sin_port        = htons(9); // 9 is discard port
-    sockHandle           = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    AddrLen              = sizeof(Addr);
-    result               = connect(sockHandle, (sockaddr *)&Addr, AddrLen);
-    if (0 != result)
-    {
-        result = -2;
-        goto exit;
-    }
-    result = getsockname(sockHandle, (sockaddr *)&Addr, (socklen_t *)&AddrLen);
-    if (0 != result)
-    {
-        result = -3;
-        goto exit;
-    }
-    source_address = inet_ntoa(((struct sockaddr_in *)&Addr)->sin_addr);
-    outIpAddress   = source_address;
-exit:
-    if (sockHandle)
-        close(sockHandle);
-    return result;
-}
-
-int zzj::NetworkHelper::GetAllIpv4(std::vector<std::string> &ipv4List)
-{
-    int result                 = 0;
-    struct ifaddrs *interfaces = NULL;
-    struct ifaddrs *temp_addr  = NULL;
-    int success                = 0;
-    success                    = getifaddrs(&interfaces);
-    std::string ipAddr;
-    if (success != 0)
-    {
-        result = -1;
-        goto exit;
-    }
-    temp_addr = interfaces;
-    while (temp_addr != NULL)
-    {
-        if (temp_addr->ifa_addr->sa_family == AF_INET && !(temp_addr->ifa_flags & IFF_LOOPBACK))
-        {
-            ipAddr = inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr);
-            ipv4List.push_back(ipAddr);
-        }
-        temp_addr = temp_addr->ifa_next;
-    }
-    freeifaddrs(interfaces);
-exit:
-    return result;
 }

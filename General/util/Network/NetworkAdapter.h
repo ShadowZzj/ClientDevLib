@@ -32,9 +32,9 @@ class NetworkAdapter
     std::vector<std::string> ipv4GatewayAddrs;
     std::vector<std::string> ipv6GatewayAddrs;
 
-    unsigned long flags;
-    unsigned long mtu;
-    NetworkStatus status;
+    unsigned long flags =0;
+    unsigned long mtu =0;
+    NetworkStatus status = NetworkStatus::DOWN;
     std::string dnsSuffixes;
     std::string macAddr;
     std::string name;
@@ -46,5 +46,6 @@ class NetworkHelper
 {
     public:
         static int GetOutIpAddress(std::string &ipAddr,const std::string& toIP = "8.8.8.8");
+        static int GetAllIpv4(std::vector<std::string> &ipv4List);
 };
 } // namespace zzj

@@ -16,13 +16,4 @@ char *getMacAddress(char *macAddress, const char *ifName);
 - (NSString *)description;
 @end
 
-namespace zzj
-{
-class NetworkHelper
-{
-  public:
-    static int GetOutputIpAddress(std::string &outIpAddr);
-    static int GetAllIpv4(std::vector<std::string> &ipv4List);
-};
-};
 #endif
