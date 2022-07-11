@@ -79,6 +79,78 @@ exit:
     return ret;
 }
 
+int zzj::Http::PostFile(const std::string &apiPath, std::map<std::string, std::string> headers,
+                        std::map<std::string, std::string> bodyParam, const std::string &fileKey,
+                        const std::string &fileName, std::string &ret, bool setSSL, int timeout,
+                        std::string personalCertificateFile, std::string passwd)
+{
+    CURL *curl;
+    CURLcode res;
+
+    char errBuf[CURL_ERROR_SIZE];
+    curl_mime *form               = NULL;
+    curl_mimepart *field          = NULL;
+    struct curl_slist *headerlist = NULL;
+    curl                          = curl_easy_init();
+    if (curl)
+    {
+        /* Create the form */
+        form = curl_mime_init(curl);
+
+        for (auto it = bodyParam.begin(); it != bodyParam.end(); it++)
+        {
+            field = curl_mime_addpart(form);
+            curl_mime_name(field, it->first.c_str());
+            curl_mime_data(field, it->second.c_str(), CURL_ZERO_TERMINATED);
+        }
+
+        /* Fill in the file upload field */
+        field = curl_mime_addpart(form);
+        curl_mime_name(field, fileKey.c_str());
+        curl_mime_filedata(field, fileName.c_str());
+
+        /* initialize custom header list */
+        for (auto &header : headers)
+        {
+            std::string tmpheader = header.first + ": " + header.second;
+            headerlist            = curl_slist_append(headerlist, tmpheader.c_str());
+        }
+        /* what URL that receives this POST */
+        curl_easy_setopt(curl, CURLOPT_URL, apiPath.c_str());
+        curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ret);
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuf);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, setSSL);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, setSSL);
+        if (!personalCertificateFile.empty() && !passwd.empty())
+        {
+            curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "P12");
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, personalCertificateFile.c_str());
+            curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, passwd.c_str());
+        }
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+        /* Perform the request, res will get the return code */
+        res = curl_easy_perform(curl);
+        /* Check for errors */
+        if (res != CURLE_OK)
+        {
+            printf("%s", errBuf);
+        }
+        /* always cleanup */
+        curl_easy_cleanup(curl);
+
+        /* then cleanup the form */
+        curl_mime_free(form);
+        /* free slist */
+        curl_slist_free_all(headerlist);
+    }
+    return res;
+}
+
 int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool setSSL)
 {
     CURL *curl = curl_easy_init();
