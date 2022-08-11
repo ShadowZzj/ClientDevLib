@@ -9,6 +9,7 @@
 #include <sstream> 
 #include <iomanip>   
 #include <ctime>  
+#include "SPDLogHelper.h"
 
 using namespace zzj;
 
@@ -127,6 +128,14 @@ void ProcessLimitAgentInterface::RefreshStatistic(
                 (double)(nowStatisticTimePoint.cpuUsed.value() - preStatisticTimePoint.cpuUsed.value()).count() /
                 (deltaTime.count());
 #endif
+            if (directCpuPercentage > 0.5)
+            {
+                spdlog::info("process name is {}, now time point is {}, pre time point is {}, delta time is {}",
+                             ProcessV2::GetProcessNameById(pid),
+                             nowStatisticTimePoint.cpuUsed.value().count(), preStatisticTimePoint.cpuUsed.value().count(),
+                             deltaTime.count());
+            }
+
             if (!preStatisticCycle.cpuPercentage)
                 preStatisticCycle.cpuPercentage = directCpuPercentage;
             else
