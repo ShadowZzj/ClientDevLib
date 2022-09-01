@@ -254,7 +254,7 @@ void ProcessLimitAgentInterface::Run()
         
         if (m_interface)
         {
-            if(int(pcpu * 10000) == int(limit * 10000))
+            if(int(pcpu * 10000) == int(limit * 10000) || pcpu > 1.2)
                 m_interface->LimitReportEvent(0, {});
             else
                 m_interface->LimitReportEvent(pcpu, processCPUMap);
