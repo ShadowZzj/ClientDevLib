@@ -1,7 +1,6 @@
 #ifndef _G_HTTP_H_
 #define _G_HTTP_H_
 
-#include <curl/curl.h>
 #include <map>
 #include <string>
 #include <vector>

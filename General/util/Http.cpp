@@ -2,7 +2,11 @@
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
-
+#ifdef _WIN32
+#include <curl/win/curl.h>
+#else
+#include <curl/mac/curl.h>
+#endif
 size_t WriteDataFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t written = fwrite(ptr, size, nmemb, stream);
