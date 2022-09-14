@@ -22,14 +22,13 @@ class state;
         }                                                                                                              \
         static className##_LuaExport *CreateInstance()                                                                 \
         {                                                                                                              \
-            std::unique_lock<std::mutex> lock(rwMutex);                                                                \
             if (!instance)                                                                                             \
                 instance = new className##_LuaExport();                                                                \
             return instance;                                                                                           \
         }                                                                                                              \
         char SetFunc(std::function<void(sol::state &)> &&_func)                                                        \
         {                                                                                                              \
-            std::unique_lock<std::mutex> lock(rwMutex);                                                                \
+            std::unique_lock<std::mutex> lock(*rwMutex);                                                                \
             func = _func;                                                                                              \
             return 1;                                                                                                  \
         }                                                                                                              \
@@ -41,10 +40,12 @@ class state;
       private:                                                                                                         \
         className##_LuaExport()                                                                                        \
         {                                                                                                              \
+            if (!rwMutex)                                                                                              \
+                rwMutex = new std::mutex();                                                                            \
             LuaExportBase::PushLuaExportList(this);                                                                    \
         }                                                                                                              \
         std::function<void(sol::state &)> func;                                                                        \
-        inline static std::mutex rwMutex;                                                                              \
+        inline static std::mutex* rwMutex;                                                                             \
         inline static className##_LuaExport *instance = nullptr;                                                       \
     };                                                                                                                 \
                                                                                                                        \
@@ -148,14 +149,22 @@ class LuaExportBase
 
     static std::vector<LuaExportBase *> &GetLuaExportList()
     {
-        std::unique_lock<std::mutex> lock(rwMutex);
-        return exports;
+        std::unique_lock<std::mutex> lock(*rwMutex);
+        return *exports;
     }
     static void PushLuaExportList(LuaExportBase *item)
     {
-        std::unique_lock<std::mutex> lock(rwMutex);
-        exports.push_back(item);
+        std::unique_lock<std::mutex> lock(*rwMutex);
+        exports->push_back(item);
     }
-    inline static std::mutex rwMutex;
-    inline static std::vector<LuaExportBase *> exports;
+    LuaExportBase()
+    {
+        if (!rwMutex)
+        {
+            rwMutex = new std::mutex();
+            exports = new std::vector<LuaExportBase *>();
+        }
+    }
+    inline static std::mutex* rwMutex;
+    inline static std::vector<LuaExportBase *>* exports;
 };
