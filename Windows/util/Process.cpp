@@ -3,6 +3,7 @@
 #include <General/util/StrUtil.h>
 #include <General/util/BaseUtil.hpp>
 #include <Windows.h>
+#include <psapi.h>
 #include <tlhelp32.h>
 namespace zzj
 {
@@ -163,6 +164,14 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
 
     int64_t totalCpuTimeMs = (ns100UserTime.QuadPart + ns100KernelTime.QuadPart)/10000;
     statictic.cpuUsed      = std::chrono::milliseconds(totalCpuTimeMs);
+
+
+    PROCESS_MEMORY_COUNTERS pmc;
+    ret = GetProcessMemoryInfo(handle, &pmc, sizeof(pmc));
+    if (!ret)
+        return -4;
+    statictic.memoryUsed = pmc.WorkingSetSize;
+
     return 0;
 
 }
