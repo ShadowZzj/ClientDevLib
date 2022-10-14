@@ -1,0 +1,20 @@
+openssl 1.1.1k
+
+openssl 1.1.1k源码repo下载到本地
+
+mac/arm:
+export CFLAGS="-arch  arm64 -isysroot $(xcrun -sdk macosx --show-sdk-path) -mmacosx-version-min=10.13"
+./Configure darwin64-arm64-cc --prefix=/Users/zhuzhengjia/openssl-1.1.1k-arm --openssldir=/Users/zhuzhengjia/openssl-1.1.1k-arm/ssl
+修改makefile中CC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch arm
+make
+make install
+
+mac/x86_64:
+export CFLAGS="-arch  x84_64 -isysroot $(xcrun -sdk macosx --show-sdk-path) -mmacosx-version-min=10.13"
+./config --prefix=/Users/zhuzhengjia/openssl-1.1.1k-intel --openssldir=/Users/zhuzhengjia/openssl-1.1.1k-intel/ssl
+make 
+make install
+
+mac/universal
+lipo -create -output libssl.1.1.dylib ../arm/libssl.1.1.dylib ../x64/libssl.1.1.dylib
+lipo -create -output libcrypto.1.1.dylib ../arm/libcrypto.1.1.dylib ../x64/libcrypto.1.1.dylib
