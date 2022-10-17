@@ -1,0 +1,14 @@
+libsqlite3.0
+
+
+mac/x64:
+export CFLAGS="-arch  x86_64 -isysroot $(xcrun -sdk macosx --show-sdk-path) -mmacosx-version-min=10.13 -fvisibility=hidden -fvisibility-inlines-hidden"
+./configure -host=x86_64-apple-darwin --prefix=/Users/zhuzhengjia/sqlite3-x64
+make
+make install
+
+mac/arm:
+x86_x64Ìæ»»³Éarm64
+
+mac/universal:
+lipo
