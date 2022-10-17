@@ -70,7 +70,7 @@ set_target_properties(
     XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME
     "YES"
     )   
-set_target_properties(${libname}++ PROPERTIES CXX_VISIBILITY_PRESET hidden) 
+#set_target_properties(${libname}++ PROPERTIES CXX_VISIBILITY_PRESET hidden) 
 if(BUILD_SHARED_LIBS)
     target_compile_definitions(${libname}++ PRIVATE LIBCONFIG_STATIC)
 else()
