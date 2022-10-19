@@ -278,7 +278,6 @@ int zzj::Http::PostMutualAuth(const char *apiPath, const char *str, std::string 
     }
 
 exit:
-    spdlog::error("Http post result {},ret :{} ", result, errBuf);
     curl_slist_free_all(http_headers);
     curl_easy_cleanup(curl);
     return result;
