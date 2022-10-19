@@ -25,7 +25,7 @@ std::vector<zzj::User> zzj::User::GetComputerUsers()
 
             // Get the user's name
             auto fullName    = CSIdentityGetPosixName(identity);
-            NSString *foo    = (NSString *)CFBridgingRelease(fullName);
+            NSString *foo    = (__bridge NSString *)fullName;
             std::string name = [foo UTF8String];
 
             // Get the user's home directory
