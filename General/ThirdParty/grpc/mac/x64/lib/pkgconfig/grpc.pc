@@ -1,0 +1,12 @@
+prefix=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: gRPC
+Description: high performance general RPC framework
+Version: 20.0.0
+Cflags: -I${includedir}
+Requires: gpr openssl absl_base absl_bind_front absl_cord absl_core_headers absl_flat_hash_map absl_hash absl_inlined_vector absl_memory absl_optional absl_status absl_statusor absl_str_format absl_strings absl_synchronization absl_time absl_utility absl_variant
+Libs: -L${libdir} -lgrpc -laddress_sorting -lre2 -lupb -lcares -lz
+Libs.private: 

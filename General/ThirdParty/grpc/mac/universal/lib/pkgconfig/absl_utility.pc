@@ -1,0 +1,12 @@
+prefix=/Users/liuwei23/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: absl_utility
+Description: Abseil utility library
+URL: https://abseil.io/
+Version: 20210324
+Requires: absl_base_internal = 20210324, absl_config = 20210324, absl_type_traits = 20210324
+Libs: -L${libdir}  
+Cflags: -I${includedir} -Wno-float-conversion -Wno-implicit-float-conversion -Wno-implicit-int-float-conversion -Wno-implicit-int-conversion -Wno-shorten-64-to-32 -Wno-sign-conversion -DNOMINMAX

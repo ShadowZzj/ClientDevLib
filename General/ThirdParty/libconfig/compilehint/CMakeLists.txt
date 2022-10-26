@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.1)
+
+# Extract version from configure.ac.
+set(VERSION_REGEX "^AC_INIT\\(libconfig,[ \t]+([0-9.]+),.*")
+file(STRINGS "configure.ac"
+  VERSION_STRING REGEX ${VERSION_REGEX})
+string(REGEX REPLACE ${VERSION_REGEX} "\\1" VERSION_STRING "${VERSION_STRING}")
+set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "" FORCE)
+set (CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "" FORCE)
+set(CMAKE_CONFIGURATION_TYPES
+      "RelWithDebInfo"
+      CACHE STRING "" FORCE)
+set (CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
+
+project(libconfig LANGUAGES C CXX VERSION ${VERSION_STRING})
+option(BUILD_EXAMPLES "Enable examples" ON)
+option(BUILD_SHARED_LIBS  "Enable shared library" ON)
+option(BUILD_TESTS "Enable tests" ON)
+
+set_property(GLOBAL	PROPERTY USE_FOLDERS ON)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_EXTENSIONS ON)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${OutputDirectory}/out)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${OutputDirectory}/out)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${OutputDirectory}/out)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+
+include(GNUInstallDirs)
+include(CheckSymbolExists)
+add_subdirectory(lib)
+  
+
+
+

@@ -211,7 +211,7 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
 
 exit:
     if (0 != result)
-        spdlog::error("Http post result {},ret :{} ", result, ret);
+        spdlog::error("Http post result {},ret :{} ", result, errBuf);
     curl_slist_free_all(http_headers);
     curl_easy_cleanup(curl);
     return result;
@@ -272,6 +272,8 @@ int zzj::Http::PostMutualAuth(const char *apiPath, const char *str, std::string 
         default:
             result = res;
         }
+
+        spdlog::error("Http post result {},ret :{} ", result, errBuf);
         goto exit;
     }
 
