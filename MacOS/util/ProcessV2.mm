@@ -74,7 +74,7 @@ std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
     }
 
     if (close_process_iterator(&it) != 0)
-        exit(1);
+        return {};
     return ret;
 }
 
@@ -181,7 +181,7 @@ bool ProcessV2::IsProcessAlive(const std::string &name)
         }
     }
     if (close_process_iterator(&it) != 0)
-        exit(1);
+        return false;
     if (pid >= 0)
     {
         return true;
@@ -213,5 +213,71 @@ bool ProcessV2::ResumePid(int pid)
         return true;
     return false;
 }
+
+static std::vector<std::pair<int, std::string>> GetProcessInfo(const std::set<std::string> proccessList,
+                                                                   std::map<std::string, zzj::ProcessV2> &processes)
+{
+    std::vector<std::pair<int, std::string>> ret;
+    struct process_iterator it;
+    struct process proc;
+    struct process_filter filter;
+    filter.pid              = 0;
+    filter.include_children = 0;
+    init_process_iterator(&it, &filter);
+    while (get_next_process(&it, &proc) != -1)
+    {
+        ProcessV2 process;
+        process.pid         = proc.pid;
+        process.processName = str::ansi2utf8(proc.command);
+        
+        if (proccessList.find(process.processName) != proccessList.end())
+        {
+            process.statisticTimePoint.cpuUsed  = std::chrono::milliseconds(proc.cputime);
+
+            task_t task;
+            kern_return_t error;
+            mach_msg_type_number_t count;
+            struct task_basic_info ti;
+            error = task_for_pid(mach_task_self(), pid, &task);
+            if (error != KERN_SUCCESS)
+            {
+                ret.push_back(
+                        std::make_pair(-3, "task_for_pid fail,the process name is " + process.processName));
+            }
+            count = TASK_BASIC_INFO_COUNT;
+            error = task_info(task, TASK_BASIC_INFO, (task_info_t)&ti, &count);
+            if (error != KERN_SUCCESS)
+            {
+                ret.push_back(
+                        std::make_pair(-3, "task_info fail,the process name is " + process.processName));
+            }
+            vm_region_basic_info_data_64_t b_info;
+            vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
+            vm_size_t size;
+            mach_port_t object_name;
+            count = VM_REGION_BASIC_INFO_COUNT_64;
+            error = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count, &object_name);
+            if (error != KERN_SUCCESS)
+            {                
+                ret.push_back(
+                        std::make_pair(-3, "vm_region_64 fail,the process name is " + process.processName));
+            }
+            if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
+                ti.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
+            {
+                ti.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
+            }
+            process.statisticTimePoint.memoryUsed = ti.resident_size;
+            mach_port_deallocate(mach_task_self(), task);
+            processes[process.processName]        = process;
+        }
+    }
+
+    if (close_process_iterator(&it) != 0)
+        return {};
+
+    return ret;
+}
+
 
 }; // namespace zzj

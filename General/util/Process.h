@@ -1,12 +1,12 @@
 #ifndef _G_PROCESS_H_
 #define _G_PROCESS_H_
 #include <chrono>
+#include <map>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
-#include <mutex>
-#include <chrono>
-
+#include <set>
 int IsProcessWithIdRunning(const char *id);
 int AddCrashHandler();
 
@@ -55,6 +55,7 @@ class ProcessV2
     };
 
   public:
+    ProcessV2();
     /**
      * @brief Construct a new ProcessV2 object by pid
      *
@@ -80,7 +81,7 @@ class ProcessV2
      * @return true
      * @return false
      */
-    
+
     bool IsProcessAlive();
     /**
      * @brief Get the Statictic object
@@ -152,13 +153,15 @@ class ProcessV2
      */
     static bool ResumePid(int pid);
 
+    static std::vector<std::pair<int, std::string>> GetProcessInfo(const std::set<std::string> proccessList,
+                                                                   std::map<std::string, zzj::ProcessV2> &processes);
+
     int pid;
     std::string processName;
+    StatisticTimePoint statisticTimePoint;
+    StatisticCycle statisticCycle;
 
-  private:
-    ProcessV2()
-    {
-    }
+
 };
 }; // namespace zzj
 #endif

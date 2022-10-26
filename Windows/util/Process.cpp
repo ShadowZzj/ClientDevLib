@@ -1,12 +1,16 @@
-#include <General/util/Process.h>
-#include <General/util/Thread.h>
-#include <General/util/StrUtil.h>
 #include <General/util/BaseUtil.hpp>
+#include <General/util/Process.h>
+#include <General/util/StrUtil.h>
+#include <General/util/Thread.h>
 #include <Windows.h>
 #include <psapi.h>
+#include <set>
 #include <tlhelp32.h>
 namespace zzj
 {
+ProcessV2::ProcessV2()
+{
+}
 ProcessV2::ProcessV2(int pid)
 {
     this->pid = pid;
@@ -82,8 +86,6 @@ std::vector<zzj::ThreadV2> zzj::ProcessV2::GetProcessThreadsCache(int pid)
     return tempThreads;
 }
 
-
-
 std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
 {
     PROCESSENTRY32W entry;
@@ -155,16 +157,15 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
         return -3;
 
     ULARGE_INTEGER ns100UserTime;
-    ns100UserTime.LowPart = userTime.dwLowDateTime;
+    ns100UserTime.LowPart  = userTime.dwLowDateTime;
     ns100UserTime.HighPart = userTime.dwHighDateTime;
 
     ULARGE_INTEGER ns100KernelTime;
-    ns100KernelTime.LowPart = kernelTime.dwLowDateTime;
+    ns100KernelTime.LowPart  = kernelTime.dwLowDateTime;
     ns100KernelTime.HighPart = kernelTime.dwHighDateTime;
 
-    int64_t totalCpuTimeMs = (ns100UserTime.QuadPart + ns100KernelTime.QuadPart)/10000;
+    int64_t totalCpuTimeMs = (ns100UserTime.QuadPart + ns100KernelTime.QuadPart) / 10000;
     statictic.cpuUsed      = std::chrono::milliseconds(totalCpuTimeMs);
-
 
     PROCESS_MEMORY_COUNTERS pmc;
     ret = GetProcessMemoryInfo(handle, &pmc, sizeof(pmc));
@@ -173,7 +174,6 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
     statictic.memoryUsed = pmc.WorkingSetSize;
 
     return 0;
-
 }
 int ProcessV2::GetProcessIdByName(const std::string &name)
 {
@@ -189,7 +189,7 @@ int ProcessV2::GetProcessIdByName(const std::string &name)
 
 std::string zzj::ProcessV2::GetProcessNameById(const int &pid)
 {
-    auto ret      = GetRunningProcesses();
+    auto ret = GetRunningProcesses();
     for (auto &p : ret)
     {
         if (p.pid == pid)
@@ -197,7 +197,6 @@ std::string zzj::ProcessV2::GetProcessNameById(const int &pid)
     }
     return "";
 }
-
 
 bool ProcessV2::IsProcessAlive(const std::string &name)
 {
@@ -246,4 +245,74 @@ bool ProcessV2::ResumePid(int pid)
     return true;
 }
 
-}; // namespace zzj
+std::vector<std::pair<int, std::string>> ProcessV2::GetProcessInfo(const std::set<std::string> proccessList,
+                                                                   std::map<std::string, zzj::ProcessV2> &processes)
+{
+    std::vector<std::pair<int, std::string>> ret;
+
+    EnableDebugPrivilege();
+
+    PROCESSENTRY32W entry;
+    entry.dwSize    = sizeof(PROCESSENTRY32W);
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+    if (Process32FirstW(snapshot, &entry) == TRUE)
+    {
+        while (Process32NextW(snapshot, &entry) == TRUE)
+        {
+            ProcessV2 process;
+            process.pid         = entry.th32ProcessID;
+            process.processName = str::w2utf8(entry.szExeFile);
+            if (proccessList.find(process.processName) != proccessList.end())
+            {
+                auto handle =
+                    OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION, false, process.pid);
+                if (NULL == handle)
+                {
+                    ret.push_back(std::make_pair(-2, "OpenProcess fail,the process name is " + process.processName));
+                }
+                DEFER
+                {
+                    CloseHandle(handle);
+                };
+
+                FILETIME createTime;
+                FILETIME exitTime;
+                FILETIME kernelTime;
+                FILETIME userTime;
+
+                auto timeRet = GetProcessTimes(handle, &createTime, &exitTime, &kernelTime, &userTime);
+                if (!timeRet)
+                {
+                    ret.push_back(
+                        std::make_pair(-3, "GetProcessTimes fail,the process name is " + process.processName));
+                }
+
+                ULARGE_INTEGER ns100UserTime;
+                ns100UserTime.LowPart  = userTime.dwLowDateTime;
+                ns100UserTime.HighPart = userTime.dwHighDateTime;
+
+                ULARGE_INTEGER ns100KernelTime;
+                ns100KernelTime.LowPart  = kernelTime.dwLowDateTime;
+                ns100KernelTime.HighPart = kernelTime.dwHighDateTime;
+
+                int64_t totalCpuTimeMs             = (ns100UserTime.QuadPart + ns100KernelTime.QuadPart) / 10000;
+                process.statisticTimePoint.cpuUsed = std::chrono::milliseconds(totalCpuTimeMs);
+
+                PROCESS_MEMORY_COUNTERS pmc;
+                auto memoryRet = GetProcessMemoryInfo(handle, &pmc, sizeof(pmc));
+                if (!memoryRet)
+                {
+                    ret.push_back(
+                        std::make_pair(-4, "GetProcessMemoryInfo fail,the process name is " + process.processName));
+                }
+                process.statisticTimePoint.memoryUsed = pmc.WorkingSetSize;
+                processes[process.processName]        = process;
+            }
+        }
+    }
+
+    CloseHandle(snapshot);
+    return ret;
+}
+
+} // namespace zzj
