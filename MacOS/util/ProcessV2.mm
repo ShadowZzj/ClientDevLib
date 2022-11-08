@@ -24,6 +24,9 @@
 
 namespace zzj
 {
+ProcessV2::ProcessV2()
+{
+}
 ProcessV2::ProcessV2(int pid)
 {
     this->pid = pid;
@@ -174,7 +177,7 @@ bool ProcessV2::IsProcessAlive(const std::string &name)
     init_process_iterator(&it, &filter);
     while (get_next_process(&it, &proc) != -1)
     {
-        if (strncmp(proc.command, name.c_str(), name.length()) == 0 && kill(pid, SIGCONT) == 0)
+        if (strncmp(proc.command, name.c_str(), name.length()) == 0 && kill(pid, 0) == 0)
         {
             pid = proc.pid;
             break;
@@ -214,7 +217,7 @@ bool ProcessV2::ResumePid(int pid)
     return false;
 }
 
-static std::vector<std::pair<int, std::string>> GetProcessInfo(const std::set<std::string> proccessList,
+std::vector<std::pair<int, std::string>> ProcessV2::GetProcessInfo(const std::set<std::string> proccessList,
                                                                    std::map<std::string, zzj::ProcessV2> &processes)
 {
     std::vector<std::pair<int, std::string>> ret;
@@ -233,7 +236,7 @@ static std::vector<std::pair<int, std::string>> GetProcessInfo(const std::set<st
         if (proccessList.find(process.processName) != proccessList.end())
         {
             process.statisticTimePoint.cpuUsed  = std::chrono::milliseconds(proc.cputime);
-
+            pid_t pid = -1;
             task_t task;
             kern_return_t error;
             mach_msg_type_number_t count;

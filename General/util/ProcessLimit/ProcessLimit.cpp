@@ -1,6 +1,6 @@
 #include "ProcessLimit.h"
 #include "../SPDLogHelper.h"
-#include "Process.h"
+#include "../Process.h"
 #include "ProcessInfoStatistic.h"
 #include "ProcessLimitParameter.hpp"
 #include <ctime>
@@ -115,7 +115,10 @@ void ProcessLimitAgentInterface::Run()
 
         m_processIdSet = ProcessInfoStatistic::CreateInstance()->GetProcessId(m_params->GetResourceName());
         if (m_processIdSet.empty())
+        {
+            std::this_thread::sleep_for(timeSlot);
             continue;
+        }
         resumeFunc();
         std::this_thread::sleep_for(workTime);
         suspendFunc();
