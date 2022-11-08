@@ -237,8 +237,7 @@ bool zzj::Process::ProcessIsState(const char* processName)
     int BUFSZ = 150;
     char buf[BUFSZ];
     char command[1024] = { 0 };
-    
-    sprintf(command, "ps -ef | grep  %s | grep -v grep | wc -l", processName);
+    sprintf(command, "pgrep -l \"%s\"| wc -l", processName);
     
     if((fp = popen(command,"r")) == NULL)
         return false;
