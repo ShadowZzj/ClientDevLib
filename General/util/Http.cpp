@@ -306,7 +306,10 @@ int zzj::Http::Get(const char *apiPath, std::string &ret)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header_string);
-
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, true);
     res = curl_easy_perform(curl);
     if (res != CURLE_OK)
     {
