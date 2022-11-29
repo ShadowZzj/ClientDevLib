@@ -66,7 +66,7 @@ int zzj::Service::Start()
 }
 int zzj::Service::Stop()
 {
-    bool res   = WinService::StopService(serviceName.c_str(),15);
+    bool res   = WinService::StopService(serviceName.c_str(), 15);
     int result = !res;
     return result;
 }
@@ -85,6 +85,27 @@ int zzj::Service::IsServiceBinExist(bool &isExist)
     isExist = IsFileExist(binPath.c_str());
     return 0;
 }
+int zzj::Service::SetServiceStartType(StartUpType startType)
+{
+    int result = 0;
+    switch (startType)
+    {
+    case StartUpType::Auto:
+        result = WinService::SetServiceStartUpType(serviceName.c_str(), SERVICE_AUTO_START);
+        break;
+    case StartUpType::Manual:
+        result = WinService::SetServiceStartUpType(serviceName.c_str(), SERVICE_DEMAND_START);
+        break;
+    case StartUpType::Disabled:
+        result = WinService::SetServiceStartUpType(serviceName.c_str(), SERVICE_DISABLED);
+        break;
+    default:
+        result = -100;
+        break;
+    }
+    return result;
+}
+
 zzj::ServiceInterface::ControlStatus zzj::Service::CheckSafeStop(int seconds)
 {
     int res = serviceInternal.CheckSafeStop(seconds);

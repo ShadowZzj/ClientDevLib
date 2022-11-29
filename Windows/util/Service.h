@@ -64,6 +64,7 @@ class Service : public ServiceInterface
     virtual int IsServiceInstalled(bool &isInstlled) override;
     virtual int IsServiceRunning(bool &isRunning) override;
     virtual int IsServiceBinExist(bool &isExist) override;
+    virtual int SetServiceStartType(StartUpType startType) override;
     virtual ControlStatus CheckSafeStop(int seconds) override;
 
     virtual void OnStop()

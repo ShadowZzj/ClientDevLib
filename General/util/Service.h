@@ -31,6 +31,12 @@ class ServiceInterface
         Timeout,
         Error
     };
+    enum class StartUpType : int
+    {
+        Auto,
+        Manual,
+        Disabled
+    };
     virtual int Install(ServiceInterface *otherService = nullptr) = 0;
     virtual int Uninstall()                                       = 0;
     virtual int Start()                                           = 0;
@@ -41,6 +47,7 @@ class ServiceInterface
     virtual int IsServiceInstalled(bool &isInstlled) = 0;
     virtual int IsServiceRunning(bool &isRunning)    = 0;
     virtual int IsServiceBinExist(bool &isExist)     = 0;
+    virtual int SetServiceStartType(StartUpType startType)   = 0;
     virtual ControlStatus CheckSafeStop(int seconds) = 0;
 
   protected:
