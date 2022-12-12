@@ -20,7 +20,8 @@ class Http
                               std::string personalCertificateFile, std::string passwd);
     static int Get(const char *apiPath, std::string &ret);
     static int Put(const char *apiPath, const char *str, std::string &ret);
-
+    static int PostWithJsonSetting(const std::string& jsonSetting, std::string &retString);
+    static int GetWithJsonSetting(const std::string& jsonSetting, std::string &retString);
   private:
 };
 }; // namespace zzj
