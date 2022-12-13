@@ -1,7 +1,10 @@
 #include "Http.h"
+#include <General/util/BaseUtil.hpp>
+#include <json.hpp>
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
+
 #ifdef _WIN32
 #include <curl/win/curl.h>
 #else
@@ -19,7 +22,16 @@ size_t WriteData(void *ptr, size_t size, size_t nmemb, void *stream)
     (*str).append((char *)ptr, size * nmemb);
     return size * nmemb;
 }
-
+size_t WriteHeader(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    std::string header;
+    header.append((char *)ptr, size * nmemb);
+    nlohmann::json *json = (nlohmann::json *)stream;
+    std::string key      = header.substr(0, header.find(":"));
+    std::string value    = header.substr(header.find(":") + 1);
+    (*json)[key]         = value;
+    return size * nmemb;
+}
 int zzj::Http::Put(const char *apiPath, const char *str, std::string &ret)
 {
     CURL *curl;
@@ -82,7 +94,356 @@ exit:
 
     return ret;
 }
+#include <iostream>
+int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &retString)
+{
+    CURL *curl = curl_easy_init();
+    CURLcode res;
+    int result = 0;
+    char errBuf[CURL_ERROR_SIZE];
+    struct curl_slist *http_headers = NULL;
+    retString                       = "";
+    std::string postRetContent;
+    DEFER
+    {
+        if (0 != result)
+            spdlog::error("Http post result {},ret :{} ", result, errBuf);
+        curl_slist_free_all(http_headers);
+        curl_easy_cleanup(curl);
+    };
+    if (!curl)
+    {
+        result = -1;
+        return result;
+    }
+    try
+    {
+        nlohmann::json setting = nlohmann::json::parse(jsonSetting);
+        if (setting.find("url") == setting.end())
+        {
+            spdlog::error("Http post json parse error, no url");
+            result = -3;
+            return result;
+        }
+        std::string url = setting["url"];
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        if (setting.find("headers") != setting.end())
+        {
+            nlohmann::json headers = setting["headers"];
+            for (auto it = headers.begin(); it != headers.end(); it++)
+            {
+                if (!it.value().is_string())
+                {
+                    spdlog::error("Http post json parse error, header value is not string");
+                    result = -3;
+                    return result;
+                }
+                std::string header = it.key() + ":" + it.value().get<std::string>();
+                http_headers       = curl_slist_append(http_headers, header.c_str());
+            }
+        }
+        if (setting.find("body") != setting.end())
+        {
+            nlohmann::json body = setting["body"];
+            if (body.find("type") == body.end())
+            {
+                spdlog::error("Http post json parse error, no body type");
+                result = -3;
+                return result;
+            }
+            std::string bodyType = body["type"];
+            if (bodyType == "json")
+            {
+                if (body.find("data") == body.end())
+                {
+                    spdlog::error("Http post json parse error, no body data");
+                    result = -3;
+                    return result;
+                }
+                std::string bodyData = body["data"];
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, bodyData.c_str());
+            }
+            else if (bodyType == "form")
+            {
+                if (body.find("data") == body.end())
+                {
+                    spdlog::error("Http post json parse error, no body data");
+                    result = -3;
+                    return result;
+                }
+                nlohmann::json bodyData        = body["data"];
+                struct curl_httppost *formpost = NULL;
+                struct curl_httppost *lastptr  = NULL;
+                for (auto it = bodyData.begin(); it != bodyData.end(); it++)
+                {
+                    if (!it.value().is_string())
+                    {
+                        spdlog::error("Http post json parse error, body data value is not string");
+                        result = -3;
+                        return result;
+                    }
+                    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, it.key().c_str(), CURLFORM_COPYCONTENTS,
+                                 it.value().get<std::string>().c_str(), CURLFORM_END);
+                }
+                curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+            }
+            else
+            {
+                spdlog::error("Http post json parse error, body type is not support");
+                result = -3;
+                return result;
+            }
+        }
+        if (setting.find("timeout") != setting.end())
+        {
+            int timeout = setting["timeout"];
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
+        }
+        else
+        {
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
+        }
+        if (setting.find("followlocation") != setting.end())
+        {
+            int followlocation = setting["followlocation"];
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, followlocation);
+        }
+        else
+        {
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+        }
+        if (setting.find("ssl") != setting.end())
+        {
+            nlohmann::json ssl = setting["ssl"];
+            if (ssl.find("verifypeer") != ssl.end())
+            {
+                bool verifypeer = ssl["verifypeer"];
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, verifypeer);
+            }
+            if (ssl.find("verifyhost") != ssl.end())
+            {
+                bool verifyhost = ssl["verifyhost"];
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, verifyhost);
+            }
+            if (ssl.find("cert") != ssl.end())
+            {
+                std::string cert = ssl["cert"];
+                curl_easy_setopt(curl, CURLOPT_SSLCERT, cert.c_str());
+            }
+            if (ssl.find("keypasswd") != ssl.end())
+            {
+                std::string keypasswd = ssl["keypasswd"];
+                curl_easy_setopt(curl, CURLOPT_KEYPASSWD, keypasswd.c_str());
+            }
+        }
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("Http post json error {}", e.what());
+        result = -2;
+        return result;
+    }
+    int responseCode = 0;
+    nlohmann::json postRetHeader;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &postRetContent);
+    curl_easy_setopt(curl, CURLOPT_POST, 1);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuf);
+    // get response header
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteHeader);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &postRetHeader);
+    res = curl_easy_perform(curl);
 
+    if (res != CURLE_OK)
+    {
+        spdlog::error("Http post error {}", errBuf);
+        result = -3;
+        return result;
+    }
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    nlohmann::json retJson;
+    retJson["code"]   = responseCode;
+    retJson["header"] = postRetHeader;
+    retJson["body"]   = postRetContent;
+    retString         = retJson.dump();
+    return result;
+}
+int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &retString)
+{
+    CURL *curl = curl_easy_init();
+    CURLcode res;
+    int result = 0;
+    char errBuf[CURL_ERROR_SIZE];
+    struct curl_slist *http_headers = NULL;
+    retString                       = "";
+    std::string postRetContent;
+    DEFER
+    {
+        if (0 != result)
+            spdlog::error("Http get result {},ret :{} ", result, errBuf);
+        curl_slist_free_all(http_headers);
+        curl_easy_cleanup(curl);
+    };
+    if (!curl)
+    {
+        result = -1;
+        return result;
+    }
+    try
+    {
+        nlohmann::json setting = nlohmann::json::parse(jsonSetting);
+        if (setting.find("url") == setting.end())
+        {
+            spdlog::error("Http get json parse error, no url");
+            result = -3;
+            return result;
+        }
+        std::string url = setting["url"];
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        if (setting.find("headers") != setting.end())
+        {
+            nlohmann::json headers = setting["headers"];
+            for (auto it = headers.begin(); it != headers.end(); it++)
+            {
+                if (!it.value().is_string())
+                {
+                    spdlog::error("Http get json parse error, header value is not string");
+                    result = -3;
+                    return result;
+                }
+                std::string header = it.key() + ":" + it.value().get<std::string>();
+                http_headers       = curl_slist_append(http_headers, header.c_str());
+            }
+        }
+        if (setting.find("body") != setting.end())
+        {
+            nlohmann::json body = setting["body"];
+            if (body.find("type") == body.end())
+            {
+                spdlog::error("Http get json parse error, no body type");
+                result = -3;
+                return result;
+            }
+            std::string bodyType = body["type"];
+            if (bodyType == "json")
+            {
+                if (body.find("data") == body.end())
+                {
+                    spdlog::error("Http get json parse error, no body data");
+                    result = -3;
+                    return result;
+                }
+                std::string bodyData = body["data"];
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, bodyData.c_str());
+            }
+            else if (bodyType == "form")
+            {
+                if (body.find("data") == body.end())
+                {
+                    spdlog::error("Http get json parse error, no body data");
+                    result = -3;
+                    return result;
+                }
+                nlohmann::json bodyData        = body["data"];
+                struct curl_httppost *formpost = NULL;
+                struct curl_httppost *lastptr  = NULL;
+                for (auto it = bodyData.begin(); it != bodyData.end(); it++)
+                {
+                    if (!it.value().is_string())
+                    {
+                        spdlog::error("Http get json parse error, body data value is not string");
+                        result = -3;
+                        return result;
+                    }
+                    curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, it.key().c_str(), CURLFORM_COPYCONTENTS,
+                                 it.value().get<std::string>().c_str(), CURLFORM_END);
+                }
+                curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
+            }
+            else
+            {
+                spdlog::error("Http get json parse error, body type is not support");
+                result = -3;
+                return result;
+            }
+        }
+        if (setting.find("timeout") != setting.end())
+        {
+            int timeout = setting["timeout"];
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
+        }
+        else
+        {
+            curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
+            curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
+        }
+        if (setting.find("followlocation") != setting.end())
+        {
+            int followlocation = setting["followlocation"];
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, followlocation);
+        }
+        else
+        {
+            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+        }
+        if (setting.find("ssl") != setting.end())
+        {
+            nlohmann::json ssl = setting["ssl"];
+            if (ssl.find("verifypeer") != ssl.end())
+            {
+                bool verifypeer = ssl["verifypeer"];
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, verifypeer);
+            }
+            if (ssl.find("verifyhost") != ssl.end())
+            {
+                bool verifyhost = ssl["verifyhost"];
+                curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, verifyhost);
+            }
+            if (ssl.find("cert") != ssl.end())
+            {
+                std::string cert = ssl["cert"];
+                curl_easy_setopt(curl, CURLOPT_SSLCERT, cert.c_str());
+            }
+            if (ssl.find("keypasswd") != ssl.end())
+            {
+                std::string keypasswd = ssl["keypasswd"];
+                curl_easy_setopt(curl, CURLOPT_KEYPASSWD, keypasswd.c_str());
+            }
+        }
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("Http post json error {}", e.what());
+        result = -2;
+        return result;
+    }
+    int responseCode = 0;
+    nlohmann::json postRetHeader;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &postRetContent);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuf);
+    // get response header
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteHeader);
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &postRetHeader);
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK)
+    {
+        spdlog::error("Http post error {}", errBuf);
+        result = -3;
+        return result;
+    }
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+    nlohmann::json retJson;
+    retJson["code"]   = responseCode;
+    retJson["header"] = postRetHeader;
+    retJson["body"]   = postRetContent;
+    retString         = retJson.dump();
+    return result;
+}
 int zzj::Http::PostFile(const std::string &apiPath, std::map<std::string, std::string> headers,
                         std::map<std::string, std::string> bodyParam, const std::string &fileKey,
                         const std::string &fileName, std::string &ret, bool setSSL, int timeout,
@@ -306,7 +667,10 @@ int zzj::Http::Get(const char *apiPath, std::string &ret)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header_string);
-
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, true);
     res = curl_easy_perform(curl);
     if (res != CURLE_OK)
     {

@@ -4,6 +4,8 @@
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <filesystem>
+#include <spdlog/spdlog.h>
 
 #if (BOOST_OS_WINDOWS)
 #include <Windows/WinUtilLib/WindowsUtilLib/StrUtil.h>
