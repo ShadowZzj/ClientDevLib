@@ -164,3 +164,51 @@ exit:
     DynamicLibPath = ret;
     return ret;
 }
+
+int zzj::FileV2::RenameCopy(boost::filesystem::path src, boost::filesystem::path dst,std::string suffix)
+{
+    int result = 0;
+    try
+    {
+        std::map<std::string, std::string> oldToNew;
+        //重命名操作
+        for (auto &it : boost::filesystem::recursive_directory_iterator(src))
+        {
+            if (boost::filesystem::is_directory(it))
+                continue;
+            
+            boost::filesystem::path oldFile = dst / it.path().filename();            
+            boost::filesystem::path newFile = dst / (it.path().filename().string() +  "_" + suffix);
+            try {
+                if(!boost::filesystem::exists(oldFile))
+                    continue;
+                boost::filesystem::rename(oldFile, newFile);
+                oldToNew.emplace(oldFile.string(), newFile.string());
+            } catch (std::exception & ex) {
+                spdlog::error("Filesystem rename exception {}",ex.what());
+                //rollback
+                for (auto [key, value] : oldToNew)
+                    boost::filesystem::rename(value, key);
+                return -2;
+            }
+        }
+        
+#ifdef _WIN32
+        //复制操作
+        std::filesystem::copy(src.string(), dst.string(),
+                              std::filesystem::copy_options::recursive |
+                              std::filesystem::copy_options::overwrite_existing);
+#else
+        result = zzj::File::CopyFilesFromTo(src.c_str(), dst.c_str());
+        if (0!=result)
+            throw std::runtime_error(std::string("copy file error with ")+std::to_string(result));
+        
+#endif
+    }
+    catch (const std::exception &exp)
+    {
+        spdlog::error("copy error: {}", exp.what());
+        result = -1;
+    }
+    return result;
+}

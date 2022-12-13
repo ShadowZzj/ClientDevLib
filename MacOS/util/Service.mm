@@ -1,9 +1,9 @@
 #include "Service.h"
-#include <plist/Plist.hpp>
 #import "FileUtil.h"
 #import "Process.h"
 #import <Foundation/Foundation.h>
 #include <map>
+#include <plist/Plist.hpp>
 #include <spdlog/spdlog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -155,17 +155,17 @@ int zzj::Service::IsServiceRunning(bool &isRunning)
             spdlog::error("Protect launchctl error {}", result);
             return result;
         }
-        if(standardOut.empty())
+        if (standardOut.empty())
         {
-            isRunning=false;
+            isRunning = false;
             return result;
         }
-        if(standardOut.find(L"\"OnDemand\" = true") != std::wstring::npos)
+        if (standardOut.find(L"\"OnDemand\" = true") != std::wstring::npos)
         {
             isRunning = true;
             return result;
         }
-        else if(standardOut.find(L"PID") != std::wstring::npos)
+        else if (standardOut.find(L"PID") != std::wstring::npos)
         {
             isRunning = true;
             return result;
@@ -204,7 +204,90 @@ void zzj::Service::TermHandler()
 zzj::Service::ControlStatus zzj::Service::CheckSafeStop(int seconds)
 {
     std::unique_lock<std::mutex> lck(m_mutex);
-    bool res = m_cv.wait_for(lck, std::chrono::seconds(seconds),
-                                               [this]() { return this->requestStop; });
+    bool res = m_cv.wait_for(lck, std::chrono::seconds(seconds), [this]() { return this->requestStop; });
     return res == false ? ControlStatus::Timeout : ControlStatus::RequestStop;
+}
+
+int zzj::Service::EnableService()
+{
+    std::string cmd = "launchctl enable system/";
+    cmd             = cmd + serviceName;
+    return system(cmd.c_str());
+}
+int zzj::Service::DisableService()
+{
+    std::string cmd = "launchctl disable system/";
+    cmd             = cmd + serviceName;
+    return system(cmd.c_str());
+}
+int zzj::Service::SetServiceStartType(zzj::ServiceInterface::StartUpType startType)
+{
+    std::map<string, boost::any> rootDict;
+    // declare string ostream
+    std::ostringstream oldPlistStream;
+    std::ostringstream newPlistStream;
+    int result = 0;
+
+    try
+    {
+        Plist::readPlist(PlistTemplate.c_str(), PlistTemplate.length(), rootDict);
+        Plist::writePlistXML(oldPlistStream, rootDict);
+
+        switch (startType)
+        {
+        case zzj::ServiceInterface::StartUpType::Auto:
+            rootDict["KeepAlive"] = true;
+            Plist::writePlistXML(newPlistStream, rootDict);
+            PlistTemplate = newPlistStream.str();
+            result        = Install();
+            if (0 != result)
+            {
+                result = -1;
+                break;
+            }
+            result = EnableService();
+            if (0 != result)
+            {
+                result = -2;
+                break;
+            }
+            break;
+        case zzj::ServiceInterface::StartUpType::Manual:
+            rootDict["KeepAlive"] = false;
+            Plist::writePlistXML(newPlistStream, rootDict);
+            PlistTemplate = newPlistStream.str();
+            result = Install();
+            if (0 != result)
+            {
+                result = -3;
+                break;
+            }
+            result = EnableService();
+            if (0 != result)
+            {
+                result = -4;
+                break;
+            }
+            break;
+        case zzj::ServiceInterface::StartUpType::Disabled:
+            result = DisableService();
+            if (0 != result)
+            {
+                result = -5;
+                break;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    catch (...)
+    {
+        if (!oldPlistStream.str().empty())
+            PlistTemplate = oldPlistStream.str();
+        return -6;
+    }
+    if (!oldPlistStream.str().empty())
+        PlistTemplate = oldPlistStream.str();
+    return result;
 }

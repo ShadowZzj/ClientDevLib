@@ -24,7 +24,10 @@ class Service : public ServiceInterface
     virtual int IsServiceRunning(bool &isRunning) override;
     virtual int IsServiceBinExist(bool &isExist) override;
     virtual void ServiceFunc() override{}
+    virtual int SetServiceStartType(StartUpType startType) override;
     virtual void Run() override;
+    int EnableService();
+    int DisableService();
     static void TermHandler();
     virtual zzj::ServiceInterface::ControlStatus CheckSafeStop(int seconds) override;
   protected:
@@ -41,6 +44,7 @@ class Service : public ServiceInterface
     std::condition_variable m_cv;
     bool requestStop = false;
 };
+
 }; // namespace zzj
 
 #endif
