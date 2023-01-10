@@ -1,7 +1,7 @@
 #ifndef PROCESSINFOSTATISTIC_H
 #define PROCESSINFOSTATISTIC_H
 
-#include "../Process.h"
+#include <General/util/Process/Process.h>
 #include <chrono>
 #include <map>
 #include <memory>

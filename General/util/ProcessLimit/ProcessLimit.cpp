@@ -1,6 +1,6 @@
 #include "ProcessLimit.h"
 #include "../SPDLogHelper.h"
-#include "../Process.h"
+#include <General/util/Process/Process.h>
 #include "ProcessInfoStatistic.h"
 #include "ProcessLimitParameter.hpp"
 #include <ctime>

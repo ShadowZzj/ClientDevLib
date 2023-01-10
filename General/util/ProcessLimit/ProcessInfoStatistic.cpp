@@ -1,6 +1,6 @@
 #include "ProcessInfoStatistic.h"
 #include <thread>
-#include "../Process.h"
+#include <General/util/Process/Process.h>
 #include "ProcessLimit.h"
 #include "ProcessLimitParameter.hpp"
 

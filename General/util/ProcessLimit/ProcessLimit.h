@@ -1,9 +1,9 @@
 #ifndef PROCESSLIMIT
 #define PROCESSLIMIT
 
-#include "../Process.h"
+#include <General/util/Process/Process.h>
 #include "ProcessLimitParameter.hpp"
-#include "../Sync.hpp"
+#include <General/util/Sync/StopNotify.hpp>
 #include <atomic>
 #include <map>
 #include <optional>
