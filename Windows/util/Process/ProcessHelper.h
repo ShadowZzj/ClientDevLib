@@ -8,6 +8,7 @@
 #include <TlHelp32.h>
 #include <list>
 #include <General/util/Lua/LuaExport.hpp>
+#include <memory>
 #define DISALLOW_COPY_AND_ASSIGN(TypeName)	\
 	TypeName(const TypeName&);	\
 	TypeName& operator=(const TypeName&);
@@ -97,11 +98,9 @@ namespace zzj {
 	private:
 		std::map<std::string, std::string> env;
 	};
-
 	class Process {
+		friend class Memory;
 	public:
-		
-
 		static const int INVALID_VAL = -1;
 		DWORD GetSessionId();
 		DWORD GetProcessId();
@@ -114,6 +113,8 @@ namespace zzj {
 		bool SetProcessDirectory(const wchar_t* dir);
 		bool BindProcess(HANDLE handle);
 		bool BindProcess(DWORD processId, DWORD deriredAccess);
+		uintptr_t GetModuleBaseAddress(const std::string& moduleName);
+		
 		static DWORD GetSessionId(DWORD processId);
 		static HANDLE GetProcessHandle(DWORD processId, DWORD desiredAccess);
 		static std::vector<DWORD> GetProcessId(std::wstring processName);
@@ -136,7 +137,7 @@ namespace zzj {
         static bool KillProcess(const char *name);
         static std::wstring GetModulePath(std::wstring moduleName = L"");
 		Process(){
-			process=::GetCurrentProcess();
+			process=std::make_shared<ScopeKernelHandle>(::GetCurrentProcess());
 			processId = ::GetCurrentProcessId();
 		}
 		Process(HANDLE processHandle) {
@@ -147,14 +148,13 @@ namespace zzj {
 				CrashMe();
 		}
 		operator HANDLE() {
-			return process;
+			return *process;
 		}
-		Process operator=(const Process &p) = delete;
 
 		EnvHelper envHelper;
 	private:
 		bool InitWithHandle(HANDLE processHandle) {
-			process = processHandle;
+			process = std::make_shared<ScopeKernelHandle>(processHandle);
 			processId = GetProcessId(processHandle);
 			return true;
 		}
@@ -162,19 +162,32 @@ namespace zzj {
 			HANDLE processHandle = OpenProcess(desiredAccess, FALSE, _processId);
 			if (processHandle == INVALID_HANDLE_VALUE)
 				return false;
-			process = processHandle;
+			process = std::make_shared<ScopeKernelHandle>(processHandle);
 			processId = _processId;
 			return true;
 		}
 		bool IsValid() {
-			return process != INVALID_HANDLE_VALUE&&processId!=INVALID_VAL;
+			return process != nullptr&&processId!=INVALID_VAL;
 		}
-		ScopeKernelHandle process=INVALID_HANDLE_VALUE;
+		std::shared_ptr<ScopeKernelHandle> process=nullptr;
 		DWORD processId = INVALID_VAL;
 
       protected:
         DECLARE_LUA_EXPORT(Process)
 	};
 
+	class Memory
+    {
+      public:
+        Memory(const Process _process) : process(_process)
+        {
+        }
+        ~Memory() = default;
+        bool Read(uintptr_t address, void *buffer, size_t size);
+        bool Write(uintptr_t address, const void *buffer, size_t size);
+        uintptr_t FindMultiPleLevelAddress(uintptr_t baseAddress, std::vector<unsigned int> offsets);
 
-}
+      private:
+        Process process;
+    };
+    }

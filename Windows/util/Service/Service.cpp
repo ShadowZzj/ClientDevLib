@@ -48,7 +48,6 @@ int zzj::Service::Install(ServiceInterface *otherService)
     if (otherService != nullptr)
         return otherService->Install();
     result = WinService::InstallService(serviceName.c_str(), displayName.c_str(), description.c_str(), binPath.c_str());
-exit:
     return result;
 }
 

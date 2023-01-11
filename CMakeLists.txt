@@ -1,22 +1,31 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.15)
 
 set(PRO_SUP ${CMAKE_CURRENT_LIST_DIR})
 set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} /level='requireAdministrator' /uiAccess='false'")
 set(CMAKE_CXX_STANDARD 17)
+
 project(ClientDevLib)
 add_definitions(-DUNICODE -D_UNICODE)
-
 include(${PRO_SUP}/General/ThirdParty/sqlite3pp/export.cmake)
 include(${PRO_SUP}/General/util/ConfigManager/export.cmake)
 include(${PRO_SUP}/General/util/Lua/export.cmake)
 include_directories(${PRO_SUP}/General/ThirdParty ${PRO_SUP} ${PRO_SUP}/General/ThirdParty/lua/win/include ${PRO_SUP}/General/ThirdParty/boost_1_75_0)
 link_directories(${PRO_SUP}/General/ThirdParty/boost_1_75_0/lib)
+
+if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+    set(PLATFORM_DIR x86)
+    message("Platform: x86")
+else()
+    set(PLATFORM_DIR x64)
+    message("Platform: x64")
+endif()
+
 if(BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CONFIGURATION_TYPES
         "RelWithDebInfo"
         CACHE STRING "" FORCE)
-    set(OutputDirectory ${PRO_SUP}/Windows/build/Release)
+    set(OutputDirectory ${PRO_SUP}/Windows/build/${PLATFORM_DIR}/Release)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${OutputDirectory}/bin)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO ${OutputDirectory}/bin)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO ${OutputDirectory}/bin)
@@ -28,7 +37,7 @@ else()
     set(CMAKE_CONFIGURATION_TYPES
         "Debug"
         CACHE STRING "" FORCE)
-    set(OutputDirectory ${PRO_SUP}/Windows/build/Debug)
+    set(OutputDirectory ${PRO_SUP}/Windows/build/${PLATFORM_DIR}/Debug)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${OutputDirectory}/bin)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${OutputDirectory}/bin)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${OutputDirectory}/bin)
@@ -37,6 +46,7 @@ else()
     # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
+message("OutputDirectory: ${OutputDirectory}")
 file(
     GLOB_RECURSE source_list
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -60,4 +70,14 @@ add_library(
     ${source_list}
 )
 
+add_executable(
+    ${PROJECT_NAME}_test
+    Windows/test.cpp
+)
+
+target_link_libraries(
+    ${PROJECT_NAME}_test
+    ${PROJECT_NAME}
+)
+set_property(TARGET  ${PROJECT_NAME}_test  ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 

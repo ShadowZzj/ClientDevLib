@@ -22,7 +22,7 @@ DWORD Process::GetProcessId() {
 }
 
 HANDLE Process::GetProcessHandle() {
-	return process;
+	return *process;
 }
 DWORD Process::GetSessionId(DWORD processId) {
 	DWORD sessionId;
@@ -112,7 +112,7 @@ DWORD Process::GetProcessDirectory(size_t len, wchar_t* buf) {
 
 bool zzj::Process::SetProcessPriority(DWORD priority)
 {
-    return SetPriorityClass(process, priority);
+    return SetPriorityClass(*process, priority);
 }
 
 bool Process::SetProcessDirectory(const char *dir)
@@ -142,8 +142,27 @@ bool zzj::Process::BindProcess(DWORD processId, DWORD deriredAccess)
 {
 	return InitWithId(processId, deriredAccess);
 }
-void EnvHelper::RefreshEnv() {
-	env.clear();
+uintptr_t zzj::Process::GetModuleBaseAddress(const std::string &moduleName)
+{
+	uintptr_t moduleBaseAddress = 0;
+	std::wstring wmoduleName = zzj::str::utf82w(moduleName);
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+	if (INVALID_HANDLE_VALUE == hSnapshot)
+		return 0;
+	
+	MODULEENTRY32 me = { sizeof(me) };
+	for (BOOL ret = Module32First(hSnapshot, &me); ret; ret = Module32Next(hSnapshot, &me)) {
+		if (me.szModule == wmoduleName) {
+			moduleBaseAddress = (uintptr_t)me.modBaseAddr;
+			break;
+		}
+	}
+
+    return moduleBaseAddress;
+}
+void EnvHelper::RefreshEnv()
+{
+    env.clear();
     wchar_t* envStr = GetEnvironmentStringsW();
     if (!envStr)
         return;
@@ -821,4 +840,33 @@ std::wstring zzj::Process::GetModulePath(std::wstring moduleName)
     (wcsrchr(szFilePath, L'\\'))[1] = 0; // 删除文件名，只获得路径字串
     return szFilePath;
 
+}
+
+bool zzj::Memory::Read(uintptr_t address, void *buffer, size_t size)
+{
+	SIZE_T numRead = 0;
+	bool ret = ReadProcessMemory(*process.process, (LPCVOID)address, buffer, size, &numRead);
+	return ret &&  numRead == size;
+}
+
+bool zzj::Memory::Write(uintptr_t address, const void *buffer, size_t size)
+{
+    SIZE_T numWrite = 0;
+    bool ret = WriteProcessMemory(*process.process, (LPVOID)address, buffer, size, &numWrite);
+	return ret && numWrite == size;
+}
+
+uintptr_t zzj::Memory::FindMultiPleLevelAddress(uintptr_t baseAddress, std::vector<unsigned int> offsets)
+{
+    std::cout << "hahaa" << std::endl;
+	uintptr_t address = baseAddress;
+	for (auto offset : offsets)
+	{
+        std::cout << "read address: " << std::hex << address << std::endl;
+		if (!Read(address, &address, sizeof(address)))
+			return uintptr_t();
+        std::cout << "    content:" << std::hex << address << std::endl;
+		address += offset;
+	}
+    return address;
 }
