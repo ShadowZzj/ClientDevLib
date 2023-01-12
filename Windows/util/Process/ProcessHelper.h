@@ -107,14 +107,15 @@ namespace zzj {
 		HANDLE GetProcessHandle();
 		DWORD GetProcessDirectory(size_t len, char* buf);
 		DWORD GetProcessDirectory(size_t len, wchar_t* buf);
-
+		
 		bool SetProcessPriority(DWORD priority);
 		bool SetProcessDirectory(const char* dir);
 		bool SetProcessDirectory(const wchar_t* dir);
 		bool BindProcess(HANDLE handle);
 		bool BindProcess(DWORD processId, DWORD deriredAccess);
+		bool IsAlive();
 		uintptr_t GetModuleBaseAddress(const std::string& moduleName);
-		
+
 		static DWORD GetSessionId(DWORD processId);
 		static HANDLE GetProcessHandle(DWORD processId, DWORD desiredAccess);
 		static std::vector<DWORD> GetProcessId(std::wstring processName);
@@ -185,6 +186,8 @@ namespace zzj {
         ~Memory() = default;
         bool Read(uintptr_t address, void *buffer, size_t size);
         bool Write(uintptr_t address, const void *buffer, size_t size);
+        bool Write(uintptr_t address, std::vector<uint8_t> buf);
+		bool Nop(uintptr_t address, size_t size);
         uintptr_t FindMultiPleLevelAddress(uintptr_t baseAddress, std::vector<unsigned int> offsets);
 
       private:

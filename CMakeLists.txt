@@ -58,12 +58,14 @@ file(
     "General/util/*.hpp"
 )
 
+
 foreach(source IN LISTS source_list)
     get_filename_component(source_path "${source}" PATH)
     string(REPLACE "/" "\\" source_path_msvc "${source_path}")
     source_group("${source_path_msvc}" FILES "${source}")
 endforeach()
 
+add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src)
 add_library(
     ${PROJECT_NAME}
     STATIC
@@ -75,9 +77,19 @@ add_executable(
     Windows/test.cpp
 )
 
+add_library(
+    ${PROJECT_NAME}_testdll
+    SHARED
+    Windows/testdll.cpp
+)
+message (${PRO_SUP})
 target_link_libraries(
     ${PROJECT_NAME}_test
     ${PROJECT_NAME}
 )
+target_link_libraries(
+    ${PROJECT_NAME}_testdll
+    ${PROJECT_NAME}
+)
 set_property(TARGET  ${PROJECT_NAME}_test  ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
+set_property(TARGET  ${PROJECT_NAME}_testdll  ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

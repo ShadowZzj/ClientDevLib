@@ -8,6 +8,7 @@
 #include <General/util/BaseUtil.hpp>
 #include "ProcessHelper.h"
 #include <General/util/StrUtil.h>
+#include <spdlog/spdlog.h>
 using namespace zzj;
 #pragma comment(lib,"Userenv.lib")
 #pragma comment(lib, "Wtsapi32.lib")
@@ -141,6 +142,13 @@ bool zzj::Process::BindProcess(HANDLE handle)
 bool zzj::Process::BindProcess(DWORD processId, DWORD deriredAccess)
 {
 	return InitWithId(processId, deriredAccess);
+}
+bool zzj::Process::IsAlive()
+{
+	DWORD exitCode;
+	if (GetExitCodeProcess(*process, &exitCode))
+		return exitCode == STILL_ACTIVE;
+    return false;
 }
 uintptr_t zzj::Process::GetModuleBaseAddress(const std::string &moduleName)
 {
@@ -845,27 +853,54 @@ std::wstring zzj::Process::GetModulePath(std::wstring moduleName)
 bool zzj::Memory::Read(uintptr_t address, void *buffer, size_t size)
 {
 	SIZE_T numRead = 0;
-	bool ret = ReadProcessMemory(*process.process, (LPCVOID)address, buffer, size, &numRead);
+	bool ret = true;
+	if(process.processId != GetCurrentProcessId())
+		ret = ReadProcessMemory(*process.process, (LPCVOID)address, buffer, size, &numRead);
+    else
+    {
+        memcpy(buffer, (void *)address, size);
+        numRead = size;
+    }
 	return ret &&  numRead == size;
 }
 
 bool zzj::Memory::Write(uintptr_t address, const void *buffer, size_t size)
 {
     SIZE_T numWrite = 0;
-    bool ret = WriteProcessMemory(*process.process, (LPVOID)address, buffer, size, &numWrite);
+    DWORD oldProtect;
+	bool ret = true;
+    VirtualProtectEx(process, (LPVOID)address, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+	if(process.processId != GetCurrentProcessId())
+    	ret = WriteProcessMemory(*process.process, (LPVOID)address, buffer, size, &numWrite);
+    else
+    {
+        memcpy((void *)address, buffer, size);
+        numWrite = size;
+    }
+    VirtualProtectEx(process, (LPVOID)address, size, oldProtect, &oldProtect);
 	return ret && numWrite == size;
+}
+
+bool zzj::Memory::Write(uintptr_t address, std::vector<uint8_t> buf)
+{
+
+    return Write(address, buf.data(), buf.size());
+}
+
+bool zzj::Memory::Nop(uintptr_t address, size_t size)
+{
+	std::vector<uint8_t> nop(size, 0x90);
+	return Write(address, nop.data(), size);
 }
 
 uintptr_t zzj::Memory::FindMultiPleLevelAddress(uintptr_t baseAddress, std::vector<unsigned int> offsets)
 {
-    std::cout << "hahaa" << std::endl;
 	uintptr_t address = baseAddress;
 	for (auto offset : offsets)
 	{
-        std::cout << "read address: " << std::hex << address << std::endl;
+		spdlog::info("address:{}", address);
 		if (!Read(address, &address, sizeof(address)))
 			return uintptr_t();
-        std::cout << "    content:" << std::hex << address << std::endl;
 		address += offset;
 	}
     return address;

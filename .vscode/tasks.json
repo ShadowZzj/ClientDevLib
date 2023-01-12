@@ -1,0 +1,45 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "ClientDevLib build x86 Release",
+            "command": "cmake",
+            "windows": {
+                "args": [
+                    "-G",
+                    "Visual Studio 17 2022",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}",
+                    "-A",
+                    "Win32"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/Windows/build/x86"
+                }
+            }
+        },
+         {
+            "type": "shell",
+            "label": "ClientDevLib build x64 Release",
+            "command": "cmake",
+            "windows": {
+                "args": [
+                    "-G",
+                    "Visual Studio 17 2022",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}",
+                    "-A",
+                    "x64"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/Windows/build/x86"
+                }
+            }
+        }
+    ]
+}
