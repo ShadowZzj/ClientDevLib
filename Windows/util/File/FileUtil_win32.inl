@@ -32,7 +32,7 @@ inline bool FileUtils_Win32::getFileSize(const std::string &filePath, std::int32
 inline bool FileUtils_Win32::getFileSign(const std::string &filePath, std::string &sign)
 {
     zzj::PEFile::FileSign::PSPROG_PUBLISHERINFO info = new zzj::PEFile::FileSign::SPROG_PUBLISHERINFO();
-    if (zzj::PEFile::FileSign(filePath).GetProgAndPublisherInfo(info))
+    if (zzj::PEFile::FileSign(filePath).GetProgAndPublisherInfo(info) && info->lpszProgramName != nullptr)
     {
         sign = str::Wstr2Str(info->lpszProgramName);
     }
