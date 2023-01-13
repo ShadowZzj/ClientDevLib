@@ -6,9 +6,52 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <iostream>
+
+
+bool HookAddress(uintptr_t target, uintptr_t ourFunc, int hookLen)
+{
+    
+    if (hookLen < 5)
+        return false;
+
+    zzj::Process p;
+    zzj::Memory m(p);
+
+    zzj::ProcessV2::SuspendPid(p.GetProcessId());
+    DWORD oldProtect;
+    VirtualProtectEx(GetCurrentProcess(), (LPVOID)target, hookLen, PAGE_GRAPHICS_EXECUTE_READWRITE, &oldProtect);
+    std::vector<uint8_t> data(hookLen, 0x90);
+    m.Write(target, data);
+    
+    auto detourAddress = ourFunc - target - 5;
+    m.Write(target, {0xE9});
+    m.Write(target + 1, &detourAddress, sizeof(detourAddress));
+    VirtualProtectEx(GetCurrentProcess(), (LPVOID)target, hookLen, oldProtect, &oldProtect);
+    Sleep(3000);
+    zzj::ProcessV2::ResumePid(p.GetProcessId());
+    return true;
+}
+
+bool TrampolionHook(uintptr_t target, uintptr_t ourFunc, int hookLen)
+{
+    zzj::Process p;
+    zzj::Memory m(p);
+    auto gateway = m.Alloc(hookLen);
+    m.Write(gateway, (void*)target, hookLen);
+    m.Write(gateway + hookLen, {0xE9});
+    auto relativeAddress = target - gateway - 5;
+    m.Write(gateway+hookLen+1,&relativeAddress,sizeof(relativeAddress));
+
+    HookAddress(target, ourFunc, hookLen);
+}
+
+void  OurFunc()
+{
+    spdlog::info("In hook");
+
+}
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
-    MessageBoxA(NULL, "start", "gg", MB_OK);
     bool bHealth = false;
     bool bAmmo   = false;
     std::string processName = "ac_client.exe";
@@ -35,6 +78,10 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
     spdlog::info("ammo address: {:#x}", ammoAddress);
     spdlog::info("health address: {:#x}", healthAddr);
 
+    auto testHookAddress = baseAddress + 0x62020;
+    bool isHook          = false;
+
+
     while (p.IsAlive())
     {
         if (zzj::Keyboard::IsKeyUp('1'))
@@ -57,9 +104,23 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
             }
         }
 
-        if (zzj::Keyboard::IsKeyUp(VK_ESCAPE))
+        if (zzj::Keyboard::IsKeyUp('3'))
         {
-            return 0;
+            isHook = !isHook;
+            if (isHook)
+            {
+                spdlog::info("hook on");
+                HookAddress(testHookAddress, (uintptr_t)OurFunc, 6);
+            }
+            else
+            {
+                spdlog::info("hook off");
+                m.Write(testHookAddress, {0x55, 0x8B, 0xEC, 0x83, 0xE4, 0xF8});
+            }
+        }
+        if (zzj::Keyboard::IsKeyUp(VK_END))
+        {
+            break;
         }
 
         if (bHealth)

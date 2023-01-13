@@ -887,6 +887,16 @@ bool zzj::Memory::Write(uintptr_t address, std::vector<uint8_t> buf)
     return Write(address, buf.data(), buf.size());
 }
 
+uintptr_t zzj::Memory::Alloc(DWORD size, DWORD allocationType, DWORD protect)
+{
+	return (uintptr_t)VirtualAllocEx(process, NULL, size, allocationType, protect);
+}
+
+uintptr_t zzj::Memory::DeAlloc(uintptr_t address)
+{
+	return (uintptr_t)VirtualFreeEx(process, (LPVOID)address, 0, MEM_RELEASE);
+}
+
 bool zzj::Memory::Nop(uintptr_t address, size_t size)
 {
 	std::vector<uint8_t> nop(size, 0x90);

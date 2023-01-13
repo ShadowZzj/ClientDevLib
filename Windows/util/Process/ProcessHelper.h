@@ -187,6 +187,8 @@ namespace zzj {
         bool Read(uintptr_t address, void *buffer, size_t size);
         bool Write(uintptr_t address, const void *buffer, size_t size);
         bool Write(uintptr_t address, std::vector<uint8_t> buf);
+		uintptr_t Alloc(DWORD size,DWORD allocationType = MEM_COMMIT|MEM_RESERVE, DWORD protect = PAGE_EXECUTE_READWRITE);
+		uintptr_t DeAlloc(uintptr_t address);
 		bool Nop(uintptr_t address, size_t size);
         uintptr_t FindMultiPleLevelAddress(uintptr_t baseAddress, std::vector<unsigned int> offsets);
 

@@ -223,6 +223,8 @@ bool ProcessV2::SuspendPid(int pid)
     auto threads = GetProcessThreadsCache(pid);
     for (auto &t : threads)
     {
+        if(t.tid == GetCurrentThreadId())
+            continue;
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
         if (NULL == handle)
             return false;
@@ -236,6 +238,8 @@ bool ProcessV2::ResumePid(int pid)
     auto threads = GetProcessThreadsCache(pid);
     for (auto &t : threads)
     {
+        if (t.tid == GetCurrentThreadId())
+            continue;
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
         if (NULL == handle)
             return false;
