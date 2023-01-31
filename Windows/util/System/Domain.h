@@ -16,6 +16,7 @@ namespace zzj
 
         std::string domainName;
         std::string dnsDomainName;
+        std::string domainGUID;
         
 
 

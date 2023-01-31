@@ -5,6 +5,15 @@
 #include <iostream>
 #include <General/util/StrUtil.h>
 #pragma comment(lib, "netapi32.lib")
+using namespace zzj;
+
+std::string GUIDToString(GUID guid)
+{
+    std::string guidStr;
+    guidStr = fmt::format("{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}",
+                          guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+    return guidStr;
+}
 bool zzj::Domain::IsDomainJoined()
 {
 
@@ -16,6 +25,7 @@ bool zzj::Domain::IsDomainJoined()
     }
     if (pdsrib->MachineRole == DsRole_RoleMemberWorkstation)
     {
+        DsRoleFreeMemory(pdsrib);
         return true;
     }
     DsRoleFreeMemory(pdsrib);
@@ -33,8 +43,9 @@ zzj::Domain zzj::Domain::GetDomain()
             throw std::runtime_error(fmt::format("DsRoleGetPrimaryDomainInformation failed with error code {}", dwErr));
         }
         Domain domain;
-        domain.domainName = zzj::str::w2utf8(pdsrib->DomainNameFlat);
-        domain.dnsDomainName = zzj::str::w2utf8(pdsrib->DomainNameDns);
+        domain.domainName = str::w2utf8(pdsrib->DomainNameFlat);
+        domain.dnsDomainName = str::w2utf8(pdsrib->DomainNameDns);
+        domain.domainGUID = GUIDToString(pdsrib->DomainGuid);
         DsRoleFreeMemory(pdsrib);
         return domain;
     }
