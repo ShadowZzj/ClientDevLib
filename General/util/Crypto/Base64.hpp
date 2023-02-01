@@ -97,7 +97,7 @@ class Base64Help
             if (j < out_len)
                 buf[j++] = (triple >> 0 * 8) & 0xFF;
         }
-
+        bufSize = out_len;
         return SUCCESS;
     }
 };
