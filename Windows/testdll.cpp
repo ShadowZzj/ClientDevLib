@@ -43,6 +43,7 @@ bool TrampolionHook(uintptr_t target, uintptr_t ourFunc, int hookLen)
     m.Write(gateway+hookLen+1,&relativeAddress,sizeof(relativeAddress));
 
     HookAddress(target, ourFunc, hookLen);
+	return true;
 }
 
 void  OurFunc()

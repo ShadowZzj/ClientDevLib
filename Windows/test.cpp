@@ -8,17 +8,8 @@
 
 int main()
 {
-    zzj::GHInJector injector;
-    auto processes      = zzj::ProcessV2::GetRunningProcesses();
-    DWORD pid = 0;
-    for(auto& p : processes)
-    {
-        if(p.processName == "ac_client.exe")
-        {
-            pid = p.pid;
-        }
-    }
-    if (pid == 0)
-        return -1;
+    std::cout << "123";
+    while (1)
+        ;
     
 }
