@@ -118,7 +118,7 @@ bool CallJ::ExecCall(char* injson, int injsonlen, char** outjson, int* outjsonle
 			return false;
 		}
 
-		char *temp = ret.data() ? _strdup(ret.data()) : nullptr;
+		char *temp = ret.data() ? strdup(ret.data()) : nullptr;
 		if (temp == nullptr)
 			return false;
 

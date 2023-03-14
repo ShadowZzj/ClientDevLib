@@ -63,7 +63,7 @@ std::string GetActiveUserSid()
 
         if (auto iter = out.find(L"\n"); iter != std::wstring::npos)
             out.erase(iter);
-        std::string ret = str::w2utf8(out);
+        std::string ret = zzj::str::w2utf8(out);
         ret = std::string("p-") + ret;
         
         

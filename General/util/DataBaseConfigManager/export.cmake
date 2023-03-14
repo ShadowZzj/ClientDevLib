@@ -1,5 +1,3 @@
-set(PRO_SUP $ENV{ZV_PRO_SUP})
-
 include (${PRO_SUP}/General/ThirdParty/sqlite3pp/export.cmake)
 file(GLOB _CONFIGMANAGER_SRCS 
 ${PRO_SUP}/General/util/ConfigManager/*.h

@@ -1,9 +1,9 @@
 #include "ProcessIterator/process_iterator.h"
 #include "ProcessIterator/process_iterator_apple.h"
 #include <General/util/BaseUtil.hpp>
-#include <General/util/Process.h>
+#include <General/util/Process/Process.h>
 #include <General/util/StrUtil.h>
-#include <General/util/Thread.h>
+#include <General/util/Process/Thread.h>
 #include <chrono>
 #include <mach/mach_host.h>
 #include <mach/mach_init.h>

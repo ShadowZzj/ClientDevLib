@@ -1,6 +1,6 @@
 #import <Collaboration/Collaboration.h>
 #import <CoreServices/CoreServices.h>
-#include <General/util/User.h>
+#include <General/util/User/User.h>
 
 std::vector<zzj::User> zzj::User::GetComputerUsers()
 {

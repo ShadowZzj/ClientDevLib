@@ -1,9 +1,9 @@
-#include "ConfigManager.h"
+#include "DataBaseConfigManager.h"
 #include <sqlite3/sqlite3.h>
 #include <sqlite3pp/sqlite3pp.h>
 #include <sqlite3pp/sqlite3ppext.h>
 #include <iostream>
-
+using namespace zzj;
 ConfigManager::ConfigManager(std::string groupName, std::string moudleName)
 {
 	m_groupName = groupName;

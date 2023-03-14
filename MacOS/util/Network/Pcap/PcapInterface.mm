@@ -115,7 +115,7 @@ int zzj::PcapInterface::InterfaceInfo::GetInterfaceInfo(const pcap_if_t * pcapIf
             for(int i=0;i<sockAddr->sdl_alen;i++){
                 if(i !=0 )
                     macAddr+=":";
-                macAddr +=ToHex(*(sockAddr->sdl_data+sockAddr->sdl_nlen+i), false);
+                macAddr +=str::ToHex(*(sockAddr->sdl_data+sockAddr->sdl_nlen+i), false);
             }
             interfaceInfo.m_MacAddress = macAddr;
             interfaceInfo.m_ifName = macTmp.substr(0,sockAddr->sdl_nlen);

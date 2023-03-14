@@ -1,7 +1,5 @@
-#ifndef _MAC_SERVICE_H_
-#define _MAC_SERVICE_H_
-
-#include <General/util/Service.h>
+#pragma once
+#include <General/util/Service/Service.h>
 #include <mutex>
 
 namespace zzj
@@ -47,4 +45,3 @@ class Service : public ServiceInterface
 
 }; // namespace zzj
 
-#endif

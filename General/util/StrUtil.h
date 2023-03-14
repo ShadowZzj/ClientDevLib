@@ -24,7 +24,7 @@ namespace str
 {
 inline char *Dup(const char *s)
 {
-    return s ? _strdup(s) : nullptr;
+    return s ? strdup(s) : nullptr;
 }
 inline wchar_t *Dup(const wchar_t *s)
 {

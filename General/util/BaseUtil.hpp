@@ -1,6 +1,7 @@
 #ifndef _G_BASEUTIL_H_
 #define _G_BASEUTIL_H_
 #include <exception>
+#include <stdexcept>
 #define CONCAT_INTERNAL(x, y) x##y
 #define CONCAT(x, y) CONCAT_INTERNAL(x, y)
 #define DEFER const auto &CONCAT(defer__, __LINE__) = zzj::ExitScopeHelp() + [&]()
@@ -14,7 +15,7 @@ size_t GetDim(T(&array)[N]) {
 }
 
 inline void CrashMe() {
-	throw std::exception("CrashMe");
+    throw std::runtime_error("CrashMe");
 }
 template <typename T> struct ExitScope
 {
