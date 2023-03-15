@@ -2,7 +2,7 @@
 #include "WinDynCalls.h"
 KERNEL32_API_LIST(API_DLR)
 
-
+#pragma comment(lib, "Pathcch.lib")
 //Only load dll located in SystemDirectory e.g C:\Windows\System32
 HMODULE SafeLoadLibrary(const WCHAR* dllName) {
 	WCHAR dllAbsPath[MAX_PATH]{};
