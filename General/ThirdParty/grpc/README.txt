@@ -1,4 +1,4 @@
-v1.47.0
+v1.42.0
 Compile Commond:
 
 1. clone grpc and select specific version

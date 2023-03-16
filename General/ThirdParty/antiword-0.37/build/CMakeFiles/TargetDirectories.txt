@@ -1,3 +1,0 @@
-/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/antiword.dir
-/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/ALL_BUILD.dir
-/Users/bixiangyang/kepm/kepm_client/ClientDevLib/General/ThirdParty/antiword-0.37/build/CMakeFiles/ZERO_CHECK.dir
