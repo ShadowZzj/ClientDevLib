@@ -2,7 +2,12 @@
 #include <string>
 namespace zzj
 {
-class TCPSocket
+  class Socket
+  {
+    public:
+      static bool IsPortAvailable(unsigned short port);
+  };
+class TCPSocket : Socket
 {
   public:
     TCPSocket();
@@ -11,11 +16,10 @@ class TCPSocket
     int Send(const std::string &data);
     int Recv(std::string &data, int len);
     bool Close();
-
   private:
     int m_socket;
 };
-class UDPSocket
+class UDPSocket : Socket
 {
   public:
     UDPSocket();

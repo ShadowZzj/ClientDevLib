@@ -1,13 +1,15 @@
 #include "Socket.h"
+#include <boost/asio.hpp>
+
 #ifdef _WIN32
-#include <winsock2.h>
 #include <Ws2tcpip.h>
+#include <winsock2.h>
 #pragma comment(lib, "ws2_32.lib")
 #else
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 using namespace zzj;
 TCPSocket::TCPSocket()
@@ -76,7 +78,6 @@ bool UDPSocket::Close()
 #else
     return close(m_socket);
 #endif
-    
 }
 
 int UDPSocket::Sendto(const std::string &data, const std::string &ip, int port)
@@ -85,10 +86,10 @@ int UDPSocket::Sendto(const std::string &data, const std::string &ip, int port)
     addr.sin_family      = AF_INET;
     addr.sin_port        = htons(port);
     addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    int result = sendto(m_socket, data.c_str(), data.size(), 0, (sockaddr *)&addr, sizeof(addr));
+    int result           = sendto(m_socket, data.c_str(), data.size(), 0, (sockaddr *)&addr, sizeof(addr));
     return result;
 }
-int UDPSocket::Recvfrom(std::string &data, std::string &ip, int &port,int len)
+int UDPSocket::Recvfrom(std::string &data, std::string &ip, int &port, int len)
 {
     sockaddr_in addr;
 #ifdef _WIN32
@@ -96,8 +97,8 @@ int UDPSocket::Recvfrom(std::string &data, std::string &ip, int &port,int len)
 #else
     socklen_t addr_len = sizeof(addr);
 #endif
-    char *buf    = new char[len];
-    int ret      = recvfrom(m_socket, buf, len, 0, (sockaddr *)&addr, &addr_len);
+    char *buf = new char[len];
+    int ret   = recvfrom(m_socket, buf, len, 0, (sockaddr *)&addr, &addr_len);
     if (ret > 0)
     {
         data = std::string(buf, ret);
@@ -106,4 +107,16 @@ int UDPSocket::Recvfrom(std::string &data, std::string &ip, int &port,int len)
     }
     delete[] buf;
     return ret;
+}
+
+bool zzj::Socket::IsPortAvailable(unsigned short port)
+{
+    using boost::asio::ip::tcp;
+    boost::asio::io_service io_service;
+    tcp::acceptor acceptor(io_service);
+
+    boost::system::error_code ec;
+    acceptor.open(tcp::v4(), ec) || acceptor.bind({tcp::v4(), port}, ec);
+
+    return !ec;
 }
