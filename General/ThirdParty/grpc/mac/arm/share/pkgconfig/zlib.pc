@@ -1,8 +1,8 @@
-prefix=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install
-exec_prefix=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install
-libdir=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install/lib
-sharedlibdir=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install/lib
-includedir=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install/include
+prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0
+exec_prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0
+libdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0/lib
+sharedlibdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0/lib
+includedir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0/include
 
 Name: zlib
 Description: zlib compression library

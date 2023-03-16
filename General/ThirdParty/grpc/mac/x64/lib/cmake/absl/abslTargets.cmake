@@ -986,7 +986,7 @@ add_library(absl::time_zone STATIC IMPORTED)
 
 set_target_properties(absl::time_zone PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "\$<\$<PLATFORM_ID:Darwin>:/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX12.0.sdk/System/Library/Frameworks/CoreFoundation.framework>"
+  INTERFACE_LINK_LIBRARIES "\$<\$<PLATFORM_ID:Darwin>:/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.1.sdk/System/Library/Frameworks/CoreFoundation.framework>"
 )
 
 # Create imported target absl::any

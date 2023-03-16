@@ -1,4 +1,4 @@
-prefix=/Users/vbb/Library/Application Support/Kim (Kim)/userData/b7744d68566745898ee40b81347934c9/Kim file/2022-10/grpc/cmake/install
+prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include

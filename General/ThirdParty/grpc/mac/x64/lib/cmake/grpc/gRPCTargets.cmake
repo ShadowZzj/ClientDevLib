@@ -16,7 +16,7 @@ set(CMAKE_IMPORT_FILE_VERSION 1)
 set(_targetsDefined)
 set(_targetsNotDefined)
 set(_expectedTargets)
-foreach(_expectedTarget gRPC::cares gRPC::re2 gRPC::ssl gRPC::crypto gRPC::zlibstatic gRPC::address_sorting gRPC::gpr gRPC::grpc gRPC::grpc_unsecure gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_error_details gRPC::grpc++_reflection gRPC::grpc++_unsecure gRPC::grpc_plugin_support gRPC::grpcpp_channelz gRPC::upb gRPC::grpc_cpp_plugin gRPC::grpc_csharp_plugin gRPC::grpc_node_plugin gRPC::grpc_objective_c_plugin gRPC::grpc_php_plugin gRPC::grpc_python_plugin gRPC::grpc_ruby_plugin)
+foreach(_expectedTarget gRPC::cares gRPC::re2 gRPC::zlibstatic gRPC::address_sorting gRPC::gpr gRPC::grpc gRPC::grpc_unsecure gRPC::grpc++ gRPC::grpc++_alts gRPC::grpc++_error_details gRPC::grpc++_reflection gRPC::grpc++_unsecure gRPC::grpc_plugin_support gRPC::grpcpp_channelz gRPC::upb gRPC::grpc_cpp_plugin gRPC::grpc_csharp_plugin gRPC::grpc_node_plugin gRPC::grpc_objective_c_plugin gRPC::grpc_php_plugin gRPC::grpc_python_plugin gRPC::grpc_ruby_plugin)
   list(APPEND _expectedTargets ${_expectedTarget})
   if(NOT TARGET ${_expectedTarget})
     list(APPEND _targetsNotDefined ${_expectedTarget})
@@ -65,16 +65,6 @@ set_target_properties(gRPC::re2 PROPERTIES
   INTERFACE_LINK_LIBRARIES "Threads::Threads"
 )
 
-# Create imported target gRPC::ssl
-add_library(gRPC::ssl STATIC IMPORTED)
-
-# Create imported target gRPC::crypto
-add_library(gRPC::crypto STATIC IMPORTED)
-
-set_target_properties(gRPC::crypto PROPERTIES
-  INTERFACE_LINK_LIBRARIES "pthread"
-)
-
 # Create imported target gRPC::zlibstatic
 add_library(gRPC::zlibstatic STATIC IMPORTED)
 
@@ -99,7 +89,7 @@ add_library(gRPC::grpc STATIC IMPORTED)
 
 set_target_properties(gRPC::grpc PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
-  INTERFACE_LINK_LIBRARIES "gRPC::zlibstatic;gRPC::cares;gRPC::address_sorting;gRPC::re2;gRPC::upb;m;pthread;absl::flat_hash_map;absl::inlined_vector;absl::bind_front;absl::hash;absl::statusor;absl::variant;absl::utility;gRPC::gpr;gRPC::ssl;gRPC::crypto;gRPC::address_sorting;-framework CoreFoundation"
+  INTERFACE_LINK_LIBRARIES "gRPC::zlibstatic;gRPC::cares;gRPC::address_sorting;gRPC::re2;gRPC::upb;m;pthread;absl::flat_hash_map;absl::inlined_vector;absl::bind_front;absl::hash;absl::statusor;absl::variant;absl::utility;gRPC::gpr;OpenSSL::SSL;OpenSSL::Crypto;gRPC::address_sorting;-framework CoreFoundation"
 )
 
 # Create imported target gRPC::grpc_unsecure

@@ -12,8 +12,8 @@ set_target_properties(c-ares::cares PROPERTIES
   IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libcares.a"
   )
 
-list(APPEND _IMPORT_CHECK_TARGETS c-ares::cares )
-list(APPEND _IMPORT_CHECK_FILES_FOR_c-ares::cares "${_IMPORT_PREFIX}/lib/libcares.a" )
+list(APPEND _cmake_import_check_targets c-ares::cares )
+list(APPEND _cmake_import_check_files_for_c-ares::cares "${_IMPORT_PREFIX}/lib/libcares.a" )
 
 # Commands beyond this point should not need to know the version.
 set(CMAKE_IMPORT_FILE_VERSION)

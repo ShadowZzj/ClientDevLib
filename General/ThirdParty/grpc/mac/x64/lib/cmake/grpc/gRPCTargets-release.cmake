@@ -25,26 +25,6 @@ set_target_properties(gRPC::re2 PROPERTIES
 list(APPEND _IMPORT_CHECK_TARGETS gRPC::re2 )
 list(APPEND _IMPORT_CHECK_FILES_FOR_gRPC::re2 "${_IMPORT_PREFIX}/lib/libre2.a" )
 
-# Import target "gRPC::ssl" for configuration "Release"
-set_property(TARGET gRPC::ssl APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-set_target_properties(gRPC::ssl PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libssl.a"
-  )
-
-list(APPEND _IMPORT_CHECK_TARGETS gRPC::ssl )
-list(APPEND _IMPORT_CHECK_FILES_FOR_gRPC::ssl "${_IMPORT_PREFIX}/lib/libssl.a" )
-
-# Import target "gRPC::crypto" for configuration "Release"
-set_property(TARGET gRPC::crypto APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
-set_target_properties(gRPC::crypto PROPERTIES
-  IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "ASM;C"
-  IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libcrypto.a"
-  )
-
-list(APPEND _IMPORT_CHECK_TARGETS gRPC::crypto )
-list(APPEND _IMPORT_CHECK_FILES_FOR_gRPC::crypto "${_IMPORT_PREFIX}/lib/libcrypto.a" )
-
 # Import target "gRPC::zlibstatic" for configuration "Release"
 set_property(TARGET gRPC::zlibstatic APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(gRPC::zlibstatic PROPERTIES
