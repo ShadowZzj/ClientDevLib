@@ -44,11 +44,12 @@ class ServiceInterface
     virtual void ServiceFunc()                                    = 0;
     virtual void Run()                                            = 0;
     virtual int Protect(ServiceInterface *otherService = nullptr);
-    virtual int IsServiceInstalled(bool &isInstlled) = 0;
-    virtual int IsServiceRunning(bool &isRunning)    = 0;
-    virtual int IsServiceBinExist(bool &isExist)     = 0;
-    virtual int SetServiceStartType(StartUpType startType)   = 0;
-    virtual ControlStatus CheckSafeStop(int seconds) = 0;
+    virtual int IsServiceInstalled(bool &isInstlled)        = 0;
+    virtual int IsServiceRunning(bool &isRunning)           = 0;
+    virtual int IsServiceBinExist(bool &isExist)            = 0;
+    virtual int SetServiceStartType(StartUpType startType)  = 0;
+    virtual int GetServiceStartType(StartUpType &startType) = 0;
+    virtual ControlStatus CheckSafeStop(int seconds)        = 0;
 
   protected:
     std::string serviceName;

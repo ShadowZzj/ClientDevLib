@@ -23,6 +23,7 @@ class Service : public ServiceInterface
     virtual int IsServiceBinExist(bool &isExist) override;
     virtual void ServiceFunc() override{}
     virtual int SetServiceStartType(StartUpType startType) override;
+    virtual int GetServiceStartType(StartUpType &startType) override;
     virtual void Run() override;
     int EnableService();
     int DisableService();

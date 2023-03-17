@@ -220,6 +220,40 @@ int zzj::Service::DisableService()
     cmd             = cmd + serviceName;
     return system(cmd.c_str());
 }
+int zzj::Service::GetServiceStartType(StartUpType &startType)
+{
+    std::map<std::string, boost::any> rootDict;
+    std::istringstream plistStream(GetPlistFileFullName());
+    try
+    {
+        Plist::readPlist(plistStream, rootDict);
+        
+        if (rootDict.find("KeepAlive") != rootDict.end())
+        {
+            bool keepAlive = boost::any_cast<bool>(rootDict["KeepAlive"]);
+
+            if (keepAlive)
+            {
+                startType = zzj::ServiceInterface::StartUpType::Auto;
+            }
+            else
+            {
+                startType = zzj::ServiceInterface::StartUpType::Manual;
+            }
+        }
+        else
+        {
+            startType = zzj::ServiceInterface::StartUpType::Disabled;
+        }
+    }
+    catch (...)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
 int zzj::Service::SetServiceStartType(zzj::ServiceInterface::StartUpType startType)
 {
     std::map<string, boost::any> rootDict;
