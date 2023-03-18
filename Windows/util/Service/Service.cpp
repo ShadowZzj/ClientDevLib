@@ -104,6 +104,28 @@ int zzj::Service::SetServiceStartType(StartUpType startType)
     }
     return result;
 }
+int zzj::Service::GetServiceStartType(StartUpType &startType)
+{
+    int startupType = -1;
+    int result      = WinService::GetServiceStartUpType(serviceName.c_str(), startupType);
+    switch (startupType)
+    {
+    case SERVICE_AUTO_START:
+        startType = StartUpType::Auto;
+        break;
+    case SERVICE_DEMAND_START:
+
+        startType = StartUpType::Manual;
+        break;
+    case SERVICE_DISABLED:
+        startType = StartUpType::Disabled;
+        break;
+    default:
+        startType = StartUpType::Unknown;
+        break;
+    }
+    return result;
+}
 
 zzj::ServiceInterface::ControlStatus zzj::Service::CheckSafeStop(int seconds)
 {

@@ -443,6 +443,43 @@ int WinService::SetServiceStartUpType(const char *serviceName, int startupType)
     return 0;
 }
 
+int WinService::GetServiceStartUpType(const char *serviceName, int& startupType)
+{
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_READ);
+    if (hSC == NULL)
+        return -1;
+
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, serviceName, SERVICE_QUERY_CONFIG);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return -2;
+    }
+
+    DWORD bytesNeeded;
+    QUERY_SERVICE_CONFIGA *serviceConfig = nullptr;
+
+    if (!::QueryServiceConfigA(hSvc, nullptr, 0, &bytesNeeded) && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        serviceConfig = (QUERY_SERVICE_CONFIGA *)new char[bytesNeeded];
+        if (::QueryServiceConfigA(hSvc, serviceConfig, bytesNeeded, &bytesNeeded))
+        {
+            startupType = serviceConfig->dwStartType;
+        }
+        delete[] serviceConfig;
+    }
+    else
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -3;
+    }
+
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return 0;
+}
+
 int WinService::IsServiceInstalled(const char *serviceName, bool &installed)
 {
     int result = 0;

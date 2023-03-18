@@ -34,6 +34,7 @@ class WinService
     static bool UninstallService(const char *serviceName);
 
     static int SetServiceStartUpType(const char *serviceName, int startupType);
+    static int GetServiceStartUpType(const char *serviceName, int& startupType);
     static int IsServiceInstalled(const char *serviceName, bool &installed);
     static int IsServiceRunning(const char *serviceName, bool &running);
 

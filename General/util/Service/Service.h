@@ -35,7 +35,8 @@ class ServiceInterface
     {
         Auto,
         Manual,
-        Disabled
+        Disabled,
+        Unknown
     };
     virtual int Install(ServiceInterface *otherService = nullptr) = 0;
     virtual int Uninstall()                                       = 0;
