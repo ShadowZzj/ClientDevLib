@@ -86,7 +86,7 @@ class MacPinger : public PingerInterface
         struct icmp icmp_hdr;
         icmp_hdr.icmp_type = ICMP_ECHO;
         icmp_hdr.icmp_code = 0;
-        icmp_hdr.icmp_id = htons(1);
+        icmp_hdr.icmp_id = htons(getpid());
         icmp_hdr.icmp_seq = htons(1);
         icmp_hdr.icmp_cksum = 0;
         icmp_hdr.icmp_cksum = checksum(&icmp_hdr, sizeof(icmp_hdr));
@@ -114,6 +114,15 @@ class MacPinger : public PingerInterface
         auto timeRecv = utime();
 
         struct icmp *icmp_reply = (struct icmp *)(buf + 20); // Skip IP header
+        int reply_id = ntohs(icmp_reply->icmp_id);
+        int reply_seq = ntohs(icmp_reply->icmp_seq);
+        if (reply_id != ntohs(icmp_hdr.icmp_id) || reply_seq != ntohs(icmp_hdr.icmp_seq))
+        {
+            std::cout<<"id error"<<std::endl;
+            close(sockfd);
+            freeaddrinfo(res);
+            return false;
+        }
         if (icmp_reply->icmp_type == ICMP_ECHOREPLY)
         {
             num_replies_++;
