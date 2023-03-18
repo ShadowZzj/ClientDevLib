@@ -18,3 +18,10 @@ make install
 mac/universal
 lipo -create -output libssl.1.1.dylib ../arm/libssl.1.1.dylib ../x64/libssl.1.1.dylib
 lipo -create -output libcrypto.1.1.dylib ../arm/libcrypto.1.1.dylib ../x64/libcrypto.1.1.dylib
+
+
+win:
+
+perl Configure VC-WIN64A no-dso --prefix=C:\openssl-build --openssldir=C:\openssl-build -MT
+nmake 
+nmake install
