@@ -1,7 +1,7 @@
-prefix=C:/Program Files (x86)/grpc
-exec_prefix=C:/Program Files (x86)/grpc
-libdir=C:/Program Files (x86)/grpc/lib
-includedir=C:/Program Files (x86)/grpc/include
+prefix=D:/grpc/install
+exec_prefix=D:/grpc/install
+libdir=D:/grpc/install/lib
+includedir=D:/grpc/install/include
 
 Name: Protocol Buffers
 Description: Google's Data Interchange Format

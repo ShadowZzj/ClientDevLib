@@ -6,7 +6,7 @@ Compile Commond:
 3. mkdir cmake/build
 4. cd cmake/build
 5
-6. cmake ../.. -DCMAKE_INSTALL_PREFIX="~/Desktop/grpc/cmake/build/static/" -DgRPC_INSTALL=ON -DCMAKE_BUILD_TYPE=Release -DgRPC_BUILD+TESTS=OFF -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15  -DgRPC_SSL_PROVIDER=package -DOPENSSL_ROOT_DIR=~/Desktop/openssl
+6. cmake ../.. -G "Visual Studio 17" -DCMAKE_INSTALL_PREFIX="D:\openssl\install" -DgRPC_INSTALL=ON -DCMAKE_BUILD_TYPE=Release -DgRPC_BUILD+TESTS=OFF -DgRPC_SSL_PROVIDER=package -DOPENSSL_ROOT_DIR=D:\openssl
 #-DBUILD_SHARED_LIBS=ON -- compile dylib
 7. make -j 20
 

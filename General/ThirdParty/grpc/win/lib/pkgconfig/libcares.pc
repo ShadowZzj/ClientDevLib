@@ -4,7 +4,7 @@
 #              | (_|_____| (_| | | |  __/\__ \
 #               \___|     \__,_|_|  \___||___/
 #
-prefix=C:/Program Files (x86)/grpc
+prefix=D:/grpc/install
 exec_prefix=${prefix}/bin
 libdir=${prefix}/lib
 includedir=${prefix}/include

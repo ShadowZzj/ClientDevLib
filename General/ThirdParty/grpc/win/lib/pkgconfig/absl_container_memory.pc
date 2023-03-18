@@ -1,4 +1,4 @@
-prefix=C:/Program Files (x86)/grpc
+prefix=D:/grpc/install
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include
