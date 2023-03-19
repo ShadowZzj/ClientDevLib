@@ -1,17 +1,32 @@
-#include <arpa/inet.h>
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <sys/types.h>
+
+#ifndef _WIN32
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
+#else
+#include <IPExport.h>
+#include <Windows.h>
+#include <icmpapi.h>
+#include <inaddr.h>
+#include <iphlpapi.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "iphlpapi.lib")
+#endif
+namespace zzj
+{
 static uint64_t utime(void)
 {
 #ifdef _WIN32
@@ -42,6 +57,126 @@ class PingerInterface
 #ifdef _WIN32
 // Windows specific implementation
 // ...
+class WinPinger : public PingerInterface
+{
+  public:
+    std::string get_ip_address(const std::string &hostname)
+    {
+        addrinfo hints    = {};
+        hints.ai_family   = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+
+        addrinfo *res = nullptr;
+        if (getaddrinfo(hostname.c_str(), nullptr, &hints, &res) != 0)
+        {
+            std::cerr << "Error resolving address" << std::endl;
+            return "";
+        }
+
+        char ipAddr[INET_ADDRSTRLEN];
+        if (inet_ntop(AF_INET, &((sockaddr_in *)res->ai_addr)->sin_addr, ipAddr, sizeof(ipAddr)) == nullptr)
+        {
+            std::cerr << "Error converting IP address" << std::endl;
+            freeaddrinfo(res);
+            return "";
+        }
+
+        freeaddrinfo(res);
+
+        return ipAddr;
+    }
+    bool send_ping(const std::string &destination) override
+    {
+        HANDLE hIcmpFile;
+        DWORD dwRetVal     = 0;
+        DWORD dwError      = 0;
+        char SendData[32]  = "Data Buffer";
+        LPVOID ReplyBuffer = nullptr;
+        DWORD ReplySize    = 0;
+
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            std::cerr << "WSAStartup failed: " << WSAGetLastError() << std::endl;
+            return false;
+        }
+
+        struct addrinfo hints, *res;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family   = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+
+        if (getaddrinfo(destination.c_str(), nullptr, &hints, &res) != 0)
+        {
+            std::cerr << "Error resolving address" << std::endl;
+            WSACleanup();
+            return false;
+        }
+
+        struct sockaddr_in *ipv4_addr = (struct sockaddr_in *)res->ai_addr;
+        unsigned long ipAddress       = ipv4_addr->sin_addr.S_un.S_addr;
+
+        hIcmpFile = IcmpCreateFile();
+        if (hIcmpFile == INVALID_HANDLE_VALUE)
+        {
+            std::cerr << "Unable to open handle: " << GetLastError() << std::endl;
+            freeaddrinfo(res);
+            WSACleanup();
+            return false;
+        }
+
+        ReplySize   = sizeof(ICMP_ECHO_REPLY) + sizeof(SendData);
+        ReplyBuffer = (VOID *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ReplySize);
+        if (ReplyBuffer == nullptr)
+        {
+            std::cerr << "HeapAlloc failed: " << GetLastError() << std::endl;
+            IcmpCloseHandle(hIcmpFile);
+            freeaddrinfo(res);
+            WSACleanup();
+            return false;
+        }
+
+        dwRetVal =
+            IcmpSendEcho(hIcmpFile, ipAddress, SendData, sizeof(SendData), nullptr, ReplyBuffer, ReplySize, 2000);
+
+        if (dwRetVal != 0)
+        {
+            PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+            struct in_addr ReplyAddr;
+            ReplyAddr.S_un.S_addr = pEchoReply->Address;
+            num_replies_++;
+            total_time_ += pEchoReply->RoundTripTime;
+        }
+        else
+        {
+            dwError = GetLastError();
+            std::cerr << "IcmpSendEcho failed: " << dwError << std::endl;
+            HeapFree(GetProcessHeap(), 0, ReplyBuffer);
+            IcmpCloseHandle(hIcmpFile);
+            freeaddrinfo(res);
+            WSACleanup();
+            return false;
+        }
+
+        HeapFree(GetProcessHeap(), 0, ReplyBuffer);
+        IcmpCloseHandle(hIcmpFile);
+        freeaddrinfo(res);
+        WSACleanup();
+        return true;
+    }
+
+    double get_average_delay() const override
+    {
+        return num_replies_ > 0 ? total_time_ / num_replies_ : 0;
+    }
+
+  private:
+    int num_replies_   = 0;
+    double total_time_ = 0;
+};
+
 #else
 // macOS specific implementation
 class MacPinger : public PingerInterface
@@ -118,7 +253,7 @@ class MacPinger : public PingerInterface
         int reply_seq = ntohs(icmp_reply->icmp_seq);
         if (reply_id != ntohs(icmp_hdr.icmp_id) || reply_seq != ntohs(icmp_hdr.icmp_seq))
         {
-            std::cout<<"id error"<<std::endl;
+            std::cout << "id error" << std::endl;
             close(sockfd);
             freeaddrinfo(res);
             return false;
@@ -164,3 +299,4 @@ class MacPinger : public PingerInterface
     double total_time_ = 0;
 };
 #endif
+}; // namespace zzj
