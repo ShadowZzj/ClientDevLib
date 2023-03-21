@@ -4,7 +4,8 @@
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
-
+#include <General/util/StrUtil.h>
+#include <fstream>
 #ifdef _WIN32
 #include <curl/win/curl.h>
 #else
@@ -99,7 +100,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
 {
     try
     {
-        CURL *curl = curl_easy_init();
+        CURL *curl           = curl_easy_init();
         curl_mime *form      = NULL;
         curl_mimepart *field = NULL;
         CURLcode res;
@@ -151,6 +152,11 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             }
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_headers);
         }
+        if(setting.find("nobody") != setting.end())
+        {
+            int nobody = setting["nobody"];
+            curl_easy_setopt(curl, CURLOPT_NOBODY,nobody);
+        }
         if (setting.find("body") != setting.end())
         {
             nlohmann::json body = setting["body"];
@@ -182,9 +188,9 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
                     result = -3;
                     return result;
                 }
-                nlohmann::json files = body["data"]["files"];
+                nlohmann::json files  = body["data"]["files"];
                 nlohmann::json fields = body["data"]["fields"];
-                form = curl_mime_init(curl);
+                form                  = curl_mime_init(curl);
                 for (auto it = files.begin(); it != files.end(); it++)
                 {
                     if (!it.value().is_string())
@@ -281,11 +287,16 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             result = -3;
             return result;
         }
+        double time;
+        curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &time);
+        time = time * 1000;
+
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
         nlohmann::json retJson;
         retJson["code"]   = responseCode;
         retJson["header"] = postRetHeader;
         retJson["body"]   = postRetContent;
+        retJson["extra"]["time"] = time;
         retString         = retJson.dump();
         return result;
     }
@@ -294,7 +305,6 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
         spdlog::error("Http post json error {}", e.what());
         return -2;
     }
-
 }
 int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &retString)
 {
@@ -357,6 +367,11 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
             curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
         }
+        if(setting.find("nobody") != setting.end())
+        {
+            int nobody = setting["nobody"];
+            curl_easy_setopt(curl, CURLOPT_NOBODY,nobody);
+        }
         if (setting.find("followlocation") != setting.end())
         {
             int followlocation = setting["followlocation"];
@@ -406,12 +421,25 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             result = -3;
             return result;
         }
+        double time;
+        curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &time);
+        time = time * 1000;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-        nlohmann::json retJson;
-        retJson["code"]   = responseCode;
-        retJson["header"] = postRetHeader;
-        retJson["body"]   = postRetContent;
-        retString         = retJson.dump();
+        try {
+            nlohmann::json retJson;
+            retJson["code"]          = responseCode;
+            retJson["header"]        = postRetHeader;
+            retJson["body"]          = postRetContent;
+            retJson["extra"]["time"] = time;
+            retString                = retJson.dump();
+        } catch (std::exception& e) {
+            spdlog::error("http json error with {}, do not return body",e.what());
+            nlohmann::json retJson;
+            retJson["code"]          = responseCode;
+            retJson["header"]        = postRetHeader;
+            retJson["extra"]["time"] = time;
+            retString                = retJson.dump();
+        }
         return result;
     }
     catch (const std::exception &e)
