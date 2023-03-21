@@ -25,6 +25,10 @@ class ServiceInterface
     {
         return -1;
     };
+    virtual ~ServiceInterface()
+    {
+        
+    }
     enum class ControlStatus : int
     {
         RequestStop,
