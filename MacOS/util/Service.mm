@@ -223,10 +223,20 @@ int zzj::Service::DisableService()
 int zzj::Service::GetServiceStartType(StartUpType &startType)
 {
     std::map<std::string, boost::any> rootDict;
-    std::istringstream plistStream(GetPlistFileFullName());
+    std::ifstream plistFile(GetPlistFileFullName());
+    std::ostringstream plistStream;
+
+    if (plistFile.is_open()) {
+        plistStream << plistFile.rdbuf();
+        plistFile.close();
+    } else {
+        std::cerr << "Unable to open file: " << GetPlistFileFullName() << std::endl;
+        return -2;
+    }
     try
     {
-        Plist::readPlist(plistStream, rootDict);
+        std::string content = plistStream.str();
+        Plist::readPlist(content.c_str(),content.size(), rootDict);
         
         if (rootDict.find("KeepAlive") != rootDict.end())
         {
@@ -248,6 +258,7 @@ int zzj::Service::GetServiceStartType(StartUpType &startType)
     }
     catch (...)
     {
+        
         return -1;
     }
 
