@@ -177,14 +177,18 @@ bool ProcessV2::IsProcessAlive(const std::string &name)
     init_process_iterator(&it, &filter);
     while (get_next_process(&it, &proc) != -1)
     {
-        if (strncmp(proc.command, name.c_str(), name.length()) == 0 && kill(pid, 0) == 0)
+
+        if (name == proc.command && kill(pid, 0) == 0)
         {
             pid = proc.pid;
             break;
         }
     }
-    if (close_process_iterator(&it) != 0)
+    if (auto ret = close_process_iterator(&it) ;ret!= 0)
+    {
+        std::cout<<"close_process_iterator error:"<<ret<<std::endl;
         return false;
+    }
     if (pid >= 0)
     {
         return true;
