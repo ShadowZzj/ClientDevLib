@@ -50,8 +50,9 @@ class PingerInterface
     {
     }
 
-    virtual bool send_ping(const std::string &destination) = 0;
-    virtual double get_average_delay() const               = 0;
+    virtual bool send_ping(const std::string &destination, int timeoutSecond) = 0;
+    virtual double get_average_delay() const                                  = 0;
+    virtual void Reset()                                                      = 0;
 };
 
 #ifdef _WIN32
@@ -86,7 +87,7 @@ class WinPinger : public PingerInterface
 
         return ipAddr;
     }
-    bool send_ping(const std::string &destination) override
+    bool send_ping(const std::string &destination, int timeoutSecond = 2) override
     {
         HANDLE hIcmpFile;
         DWORD dwRetVal     = 0;
@@ -138,8 +139,8 @@ class WinPinger : public PingerInterface
             return false;
         }
 
-        dwRetVal =
-            IcmpSendEcho(hIcmpFile, ipAddress, SendData, sizeof(SendData), nullptr, ReplyBuffer, ReplySize, 2000);
+        dwRetVal = IcmpSendEcho(hIcmpFile, ipAddress, SendData, sizeof(SendData), nullptr, ReplyBuffer, ReplySize,
+                                timeoutSecond * 1000);
 
         if (dwRetVal != 0)
         {
@@ -171,6 +172,11 @@ class WinPinger : public PingerInterface
     {
         return num_replies_ > 0 ? total_time_ / num_replies_ : 0;
     }
+    void Reset() override
+    {
+        num_replies_ = 0;
+        total_time_  = 0;
+    }
 
   private:
     int num_replies_   = 0;
@@ -182,7 +188,7 @@ class WinPinger : public PingerInterface
 class MacPinger : public PingerInterface
 {
   public:
-    bool send_ping(const std::string &destination) override
+    bool send_ping(const std::string &destination, int timeoutSecond = 2) override
     {
         struct addrinfo hints, *res;
         int sockfd;
@@ -201,21 +207,19 @@ class MacPinger : public PingerInterface
         sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sockfd < 0)
         {
-            std::cerr << "Error creating socket" << std::endl;
             freeaddrinfo(res);
             return false;
         }
         // Set the timeout value
         struct timeval timeout;
-        timeout.tv_sec = 2;  // Timeout in seconds
-        timeout.tv_usec = 0; // Additional timeout in microseconds
+        timeout.tv_sec = timeoutSecond; // Timeout in seconds
+        timeout.tv_usec = 0;            // Additional timeout in microseconds
 
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
         {
-            std::cerr << "Failed to set timeout: " << std::strerror(errno) << std::endl;
             close(sockfd);
             freeaddrinfo(res);
-            return 1;
+            return false;
         }
 
         struct icmp icmp_hdr;
@@ -224,13 +228,29 @@ class MacPinger : public PingerInterface
         icmp_hdr.icmp_id = htons(getpid());
         icmp_hdr.icmp_seq = htons(1);
         icmp_hdr.icmp_cksum = 0;
-        icmp_hdr.icmp_cksum = checksum(&icmp_hdr, sizeof(icmp_hdr));
+        // icmp_hdr.icmp_cksum = checksum(&icmp_hdr, sizeof(icmp_hdr));
         char buf[1024]{1};
 
-        ssize_t bytes_sent = sendto(sockfd, &icmp_hdr, sizeof(icmp_hdr), 0, res->ai_addr, res->ai_addrlen);
+        // Add data to the ICMP request and include it in the checksum
+        const size_t data_size = 56; // 56 bytes of data (default size for the 'ping' utility)
+        char data[data_size];
+        for (size_t i = 0; i < data_size; ++i)
+        {
+            data[i] = i;
+        }
+
+        // Allocate memory for the ICMP packet
+        char packet[sizeof(icmp_hdr) + data_size];
+        memcpy(packet, &icmp_hdr, sizeof(icmp_hdr));
+        memcpy(packet + sizeof(icmp_hdr), data, data_size);
+        icmp_hdr.icmp_cksum = checksum(packet, sizeof(packet));
+
+        // Update the ICMP header's checksum
+        memcpy(packet, &icmp_hdr, sizeof(icmp_hdr));
+
+        ssize_t bytes_sent = sendto(sockfd, packet, sizeof(packet), 0, res->ai_addr, res->ai_addrlen);
         if (bytes_sent < 0)
         {
-            std::cerr << "Error sending ICMP packet" << std::endl;
             close(sockfd);
             freeaddrinfo(res);
             return false;
@@ -240,18 +260,18 @@ class MacPinger : public PingerInterface
         ssize_t bytes_received = recv(sockfd, buf, sizeof(buf), 0);
         if (bytes_received < 0)
         {
-            std::cerr << "Error receiving ICMP packet" << std::endl;
             close(sockfd);
             freeaddrinfo(res);
             return false;
         }
-        std::cout << "recv: " << bytes_received << std::endl;
         auto timeRecv = utime();
 
         struct icmp *icmp_reply = (struct icmp *)(buf + 20); // Skip IP header
         int reply_id = ntohs(icmp_reply->icmp_id);
         int reply_seq = ntohs(icmp_reply->icmp_seq);
-        if (reply_id != ntohs(icmp_hdr.icmp_id) || reply_seq != ntohs(icmp_hdr.icmp_seq))
+        int request_id = ntohs(icmp_hdr.icmp_id);
+        int request_seq = ntohs(icmp_hdr.icmp_seq);
+        if (reply_id != request_id || reply_seq != request_seq)
         {
             std::cout << "id error" << std::endl;
             close(sockfd);
@@ -268,30 +288,69 @@ class MacPinger : public PingerInterface
         close(sockfd);
         return true;
     }
-
     double get_average_delay() const override
     {
         return num_replies_ > 0 ? total_time_ / num_replies_ : 0;
     }
+    void Reset() override
+    {
+        num_replies_ = 0;
+        total_time_ = 0;
+    }
 
   private:
-    uint16_t checksum(void *data, int len)
+    //    uint16_t checksum(void *data, int len)
+    //    {
+    //        uint16_t *addr = (uint16_t *)data;
+    //        uint32_t sum = 0;
+    //        while (len > 1)
+    //        {
+    //            sum += *addr++;
+    //            len -= 2;
+    //        }
+    //        if (len > 0)
+    //        {
+    //            sum += *(uint8_t *)addr;
+    //        }
+    //        while (sum >> 16)
+    //            sum = (sum & 0xffff) + (sum >> 16);
+    //
+    //        return ~sum;
+    //    }
+    uint16_t checksum(void *vdata, size_t length)
     {
-        uint16_t *addr = (uint16_t *)data;
-        uint32_t sum = 0;
-        while (len > 1)
-        {
-            sum += *addr++;
-            len -= 2;
-        }
-        if (len > 0)
-        {
-            sum += *(uint8_t *)addr;
-        }
-        while (sum >> 16)
-            sum = (sum & 0xffff) + (sum >> 16);
+        // Cast the data pointer to one that can be indexed
+        char *data = (char *)vdata;
 
-        return ~sum;
+        // Initialise the accumulator
+        uint32_t acc = 0xffff;
+
+        // Handle complete 16-bit blocks
+        for (size_t i = 0; i + 1 < length; i += 2)
+        {
+            uint16_t word;
+            memcpy(&word, data + i, 2);
+            acc += ntohs(word);
+            if (acc > 0xffff)
+            {
+                acc -= 0xffff;
+            }
+        }
+
+        // Handle any partial block at the end of the data
+        if (length & 1)
+        {
+            uint16_t word = 0;
+            memcpy(&word, data + length - 1, 1);
+            acc += ntohs(word);
+            if (acc > 0xffff)
+            {
+                acc -= 0xffff;
+            }
+        }
+
+        // Return the checksum in network byte order
+        return htons(~acc);
     }
 
   private:
