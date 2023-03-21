@@ -188,6 +188,12 @@ class WinPinger : public PingerInterface
 class MacPinger : public PingerInterface
 {
   public:
+    virtual ~MacPinger(){}
+    MacPinger(int16_t id,int16_t sequence)
+    {
+        id_ = id;
+        sequence_ = sequence;
+    }
     bool send_ping(const std::string &destination, int timeoutSecond = 2) override
     {
         struct addrinfo hints, *res;
@@ -225,8 +231,8 @@ class MacPinger : public PingerInterface
         struct icmp icmp_hdr;
         icmp_hdr.icmp_type = ICMP_ECHO;
         icmp_hdr.icmp_code = 0;
-        icmp_hdr.icmp_id = htons(getpid());
-        icmp_hdr.icmp_seq = htons(1);
+        icmp_hdr.icmp_id = htons(id_);
+        icmp_hdr.icmp_seq = htons(sequence_);
         icmp_hdr.icmp_cksum = 0;
         // icmp_hdr.icmp_cksum = checksum(&icmp_hdr, sizeof(icmp_hdr));
         char buf[1024]{1};
@@ -299,24 +305,6 @@ class MacPinger : public PingerInterface
     }
 
   private:
-    //    uint16_t checksum(void *data, int len)
-    //    {
-    //        uint16_t *addr = (uint16_t *)data;
-    //        uint32_t sum = 0;
-    //        while (len > 1)
-    //        {
-    //            sum += *addr++;
-    //            len -= 2;
-    //        }
-    //        if (len > 0)
-    //        {
-    //            sum += *(uint8_t *)addr;
-    //        }
-    //        while (sum >> 16)
-    //            sum = (sum & 0xffff) + (sum >> 16);
-    //
-    //        return ~sum;
-    //    }
     uint16_t checksum(void *vdata, size_t length)
     {
         // Cast the data pointer to one that can be indexed
@@ -354,6 +342,8 @@ class MacPinger : public PingerInterface
     }
 
   private:
+    int16_t id_;
+    int16_t sequence_;
     int num_replies_ = 0;
     double total_time_ = 0;
 };
