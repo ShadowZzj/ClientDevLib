@@ -1,6 +1,6 @@
 #include "FileHelper.h"
-#include <Windows/util/HandleHelper.h>
 #include <Shlobj.h>
+#include <Windows/util/HandleHelper.h>
 #include <algorithm>
 #include <direct.h>
 #include <io.h>
@@ -9,6 +9,7 @@
 #include <tchar.h>
 #include <windows.h>
 #include <wtsapi32.h>
+
 using namespace zzj;
 
 bool FileHelper::ReadFileAtOffset(std::string fileName, void *buffer, unsigned long numToRead, unsigned long fileOffset)
@@ -190,6 +191,31 @@ std::string zzj::FileHelper::GetDllPath(void *dllAnyFunctionAddress)
     }
 exit:
     return ret;
+}
+std::string zzj::FileHelper::GetProgramPath()
+{
+    char path[MAX_PATH];
+    if (SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path) == S_OK)
+    {
+        return std::string(path);
+    }
+    else
+        return "";
+}
+
+std::string zzj::FileHelper::GetCurrentUserProgramDataFolder()
+{
+    char szAppDataPath[MAX_PATH];
+
+    // 获取AppData\Roaming目录的路径
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, szAppDataPath)))
+    {
+        return std::string(szAppDataPath);
+    }
+    else
+    {
+        return "";
+    }
 }
 
 std::string zzj::FileHelper::GetProgramDataPath(std::string appDir)

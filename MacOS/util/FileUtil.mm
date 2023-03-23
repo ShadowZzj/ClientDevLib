@@ -38,6 +38,14 @@ std::string zzj::File::GetSystemAppDataFolder()
     }
 }
 
+std::string zzj::File::GetCurrentUserAppDataFolder() {
+    @autoreleasepool {
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+        NSString *appSupportPath = [paths firstObject];
+        return std::string([appSupportPath UTF8String]);
+    }
+}
+
 std::string zzj::File::GetTempDir()
 {
     @autoreleasepool
