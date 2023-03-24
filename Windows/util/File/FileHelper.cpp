@@ -1,6 +1,8 @@
 #include "FileHelper.h"
+#include <General/util/BaseUtil.hpp>
 #include <Shlobj.h>
 #include <Windows/util/HandleHelper.h>
+#include <Windows/util/Process/ThreadHelper.h>
 #include <algorithm>
 #include <direct.h>
 #include <io.h>
@@ -205,6 +207,16 @@ std::string zzj::FileHelper::GetProgramPath()
 
 std::string zzj::FileHelper::GetCurrentUserProgramDataFolder()
 {
+    auto handle = zzj::Thread::ImpersonateCurrentUser();
+    DEFER
+    {
+        zzj::Thread::RevertToCurrentUser(handle);
+    };
+    if (handle == NULL)
+    {
+        return "";
+    }
+
     char szAppDataPath[MAX_PATH];
 
     // 获取AppData\Roaming目录的路径
