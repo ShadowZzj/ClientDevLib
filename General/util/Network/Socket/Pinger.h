@@ -1,9 +1,14 @@
+#pragma once
+#include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
 #include <sys/types.h>
-
+#include <thread>
+#include <vector>
 #ifndef _WIN32
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -184,15 +189,132 @@ class WinPinger : public PingerInterface
 };
 
 #else
+class PingReceiver
+{
+  public:
+    friend class MacPinger;
+    PingReceiver()
+    {
+        sockfd_ = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+        if (sockfd_ < 0)
+        {
+            throw std::runtime_error("Error creating socket");
+        }
+        // Set the timeout value
+        struct timeval timeout;
+        timeout.tv_sec = 2;  // Timeout in seconds
+        timeout.tv_usec = 0; // Additional timeout in microseconds
+
+        if (setsockopt(sockfd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+        {
+            throw std::runtime_error("Error set sock rectimeo");
+        }
+        running_ = true;
+        recv_thread_ = std::thread(&PingReceiver::recv_loop, this);
+    }
+
+    ~PingReceiver()
+    {
+        running_ = false;
+        if (recv_thread_.joinable())
+        {
+            recv_thread_.join();
+        }
+        close(sockfd_);
+    }
+
+    int sockfd() const
+    {
+        return sockfd_;
+    }
+
+    std::shared_ptr<std::vector<char>> get_response(int16_t id, int16_t sequence)
+    {
+        auto key = std::make_pair(id, sequence);
+        auto iter = responses_.find(key);
+        if (iter != responses_.end())
+        {
+            return iter->second;
+        }
+        return nullptr;
+    }
+
+    void remove_response(int16_t id, int16_t sequence)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        responses_.erase(std::make_pair(id, sequence));
+    }
+
+  private:
+    void recv_loop()
+    {
+        char buf[1024];
+        while (running_)
+        {
+            ssize_t bytes_received = recv(sockfd_, buf, sizeof(buf), 0);
+            if (bytes_received < 0)
+            {
+                if (errno == EINTR) // Continue if interrupted by a signal
+                {
+                    continue;
+                }
+                else if (errno == EAGAIN || errno == EWOULDBLOCK) // Timeout
+                {
+                    continue;
+                }
+                else
+                {
+                    std::cerr << "Error receiving packet: " << strerror(errno) << std::endl;
+                    break;
+                }
+            }
+
+            struct ip *ip_hdr = (struct ip *)buf;
+            struct icmp *icmp_reply = (struct icmp *)(buf + (ip_hdr->ip_hl << 2));
+
+            if (icmp_reply->icmp_type == ICMP_ECHOREPLY)
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                int16_t id = ntohs(icmp_reply->icmp_id);
+                int16_t seq = ntohs(icmp_reply->icmp_seq);
+                auto key = std::make_pair(id, seq);
+                auto data = std::make_shared<std::vector<char>>(buf, buf + bytes_received);
+                responses_[key] = data;
+                cv_.notify_all();
+            }
+        }
+    }
+
+  private:
+    int sockfd_;
+    std::atomic<bool> running_;
+    std::thread recv_thread_;
+    std::map<std::pair<int16_t, int16_t>, std::shared_ptr<std::vector<char>>> responses_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+};
 // macOS specific implementation
 class MacPinger : public PingerInterface
 {
   public:
-    virtual ~MacPinger(){}
-    MacPinger(int16_t id,int16_t sequence)
+    virtual ~MacPinger()
+    {
+        std::unique_lock<std::mutex> lock(receiver_mutex_);
+        instance_count_.fetch_sub(1, std::memory_order_relaxed);
+        if (instance_count_.load(std::memory_order_relaxed) == 0)
+        {
+            receiver_.reset();
+        }
+    }
+    MacPinger(int16_t id, int16_t sequence)
     {
         id_ = id;
         sequence_ = sequence;
+        if (!receiver_)
+        {
+            receiver_ = std::make_shared<PingReceiver>();
+        }
+        instance_count_.fetch_add(1, std::memory_order_relaxed);
     }
     bool send_ping(const std::string &destination, int timeoutSecond = 2) override
     {
@@ -210,23 +332,7 @@ class MacPinger : public PingerInterface
             return false;
         }
 
-        sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-        if (sockfd < 0)
-        {
-            freeaddrinfo(res);
-            return false;
-        }
-        // Set the timeout value
-        struct timeval timeout;
-        timeout.tv_sec = timeoutSecond; // Timeout in seconds
-        timeout.tv_usec = 0;            // Additional timeout in microseconds
-
-        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
-        {
-            close(sockfd);
-            freeaddrinfo(res);
-            return false;
-        }
+        sockfd = receiver_->sockfd();
 
         struct icmp icmp_hdr;
         icmp_hdr.icmp_type = ICMP_ECHO;
@@ -254,25 +360,45 @@ class MacPinger : public PingerInterface
         // Update the ICMP header's checksum
         memcpy(packet, &icmp_hdr, sizeof(icmp_hdr));
 
+        // ... (rest of the send_ping implementation)
+
         ssize_t bytes_sent = sendto(sockfd, packet, sizeof(packet), 0, res->ai_addr, res->ai_addrlen);
         if (bytes_sent < 0)
         {
-            close(sockfd);
             freeaddrinfo(res);
             return false;
         }
 
         auto timeSent = utime();
-        ssize_t bytes_received = recv(sockfd, buf, sizeof(buf), 0);
-        if (bytes_received < 0)
+        auto timeout = std::chrono::seconds(timeoutSecond); // Set the timeout duration
+
+        std::shared_ptr<std::vector<char>> response;
+
         {
-            close(sockfd);
+            std::unique_lock<std::mutex> lock(receiver_->mutex_);
+            auto bRes = receiver_->cv_.wait_for(lock, timeout, [this, &response]() {
+                response = receiver_->get_response(id_, sequence_);
+                return response != nullptr;
+            });
+            // timeout
+            if (!bRes)
+            {
+                std::cout << "timeout" << std::endl;
+                freeaddrinfo(res);
+                packet_loss_number++;
+                return false;
+            }
+        }
+
+        if (!response)
+        {
             freeaddrinfo(res);
             return false;
         }
+
         auto timeRecv = utime();
 
-        struct icmp *icmp_reply = (struct icmp *)(buf + 20); // Skip IP header
+        struct icmp *icmp_reply = (struct icmp *)(response->data() + 20);
         int reply_id = ntohs(icmp_reply->icmp_id);
         int reply_seq = ntohs(icmp_reply->icmp_seq);
         int request_id = ntohs(icmp_hdr.icmp_id);
@@ -280,23 +406,35 @@ class MacPinger : public PingerInterface
         if (reply_id != request_id || reply_seq != request_seq)
         {
             std::cout << "id error" << std::endl;
-            close(sockfd);
+            receiver_->remove_response(id_, sequence_);
             freeaddrinfo(res);
             return false;
         }
         if (icmp_reply->icmp_type == ICMP_ECHOREPLY)
         {
-            num_replies_++;
             double round_trip_time_ms = (timeRecv - timeSent) / 1000.0;
-            total_time_ += round_trip_time_ms;
+            if(round_trip_time_ms/1000 < timeoutSecond)
+            {
+                num_replies_++;
+                total_time_ += round_trip_time_ms;
+            }
+            else
+            {
+                packet_loss_number++;
+            }
         }
 
-        close(sockfd);
+        receiver_->remove_response(id_, sequence_);
+        freeaddrinfo(res);
         return true;
     }
     double get_average_delay() const override
     {
         return num_replies_ > 0 ? total_time_ / num_replies_ : 0;
+    }
+    double get_packet_loss_rate() const
+    {
+        return (num_replies_ + packet_loss_number) ==0? 0: packet_loss_number/(num_replies_ + packet_loss_number);
     }
     void Reset() override
     {
@@ -346,6 +484,10 @@ class MacPinger : public PingerInterface
     int16_t sequence_;
     int num_replies_ = 0;
     double total_time_ = 0;
+    int packet_loss_number = 0;
+    static std::shared_ptr<PingReceiver> receiver_;
+    static std::mutex receiver_mutex_;
+    static std::atomic<int> instance_count_;
 };
 #endif
 }; // namespace zzj
