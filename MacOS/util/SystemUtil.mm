@@ -3,52 +3,52 @@
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <assert.h>
 #include <iostream>
+#include <pwd.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
-
 std::string zzj::Computer::GetIdentifier()
 {
     io_service_t platformExpert =
-    IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+        IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
     CFStringRef serialNumberAsCFString = NULL;
-    
+
     if (platformExpert)
     {
         serialNumberAsCFString = (CFStringRef)IORegistryEntryCreateCFProperty(
-                                                                              platformExpert, CFSTR(kIOPlatformSerialNumberKey), kCFAllocatorDefault, 0);
+            platformExpert, CFSTR(kIOPlatformSerialNumberKey), kCFAllocatorDefault, 0);
         IOObjectRelease(platformExpert);
     }
-    
+
     NSString *serialNumberAsNSString = nil;
     if (serialNumberAsCFString)
     {
         serialNumberAsNSString = [NSString stringWithString:(__bridge NSString *)serialNumberAsCFString];
         CFRelease(serialNumberAsCFString);
     }
-    
+
     return [serialNumberAsNSString UTF8String];
 }
 
 std::string zzj::Computer::GetUUID()
 {
     io_service_t platformExpert =
-    IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+        IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
     CFStringRef guidStr = NULL;
-    
+
     if (platformExpert)
     {
         guidStr = (CFStringRef)IORegistryEntryCreateCFProperty(platformExpert, CFSTR(kIOPlatformUUIDKey),
                                                                kCFAllocatorDefault, 0);
         IOObjectRelease(platformExpert);
     }
-    
+
     NSString *serialNumberAsNSString = nil;
     if (guidStr)
     {
         serialNumberAsNSString = [NSString stringWithString:(__bridge NSString *)guidStr];
         CFRelease(guidStr);
     }
-    
+
     return [serialNumberAsNSString UTF8String];
 }
 std::vector<std::string> zzj::HardDrive::GetRootHardDriveUUID()
@@ -58,7 +58,7 @@ std::vector<std::string> zzj::HardDrive::GetRootHardDriveUUID()
     DASessionRef session   = DASessionCreate(NULL);
     const char *mountPoint = "/";
     CFURLRef url = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8 *)mountPoint, strlen(mountPoint), TRUE);
-    
+
     std::vector<std::string> ret;
     if (session)
     {
@@ -98,13 +98,14 @@ std::string zzj::Computer::GetCurrentTimeStamp()
 }
 std::string zzj::Computer::GetActiveConsoleGroupId()
 {
-    @autoreleasepool {
-        
+    @autoreleasepool
+    {
+
         SCDynamicStoreRef store;
         CFStringRef name;
         gid_t gid;
         std::string ret;
-        
+
         store = SCDynamicStoreCreate(NULL, CFSTR("GetConsoleUser"), NULL, NULL);
         name  = SCDynamicStoreCopyConsoleUser(store, NULL, &gid);
         CFRelease(store);
@@ -115,20 +116,21 @@ std::string zzj::Computer::GetActiveConsoleGroupId()
         }
         else
             ret = "";
-        
+
         return ret;
     }
 }
 
 std::string zzj::Computer::GetActiveConsoleSessionId()
 {
-    @autoreleasepool {
-        
+    @autoreleasepool
+    {
+
         SCDynamicStoreRef store;
         CFStringRef name;
         uid_t uid;
         std::string ret;
-        
+
         store = SCDynamicStoreCreate(NULL, CFSTR("GetConsoleUser"), NULL, NULL);
         name  = SCDynamicStoreCopyConsoleUser(store, &uid, NULL);
         CFRelease(store);
@@ -136,33 +138,34 @@ std::string zzj::Computer::GetActiveConsoleSessionId()
         {
             CFRelease(name);
             ret = std::to_string(uid);
-            if(ret == "0")
-            ret = "";
+            if (ret == "0")
+                ret = "";
         }
         else
             ret = "";
-        
+
         return ret;
     }
 }
 
 std::string zzj::Computer::GetCurrentUserName()
 {
-    @autoreleasepool {
-        
-        if(zzj::Computer::GetActiveConsoleSessionId().empty())
+    @autoreleasepool
+    {
+
+        if (zzj::Computer::GetActiveConsoleSessionId().empty())
             return "";
-            
+
         SCDynamicStoreRef store;
         CFStringRef name;
         uid_t uid;
         char buf[256];
         Boolean ok;
-        
+
         store = SCDynamicStoreCreate(NULL, CFSTR("GetConsoleUser"), NULL, NULL);
         name  = SCDynamicStoreCopyConsoleUser(store, &uid, NULL);
         CFRelease(store);
-        
+
         if (name != NULL)
         {
             ok = CFStringGetCString(name, buf, 256, kCFStringEncodingUTF8);
@@ -173,7 +176,23 @@ std::string zzj::Computer::GetCurrentUserName()
         {
             strcpy(buf, "");
         }
-        
+
         return buf;
+    }
+}
+std::string zzj::Computer::GetCurrentUserHomeDir()
+{
+    std::string currentUser = GetCurrentUserName();
+    if (currentUser.empty())
+        return "";
+
+    struct passwd *userInfo = getpwnam(currentUser.c_str());
+    if (userInfo)
+    {
+        return userInfo->pw_dir;
+    }
+    else
+    {
+        return "";
     }
 }

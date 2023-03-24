@@ -41,7 +41,7 @@ class File
     static int MkdirRecursive(std::string dirPath, int mode);
     static int ChmodIfExe(std::string fileFullPath, mode_t mode);
     static std::string GetSystemAppDataFolder();
-    static std::string GetCurrentUserAppDataFolder()
+    static std::string GetCurrentUserAppDataFolder();
     static File CreateInstance(const std::string fileFullPath);
     
     mode_t GetPosixFilePermission();

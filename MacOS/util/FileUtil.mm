@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pwd.h>
+#include "SystemUtil.h"
+#include <boost/filesystem.hpp>
 using namespace std;
 
 int zzj::File::ReadFileAtOffset(const char *fileName, char *buf, size_t size, int pos)
@@ -40,9 +42,13 @@ std::string zzj::File::GetSystemAppDataFolder()
 
 std::string zzj::File::GetCurrentUserAppDataFolder() {
     @autoreleasepool {
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-        NSString *appSupportPath = [paths firstObject];
-        return std::string([appSupportPath UTF8String]);
+        std::string currentUserHomeDir = zzj::Computer::GetCurrentUserHomeDir();
+        if(currentUserHomeDir.empty())
+            return "";
+        
+        boost::filesystem::path ret = currentUserHomeDir;
+        ret/="Library/Application Support";
+        return ret.string();
     }
 }
 

@@ -16,6 +16,7 @@ class Computer
     static std::string GetActiveConsoleGroupId();
     static std::string GetCurrentTimeStamp();
     static std::string GetCurrentUserName();
+    static std::string GetCurrentUserHomeDir();
 };
 class HardDrive
 {
