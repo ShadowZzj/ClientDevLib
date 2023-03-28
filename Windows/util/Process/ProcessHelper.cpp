@@ -150,6 +150,86 @@ bool zzj::Process::IsAlive()
 		return exitCode == STILL_ACTIVE;
     return false;
 }
+std::tuple<int, zzj::Process::ProcessType> zzj::Process::GetProcessType()
+{
+    if (auto [err, is_admin] = IsAdminProcess(); err == 0)
+    {
+        if (is_admin)
+        {
+            return {0, ProcessType::Admin};
+        }
+
+        if (auto [err2, is_service] = IsServiceProcess(); err2 == 0)
+        {
+            if (is_service)
+            {
+                return {0, ProcessType::Service};
+            }
+            return {0, ProcessType::User};
+        }
+        else
+            return {-1, ProcessType::User};
+    }
+    else
+        return {-1, ProcessType::User};
+}
+std::tuple<int, bool> zzj::Process::IsServiceProcess()
+{
+    bool is_service        = false;
+    HANDLE token           = NULL;
+    PTOKEN_USER token_user = NULL;
+    DWORD return_length    = 0;
+
+    if (!OpenProcessToken(*process, TOKEN_QUERY, &token))
+    {
+        return {-1,is_service};
+    }
+
+    GetTokenInformation(token, TokenUser, NULL, 0, &return_length);
+    token_user = (PTOKEN_USER)malloc(return_length);
+
+    if (GetTokenInformation(token, TokenUser, token_user, return_length, &return_length))
+    {
+        LPWSTR string_sid = NULL;
+
+        if (ConvertSidToStringSidW(token_user->User.Sid, &string_sid))
+        {
+            is_service = wcsstr(string_sid, L"S-1-5-18") != NULL;
+            LocalFree(string_sid);
+        }
+    }
+
+    if (token_user)
+    {
+        free(token_user);
+    }
+
+    if (token)
+    {
+        CloseHandle(token);
+    }
+
+    return {0, is_service};
+}
+std::tuple<int, bool> zzj::Process::IsAdminProcess()
+{
+    BOOL is_admin                         = FALSE;
+    SID_IDENTIFIER_AUTHORITY nt_authority = SECURITY_NT_AUTHORITY;
+    PSID administrators_group             = NULL;
+
+    if (AllocateAndInitializeSid(&nt_authority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
+                                 0, &administrators_group))
+    {
+        bool isSuccess = CheckTokenMembership(*process, administrators_group, &is_admin);
+        if (!isSuccess)
+		{
+            FreeSid(administrators_group);
+            return {-1, false};
+		}
+    }
+
+    return {0, is_admin};
+}
 uintptr_t zzj::Process::GetModuleBaseAddress(const std::string &moduleName)
 {
 	uintptr_t moduleBaseAddress = 0;

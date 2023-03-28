@@ -9,6 +9,7 @@
 #include <list>
 #include <General/util/Lua/LuaExport.hpp>
 #include <memory>
+#include <tuple>
 #define DISALLOW_COPY_AND_ASSIGN(TypeName)	\
 	TypeName(const TypeName&);	\
 	TypeName& operator=(const TypeName&);
@@ -100,7 +101,14 @@ namespace zzj {
 	};
 	class Process {
 		friend class Memory;
+
 	public:
+        enum class ProcessType : int
+        {
+            User,
+            Admin,
+            Service
+        };
 		static const int INVALID_VAL = -1;
 		DWORD GetSessionId();
 		DWORD GetProcessId();
@@ -114,6 +122,10 @@ namespace zzj {
 		bool BindProcess(HANDLE handle);
 		bool BindProcess(DWORD processId, DWORD deriredAccess);
 		bool IsAlive();
+        std::tuple<int, ProcessType> GetProcessType();
+        std::tuple<int,bool> IsServiceProcess();
+        std::tuple<int,bool> IsAdminProcess();
+		
 		uintptr_t GetModuleBaseAddress(const std::string& moduleName);
 
 		static DWORD GetSessionId(DWORD processId);

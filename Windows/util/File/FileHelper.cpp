@@ -11,7 +11,8 @@
 #include <tchar.h>
 #include <windows.h>
 #include <wtsapi32.h>
-
+#include <Windows/util/Process/ProcessHelper.h>
+#include <General/util/Process/Process.h>
 using namespace zzj;
 
 bool FileHelper::ReadFileAtOffset(std::string fileName, void *buffer, unsigned long numToRead, unsigned long fileOffset)
@@ -207,27 +208,36 @@ std::string zzj::FileHelper::GetProgramPath()
 
 std::string zzj::FileHelper::GetCurrentUserProgramDataFolder()
 {
-    auto handle = zzj::Thread::ImpersonateCurrentUser();
-    DEFER
+
+    zzj::Process currentProcess;
+
+    if (auto [result, res] = currentProcess.IsServiceProcess(); result == 0)
     {
-        zzj::Thread::RevertToCurrentUser(handle);
-    };
-    if (handle == NULL)
-    {
-        return "";
+        HANDLE handle = NULL;
+        DEFER{
+            if (handle != NULL)
+                zzj::Thread::RevertToCurrentUser(handle);
+        };
+        if (res)
+        {
+            handle = zzj::Thread::ImpersonateCurrentUser();
+            if (NULL == handle)
+                return "";
+        }
+        char szAppDataPath[MAX_PATH];
+
+        // 获取AppData\Roaming目录的路径
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, szAppDataPath)))
+        {
+            return std::string(szAppDataPath);
+        }
+        else
+        {
+            return "";
+        }
     }
 
-    char szAppDataPath[MAX_PATH];
-
-    // 获取AppData\Roaming目录的路径
-    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, szAppDataPath)))
-    {
-        return std::string(szAppDataPath);
-    }
-    else
-    {
-        return "";
-    }
+    return "";
 }
 
 std::string zzj::FileHelper::GetProgramDataPath(std::string appDir)
