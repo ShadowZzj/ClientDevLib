@@ -170,7 +170,7 @@ inline int HexStrToDecStr(std::string inStr, std::string &outStr)
         goto exit;
     }
     sum = strtoull(inStr.c_str(), NULL, 16);
-    sprintf(buf, "%lld", sum);
+    sprintf(buf, "%llu", sum);
     outStr = buf;
 exit:
     if (buf)
