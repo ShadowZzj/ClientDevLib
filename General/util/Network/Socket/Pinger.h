@@ -19,13 +19,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 #else
-#include <IPExport.h>
-#include <Windows.h>
-#include <icmpapi.h>
-#include <inaddr.h>
-#include <iphlpapi.h>
-#include <winsock2.h>
 #include <ws2tcpip.h>
+#include <IPExport.h>
+#include <icmpapi.h>
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
