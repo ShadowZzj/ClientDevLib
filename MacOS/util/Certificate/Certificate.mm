@@ -5,9 +5,7 @@
 #include <MacOS/util/FileUtil.h>
 using namespace zzj;
 
-namespace zzj
-{
-std::tuple<int, Certificate> GetCertificateInfo(SecCertificateRef certificate)
+std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef certificate)
 {
     @autoreleasepool
     {
@@ -71,7 +69,6 @@ std::tuple<int, Certificate> GetCertificateInfo(SecCertificateRef certificate)
         return {result, cert};
     }
 }
-}; // namespace zzj
 
 std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate(
     const std::string &content, const std::string &passwd, const Certificate::StoreType &storeType,

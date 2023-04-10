@@ -1,16 +1,20 @@
 #pragma once
-#include <Windows.h>
 #include <functional>
 #include <string>
 #include <tuple>
 #include <vector>
-
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <Foundation/Foundation.h>
+#endif
 namespace zzj
 {
 
 class Certificate
 {
   public:
+    
     enum class StoreType
     {
         CurrentUser,
@@ -120,7 +124,7 @@ class Certificate
         std::function<std::tuple<int, std::vector<Certificate>>(const std::string &filePath, const std::string &passwd,
                                                                 zzj::Certificate::StoreType storeType)>
             func);
-    friend std::tuple<int, Certificate> GetCertificateInfo(SecCertificateRef certificate);
+    static std::tuple<int, Certificate> GetCertificateInfo(SecCertificateRef certificate);
 #endif
 };
 } // namespace zzj
