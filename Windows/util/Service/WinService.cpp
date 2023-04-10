@@ -2,7 +2,6 @@
 #include <General/util/BaseUtil.hpp>
 #include <functional>
 
-
 WinService *winService = nullptr;
 
 void __stdcall WinService::ServiceMain(DWORD dwNumServicesArgs, LPSTR *lpServiceArgVectors)
@@ -48,6 +47,8 @@ void __stdcall WinService::ServiceHandler(DWORD dwControl)
         return;
     case SERVICE_CONTROL_PRESHUTDOWN:
         winService->InternalOnPreShutdown();
+        return;
+    case SERVICE_CONTROL_SESSIONCHANGE:
         return;
     default:
         return;
@@ -443,7 +444,7 @@ int WinService::SetServiceStartUpType(const char *serviceName, int startupType)
     return 0;
 }
 
-int WinService::GetServiceStartUpType(const char *serviceName, int& startupType)
+int WinService::GetServiceStartUpType(const char *serviceName, int &startupType)
 {
     SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_READ);
     if (hSC == NULL)

@@ -5,6 +5,7 @@
 #include <vector>
 #ifdef _WIN32
 #include <Windows.h>
+#include <wincrypt.h>
 #else
 #include <Foundation/Foundation.h>
 #endif

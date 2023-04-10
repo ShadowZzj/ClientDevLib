@@ -678,7 +678,7 @@ bool AdjustPrivilege(LPCWSTR lpwPrivilegeName, bool bEnable)
 
 	return bRet;
 }
-DWORD Process::SystemCreateProcess(std::wstring& commandLine, bool bElevated, bool bWait, DWORD dwWaitTime, bool show)
+DWORD Process::SystemCreateProcess(const std::wstring& commandLine, bool bElevated, bool bWait, DWORD dwWaitTime, bool show)
 {
 	DWORD dwPid = 0;
 	HANDLE hActiveUserProcess = NULL;
@@ -925,7 +925,7 @@ std::wstring zzj::Process::GetModulePath(std::wstring moduleName)
         mHandle = GetModuleHandleW(moduleName.c_str());
 
     GetModuleFileNameW(mHandle, szFilePath, MAX_PATH);
-    (wcsrchr(szFilePath, L'\\'))[1] = 0; // É¾³ýÎÄ¼þÃû£¬Ö»»ñµÃÂ·¾¶×Ö´®
+    (wcsrchr(szFilePath, L'\\'))[1] = 0; // É¾ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½Ö´ï¿½
     return szFilePath;
 
 }
