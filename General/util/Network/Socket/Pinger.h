@@ -6,7 +6,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <sys/types.h>
 #include <thread>
 #include <vector>
 #ifndef _WIN32
@@ -18,13 +17,15 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <sys/types.h>
 #else
-#include <ws2tcpip.h>
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0601
+#include <Windows.h>
 #include <IPExport.h>
 #include <icmpapi.h>
-
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "iphlpapi.lib")
+#include <ws2tcpip.h>
 #endif
 namespace zzj
 {
