@@ -36,8 +36,8 @@ static std::string GetExecutablePath()
 
 inline LONG WINAPI WriteDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
 {
-    // ·µ»ØEXCEPTION_CONTINUE_SEARCH£¬ÈÃ³ÌÐòÍ£Ö¹ÔËÐÐ
-    LONG ret = EXCEPTION_CONTINUE_SEARCH;
+    // ï¿½ï¿½ï¿½ï¿½EXCEPTION_CONTINUE_SEARCHï¿½ï¿½ï¿½Ã³ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½
+    LONG ret = EXCEPTION_EXECUTE_HANDLER;
 
     time_t nowtime;
     time(&nowtime);
@@ -47,7 +47,7 @@ inline LONG WINAPI WriteDumpHandler(struct _EXCEPTION_POINTERS *pExceptionInfo)
     ::GetModuleFileNameA(NULL, current_proc_path, MAX_PATH);
 
     std::string fileName = current_proc_path;
-    // ÉèÖÃcoreÎÄ¼þÉú³ÉÄ¿Â¼ºÍÎÄ¼þÃû
+    // ï¿½ï¿½ï¿½ï¿½coreï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
 
     fileName += ".dmp";
     if (zzj::FileHelper::IsFileExist(fileName))
