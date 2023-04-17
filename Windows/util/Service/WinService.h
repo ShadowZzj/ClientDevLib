@@ -1,8 +1,9 @@
 #pragma once
+#include <General/util/Service/Service.h>
 #include <General/util/BaseUtil.hpp>
 #include <Windows.h>
 #include <string>
-
+#include <General/util/System/System.h>
 using ServiceProto = void (*)(DWORD, LPSTR *);
 using HandlerProto = void (*)(DWORD);
 class WinService;
@@ -24,6 +25,7 @@ class WinService
     virtual void OnStop()        = 0;
     virtual void OnShutdown()    = 0;
     virtual void OnPreShutDown() = 0;
+    virtual void OnSessionChange(zzj::Session::SessionMessage message, zzj::Session session) = 0;
     int CheckSafeStop(int sleepSeconds);
     static int InstallService(const char *serviceName, const char *displayName, const char *description,
                               const char *binPath);
@@ -34,7 +36,7 @@ class WinService
     static bool UninstallService(const char *serviceName);
 
     static int SetServiceStartUpType(const char *serviceName, int startupType);
-    static int GetServiceStartUpType(const char *serviceName, int& startupType);
+    static int GetServiceStartUpType(const char *serviceName, int &startupType);
     static int IsServiceInstalled(const char *serviceName, bool &installed);
     static int IsServiceRunning(const char *serviceName, bool &running);
 
@@ -55,5 +57,5 @@ class WinService
                          DWORD dwWaitHint);
 
     static void WINAPI ServiceMain(DWORD dwNumServicesArgs, LPSTR *lpServiceArgVectors);
-    static void WINAPI ServiceHandler(DWORD dwControl);
+    static void WINAPI ServiceHandler(DWORD dwControl, DWORD dwEventType, LPVOID lpEventData, LPVOID lpContext);
 };

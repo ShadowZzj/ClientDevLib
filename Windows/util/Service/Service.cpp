@@ -21,6 +21,10 @@ void zzj::ServiceInternal::OnPreShutDown()
 {
     return (service->*onPreShutdownFunc)();
 }
+void zzj::ServiceInternal::OnSessionChange(zzj::Session::SessionMessage message, zzj::Session session)
+{
+    return (service->*onsessionChangeFunc)(message, session);
+}
 
 int zzj::Service::GetMutex()
 {

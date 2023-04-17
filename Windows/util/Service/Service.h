@@ -1,6 +1,8 @@
 #pragma once
 #include <General/util/Service/Service.h>
+#include <General/util/System/System.h>
 #include <Windows/util/Service/WinService.h>
+
 namespace zzj
 {
 class Service;
@@ -9,26 +11,30 @@ class ServiceInternal : public WinService
   public:
     typedef void (Service::*ServiceFuncVoid)();
     typedef BOOL (Service::*ServiceFuncBool)();
+    typedef void (Service::*ServiceFuncSession)(Session::SessionMessage message, Session session);
 
     using WinService::WinService;
 
     ServiceInternal(ServiceFuncVoid _runningFunc, ServiceFuncVoid _onstopFunc, ServiceFuncVoid _onshutdownFunc,
-                    ServiceFuncVoid _onPreShutdownFunc, ServiceFuncBool _oninitFunc, std::string name,
-                    std::string displayName, std::string description, Service *_service)
+                    ServiceFuncVoid _onPreShutdownFunc, ServiceFuncBool _oninitFunc,
+                    ServiceFuncSession _onsessionChangeFunc, std::string name, std::string displayName,
+                    std::string description, Service *_service)
         : WinService(name, description, displayName)
     {
-        runningFunc       = _runningFunc;
-        onstopFunc        = _onstopFunc;
-        onshutdownFunc    = _onshutdownFunc;
-        onPreShutdownFunc = _onPreShutdownFunc;
-        oninitFunc        = _oninitFunc;
-        service           = _service;
+        runningFunc         = _runningFunc;
+        onstopFunc          = _onstopFunc;
+        onshutdownFunc      = _onshutdownFunc;
+        onPreShutdownFunc   = _onPreShutdownFunc;
+        oninitFunc          = _oninitFunc;
+        service             = _service;
+        onsessionChangeFunc = _onsessionChangeFunc;
     }
     virtual BOOL OnInit() override;
     virtual void Run() override;
     virtual void OnStop() override;
     virtual void OnShutdown() override;
     virtual void OnPreShutDown() override;
+    virtual void OnSessionChange(zzj::Session::SessionMessage message, zzj::Session session) override;
 
   protected:
     Service *service;
@@ -37,18 +43,20 @@ class ServiceInternal : public WinService
     ServiceFuncVoid onshutdownFunc;
     ServiceFuncVoid onPreShutdownFunc;
     ServiceFuncBool oninitFunc;
+    ServiceFuncSession onsessionChangeFunc;
 };
 
 class Service : public ServiceInterface
 {
   public:
     Service(std::string name, std::string _binPath, std::string _description = "", std::string _displayName = "")
-        : ServiceInterface(name),
-          serviceInternal((ServiceInternal::ServiceFuncVoid)&Service::ServiceFunc,
-                          (ServiceInternal::ServiceFuncVoid)&Service::OnStop,
-                          (ServiceInternal::ServiceFuncVoid)&Service::OnShutdown,
-                          (ServiceInternal::ServiceFuncVoid)&Service::OnPreShutDown,
-                          (ServiceInternal::ServiceFuncBool)&Service::OnInit, name, _displayName, _description, this)
+        : ServiceInterface(name), serviceInternal((ServiceInternal::ServiceFuncVoid)&Service::ServiceFunc,
+                                                  (ServiceInternal::ServiceFuncVoid)&Service::OnStop,
+                                                  (ServiceInternal::ServiceFuncVoid)&Service::OnShutdown,
+                                                  (ServiceInternal::ServiceFuncVoid)&Service::OnPreShutDown,
+                                                  (ServiceInternal::ServiceFuncBool)&Service::OnInit,
+                                                  (ServiceInternal::ServiceFuncSession)&Service::OnSessionChange, name,
+                                                  _displayName, _description, this)
     {
         description = _description;
         displayName = _displayName;
@@ -86,6 +94,10 @@ class Service : public ServiceInterface
     };
     virtual void ServiceFunc()
     {
+    }
+    virtual void OnSessionChange(Session::SessionMessage message, Session session)
+    {
+        return;
     }
     virtual void Run()
     {

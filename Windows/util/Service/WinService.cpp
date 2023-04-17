@@ -9,7 +9,7 @@ void __stdcall WinService::ServiceMain(DWORD dwNumServicesArgs, LPSTR *lpService
     if (!winService)
         return;
     SERVICE_STATUS_HANDLE _statusHandle =
-        ::RegisterServiceCtrlHandlerA(winService->name.c_str(), (LPHANDLER_FUNCTION)ServiceHandler);
+        ::RegisterServiceCtrlHandlerExA(winService->name.c_str(), (LPHANDLER_FUNCTION_EX)ServiceHandler, NULL);
     if (NULL == _statusHandle)
     {
         return;
@@ -33,7 +33,7 @@ void __stdcall WinService::ServiceMain(DWORD dwNumServicesArgs, LPSTR *lpService
     return;
 }
 
-void __stdcall WinService::ServiceHandler(DWORD dwControl)
+void __stdcall WinService::ServiceHandler(DWORD dwControl, DWORD dwEventType, LPVOID lpEventData, LPVOID lpContext)
 {
     switch (dwControl)
     {
@@ -48,8 +48,54 @@ void __stdcall WinService::ServiceHandler(DWORD dwControl)
     case SERVICE_CONTROL_PRESHUTDOWN:
         winService->InternalOnPreShutdown();
         return;
-    case SERVICE_CONTROL_SESSIONCHANGE:
+    case SERVICE_CONTROL_SESSIONCHANGE: {
+        zzj::Session::SessionMessage message = zzj::Session::SessionMessage::None;
+        switch (dwEventType)
+        {
+        case WTS_CONSOLE_CONNECT:
+            message = zzj::Session::SessionMessage::SessionConsoleConnect;
+            break;
+        case WTS_CONSOLE_DISCONNECT:
+            message = zzj::Session::SessionMessage::SessionConsoleDisconnect;
+            break;
+        case WTS_REMOTE_CONNECT:
+            message = zzj::Session::SessionMessage::SessionRemoteConnect;
+            break;
+        case WTS_REMOTE_DISCONNECT:
+            message = zzj::Session::SessionMessage::SessionRemoteDisconnect;
+            break;
+        case WTS_SESSION_LOGON:
+            message = zzj::Session::SessionMessage::SessionLogon;
+            break;
+        case WTS_SESSION_LOGOFF:
+            message = zzj::Session::SessionMessage::SessionLogoff;
+            break;
+        case WTS_SESSION_LOCK:
+            message = zzj::Session::SessionMessage::SessionLock;
+            break;
+        case WTS_SESSION_UNLOCK:
+            message = zzj::Session::SessionMessage::SessionUnlock;
+            break;
+        case WTS_SESSION_REMOTE_CONTROL:
+            message = zzj::Session::SessionMessage::SessionRemoteControl;
+            break;
+        case WTS_SESSION_CREATE:
+            message = zzj::Session::SessionMessage::SessionCreate;
+            break;
+        case WTS_SESSION_TERMINATE:
+            message = zzj::Session::SessionMessage::SessionTerminate;
+            break;
+        default:
+            break;
+        }
+        if (message != zzj::Session::SessionMessage::None)
+        {
+            zzj::Session session;
+            session.sessionId = std::to_string(reinterpret_cast<WTSSESSION_NOTIFICATION *>(lpEventData)->dwSessionId);
+            winService->OnSessionChange(message, session);
+        }
         return;
+    }
     default:
         return;
     }
