@@ -3,33 +3,19 @@
 #pragma comment(lib,"wbemuuid.lib")
 namespace COMHelper {
 	using namespace std;
-	COMWrapper* COMWrapper::comWrapper = NULL;
-
+	
 	HRESULT COMWrapper::CreateComInstance(const IID& rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, const IID& riid, OUT LPVOID** ppv) {
 		HRESULT hres = CoCreateInstance(rclsid, pUnkOuter, dwClsContext, riid, (LPVOID*)ppv);
 		if (FAILED(hres)) {
 			cout << "Failed to create IWbemLocator object. "
 				<< "Error code = 0x"
 				<< hex << hres << endl;
-			CoUninitialize();
-			isCoUninitializeNeeded = false;
 			return hres;
 		}
 
 		return hres;
 	}
-	COMWrapper* COMWrapper::GetInstance() {
-		if (!comWrapper) {
-			comWrapper = new COMWrapper();
-		}
-		return comWrapper;
-	}
-	void COMWrapper::DestroyInstance() {
-		if (comWrapper) {
-			delete comWrapper;
-			comWrapper = NULL;
-		}
-	}
+	
 	COMWrapper::COMWrapper() {
 		Initialize();
 	}

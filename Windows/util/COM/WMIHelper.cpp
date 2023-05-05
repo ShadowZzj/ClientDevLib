@@ -136,7 +136,6 @@ HRESULT WMIWrapper::WMIEnumUnInitialize()
 }
 WMIWrapper::WMIWrapper()
 {
-    comWrapper = COMHelper::COMWrapper::GetInstance();
     Initialize();
 }
 WMIWrapper::~WMIWrapper()
@@ -147,7 +146,7 @@ HRESULT WMIWrapper::Initialize()
 {
     HRESULT hres;
     hres =
-        comWrapper->CreateComInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID **)&pLoc);
+        comWrapper.CreateComInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID **)&pLoc);
     if (FAILED(hres))
     {
         std::cout << "CreateComInstance error, crash program";
