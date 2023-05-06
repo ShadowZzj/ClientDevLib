@@ -143,10 +143,9 @@ class WinPinger : public PingerInterface
 
         dwRetVal = IcmpSendEcho(hIcmpFile, ipAddress, SendData, sizeof(SendData), nullptr, ReplyBuffer, ReplySize,
                                 timeoutSecond * 1000);
-
-        if (dwRetVal != 0)
+        PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
+        if (dwRetVal != 0 && pEchoReply->Address == ipAddress)
         {
-            PICMP_ECHO_REPLY pEchoReply = (PICMP_ECHO_REPLY)ReplyBuffer;
             struct in_addr ReplyAddr;
             ReplyAddr.S_un.S_addr = pEchoReply->Address;
             num_replies_++;
