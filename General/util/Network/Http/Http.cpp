@@ -1,11 +1,12 @@
 #include "Http.h"
 #include <General/util/BaseUtil.hpp>
+#include <General/util/StrUtil.h>
+#include <fstream>
 #include <json.hpp>
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
-#include <General/util/StrUtil.h>
-#include <fstream>
+
 #ifdef _WIN32
 #include <curl/win/curl.h>
 #else
@@ -52,6 +53,30 @@ int zzj::Http::Put(const char *apiPath, const char *str, std::string &ret)
         curl_easy_cleanup(curl);
     }
     return res;
+}
+
+std::string zzj::Http::DecodeUri(const std::string &uri)
+{
+    std::string decoded;
+    std::istringstream in(uri);
+    char ch;
+
+    while (in.get(ch))
+    {
+        if (ch == '%')
+        {
+            int32_t n;
+            in >> std::hex >> n;
+            decoded += static_cast<char>(n);
+            in.ignore(1);
+        }
+        else
+        {
+            decoded += ch;
+        }
+    }
+
+    return decoded;
 }
 
 std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int connectionTimeOut, int timeout)
@@ -152,10 +177,10 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             }
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_headers);
         }
-        if(setting.find("nobody") != setting.end())
+        if (setting.find("nobody") != setting.end())
         {
             int nobody = setting["nobody"];
-            curl_easy_setopt(curl, CURLOPT_NOBODY,nobody);
+            curl_easy_setopt(curl, CURLOPT_NOBODY, nobody);
         }
         if (setting.find("body") != setting.end())
         {
@@ -293,11 +318,11 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
 
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
         nlohmann::json retJson;
-        retJson["code"]   = responseCode;
-        retJson["header"] = postRetHeader;
-        retJson["body"]   = postRetContent;
+        retJson["code"]          = responseCode;
+        retJson["header"]        = postRetHeader;
+        retJson["body"]          = postRetContent;
         retJson["extra"]["time"] = time;
-        retString         = retJson.dump();
+        retString                = retJson.dump();
         return result;
     }
     catch (const std::exception &e)
@@ -367,10 +392,10 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60);
             curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 60);
         }
-        if(setting.find("nobody") != setting.end())
+        if (setting.find("nobody") != setting.end())
         {
             int nobody = setting["nobody"];
-            curl_easy_setopt(curl, CURLOPT_NOBODY,nobody);
+            curl_easy_setopt(curl, CURLOPT_NOBODY, nobody);
         }
         if (setting.find("followlocation") != setting.end())
         {
@@ -425,15 +450,18 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &time);
         time = time * 1000;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-        try {
+        try
+        {
             nlohmann::json retJson;
             retJson["code"]          = responseCode;
             retJson["header"]        = postRetHeader;
             retJson["body"]          = postRetContent;
             retJson["extra"]["time"] = time;
             retString                = retJson.dump();
-        } catch (std::exception& e) {
-            spdlog::error("http json error with {}, do not return body",e.what());
+        }
+        catch (std::exception &e)
+        {
+            spdlog::error("http json error with {}, do not return body", e.what());
             nlohmann::json retJson;
             retJson["code"]          = responseCode;
             retJson["header"]        = postRetHeader;

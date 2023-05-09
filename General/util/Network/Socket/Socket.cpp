@@ -116,7 +116,17 @@ bool zzj::Socket::IsPortAvailable(unsigned short port)
     tcp::acceptor acceptor(io_service);
 
     boost::system::error_code ec;
-    acceptor.open(tcp::v4(), ec) || acceptor.bind({tcp::v4(), port}, ec);
+    acceptor.open(tcp::v4(), ec);
+    if (ec)
+    {
+        return false;
+    }
 
-    return !ec;
+    acceptor.bind({tcp::v4(), port}, ec);
+    if (ec)
+    {
+        return false;
+    }
+
+    return true;
 }
