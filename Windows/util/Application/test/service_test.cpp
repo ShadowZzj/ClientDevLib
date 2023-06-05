@@ -25,6 +25,10 @@ public:
 	virtual void OnPreShutDown() {
 		
 	}
+    virtual void OnSessionChange(zzj::Session::SessionMessage msg,zzj::Session session)
+    {
+
+    }
 };
 int main(int argc, char* argv[])
 {

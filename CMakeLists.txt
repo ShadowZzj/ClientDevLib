@@ -12,7 +12,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MP /Zi")
 project(ClientDevLib)
 add_definitions(-DUNICODE -D_UNICODE)
 include(${PRO_SUP}/General/ThirdParty/sqlite3pp/export.cmake)
-include(${PRO_SUP}/General/util/ConfigManager/export.cmake)
+include(${PRO_SUP}/General/util/DataBaseConfigManager/export.cmake)
 include(${PRO_SUP}/General/util/Lua/export.cmake)
 include_directories(
   ${PRO_SUP}/General/ThirdParty ${PRO_SUP}

@@ -37,7 +37,7 @@
                     "x64"
                 ],
                 "options": {
-                    "cwd": "${workspaceFolder}/Windows/build/x86"
+                    "cwd": "${workspaceFolder}/Windows/build/x64"
                 }
             }
         }
