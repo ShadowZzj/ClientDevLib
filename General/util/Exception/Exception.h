@@ -11,7 +11,7 @@ namespace zzj
 class Exception : public std::exception
 {
   public:
-    Exception(int line, const std::string &file,const std::string& func, const std::string &msg) noexcept;
+    Exception(int line, const std::string &file, const std::string &func, const std::string &msg) noexcept;
     const char *what() const noexcept override;
 
   protected:
@@ -20,12 +20,23 @@ class Exception : public std::exception
     std::string msg;
     std::string func;
 };
-#define ZZJ_EXCEPTION(msg) throw Exception(__LINE__, __FILE__, __FUNCTION__, msg)
+#define ZZJ_EXCEPTION(msg) Exception(__LINE__, __FILE__, __func__, msg)
 #ifdef _WIN32
 class Win32Exception : public Exception
 {
   public:
-    Win32Exception(int line, const std::string &file,const std::string& func, HRESULT hr) noexcept;
+    Win32Exception(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept;
+    static std::string TranslateErrorCode(HRESULT hr) noexcept;
+    HRESULT GetErrorCode() const noexcept;
+    std::string GetErrorString() const noexcept;
+
+  private:
+    HRESULT hr;
+};
+class DXException : public Exception
+{
+  public:
+    DXException(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept;
     static std::string TranslateErrorCode(HRESULT hr) noexcept;
     HRESULT GetErrorCode() const noexcept;
     std::string GetErrorString() const noexcept;
@@ -34,7 +45,8 @@ class Win32Exception : public Exception
     HRESULT hr;
 };
 
-#define ZZJ_WIN32_EXCEPTION(hr) zzj::Win32Exception(__LINE__, __FILE__, __FUNCTION__, hr)
-#define ZZJ_LAST_WIN32_EXCEPTION() zzj::Win32Exception(__LINE__, __FILE__, __FUNCTION__, GetLastError())
+#define ZZJ_WIN32_EXCEPTION(hr) zzj::Win32Exception(__LINE__, __FILE__, __func__, hr)
+#define ZZJ_LAST_WIN32_EXCEPTION() zzj::Win32Exception(__LINE__, __FILE__, __func__, GetLastError())
+#define ZZJ_DX_EXCEPTION(hr) zzj::DXException(__LINE__, __FILE__, __func__, hr)
 #endif
 }; // namespace zzj

@@ -1,6 +1,7 @@
 
 #include "Window.h"
 #include <sstream>
+#include <General/util/Exception/Exception.h>
 using namespace zzj;
 
 // Window Class Stuff
@@ -74,6 +75,8 @@ Window::Window( int width,int height,const std::string& name )
 	}
 	// show window
 	ShowWindow( hWnd,SW_SHOWDEFAULT );
+
+	pGfx = std::make_unique<Graphics>( hWnd );
 }
 
 Window::~Window()
@@ -109,6 +112,15 @@ std::optional<int> Window::ProcessMessages()
 
 	// return empty optional when not quitting app
 	return {};
+}
+
+Graphics &zzj::Window::Gfx()
+{
+	if (!pGfx)
+	{
+        throw ZZJ_EXCEPTION("pGfx is null!");
+	}
+	return *pGfx;
 }
 
 LRESULT CALLBACK Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept

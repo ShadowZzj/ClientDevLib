@@ -1,6 +1,8 @@
 #include <General/util/Exception/Exception.h>
+#include <Windows/util/Device/DXError/dxerr.h>
 using namespace zzj;
-Win32Exception::Win32Exception(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept: Exception(line, file, func, TranslateErrorCode(hr)), hr(hr)
+Win32Exception::Win32Exception(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept
+    : Exception(line, file, func, TranslateErrorCode(hr)), hr(hr)
 {
 }
 
@@ -29,6 +31,24 @@ HRESULT Win32Exception::GetErrorCode() const noexcept
 }
 
 std::string Win32Exception::GetErrorString() const noexcept
+{
+    return TranslateErrorCode(hr);
+}
+DXException::DXException(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept
+    : Exception(line, file, func, TranslateErrorCode(hr)), hr(hr)
+{
+}
+std::string DXException::TranslateErrorCode(HRESULT hr) noexcept
+{
+    char buf[512];
+	DXGetErrorDescriptionA( hr,buf,sizeof( buf ) );
+	return buf;
+}
+HRESULT DXException::GetErrorCode() const noexcept
+{
+    return hr;
+}
+std::string DXException::GetErrorString() const noexcept
 {
     return TranslateErrorCode(hr);
 }
