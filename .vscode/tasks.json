@@ -13,7 +13,7 @@
                     "Visual Studio 17 2022",
                     "-D",
                     "BUILD_TYPE=Release",
-                    "${workspaceFolder}",
+                    "${workspaceFolder}/Windows",
                     "-A",
                     "Win32"
                 ],
@@ -32,7 +32,7 @@
                     "Visual Studio 17 2022",
                     "-D",
                     "BUILD_TYPE=Release",
-                    "${workspaceFolder}",
+                    "${workspaceFolder}/Windows",
                     "-A",
                     "x64"
                 ],
