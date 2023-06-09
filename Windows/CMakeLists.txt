@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-set(PRO_SUP ${CMAKE_CURRENT_LIST_DIR})
+set(PRO_SUP ${CMAKE_CURRENT_LIST_DIR}/../)
 set(CMAKE_EXE_LINKER_FLAGS
     "${CMAKE_EXE_LINKER_FLAGS} /level='requireAdministrator' /uiAccess='false'")
 set(CMAKE_CXX_STANDARD 17)
@@ -14,8 +14,15 @@ add_definitions(-DUNICODE -D_UNICODE)
 include(${PRO_SUP}/General/ThirdParty/sqlite3pp/export.cmake)
 include(${PRO_SUP}/General/util/DataBaseConfigManager/export.cmake)
 include(${PRO_SUP}/General/util/Lua/export.cmake)
+
+set(FEATURE_DIRECTX ON)
+set(FEATURE_DIRECTXAPP ON)
+include(${PRO_SUP}/GeneralFeatures.cmake)
+include(${PRO_SUP}/WinFeatures.cmake)
+
 include_directories(
-  ${PRO_SUP}/General/ThirdParty ${PRO_SUP}
+  ${PRO_SUP}
+  ${PRO_SUP}/General/ThirdParty
   ${PRO_SUP}/General/ThirdParty/lua/win/include
   ${PRO_SUP}/General/ThirdParty/boost_1_75_0)
 link_directories(${PRO_SUP}/General/ThirdParty/boost_1_75_0/lib)
@@ -54,25 +61,13 @@ else()
 endif()
 
 
-file(
-  GLOB_RECURSE source_list
-  RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-  "Windows/util/*.h" "Windows/util/*.cpp" "Windows/util/*.hpp"
-  "General/util/*.h" "General/util/*.cpp" "General/util/*.hpp")
+add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})
+add_library(${PROJECT_NAME} STATIC ${WINDOWS_UTIL_FILES} ${GENERAL_UTIL_FILES})
 
-foreach(source IN LISTS source_list)
-  get_filename_component(source_path "${source}" PATH)
-  string(REPLACE "/" "\\" source_path_msvc "${source_path}")
-  source_group("${source_path_msvc}" FILES "${source}")
-endforeach()
+add_executable(${PROJECT_NAME}_test test.cpp)
+add_executable(${PROJECT_NAME}_testWindow testWindow.cpp)
 
-add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src)
-add_library(${PROJECT_NAME} STATIC ${source_list})
-
-add_executable(${PROJECT_NAME}_test Windows/test.cpp)
-add_executable(${PROJECT_NAME}_testWindow Windows/testWindow.cpp)
-
-add_library(${PROJECT_NAME}_testdll SHARED Windows/testdll.cpp)
+add_library(${PROJECT_NAME}_testdll SHARED testdll.cpp)
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_testWindow ${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME}_testWindow
@@ -84,3 +79,7 @@ set_property(
 set_property(
   TARGET ${PROJECT_NAME}_testdll ${PROJECT_NAME}
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set_property(
+TARGET ${PROJECT_NAME}_testWindow ${PROJECT_NAME}
+PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
