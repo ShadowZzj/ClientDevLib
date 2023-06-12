@@ -20,6 +20,18 @@
                 "options": {
                     "cwd": "${workspaceFolder}/Windows/build/x86"
                 }
+            },
+            "osx": {
+                "args": [
+                    "-G",
+                    "Xcode",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}/MacOS"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/MacOS/build/x86"
+                }
             }
         },
          {
@@ -38,6 +50,18 @@
                 ],
                 "options": {
                     "cwd": "${workspaceFolder}/Windows/build/x64"
+                }
+            },
+            "osx": {
+                "args": [
+                    "-G",
+                    "Xcode",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}/MacOS"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/MacOS/build/x64"
                 }
             }
         }

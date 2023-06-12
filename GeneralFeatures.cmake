@@ -35,7 +35,7 @@ function(GenerateGeneralUtil)
 	endif()
 
 	message(STATUS "PLIST FEATURE: ${FEATURE_PLIST}")
-	if(${FEATURE_PLIST})
+	if((${FEATURE_PLIST}) OR (DEFINED APPLE))
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/plist/*.hpp"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/plist/*.cpp"
