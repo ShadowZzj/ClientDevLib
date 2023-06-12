@@ -22,7 +22,7 @@ class JsonStore
     template <typename T> Result<T> Get(const std::string &key)
     {
         auto path = GetStorePath();
-        if (!boost::filesystem::exists(path))
+        if (path.empty() || !boost::filesystem::exists(path))
             return ExceptionOccured{"Path does not exist"};
 
         auto mutexPtr = GetMutexForPath(path);
@@ -50,11 +50,30 @@ class JsonStore
     template <typename T> Result<T> Set(const std::string &key, const T &value)
     {
         auto path = GetStorePath();
-        if (!boost::filesystem::exists(path))
-            return ExceptionOccured{"Path does not exist"};
+
+        // If the path does not exist, and the path is valid, create it
+        if (path.empty())
+            return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
         std::lock_guard<std::mutex> lock(*mutexPtr);
+
+        if (!boost::filesystem::exists(path))
+        {
+            try
+            {
+                std::ofstream ofs(path.string());
+                ofs << "{}";
+            }
+            catch (const std::exception &e)
+            {
+                return ExceptionOccured{e.what()};
+            }
+            catch (...)
+            {
+                return ExceptionOccured{"Unknown exception"};
+            }
+        }
 
         try
         {

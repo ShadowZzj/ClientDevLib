@@ -1,4 +1,3 @@
-set (listDir ${CMAKE_CURRENT_LIST_DIR})
 file(GLOB_RECURSE WINDOWS_UTIL_FILES 
 "${CMAKE_CURRENT_LIST_DIR}/Windows/util/*.h" 
 "${CMAKE_CURRENT_LIST_DIR}/Windows/util/*.cpp"
