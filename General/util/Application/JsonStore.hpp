@@ -22,12 +22,28 @@ class JsonStore
     template <typename T> Result<T> Get(const std::string &key)
     {
         auto path = GetStorePath();
-        if (path.empty() || !boost::filesystem::exists(path))
+        if (path.empty())
             return ExceptionOccured{"Path does not exist"};
 
         auto mutexPtr = GetMutexForPath(path);
         std::lock_guard<std::mutex> lock(*mutexPtr);
 
+        if (!boost::filesystem::exists(path))
+        {
+            try
+            {
+                std::ofstream ofs(path.string());
+                ofs << "{}";
+            }
+            catch (const std::exception &e)
+            {
+                return ExceptionOccured{e.what()};
+            }
+            catch (...)
+            {
+                return ExceptionOccured{"Unknown exception"};
+            }
+        }
         try
         {
             std::ifstream ifs(path.string());
