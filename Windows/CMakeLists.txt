@@ -11,14 +11,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MP /Zi")
 
 project(ClientDevLib)
 add_definitions(-DUNICODE -D_UNICODE)
-include(${PRO_SUP}/General/ThirdParty/sqlite3pp/export.cmake)
-include(${PRO_SUP}/General/util/DataBaseConfigManager/export.cmake)
-include(${PRO_SUP}/General/util/Lua/export.cmake)
-
-set(FEATURE_DIRECTX ON)
-set(FEATURE_DIRECTXAPP ON)
-include(${PRO_SUP}/GeneralFeatures.cmake)
-include(${PRO_SUP}/WinFeatures.cmake)
+include(${PRO_SUP}/Features.cmake)
 
 include_directories(
   ${PRO_SUP}
@@ -60,6 +53,9 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
+set(FEATURE_DIRECTX ON)
+set(FEATURE_DIRECTXAPP ON)
+GenerateUtil()
 
 add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})
 add_library(${PROJECT_NAME} STATIC ${WINDOWS_UTIL_FILES} ${GENERAL_UTIL_FILES})
