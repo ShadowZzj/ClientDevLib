@@ -204,6 +204,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
                 }
                 curl_easy_setopt(curl, CURLOPT_POST, 1);
                 curl_easy_setopt(curl, CURLOPT_POSTFIELDS, bodyData.c_str());
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, bodyData.size());
             }
             else if (bodyType == "form")
             {
@@ -336,6 +337,8 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
     try
     {
         CURL *curl = curl_easy_init();
+        curl_mime *form = NULL;
+        curl_mimepart *field = NULL;
         CURLcode res;
         int result = 0;
         char errBuf[CURL_ERROR_SIZE];
@@ -351,6 +354,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                 spdlog::error("Http get result {},ret :{} ", result, errBuf);
             curl_slist_free_all(http_headers);
             curl_easy_cleanup(curl);
+            curl_mime_free(form);
         };
         if (!curl)
         {
@@ -366,6 +370,76 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         }
         std::string url = setting["url"];
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        if (setting.find("body") != setting.end())
+        {
+            nlohmann::json body = setting["body"];
+            if (body.find("type") == body.end())
+            {
+                spdlog::error("Http post json parse error, no body type");
+                result = -3;
+                return result;
+            }
+            std::string bodyType = body["type"];
+            if (bodyType == "json")
+            {
+                if (body.find("data") == body.end())
+                {
+                    bodyData = "";
+                }
+                else
+                {
+                    bodyData = body["data"];
+                }
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, bodyData.c_str());
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, bodyData.size());
+                curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+            }
+            else if (bodyType == "form")
+            {
+                if (body.find("data") == body.end())
+                {
+                    spdlog::error("Http post json parse error, no body data");
+                    result = -3;
+                    return result;
+                }
+                nlohmann::json files  = body["data"]["files"];
+                nlohmann::json fields = body["data"]["fields"];
+                form                  = curl_mime_init(curl);
+                for (auto it = files.begin(); it != files.end(); it++)
+                {
+                    if (!it.value().is_string())
+                    {
+                        spdlog::error("Http post json parse error, file value is not string");
+                        result = -3;
+                        return result;
+                    }
+                    std::string fileName = it.value().get<std::string>();
+                    field                = curl_mime_addpart(form);
+                    curl_mime_name(field, it.key().c_str());
+                    curl_mime_filedata(field, fileName.c_str());
+                }
+                for (auto it = fields.begin(); it != fields.end(); it++)
+                {
+                    if (!it.value().is_string())
+                    {
+                        spdlog::error("Http post json parse error, field value is not string");
+                        result = -3;
+                        return result;
+                    }
+                    std::string fieldValue = it.value().get<std::string>();
+                    field                  = curl_mime_addpart(form);
+                    curl_mime_name(field, it.key().c_str());
+                    curl_mime_data(field, fieldValue.c_str(), CURL_ZERO_TERMINATED);
+                }
+                curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+            }
+            else
+            {
+                spdlog::error("Http post json parse error, body type is not support");
+                result = -3;
+                return result;
+            }
+        }
         if (setting.find("headers") != setting.end())
         {
             nlohmann::json headers = setting["headers"];
@@ -430,7 +504,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                 curl_easy_setopt(curl, CURLOPT_KEYPASSWD, keypasswd.c_str());
             }
         }
-        int responseCode = 0;
+        int responseCode = -1;
         nlohmann::json postRetHeader;
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &postRetContent);

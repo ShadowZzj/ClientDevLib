@@ -9,6 +9,7 @@ class UserInfo
     std::string userName;
     std::string domainName;
     std::string sid;
+    std::string guid;
     static UserInfo GetActiveUserInfo();
 };
 };

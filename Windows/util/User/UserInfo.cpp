@@ -5,6 +5,10 @@
 #include <sddl.h>
 #include <spdlog/spdlog.h>
 #include <wtsapi32.h>
+#include <Windows/util/Process/ThreadHelper.h>
+#define SECURITY_WIN32
+#include <security.h>
+#pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 
 zzj::UserInfo zzj::UserInfo::GetActiveUserInfo()
@@ -67,5 +71,29 @@ zzj::UserInfo zzj::UserInfo::GetActiveUserInfo()
         return {};
     }
     ret.sid = str::ansi2utf8(sidString);
+
+
+    zzj::Process currentProcess;
+    HANDLE impersonateHandle = NULL;
+    DEFER
+    {
+        if (impersonateHandle)
+            zzj::Thread::RevertToCurrentUser(impersonateHandle);
+    };
+    if (auto [result, res] = currentProcess.IsServiceProcess();result == 0 && res)
+    {
+        impersonateHandle = zzj::Thread::ImpersonateCurrentUser();
+        if (NULL == impersonateHandle)
+        {
+            spdlog::info("ImpersonateCurrentUser error with {}", GetLastError());
+            return {};
+        }
+    }
+    char guid[256 + 1]      = {};
+    DWORD sizeExtended              = ARRAYSIZE(guid);
+
+    GetUserNameExA(NameUniqueId, guid, &sizeExtended);
+    ret.guid = guid;
+
     return ret;
 }
