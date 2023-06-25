@@ -24,8 +24,8 @@ Graphics::Graphics(HWND hWnd)
     sd.SwapEffect                         = DXGI_SWAP_EFFECT_DISCARD;
     sd.Flags                              = 0;
 
-    auto hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &sd,
-                                  &pSwapChain, &pDevice, nullptr, &pContext);
+    auto hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &sd,&pSwapChain, &pDevice, nullptr, &pContext);
+    
     if (hr != S_OK)
         throw ZZJ_DX_EXCEPTION(hr);
 
@@ -50,6 +50,8 @@ Graphics::~Graphics()
         pSwapChain->Release();
     if (pDevice != nullptr)
         pDevice->Release();
+    if (pTarget != nullptr)
+        pTarget->Release();
 }
 void Graphics::EndFrame()
 {

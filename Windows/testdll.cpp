@@ -2,7 +2,6 @@
 #include <string>
 #include <Windows/util/Process/ProcessHelper.h>
 #include <General/util/Process/Process.h>
-#include <Windows/util/Device/InputDevice.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <iostream>
@@ -85,12 +84,12 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 
     while (p.IsAlive())
     {
-        if (zzj::Keyboard::IsKeyUp('1'))
+        if (1)
         {
             bHealth = !bHealth;
             spdlog::info("health: {}", bHealth);
         }
-        if (zzj::Keyboard::IsKeyUp('2'))
+        if (2)
         {
             bAmmo = !bAmmo;
             if (bAmmo)
@@ -105,7 +104,7 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
             }
         }
 
-        if (zzj::Keyboard::IsKeyUp('3'))
+        if (3)
         {
             isHook = !isHook;
             if (isHook)
@@ -119,7 +118,7 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
                 m.Write(testHookAddress, {0x55, 0x8B, 0xEC, 0x83, 0xE4, 0xF8});
             }
         }
-        if (zzj::Keyboard::IsKeyUp(VK_END))
+        if (4)
         {
             break;
         }

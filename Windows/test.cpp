@@ -1,7 +1,6 @@
 #include <iostream>
 #include <Windows/util/Process/ProcessHelper.h>
 #include <General/util/Process/Process.h>
-#include <Windows/util/Device/InputDevice.h>
 #include <spdlog/spdlog.h>
 #include <General/ThirdParty/GHInjector/Injection.h>
 #include <filesystem>
