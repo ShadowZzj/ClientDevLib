@@ -78,8 +78,22 @@ bool zzj::Thread::SetThreadPriority(HANDLE threadHandle, DWORD priority)
 
 HANDLE zzj::Thread::ImpersonateCurrentUser()
 {
-    DWORD dwSessionID   = WTSGetActiveConsoleSessionId();
-    HANDLE hToken;
+    DWORD dwSessionID = 0xffffffff;
+    HANDLE hToken=NULL;
+    WTS_SESSION_INFOA * pSessionInfo = NULL;
+    DWORD dwCount = 0;
+
+    if (WTSEnumerateSessionsA(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSessionInfo, &dwCount) == FALSE)
+    {
+        return NULL;
+    }
+    for (DWORD i = 0; i < dwCount; i++)
+    {
+        WTS_SESSION_INFOA sessionInfo = pSessionInfo[i];
+        if (sessionInfo.State == WTSActive)
+            dwSessionID = sessionInfo.SessionId;
+    }
+    WTSFreeMemory(pSessionInfo);
 
     if (WTSQueryUserToken(dwSessionID, &hToken) == FALSE)
     {

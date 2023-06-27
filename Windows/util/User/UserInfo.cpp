@@ -24,9 +24,22 @@ zzj::UserInfo zzj::UserInfo::GetActiveUserInfo()
     };
 
     DWORD dwLen = 0;
-    DWORD dwSessionId;
+    DWORD dwSessionId = 0xffffffff;
     UserInfo ret;
-    dwSessionId = WTSGetActiveConsoleSessionId();
+    WTS_SESSION_INFOA * pSessionInfo = NULL;
+    DWORD dwCount = 0;
+    
+    if (WTSEnumerateSessionsA(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSessionInfo, &dwCount) == FALSE)
+    {
+        return {};
+    }
+    for (DWORD i = 0; i < dwCount; i++)
+    {
+        WTS_SESSION_INFOA sessionInfo = pSessionInfo[i];
+        if (sessionInfo.State == WTSActive)
+            dwSessionId = sessionInfo.SessionId;
+    }
+    WTSFreeMemory(pSessionInfo);
 
     if (0xffffffff == dwSessionId || 0 == dwSessionId)
         return {};
