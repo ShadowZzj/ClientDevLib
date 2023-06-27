@@ -34,7 +34,7 @@ if(WIN32)
     set(CryptoLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/openssl/win/dynamic/libcrypto.lib )
     set(SSLDll ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/openssl/win/dynamic/libssl-1_1-x64.dll )
     set(CryptoDll ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/openssl/win/dynamic/libcrypto-1_1-x64.dll )
-
+    set(BoostFileSystemLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/boost_1_75_0/lib/win/x64/static/libboost_filesystem-vc142-mt-s-x64-1_75.lib )
 elseif(APPLE)
     include(${CMAKE_CURRENT_LIST_DIR}/MacFeatures.cmake)
     

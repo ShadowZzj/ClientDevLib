@@ -5,6 +5,7 @@ function(GenerateWindowsUtil)
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.h" 
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.cpp"
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hpp"
+	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hlsl"
 	)
 	file(GLOB_RECURSE TEST_FILES_TO_REMOVE
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/test/*.cpp"
@@ -14,6 +15,8 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${file_to_remove})
 	endforeach()
 
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Shaders/VertexShader.hlsl PROPERTY VS_SHADER_TYPE Vertex)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Shaders/PixelShader.hlsl PROPERTY VS_SHADER_TYPE Pixel)
 	# 默认所有文件都会被包含，下面开始根据特性决定是否移除某些文件
 	message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
 	if ((NOT DEFINED FEATURE_INTERCEPTION) OR (NOT ${FEATURE_INTERCEPTION}))
@@ -35,6 +38,7 @@ function(GenerateWindowsUtil)
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/DXError/*.h"
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/DXError/*.cpp"
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/DXError/*.hpp"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Shaders/*.hlsl"
 	    )
 
 		list(REMOVE_ITEM FEATURE_FILES "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/HardWare.h" "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/HardWare.cpp")

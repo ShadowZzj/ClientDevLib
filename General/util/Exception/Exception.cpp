@@ -17,7 +17,8 @@ const char *Exception::what() const noexcept
         j["file"] = file;
         j["msg"]  = str::ansi2utf8(msg);
         j["func"] = func;
-        return j.dump().c_str();
+        exceptionMessage       = j.dump();
+        return exceptionMessage.c_str();
     }
     catch (...)
     {

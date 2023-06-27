@@ -1,5 +1,9 @@
-#include <Windows/util/Application/App.h>
 #include <General/util/StrUtil.h>
+#include <Windows/util/Application/App.h>
+#include <json.hpp>
+#include <spdlog/fmt/fmt.h>
+
+
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
     try
@@ -8,7 +12,22 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     }
     catch (const zzj::Exception &e)
     {
-        auto wstr = zzj::str::utf82w(e.what());
+        nlohmann::json j = nlohmann::json::parse(e.what());
+        std::string exceptionString;
+        for (auto &i : j.items())
+        {
+            std::string valueStr;
+            if (i.value().is_string())
+            {
+                valueStr = i.value().get<std::string>(); // get the string directly
+            }
+            else
+            {
+                valueStr = i.value().dump(); // for non-string types, dump as before
+            }
+            exceptionString += fmt::format("[{}]: {}\n", i.key(), valueStr);
+        }
+        auto wstr = zzj::str::utf82w(exceptionString);
         MessageBoxW(nullptr, wstr.c_str(), NULL, MB_OK | MB_ICONEXCLAMATION);
     }
     catch (const std::exception &e)

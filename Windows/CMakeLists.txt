@@ -65,10 +65,15 @@ add_executable(${PROJECT_NAME}_testWindow testWindow.cpp)
 
 add_library(${PROJECT_NAME}_testdll SHARED testdll.cpp)
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME}_testWindow ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_testWindow 
+${PROJECT_NAME}
+${BoostFileSystemLib}
+)
 set_target_properties(${PROJECT_NAME}_testWindow
                       PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
 target_link_libraries(${PROJECT_NAME}_testdll ${PROJECT_NAME})
+
+
 set_property(
   TARGET ${PROJECT_NAME}_test ${PROJECT_NAME}
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

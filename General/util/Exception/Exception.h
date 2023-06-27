@@ -1,7 +1,7 @@
 #pragma once
 #include <exception>
 #include <string>
-
+#include <vector>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -18,6 +18,7 @@ class Exception : public std::exception
     int line;
     std::string file;
     std::string msg;
+    mutable std::string exceptionMessage;
     std::string func;
 };
 #define ZZJ_EXCEPTION(msg) Exception(__LINE__, __FILE__, __func__, msg)
@@ -45,8 +46,17 @@ class DXException : public Exception
     HRESULT hr;
 };
 
+class DXInfoException : public Exception
+{
+  public:
+    DXInfoException(int line, const std::string &file, const std::string &func,
+                    const std::vector<std::string> &messages) noexcept;
+    static std::string GetErrorMessage(const std::vector<std::string> &messages) noexcept;
+};
+
 #define ZZJ_WIN32_EXCEPTION(hr) zzj::Win32Exception(__LINE__, __FILE__, __func__, hr)
 #define ZZJ_LAST_WIN32_EXCEPTION() zzj::Win32Exception(__LINE__, __FILE__, __func__, GetLastError())
 #define ZZJ_DX_EXCEPTION(hr) zzj::DXException(__LINE__, __FILE__, __func__, hr)
+#define ZZJ_DX_INFO_EXCEPTION(messages) zzj::DXInfoException(__LINE__, __FILE__, __func__, messages)
 #endif
 }; // namespace zzj
