@@ -1,6 +1,6 @@
 #include "DxgiInfoManager.h"
 #include <General/util/Exception/Exception.h>
-#include <Windows/util/Device/DXError/dxerr.h>
+#include "dxerr.h"
 
 using namespace zzj;
 DXException::DXException(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept

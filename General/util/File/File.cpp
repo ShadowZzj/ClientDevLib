@@ -26,14 +26,14 @@
 #include <sys/types.h>
 #endif
 
-long GetFileSize(std::string filename)
+long zzj::GetFileSize(std::string filename)
 {
     struct stat stat_buf;
     int rc = stat(filename.c_str(), &stat_buf);
     return rc == 0 ? stat_buf.st_size : -1;
 }
 
-bool IsDirExist(const char *dirPath)
+bool zzj::IsDirExist(const char *dirPath)
 {
     struct stat info;
     if (stat(dirPath, &info) != 0)
@@ -43,7 +43,7 @@ bool IsDirExist(const char *dirPath)
     else
         return false;
 }
-bool IsFileExist(const char *filePath)
+bool zzj::IsFileExist(const char *filePath)
 {
     struct stat buffer;
     return (stat(filePath, &buffer) == 0);
@@ -52,7 +52,7 @@ bool IsFileExist(const char *filePath)
  * Returns the full path to the currently running executable,
  * or an empty string in case of failure.
  */
-std::string GetExecutablePath()
+std::string zzj::GetExecutablePath()
 {
 #if (BOOST_OS_WINDOWS)
     char current_proc_path[MAX_PATH] = {0};
@@ -113,7 +113,7 @@ std::string GetExecutablePath()
     return std::string(exePath);
 }
 
-std::string GetDynamicLibPath(void *anyAddressInDyLib)
+std::string zzj::GetDynamicLibPath(void *anyAddressInDyLib)
 {
     static std::string DynamicLibPath = "";
 

@@ -57,13 +57,14 @@ set(FEATURE_DIRECTX ON)
 set(FEATURE_DIRECTXAPP ON)
 GenerateUtil()
 
+file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
 add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})
+
 add_library(${PROJECT_NAME} STATIC ${WINDOWS_UTIL_FILES} ${GENERAL_UTIL_FILES})
+add_executable(${PROJECT_NAME}_test test/test.cpp)
+add_executable(${PROJECT_NAME}_testWindow test/testWindow.cpp ${ProjectUtil})
+add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp)
 
-add_executable(${PROJECT_NAME}_test test.cpp)
-add_executable(${PROJECT_NAME}_testWindow testWindow.cpp)
-
-add_library(${PROJECT_NAME}_testdll SHARED testdll.cpp)
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_testWindow 
 ${PROJECT_NAME}
@@ -84,3 +85,6 @@ set_property(
 set_property(
 TARGET ${PROJECT_NAME}_testWindow ${PROJECT_NAME}
 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+file(COPY test/resource/kappa50.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
+file(COPY test/resource/cube.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})

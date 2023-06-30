@@ -1,12 +1,11 @@
 #pragma once
-#include "Keyboard.h"
-#include "Mouse.h"
+#include <Windows/util/Device/Keyboard.h>
+#include <Windows/util/Device/Mouse.h>
 #include <General/util/Exception/Exception.h>
 #include <optional>
 #include <windows.h>
 #include <string>
 #include <memory>
-#include "Graphics.h"
 namespace zzj
 {
 class Window
@@ -18,7 +17,6 @@ class Window
       public:
         static const char *GetName() noexcept;
         static HINSTANCE GetInstance() noexcept;
-
       private:
         WindowClass() noexcept;
         ~WindowClass();
@@ -35,8 +33,8 @@ class Window
     Window(const Window &) = delete;
     Window &operator=(const Window &) = delete;
     void SetTitle(const std::string &title);
+    HWND GetHWND() const noexcept;
     static std::optional<int> ProcessMessages();
-    Graphics &Gfx();
   private:
     static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
     static LRESULT CALLBACK HandleMsgThunk(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
@@ -50,6 +48,5 @@ class Window
     int width;
     int height;
     HWND hWnd;
-    std::unique_ptr<Graphics> pGfx;
 };
 }; // namespace zzj

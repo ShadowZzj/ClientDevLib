@@ -42,6 +42,10 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
 	return wndClass.hInst;
 }
 
+HWND zzj::Window::GetHWND() const noexcept
+{
+	return hWnd;
+}
 
 // Window Stuff
 Window::Window( int width,int height,const std::string& name )
@@ -75,8 +79,6 @@ Window::Window( int width,int height,const std::string& name )
 	}
 	// show window
 	ShowWindow( hWnd,SW_SHOWDEFAULT );
-
-	pGfx = std::make_unique<Graphics>( hWnd );
 }
 
 Window::~Window()
@@ -114,14 +116,6 @@ std::optional<int> Window::ProcessMessages()
 	return {};
 }
 
-Graphics &zzj::Window::Gfx()
-{
-	if (!pGfx)
-	{
-        throw ZZJ_EXCEPTION("pGfx is null!");
-	}
-	return *pGfx;
-}
 
 LRESULT CALLBACK Window::HandleMsgSetup( HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam ) noexcept
 {

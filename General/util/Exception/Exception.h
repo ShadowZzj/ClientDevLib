@@ -55,6 +55,7 @@ class DXInfoException : public Exception
 };
 
 #define ZZJ_WIN32_EXCEPTION(hr) zzj::Win32Exception(__LINE__, __FILE__, __func__, hr)
+#define ZZJ_MESSAGE_EXCEPTION(msg) zzj::Exception(__LINE__, __FILE__, __func__, msg)
 #define ZZJ_LAST_WIN32_EXCEPTION() zzj::Win32Exception(__LINE__, __FILE__, __func__, GetLastError())
 #define ZZJ_DX_EXCEPTION(hr) zzj::DXException(__LINE__, __FILE__, __func__, hr)
 #define ZZJ_DX_INFO_EXCEPTION(messages) zzj::DXInfoException(__LINE__, __FILE__, __func__, messages)

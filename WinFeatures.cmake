@@ -15,8 +15,20 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${file_to_remove})
 	endforeach()
 
-	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Shaders/VertexShader.hlsl PROPERTY VS_SHADER_TYPE Vertex)
-	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Shaders/PixelShader.hlsl PROPERTY VS_SHADER_TYPE Pixel)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorBlendVS.hlsl PROPERTY VS_SHADER_TYPE Vertex)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorBlendVS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorIndexVS.hlsl PROPERTY VS_SHADER_TYPE Vertex)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorIndexVS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/TextureVS.hlsl PROPERTY VS_SHADER_TYPE Vertex)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/TextureVS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorBlendPS.hlsl PROPERTY VS_SHADER_TYPE Pixel)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorBlendPS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorIndexPS.hlsl PROPERTY VS_SHADER_TYPE Pixel)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorIndexPS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/TexturePS.hlsl PROPERTY VS_SHADER_TYPE Pixel)
+	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/TexturePS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
+
 	# 默认所有文件都会被包含，下面开始根据特性决定是否移除某些文件
 	message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
 	if ((NOT DEFINED FEATURE_INTERCEPTION) OR (NOT ${FEATURE_INTERCEPTION}))
@@ -32,16 +44,9 @@ function(GenerateWindowsUtil)
 	message(STATUS "DirectX feature: ${FEATURE_DIRECTX}")
 	if((NOT DEFINED FEATURE_DIRECTX) OR (NOT ${FEATURE_DIRECTX}))
 	    file(GLOB FEATURE_FILES 
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/*.h"
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/*.cpp"
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/*.hpp"
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/DXError/*.h"
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/DXError/*.cpp"
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/DXError/*.hpp"
-		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Shaders/*.hlsl"
+	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/*"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/**/*"
 	    )
-
-		list(REMOVE_ITEM FEATURE_FILES "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/HardWare.h" "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/HardWare.cpp")
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 

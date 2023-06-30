@@ -1,5 +1,4 @@
 #include <General/util/Exception/Exception.h>
-#include <Windows/util/Device/DXError/dxerr.h>
 using namespace zzj;
 Win32Exception::Win32Exception(int line, const std::string &file, const std::string &func, HRESULT hr) noexcept
     : Exception(line, file, func, TranslateErrorCode(hr)), hr(hr)
