@@ -1,3 +1,6 @@
 [submodule "General/ThirdParty/cpp-httplib"]
 	path = General/ThirdParty/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "General/ThirdParty/imgui"]
+	path = General/ThirdParty/imgui
+	url = https://github.com/ocornut/imgui.git

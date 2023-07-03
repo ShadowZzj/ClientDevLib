@@ -13,12 +13,6 @@ project(ClientDevLib)
 add_definitions(-DUNICODE -D_UNICODE)
 include(${PRO_SUP}/Features.cmake)
 
-include_directories(
-  ${PRO_SUP}
-  ${PRO_SUP}/General/ThirdParty
-  ${PRO_SUP}/General/ThirdParty/lua/win/include
-  ${PRO_SUP}/General/ThirdParty/boost_1_75_0)
-link_directories(${PRO_SUP}/General/ThirdParty/boost_1_75_0/lib)
 
 if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
   set(PLATFORM_DIR x86)
@@ -53,9 +47,7 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
-set(FEATURE_DIRECTX ON)
-set(FEATURE_DIRECTXAPP ON)
-GenerateUtil()
+GenerateUtil(FEATURE_DIRECTX FEATURE_DIRECTXAPP FEATURE_IMGUI_WIN32_DIRECTX11)
 
 file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
 add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})
@@ -65,14 +57,25 @@ add_executable(${PROJECT_NAME}_test test/test.cpp)
 add_executable(${PROJECT_NAME}_testWindow test/testWindow.cpp ${ProjectUtil})
 add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp)
 
-target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
+message(STATUS "WINDOWS_UTIL_INCLUDE_DIRSasdasd:  ${WINDOWS_UTIL_INCLUDE_DIRS}")
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
+
+target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
+target_include_directories(${PROJECT_NAME}_test PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
+
+
 target_link_libraries(${PROJECT_NAME}_testWindow 
 ${PROJECT_NAME}
-${BoostFileSystemLib}
+${WINDOWS_UTIL_LIB_FILES}
 )
+target_include_directories(${PROJECT_NAME}_testWindow PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 set_target_properties(${PROJECT_NAME}_testWindow
                       PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-target_link_libraries(${PROJECT_NAME}_testdll ${PROJECT_NAME})
+
+
+target_link_libraries(${PROJECT_NAME}_testdll ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
+target_include_directories(${PROJECT_NAME}_testdll PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 
 
 set_property(
@@ -81,10 +84,14 @@ set_property(
 set_property(
   TARGET ${PROJECT_NAME}_testdll ${PROJECT_NAME}
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 set_property(
 TARGET ${PROJECT_NAME}_testWindow ${PROJECT_NAME}
 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+#iterate the file in ${WINDOWS_UTIL_DLL_FILES} glob, and copy them to the CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO
+foreach(dll ${WINDOWS_UTIL_DLL_FILES})
+  file(COPY ${dll} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
+endforeach()
 
 file(COPY test/resource/kappa50.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
 file(COPY test/resource/cube.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})

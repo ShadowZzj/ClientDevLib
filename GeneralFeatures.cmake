@@ -6,7 +6,7 @@ function(GenerateGeneralUtil)
 	"${GENERAL_FEATURES_CMAKE_DIR}/General/util/*.cpp" 
 	"${GENERAL_FEATURES_CMAKE_DIR}/General/util/*.hpp"
 	)
-
+	
 	message(STATUS "AES FEATURE: ${FEATURE_AES}")
 	if (${FEATURE_AES})
 		file(GLOB FEATURE_FILES
@@ -55,6 +55,19 @@ function(GenerateGeneralUtil)
 		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
+	message(STATUS "imgui	FEATURE: ${FEATURE_IMGUI_WIN32_DIRECTX11}")
+	if (${FEATURE_IMGUI_WIN32_DIRECTX11})
+		file(GLOB FEATURE_FILES
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_dx11.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_dx11.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/*.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/*.cpp"
+		)
+		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
+	endif()
+
 	foreach(source IN LISTS GENERAL_UTIL_FILES)
 	    #message(STATUS "General util file: ${source}")
 	    get_filename_component(source_path "${source}" PATH)
@@ -65,5 +78,4 @@ function(GenerateGeneralUtil)
 	    source_group("${source_path_msvc}" FILES "${source}")
 	endforeach()
 	set(GENERAL_UTIL_FILES "${GENERAL_UTIL_FILES}" PARENT_SCOPE)
-	
 endfunction()

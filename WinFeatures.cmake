@@ -10,10 +10,14 @@ function(GenerateWindowsUtil)
 	file(GLOB_RECURSE TEST_FILES_TO_REMOVE
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/test/*.cpp"
 	)
-
+	
 	foreach(file_to_remove ${TEST_FILES_TO_REMOVE})
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${file_to_remove})
 	endforeach()
+
+	file(GLOB WINDOWS_UTIL_LIB_FILES)
+	file(GLOB WINDOWS_UTIL_DLL_FILES)
+	set(WINDOWS_UTIL_INCLUDE_DIRS)
 
 	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorBlendVS.hlsl PROPERTY VS_SHADER_TYPE Vertex)
 	set_property(SOURCE ${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/ColorBlendVS.hlsl PROPERTY VS_SHADER_MODEL 5.0)
@@ -71,6 +75,19 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
+	if(${FEATURE_SQLITE3PP})
+		list(APPEND WINDOWS_UTIL_LIB_FILES ${SqliteLib})
+		list(APPEND WINDOWS_UTIL_DLL_FILES ${SqliteDll})
+	endif()
+	
+	if (${FEATURE_LUA})
+		list(APPEND WINDOWS_UTIL_LIB_FILES ${LuaLib})
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${PRO_SUP}/General/ThirdParty/lua/win/include)
+	endif()
+
+	if (${FEATURE_IMGUI_WIN32_DIRECTX11})
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui)
+	endif()
 	foreach(source IN LISTS WINDOWS_UTIL_FILES)
 	    #message(STATUS "Windows util file: ${source}")
 	    get_filename_component(source_path "${source}" PATH)
@@ -80,6 +97,7 @@ function(GenerateWindowsUtil)
 	    source_group("${source_path_msvc}" FILES "${source}")
 	endforeach()
 	set(WINDOWS_UTIL_FILES ${WINDOWS_UTIL_FILES} PARENT_SCOPE)
-	#message(STATUS "Windows util files: ${WINDOWS_UTIL_FILES}")
-	#message (STATUS "Windows util file: ${WINDOWS_UTIL_FILE}")
+	set(WINDOWS_UTIL_LIB_FILES ${WINDOWS_UTIL_LIB_FILES} PARENT_SCOPE)
+	set(WINDOWS_UTIL_DLL_FILES ${WINDOWS_UTIL_DLL_FILES} PARENT_SCOPE)
+	set(WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_UTIL_INCLUDE_DIRS} PARENT_SCOPE)
 endfunction()
