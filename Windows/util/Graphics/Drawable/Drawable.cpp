@@ -2,7 +2,6 @@
 #include "../Bindable/IndexBuffer.h"
 #include <cassert>
 #include <memory>
-#include <typeinfo>
 
 using namespace zzj;
 

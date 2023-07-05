@@ -18,7 +18,7 @@ template <typename C> class ConstantBuffer : public Bindable
         memcpy(msr.pData, &consts, sizeof(consts));
         GetContext(gfx)->Unmap(pConstantBuffer.Get(), 0u);
     }
-    ConstantBuffer(Graphics &gfx, const C &consts)
+    ConstantBuffer(Graphics &gfx, const C &consts, UINT slot = 0u) : slot(slot)
     {
 
         D3D11_BUFFER_DESC cbd;
@@ -31,13 +31,13 @@ template <typename C> class ConstantBuffer : public Bindable
 
         D3D11_SUBRESOURCE_DATA csd = {};
         csd.pSysMem                = &consts;
-        auto hr = GetDevice(gfx)->CreateBuffer(&cbd, &csd, &pConstantBuffer);
+        auto hr                    = GetDevice(gfx)->CreateBuffer(&cbd, &csd, &pConstantBuffer);
         if (FAILED(hr))
         {
             ZZJ_DX_EXCEPTION(hr);
         }
     }
-    ConstantBuffer(Graphics &gfx)
+    ConstantBuffer(Graphics &gfx, UINT slot = 0u) : slot(slot)
     {
         D3D11_BUFFER_DESC cbd;
         cbd.BindFlags           = D3D11_BIND_CONSTANT_BUFFER;
@@ -46,7 +46,7 @@ template <typename C> class ConstantBuffer : public Bindable
         cbd.MiscFlags           = 0u;
         cbd.ByteWidth           = sizeof(C);
         cbd.StructureByteStride = 0u;
-        auto hr = GetDevice(gfx)->CreateBuffer(&cbd, nullptr, &pConstantBuffer);
+        auto hr                 = GetDevice(gfx)->CreateBuffer(&cbd, nullptr, &pConstantBuffer);
         if (FAILED(hr))
         {
             ZZJ_DX_EXCEPTION(hr);
@@ -55,18 +55,20 @@ template <typename C> class ConstantBuffer : public Bindable
 
   protected:
     Microsoft::WRL::ComPtr<ID3D11Buffer> pConstantBuffer;
+    UINT slot;
 };
 
 template <typename C> class VertexConstantBuffer : public ConstantBuffer<C>
 {
     using ConstantBuffer<C>::pConstantBuffer;
     using Bindable::GetContext;
+    using ConstantBuffer<C>::slot;
 
   public:
     using ConstantBuffer<C>::ConstantBuffer;
     void Bind(Graphics &gfx) noexcept override
     {
-        GetContext(gfx)->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
+        GetContext(gfx)->VSSetConstantBuffers(slot, 1u, pConstantBuffer.GetAddressOf());
     }
 };
 
@@ -74,12 +76,13 @@ template <typename C> class PixelConstantBuffer : public ConstantBuffer<C>
 {
     using ConstantBuffer<C>::pConstantBuffer;
     using Bindable::GetContext;
+    using ConstantBuffer<C>::slot;
 
   public:
     using ConstantBuffer<C>::ConstantBuffer;
     void Bind(Graphics &gfx) noexcept override
     {
-        GetContext(gfx)->PSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
+        GetContext(gfx)->PSSetConstantBuffers(slot, 1u, pConstantBuffer.GetAddressOf());
     }
 };
 } // namespace zzj
