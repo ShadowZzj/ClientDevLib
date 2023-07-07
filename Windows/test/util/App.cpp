@@ -1,13 +1,21 @@
 #include "App.h"
+#include <General/util/File/File.h>
+#include <Windows/util/Graphics/Drawable/AssTest.h>
 #include <Windows/util/Graphics/Drawable/Box.h>
 #include <Windows/util/Graphics/Drawable/Cylinder.h>
 #include <Windows/util/Graphics/Drawable/Pyramid.h>
 #include <Windows/util/Graphics/Drawable/SkinnedBox.h>
 #include <Windows/util/Graphics/Math.h>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#include <boost/filesystem.hpp>
 #include <imgui/imgui.h>
 #include <memory>
 #include <random>
 #include <windows/util/Graphics/GDIPlusManager.h>
+
+
 using namespace zzj;
 GDIPlusManager gdipm;
 App::App(int width, int height, const std::string &name)
@@ -32,6 +40,8 @@ App::App(int width, int height, const std::string &name)
                 return std::make_unique<Pyramid>(gfx, rng, adist, ddist, odist, rdist, tdist);
             case 3:
                 return std::make_unique<SkinnedBox>(gfx, rng, adist, ddist, odist, rdist);
+            case 4:
+                return std::make_unique<AssTest>(gfx, rng, adist, ddist, odist, rdist, mat, 1.5f);
             default:
                 assert(false && "impossible drawable option in factory");
                 return {};
@@ -41,7 +51,7 @@ App::App(int width, int height, const std::string &name)
       private:
         Graphics &gfx;
         std::mt19937 rng{std::random_device{}()};
-        std::uniform_int_distribution<int> sdist{0, 3};
+        std::uniform_int_distribution<int> sdist{0, 4};
         std::uniform_real_distribution<float> adist{0.0f, PI * 2.0f};
         std::uniform_real_distribution<float> ddist{0.0f, PI * 0.5f};
         std::uniform_real_distribution<float> odist{0.0f, PI * 0.08f};
