@@ -5,7 +5,6 @@ function(GenerateWindowsUtil)
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.h" 
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.cpp"
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hpp"
-	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hlsl"
 	)
 	file(GLOB_RECURSE TEST_FILES_TO_REMOVE
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/test/*.cpp"
@@ -18,18 +17,6 @@ function(GenerateWindowsUtil)
 	file(GLOB WINDOWS_UTIL_LIB_FILES)
 	file(GLOB WINDOWS_UTIL_DLL_FILES)
 	set(WINDOWS_UTIL_INCLUDE_DIRS)
-
-	file(GLOB VERTEX_SHADERS "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/VertexShader/*.hlsl")
-	foreach(SHADER ${VERTEX_SHADERS})
-		set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_TYPE Vertex)
-		set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_MODEL 5.0)
-	endforeach()
-	
-	file(GLOB PIXEL_SHADERS "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/PixelShader/*.hlsl")
-	foreach(SHADER ${PIXEL_SHADERS})
-		set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_TYPE Pixel)
-		set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_MODEL 5.0)
-	endforeach()
 
 	# 默认所有文件都会被包含，下面开始根据特性决定是否移除某些文件
 	message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
@@ -71,6 +58,26 @@ function(GenerateWindowsUtil)
 	    )
 
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	endif()
+
+	message(STATUS "Shaders feature: ${FEATURE_SHADERS}")
+	if(${FEATURE_SHADERS})
+		file(GLOB_RECURSE FEATURE_FILES 
+			"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hlsl"
+		)
+		list(APPEND WINDOWS_UTIL_FILES ${FEATURE_FILES})
+		
+		file(GLOB VERTEX_SHADERS "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/VertexShader/*.hlsl")
+		foreach(SHADER ${VERTEX_SHADERS})
+			set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_TYPE Vertex)
+			set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_MODEL 5.0)
+		endforeach()
+
+		file(GLOB PIXEL_SHADERS "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/Shaders/PixelShader/*.hlsl")
+		foreach(SHADER ${PIXEL_SHADERS})
+			set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_TYPE Pixel)
+			set_property(SOURCE ${SHADER} PROPERTY VS_SHADER_MODEL 5.0)
+		endforeach()
 	endif()
 
 	message(STATUS "SQLite3pp feature: ${FEATURE_SQLITE3PP}")
