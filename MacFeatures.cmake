@@ -21,6 +21,8 @@ function(GenerateMacOSUtil)
 		)
 
 		list(REMOVE_ITEM MACOS_UTIL_FILES ${FEATURE_FILES})
+	else()
+		list(APPEND MACOS_UTIL_LIB_FILES pcap)
 	endif()
 
     message(STATUS "SQLite3pp feature: ${FEATURE_SQLITE3PP}")
