@@ -13,14 +13,28 @@
 namespace zvpro
 {
 
-class ThreadPoolTask
+template <typename T> class ThreadPoolTask
 {
   public:
-    int id;
+    T id;
     std::function<void()> task;
+    static T GetDefaultId();
 };
 
-class ThreadPool
+template <> inline int ThreadPoolTask<int>::GetDefaultId()
+{
+    static int id = 0;
+    return id++;
+}
+template <> inline std::string ThreadPoolTask<std::string>::GetDefaultId()
+{
+    static int id      = 0;
+    std::string prefix = "zzj_threadpool_task_";
+
+    return prefix + std::to_string(id++);
+}
+
+template <typename T> class ThreadPool
 {
   public:
     ThreadPool(size_t);
@@ -28,10 +42,11 @@ class ThreadPool
     auto enqueue(F &&f, Args &&...args) -> std::future<typename std::result_of<F(Args...)>::type>;
 
     template <class F, class... Args>
-    auto enqueueWithTaskId(int id, F &&f, Args &&...args) -> std::future<typename std::result_of<F(Args...)>::type>;
+    auto enqueueWithTaskId(const T &id, F &&f, Args &&...args)
+        -> std::future<typename std::result_of<F(Args...)>::type>;
     void Stop();
-    bool isTaskInQueue(int taskId);
-    bool isTaskRunning(int taskId);
+    bool isTaskInQueue(const T &taskId);
+    bool isTaskRunning(const T &taskId);
     ~ThreadPool();
 
   private:
@@ -39,8 +54,8 @@ class ThreadPool
     // need to keep track of threads so we can join them
     std::vector<std::thread> workers;
     // the task queue
-    std::vector<ThreadPoolTask> readyTasks;
-    std::vector<ThreadPoolTask> runningTasks;
+    std::vector<ThreadPoolTask<T>> readyTasks;
+    std::vector<ThreadPoolTask<T>> runningTasks;
     // synchronization
     std::mutex defaultid_mutex;
     std::mutex queue_mutex;
@@ -49,13 +64,13 @@ class ThreadPool
 };
 
 // the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads) : stop(false)
+template <typename T> ThreadPool<T>::ThreadPool(size_t threads) : stop(false)
 {
     for (size_t i = 0; i < threads; ++i)
         workers.emplace_back([this] {
             for (;;)
             {
-                ThreadPoolTask task;
+                ThreadPoolTask<T> task;
 
                 {
                     std::unique_lock<std::mutex> lock(this->queue_mutex);
@@ -79,15 +94,17 @@ inline ThreadPool::ThreadPool(size_t threads) : stop(false)
 }
 
 // add new work item to the pool
+template <typename T>
 template <class F, class... Args>
-auto ThreadPool::enqueue(F &&f, Args &&...args) -> std::future<typename std::result_of<F(Args...)>::type>
+auto ThreadPool<T>::enqueue(F &&f, Args &&...args) -> std::future<typename std::result_of<F(Args...)>::type>
 {
     std::unique_lock<std::mutex> lock(this->defaultid_mutex);
-    return enqueueWithTaskId(taskDefaultId--, f, args...);
+    return enqueueWithTaskId(ThreadPoolTask<T>::GetDefaultId(), f, args...);
 }
 
+template <typename T>
 template <class F, class... Args>
-auto ThreadPool::enqueueWithTaskId(int id, F &&f, Args &&...args)
+auto ThreadPool<T>::enqueueWithTaskId(const T &id, F &&f, Args &&...args)
     -> std::future<typename std::result_of<F(Args...)>::type>
 {
     using return_type = typename std::result_of<F(Args...)>::type;
@@ -103,16 +120,15 @@ auto ThreadPool::enqueueWithTaskId(int id, F &&f, Args &&...args)
         if (stop)
             throw std::runtime_error("enqueue on stopped ThreadPool");
 
-        ThreadPoolTask poolTask;
-        poolTask.id = id;
+        ThreadPoolTask<T> poolTask;
+        poolTask.id   = id;
         poolTask.task = [task]() { (*task)(); };
         readyTasks.push_back(poolTask);
     }
     condition.notify_one();
     return res;
 }
-
-inline void ThreadPool::Stop()
+template <typename T> void ThreadPool<T>::Stop()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
@@ -124,12 +140,12 @@ inline void ThreadPool::Stop()
     workers.clear();
 }
 // the destructor joins all threads
-inline ThreadPool::~ThreadPool()
+template <typename T> ThreadPool<T>::~ThreadPool()
 {
     Stop();
 }
 
-inline bool ThreadPool::isTaskInQueue(int taskId)
+template <typename T> bool ThreadPool<T>::isTaskInQueue(const T &taskId)
 {
     std::unique_lock<std::mutex> lock(queue_mutex);
     if (std::find_if(readyTasks.begin(), readyTasks.end(),
@@ -138,12 +154,11 @@ inline bool ThreadPool::isTaskInQueue(int taskId)
     else
         return false;
 }
-
-inline bool ThreadPool::isTaskRunning(int taskId)
+template <typename T> bool ThreadPool<T>::isTaskRunning(const T &taskId)
 {
     std::unique_lock<std::mutex> lock(queue_mutex);
     if (std::find_if(runningTasks.begin(), runningTasks.end(),
-                  [taskId](auto runningTask) { return runningTask.id == taskId; }) != runningTasks.end())
+                     [taskId](auto runningTask) { return runningTask.id == taskId; }) != runningTasks.end())
         return true;
     else
         return false;
