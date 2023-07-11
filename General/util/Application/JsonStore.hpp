@@ -4,6 +4,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <variant>
+
 namespace zzj
 {
 class JsonStore
@@ -19,6 +20,46 @@ class JsonStore
 
     template <typename T> using Result = std::variant<T, KeyNotExist, ExceptionOccured>;
 
+    Result<nlohmann::json> Get()
+    {
+        auto path = GetStorePath();
+        if (path.empty())
+            return ExceptionOccured{"Path does not exist"};
+        auto mutexPtr = GetMutexForPath(path);
+        std::lock_guard<std::mutex> lock(*mutexPtr);
+
+        if (!boost::filesystem::exists(path))
+        {
+            try
+            {
+                std::ofstream ofs(path.string());
+                ofs << "{}";
+            }
+            catch (const std::exception &e)
+            {
+                return ExceptionOccured{e.what()};
+            }
+            catch (...)
+            {
+                return ExceptionOccured{"Unknown exception"};
+            }
+        }
+        try
+        {
+            std::ifstream ifs(path.string());
+            nlohmann::json j;
+            ifs >> j;
+            return j;
+        }
+        catch (const std::exception &e)
+        {
+            return ExceptionOccured{e.what()};
+        }
+        catch (...)
+        {
+            return ExceptionOccured{"Unknown exception"};
+        }
+    }
     template <typename T> Result<T> Get(const std::string &key)
     {
         auto path = GetStorePath();
@@ -63,6 +104,32 @@ class JsonStore
         }
     }
 
+    Result<nlohmann::json> Set(const nlohmann::json &content)
+    {
+        auto path = GetStorePath();
+
+        // If the path does not exist, and the path is valid, create it
+        if (path.empty())
+            return ExceptionOccured{"Path is empty"};
+
+        auto mutexPtr = GetMutexForPath(path);
+        std::lock_guard<std::mutex> lock(*mutexPtr);
+
+        try
+        {
+            std::ofstream ofs(path.string());
+            ofs << content.dump(4);
+            return content;
+        }
+        catch (const std::exception &e)
+        {
+            return ExceptionOccured{e.what()};
+        }
+        catch (...)
+        {
+            return ExceptionOccured{"Unknown exception"};
+        }
+    }
     template <typename T> Result<T> Set(const std::string &key, const T &value)
     {
         auto path = GetStorePath();
