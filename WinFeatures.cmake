@@ -19,8 +19,8 @@ function(GenerateWindowsUtil)
 	set(WINDOWS_UTIL_INCLUDE_DIRS)
 
 	# 默认所有文件都会被包含，下面开始根据特性决定是否移除某些文件
-	message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
 	if ((NOT DEFINED FEATURE_INTERCEPTION) OR (NOT ${FEATURE_INTERCEPTION}))
+		message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
 		file(GLOB FEATURE_FILES 
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Interception/*.h"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Interception/*.cpp"
@@ -30,8 +30,8 @@ function(GenerateWindowsUtil)
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "DirectX feature: ${FEATURE_DIRECTX}")
 	if((NOT DEFINED FEATURE_DIRECTX) OR (NOT ${FEATURE_DIRECTX}))
+		message(STATUS "DirectX feature: ${FEATURE_DIRECTX}")
 	    file(GLOB FEATURE_FILES 
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/*"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Graphics/**/*"
@@ -39,8 +39,9 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "DirectXApp feature: ${FEATURE_DIRECTXAPP}")
+
 	if((NOT DEFINED FEATURE_DIRECTX) OR (NOT ${FEATURE_DIRECTX}) OR (NOT DEFINED FEATURE_DIRECTXAPP) OR (NOT ${FEATURE_DIRECTXAPP}))
+		message(STATUS "DirectXApp feature: ${FEATURE_DIRECTXAPP}")
 	    file(GLOB FEATURE_FILES 
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/App.h"
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/App.cpp"
@@ -49,8 +50,9 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "ETW feature: ${FEATURE_ETW}")
+
 	if ((NOT DEFINED FEATURE_ETW) OR (NOT ${FEATURE_ETW}))
+		message(STATUS "ETW feature: ${FEATURE_ETW}")
 	    file(GLOB FEATURE_FILES 
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/EventTrace/*.h"
 	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/EventTrace/*.cpp"
@@ -60,8 +62,9 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "Shaders feature: ${FEATURE_SHADERS}")
+	
 	if(${FEATURE_SHADERS})
+		message(STATUS "Shaders feature: ${FEATURE_SHADERS}")
 		file(GLOB_RECURSE FEATURE_FILES 
 			"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hlsl"
 		)
@@ -80,52 +83,64 @@ function(GenerateWindowsUtil)
 		endforeach()
 	endif()
 
-	message(STATUS "SQLite3pp feature: ${FEATURE_SQLITE3PP}")
 	if(${FEATURE_SQLITE3PP})
+		message(STATUS "SQLite3pp feature: ${FEATURE_SQLITE3PP}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${SqliteLib})
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${SqliteDll})
 	endif()
 	
-	message(STATUS "Lua feature: ${FEATURE_LUA}")
 	if (${FEATURE_LUA})
+		message(STATUS "Lua feature: ${FEATURE_LUA}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${LuaLib})
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${PRO_SUP}/General/ThirdParty/lua/win/include)
 	endif()
 
-	message(STATUS "ImGui feature: ${FEATURE_IMGUI}")
 	if (${FEATURE_IMGUI_WIN32_DIRECTX11})
+		message(STATUS "ImGui feature: ${FEATURE_IMGUI}")
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui)
 	endif()
 
-	message(STATUS "Curl feature: ${FEATURE_CURL}")
+
 	if (${FEATURE_CURL})
+		message(STATUS "Curl feature: ${FEATURE_CURL}")
+		set(FEATURE_OPENSSL ON)
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${CurlLib} ${SSLLib} ${CryptoLib})
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${CurlDll} ${SSLDll} ${CryptoDll})
 	endif()
 
-	message(STATUS "gRPC feature: ${FEATURE_GRPC}")
+
 	if (${FEATURE_GRPC})
+		message(STATUS "gRPC feature: ${FEATURE_GRPC}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${GrpcLib} ${SSLLib} ${CryptoLib})
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${ZlibDll} ${VCRUNTIME140DLL} ${SSLDll} ${CryptoDll})
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/grpc/include/win)
 	endif()
 
-	message(STATUS "OpenSSL feature: ${FEATURE_OPENSSL}")
 	if (${FEATURE_OPENSSL})
+		message(STATUS "OpenSSL feature: ${FEATURE_OPENSSL}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${SSLLib} ${CryptoLib})
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${SSLDll} ${CryptoDll})
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/openssl/include)
 	endif()
 
 	if (${FEATURE_BOOST})
+		message(STATUS "Boost feature: ${FEATURE_BOOST}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${BoostLibs})
 	endif()
 
 	if(${FEATURE_THIRDPARTY_ASSIMP})
+		message(STATUS "Assimp feature: ${FEATURE_THIRDPARTY_ASSIMP}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${AssimpLib})
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${AssimpDll})
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/assimp/source/include)
 	endif()
+
+	if(${FEATURE_THIRDPARTY_ZIPPER})
+		message(STATUS "Zipper feature: ${FEATURE_THIRDPARTY_ZIPPER}")
+		list(APPEND WINDOWS_UTIL_LIB_FILES ${ZipperLib} ${ZLibLib})
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/zipper/include)
+	endif()
+
 	foreach(source IN LISTS WINDOWS_UTIL_FILES)
 	    #message(STATUS "Windows util file: ${source}")
 	    get_filename_component(source_path "${source}" PATH)

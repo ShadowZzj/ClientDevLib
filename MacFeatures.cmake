@@ -12,8 +12,8 @@ function(GenerateMacOSUtil)
 	file(GLOB MACOS_UTIL_DLL_FILES)
 	set(MACOS_UTIL_INCLUDE_DIRS)
 
-    message(STATUS "PCAP FEATURE: ${FEATURE_PCAP}")
     if ((NOT DEFINED FEATURE_PCAP) OR (NOT ${FEATURE_PCAP}))
+		message(STATUS "PCAP FEATURE: ${FEATURE_PCAP}")
 		file(GLOB FEATURE_FILES 
 		"${MACOS_FEATURES_CMAKE_DIR}/MacOS/util/Network/Pcap/*.h"
 		"${MACOS_FEATURES_CMAKE_DIR}/MacOS/util/Network/Pcap/*.cpp"
@@ -25,40 +25,47 @@ function(GenerateMacOSUtil)
 		list(APPEND MACOS_UTIL_LIB_FILES pcap)
 	endif()
 
-    message(STATUS "SQLite3pp feature: ${FEATURE_SQLITE3PP}")
 	if(${FEATURE_SQLITE3PP})
+		message(STATUS "SQLite3pp feature: ${FEATURE_SQLITE3PP}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${SqliteLib} ${Sqlite3Dll})
 		list(APPEND MACOS_UTIL_DLL_FILES ${Sqlite3Dll})
 	endif()
 	
-	message(STATUS "Lua feature: ${FEATURE_LUA}")
 	if (${FEATURE_LUA})
+		message(STATUS "Lua feature: ${FEATURE_LUA}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${LuaLib})
 		list(APPEND MACOS_UTIL_INCLUDE_DIRS ${PRO_SUP}/General/ThirdParty/lua/mac/include)
 	endif()
 
-	message(STATUS "Curl feature: ${FEATURE_CURL}")
 	if (${FEATURE_CURL})
+	message(STATUS "Curl feature: ${FEATURE_CURL}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${CurlDll} ${SSLDll} ${CryptoDll})
 		list(APPEND MACOS_UTIL_DLL_FILES ${CurlDll} ${SSLDll} ${CryptoDll})
 	endif()
 
-	message(STATUS "gRPC feature: ${FEATURE_GRPC}")
 	if (${FEATURE_GRPC})
+		message(STATUS "gRPC feature: ${FEATURE_GRPC}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${GrpcLib} ${SSLDll} ${CryptoDll} ${ZlibLib})
 		list(APPEND MACOS_UTIL_DLL_FILES ${SSLDll} ${CryptoDll})
 		list(APPEND MACOS_UTIL_INCLUDE_DIRS ${MACOS_FEATURES_CMAKE_DIR}/General/ThirdParty/grpc/mac/universal/include)
 	endif()
 
-	message(STATUS "OpenSSL feature: ${FEATURE_OPENSSL}")
 	if (${FEATURE_OPENSSL})
+		message(STATUS "OpenSSL feature: ${FEATURE_OPENSSL}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${SSLDll} ${CryptoDll})
 		list(APPEND MACOS_UTIL_DLL_FILES ${SSLDll} ${CryptoDll})
 		list(APPEND MACOS_UTIL_INCLUDE_DIRS ${MACOS_FEATURES_CMAKE_DIR}/General/ThirdParty/openssl/include)
 	endif()
 
 	if (${FEATURE_BOOST})
+		message(STATUS "Boost feature: ${FEATURE_BOOST}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${BoostLibs})
+	endif()
+
+	if(${FEATURE_THIRDPARTY_ZIPPER})
+		message(STATUS "Zipper feature: ${FEATURE_THIRDPARTY_ZIPPER}")
+		list(APPEND MACOS_UTIL_LIB_FILES ${ZipperLib} ${ZLibLib})
+		list(APPEND MACOS_UTIL_INCLUDE_DIRS ${MACOS_FEATURES_CMAKE_DIR}/General/ThirdParty/zipper/include)
 	endif()
 
     foreach(source IN LISTS MACOS_UTIL_FILES)

@@ -1,7 +1,7 @@
 #include "Md5.h"
 
 using std::string;
-
+using namespace zzj;
 /* Constants for MD5Transform routine. */
 #define S11 7
 #define S12 12
@@ -356,25 +356,25 @@ string MD5::toString()
     return bytesToHexString(digest(), 16);
 }
 
-bool MD5::GetFileMD5(const string& strFilePath,string& md5)
+bool MD5::GetFileMD5(const string &strFilePath, string &md5)
 {
     if (strFilePath.empty())
         return false;
 
-    FILE* fp = NULL;
-    
+    FILE *fp = NULL;
+
 #ifdef _WIN32
     fopen_s(&fp, strFilePath.c_str(), "rb");
 #else
-    fp =fopen(strFilePath.c_str(), "rb");
+    fp = fopen(strFilePath.c_str(), "rb");
 #endif
-    
+
     if (fp == NULL)
         return false;
 
-    int nLength = 0;
-    const int nBufferSize = 1024;
-    byte buffer[nBufferSize] = { 0 };
+    int nLength              = 0;
+    const int nBufferSize    = 1024;
+    byte buffer[nBufferSize] = {0};
     MD5 fileMd5;
 
     while ((nLength = fread(buffer, sizeof(byte), nBufferSize, fp)) > 0)

@@ -1,5 +1,4 @@
-#ifndef _G_MD5_H_
-#define _G_MD5_H_
+#pragma once
 
 #include <fstream>
 #include <string>
@@ -11,6 +10,8 @@ typedef unsigned int ulong;
 using std::ifstream;
 using std::string;
 
+namespace zzj
+{
 /* MD5 declaration. */
 class MD5
 {
@@ -26,7 +27,8 @@ class MD5
     string toString();
     void reset();
 
-    static bool GetFileMD5(const string& strFilePath,string& md5);
+    static bool GetFileMD5(const string &strFilePath, string &md5);
+
   private:
     void update(const byte *input, size_t length);
     void final();
@@ -50,5 +52,4 @@ class MD5
     static const char HEX[16];
     static const size_t BUFFER_SIZE = 1024;
 };
-
-#endif /*MD5_H*/
+} // namespace zzj

@@ -1,6 +1,4 @@
-#ifndef _G_SERVICEINTERFACE_H_
-#define _G_SERVICEINTERFACE_H_
-
+#pragma once
 #include <iostream>
 #include <string>
 
@@ -27,7 +25,6 @@ class ServiceInterface
     };
     virtual ~ServiceInterface()
     {
-        
     }
     enum class ControlStatus : int
     {
@@ -55,11 +52,13 @@ class ServiceInterface
     virtual int SetServiceStartType(StartUpType startType)  = 0;
     virtual int GetServiceStartType(StartUpType &startType) = 0;
     virtual ControlStatus CheckSafeStop(int seconds)        = 0;
+    std::string GetServiceName()
+    {
+        return serviceName;
+    }
 
   protected:
     std::string serviceName;
 };
 
 }; // namespace zzj
-
-#endif
