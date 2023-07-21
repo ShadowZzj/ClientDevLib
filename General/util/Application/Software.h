@@ -1,7 +1,8 @@
 #pragma once
+#include <General/util/Lua/LuaExport.hpp>
 #include <string>
 #include <vector>
-#include <General/util/Lua/LuaExport.hpp>
+
 namespace zzj
 {
 class SoftInfo
@@ -23,16 +24,16 @@ class SoftInfo
     DECLARE_LUA_EXPORT(SoftInfo)
 };
 
-class SoftInfoManagerInterface
+class SoftInfoManager
 {
   public:
-    virtual std::tuple <int, std::vector<SoftInfo>> GetInstalledSoftware() = 0;
-    SoftInfoManagerInterface()
+    std::tuple<int, std::vector<SoftInfo>> GetInstalledSoftware();
+    SoftInfoManager()
     {
     }
-    ~SoftInfoManagerInterface()
+    ~SoftInfoManager()
     {
     }
-    DECLARE_LUA_EXPORT(SoftInfoManagerInterface)
+    DECLARE_LUA_EXPORT(SoftInfoManager)
 };
 }; // namespace zzj

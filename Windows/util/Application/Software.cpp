@@ -1,4 +1,5 @@
-#include "SoftWare.h"
+#include <General/util/Application/Software.h>
+#include <General/util/StrUtil.h>
 #include <windows.h>
 std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSoftware()
 {
@@ -42,32 +43,32 @@ std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSo
                 continue;
 
             RegQueryValueExA(hkRKey, "DisplayName", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
-            softinfo.m_strSoftName = szBuffer;
+            softinfo.m_strSoftName = zzj::str::ansi2utf8(szBuffer);
             dwNameLen              = 255;
             memset(szBuffer, 0, 255);
 
             RegQueryValueExA(hkRKey, "DisplayVersion", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
-            softinfo.m_strSoftVersion = szBuffer;
+            softinfo.m_strSoftVersion = zzj::str::ansi2utf8(szBuffer);
             dwNameLen                 = 255;
             memset(szBuffer, 0, 255);
 
             RegQueryValueExA(hkRKey, "InstallLocation", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
-            softinfo.m_strInstallLocation = szBuffer;
+            softinfo.m_strInstallLocation = zzj::str::ansi2utf8(szBuffer);
             dwNameLen                     = 255;
             memset(szBuffer, 0, 255);
 
             RegQueryValueExA(hkRKey, "Publisher", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
-            softinfo.m_strPublisher = szBuffer;
+            softinfo.m_strPublisher = zzj::str::ansi2utf8(szBuffer);
             dwNameLen               = 255;
             memset(szBuffer, 0, 255);
 
             RegQueryValueExA(hkRKey, "InstallLocation", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
-            softinfo.m_strMainProPath = szBuffer;
+            softinfo.m_strMainProPath = zzj::str::ansi2utf8(szBuffer);
             dwNameLen                 = 255;
             memset(szBuffer, 0, 255);
 
             RegQueryValueExA(hkRKey, "UninstallString", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
-            softinfo.m_strUninstallPth = szBuffer;
+            softinfo.m_strUninstallPth = zzj::str::ansi2utf8(szBuffer);
             dwNameLen                  = 255;
             memset(szBuffer, 0, 255);
 
