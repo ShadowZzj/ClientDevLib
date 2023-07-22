@@ -582,8 +582,17 @@ int WinService::IsServiceRunning(const char *serviceName, bool &running)
     scml = OpenServiceA(scm, serviceName, SC_MANAGER_ALL_ACCESS);
     if (!scml)
     {
-        result = -2;
-        goto exit;
+        if (GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
+        {
+            result  = 0;
+            running = false;
+            goto exit;
+        }
+        else
+        {
+            result = -2;
+            goto exit;
+        }
     }
 
     if (!QueryServiceStatus(scml, &ss))
