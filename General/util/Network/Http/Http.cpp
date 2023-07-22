@@ -6,7 +6,7 @@
 #include <spdlog/spdlog.h>
 #include <stdio.h>
 #include <string>
-
+#include <boost/filesystem.hpp>
 #ifdef _WIN32
 #include <curl/win/curl.h>
 #else
@@ -86,11 +86,12 @@ std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int co
     CURLcode res;
     std::string ret         = "";
     std::string outFileName = url.substr(url.find_last_of("/") + 1);
-    outFileName             = path + outFileName;
+    boost::filesystem::path outFileFullPath = path;
+    outFileFullPath                         = outFileFullPath / outFileName;
     curl                    = curl_easy_init();
     if (curl)
     {
-        fp = fopen(outFileName.c_str(), "wb");
+        fp = fopen(outFileFullPath.string().c_str(), "wb");
         if (!fp)
         {
             ret = "";
@@ -112,7 +113,7 @@ std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int co
             goto exit;
         }
     }
-    ret = outFileName;
+    ret = outFileFullPath.string().c_str();
 exit:
     curl_easy_cleanup(curl);
     if (fp)
