@@ -29,11 +29,11 @@ class Version
 
             if (v1 < v2)
             {
-                return false;
+                return true;
             }
             else if (v1 > v2)
             {
-                return true;
+                return false;
             }
         }
         return false;
