@@ -58,11 +58,11 @@ bool CallJ::ExecCall(char* injson, int injsonlen, char** outjson, int* outjsonle
 	try
 	{
 		json inj;
-		nlohmann::detail::input_adapter inadapter(injson, (size_t)injsonlen);
+        std::string jsonString(injson, injsonlen);
 
 		try
 		{
-			inj = json::parse(std::move(inadapter));
+            inj             = json::parse(jsonString);
 			std::string all = inj.dump();
 			
 		}
