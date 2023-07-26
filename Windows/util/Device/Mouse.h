@@ -1,6 +1,8 @@
 
 #pragma once
+#include <optional>
 #include <queue>
+
 namespace zzj
 {
 class Mouse
@@ -8,6 +10,10 @@ class Mouse
     friend class Window;
 
   public:
+    struct RawDelta
+    {
+        int x, y;
+    };
     class Event
     {
       public:
@@ -72,6 +78,10 @@ class Mouse
     };
 
   public:
+    std::optional<RawDelta> ReadRawDelta() noexcept;
+    void EnableRaw() noexcept;
+    void DisableRaw() noexcept;
+    bool RawEnabled() const noexcept;
     Mouse()              = default;
     Mouse(const Mouse &) = delete;
     Mouse &operator=(const Mouse &) = delete;
@@ -100,6 +110,8 @@ class Mouse
     void OnWheelDown(int x, int y) noexcept;
     void TrimBuffer() noexcept;
     void OnWheelDelta(int x, int y, int delta) noexcept;
+    void OnRawDelta(int dx, int dy) noexcept;
+    void TrimRawInputBuffer() noexcept;
 
   private:
     static constexpr unsigned int bufferSize = 16u;
@@ -109,6 +121,9 @@ class Mouse
     bool rightIsPressed = false;
     bool isInWindow     = false;
     int wheelDeltaCarry = 0;
+    bool rawEnabled     = false;
+
     std::queue<Event> buffer;
+    std::queue<RawDelta> rawDeltaBuffer;
 };
 }; // namespace zzj

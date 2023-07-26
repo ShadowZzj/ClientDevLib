@@ -8,7 +8,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 {
     try
     {
-        return zzj::App(800, 600, "hello").Go();
+        return zzj::App(1280, 720, "hello").Go();
     }
     catch (const zzj::Exception &e)
     {

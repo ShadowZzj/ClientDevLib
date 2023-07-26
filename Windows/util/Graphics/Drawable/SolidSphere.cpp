@@ -1,5 +1,5 @@
 #include "SolidSphere.h"
-#include "../Bindable/BindableBase.h"
+#include "../Bindable/BindableCommon.h"
 #include "../Primitives/Sphere.h"
 #include <General/util/File/File.h>
 #include <boost/filesystem.hpp>

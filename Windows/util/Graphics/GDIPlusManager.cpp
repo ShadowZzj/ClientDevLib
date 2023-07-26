@@ -34,6 +34,7 @@ using namespace zzj;
 ULONG_PTR GDIPlusManager::token = 0;
 int GDIPlusManager::refCount    = 0;
 
+#pragma comment(lib, "gdiplus.lib")
 GDIPlusManager::GDIPlusManager()
 {
     if (refCount++ == 0)

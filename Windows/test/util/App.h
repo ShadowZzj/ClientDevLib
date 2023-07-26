@@ -1,10 +1,12 @@
 #pragma once
 #include "ChiliTimer.h"
 #include <Windows/util/Graphics/Camera.h>
+#include <Windows/util/Graphics/Drawable/Mesh.h>
 #include <Windows/util/Graphics/Graphics.h>
 #include <Windows/util/Graphics/ImguiManager.h>
 #include <Windows/util/Graphics/PointLight.h>
 #include <Windows/util/Graphics/Window.h>
+#include <Windows/util/Graphics/Drawable/Mesh.h>
 #include <set>
 
 namespace zzj
@@ -19,22 +21,16 @@ class App
 
   private:
     void DoFrame();
-    void SpawnSimulationWindow() noexcept;
-    void SpawnBoxWindowManagerWindow() noexcept;
-    void SpawnBoxWindows() noexcept;
+    void ShowImguiDemoWindow();
 
   private:
     ImguiManager imgui;
     Window wnd;
-    Graphics gfx;
     ChiliTimer timer;
+    float speed_factor = 1.0f;
     Camera cam;
-    std::vector<std::unique_ptr<class Drawable>> drawables;
-    std::vector<class Box *> boxes;
-    float speed_factor                 = 1.0f;
-    static constexpr size_t nDrawables = 180;
+    Graphics gfx;
     PointLight light;
-    std::optional<int> comboBoxIndex;
-    std::set<int> boxControlIds;
+    std::unique_ptr<zzj::Model> nano;
 };
 }; // namespace zzj
