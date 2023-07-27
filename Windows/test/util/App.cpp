@@ -39,7 +39,7 @@ void App::DoFrame()
     light.Bind(gfx, cam.GetMatrix());
 
     boost::filesystem::path currentExePath = zzj::GetExecutablePath();
-    boost::filesystem::path modelPath      = currentExePath / "nano.gltf";
+    boost::filesystem::path modelPath      = currentExePath / "nano_textured/nanosuit.obj";
 
     if (!nano)
     {

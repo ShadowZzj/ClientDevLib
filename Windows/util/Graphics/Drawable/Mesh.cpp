@@ -1,7 +1,9 @@
 #include "Mesh.h"
+#include "../Surface.h"
 #include <General/util/File/File.h>
 #include <imgui/imgui.h>
 #include <unordered_map>
+
 namespace dx = DirectX;
 
 namespace zzj
@@ -40,10 +42,9 @@ DirectX::XMMATRIX Mesh::GetTransformXM() const noexcept
 }
 
 // Node
-Node::Node(int id, const std::string &name, std::vector<Mesh *> meshPtrs, const DirectX::XMMATRIX &transform_in) noexcept
-    : id(id),
-      meshPtrs(std::move(meshPtrs)),
-      name(name)
+Node::Node(int id, const std::string &name, std::vector<Mesh *> meshPtrs,
+           const DirectX::XMMATRIX &transform_in) noexcept
+    : id(id), meshPtrs(std::move(meshPtrs)), name(name)
 {
     dx::XMStoreFloat4x4(&transform, transform_in);
     dx::XMStoreFloat4x4(&appliedTransform, dx::XMMatrixIdentity());
@@ -165,7 +166,7 @@ Model::Model(Graphics &gfx, const std::string fileName) : pWindow(std::make_uniq
                                                            aiProcess_ConvertToLeftHanded | aiProcess_GenNormals);
     for (size_t i = 0; i < pScene->mNumMeshes; i++)
     {
-        meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i]));
+        meshPtrs.push_back(ParseMesh(gfx, *pScene->mMeshes[i], pScene->mMaterials));
     }
 
     int nextId = 0;
@@ -187,17 +188,20 @@ Model::~Model() noexcept
 {
 }
 
-std::unique_ptr<Mesh> Model::ParseMesh(Graphics &gfx, const aiMesh &mesh)
+std::unique_ptr<Mesh> Model::ParseMesh(Graphics &gfx, const aiMesh &mesh, const aiMaterial *const *pMaterials)
 {
 
     DeviceVertex::VertexBuffer vbuf(std::move(DeviceVertex::VertexLayout{}
                                                   .Append(DeviceVertex::VertexLayout::Position3D)
-                                                  .Append(DeviceVertex::VertexLayout::Normal)));
+                                                  .Append(DeviceVertex::VertexLayout::Normal)
+                                                  .Append(DeviceVertex::VertexLayout::Texture2D)));
 
+    boost::filesystem::path exePath = zzj::GetExecutablePath();
     for (unsigned int i = 0; i < mesh.mNumVertices; i++)
     {
         vbuf.EmplaceBack(*reinterpret_cast<dx::XMFLOAT3 *>(&mesh.mVertices[i]),
-                         *reinterpret_cast<dx::XMFLOAT3 *>(&mesh.mNormals[i]));
+                         *reinterpret_cast<dx::XMFLOAT3 *>(&mesh.mNormals[i]),
+                         *reinterpret_cast<dx::XMFLOAT2 *>(&mesh.mTextureCoords[0][i]));
     }
 
     std::vector<unsigned short> indices;
@@ -213,30 +217,65 @@ std::unique_ptr<Mesh> Model::ParseMesh(Graphics &gfx, const aiMesh &mesh)
 
     std::vector<std::unique_ptr<Bindable>> bindablePtrs;
 
+    bool hasSpecularMap = false;
+    float shininess     = 35.0f;
+    if (mesh.mMaterialIndex >= 0)
+    {
+        auto &material = *pMaterials[mesh.mMaterialIndex];
+
+        using namespace std::string_literals;
+        const auto base = exePath / "nano_textured";
+        aiString texFileName;
+
+        material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
+        bindablePtrs.push_back(
+            std::make_unique<Texture>(gfx, Surface::FromFile((base / texFileName.C_Str()).string())));
+
+        if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName) == aiReturn_SUCCESS)
+        {
+            bindablePtrs.push_back(
+                std::make_unique<Texture>(gfx, Surface::FromFile((base / texFileName.C_Str()).string()), 1));
+            hasSpecularMap = true;
+        }
+        else
+        {
+            material.Get(AI_MATKEY_SHININESS, shininess);
+        }
+
+        bindablePtrs.push_back(std::make_unique<Sampler>(gfx));
+    }
+
     bindablePtrs.push_back(std::make_unique<VertexBuffer>(gfx, vbuf));
 
     bindablePtrs.push_back(std::make_unique<IndexBuffer>(gfx, indices));
 
-    boost::filesystem::path exePath = zzj::GetExecutablePath();
-    auto vsShader                   = exePath / "PhongVS.cso";
-    auto psShader                   = exePath / "PhongPS.cso";
+    auto vsShader = exePath / "PhongVS.cso";
+    auto psShader = exePath;
 
     auto pvs   = std::make_unique<VertexShader>(gfx, vsShader.wstring());
     auto pvsbc = pvs->GetBytecode();
     bindablePtrs.push_back(std::move(pvs));
 
-    bindablePtrs.push_back(std::make_unique<PixelShader>(gfx, psShader.wstring()));
-
     bindablePtrs.push_back(std::make_unique<InputLayout>(gfx, vbuf.GetLayout().GetD3DLayout(), pvsbc));
-
-    struct PSMaterialConstant
+    if (hasSpecularMap)
     {
-        DirectX::XMFLOAT3 color = {0.6f, 0.6f, 0.8f};
-        float specularIntensity = 0.6f;
-        float specularPower     = 30.0f;
-        float padding[3];
-    } pmc;
-    bindablePtrs.push_back(std::make_unique<PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+        psShader /= "PhongPSSpecMap.cso";
+        bindablePtrs.push_back(std::make_unique<PixelShader>(gfx, psShader.wstring()));
+    }
+    else
+    {
+        psShader /= "PhongPS.cso";
+        bindablePtrs.push_back(std::make_unique<PixelShader>(gfx, psShader.wstring()));
+
+        struct PSMaterialConstant
+        {
+            float specularIntensity = 0.8f;
+            float specularPower;
+            float padding[2];
+        } pmc;
+        pmc.specularPower = shininess;
+        bindablePtrs.push_back(std::make_unique<PixelConstantBuffer<PSMaterialConstant>>(gfx, pmc, 1u));
+    }
 
     return std::make_unique<Mesh>(gfx, std::move(bindablePtrs));
 }

@@ -3,7 +3,7 @@
 #include <General/util/Exception/Exception.h>
 namespace wrl = Microsoft::WRL;
 using namespace zzj;
-Texture::Texture(Graphics &gfx, const Surface &s)
+Texture::Texture(Graphics &gfx, const Surface &s, unsigned int slot) : slot(slot)
 {
     // create texture resource
     D3D11_TEXTURE2D_DESC textureDesc = {};
@@ -19,14 +19,14 @@ Texture::Texture(Graphics &gfx, const Surface &s)
     textureDesc.CPUAccessFlags       = 0;
     textureDesc.MiscFlags            = 0;
 
-    D3D11_SUBRESOURCE_DATA sd        = {};
-    sd.pSysMem                       = s.GetBufferPtr();
-    sd.SysMemPitch                   = s.GetWidth() * sizeof(Surface::Color);
+    D3D11_SUBRESOURCE_DATA sd = {};
+    sd.pSysMem                = s.GetBufferPtr();
+    sd.SysMemPitch            = s.GetWidth() * sizeof(Surface::Color);
 
     wrl::ComPtr<ID3D11Texture2D> pTexture;
     auto hr = GetDevice(gfx)->CreateTexture2D(&textureDesc, &sd, &pTexture);
-	if(FAILED(hr))
-		throw ZZJ_DX_EXCEPTION(hr);
+    if (FAILED(hr))
+        throw ZZJ_DX_EXCEPTION(hr);
 
     // create the resource view on the texture
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -35,11 +35,11 @@ Texture::Texture(Graphics &gfx, const Surface &s)
     srvDesc.Texture2D.MostDetailedMip       = 0;
     srvDesc.Texture2D.MipLevels             = 1;
     hr = GetDevice(gfx)->CreateShaderResourceView(pTexture.Get(), &srvDesc, &pTextureView);
-	if(FAILED(hr))
-		throw ZZJ_DX_EXCEPTION(hr);
+    if (FAILED(hr))
+        throw ZZJ_DX_EXCEPTION(hr);
 }
 
 void Texture::Bind(Graphics &gfx) noexcept
 {
-    GetContext(gfx)->PSSetShaderResources(0u, 1u, pTextureView.GetAddressOf());
+    GetContext(gfx)->PSSetShaderResources(slot, 1u, pTextureView.GetAddressOf());
 }
