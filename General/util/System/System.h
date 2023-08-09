@@ -1,8 +1,9 @@
-#ifndef _G_SYSTEM_H_
-#define _G_SYSTEM_H_
+#pragma once
+#include <General/util/User/User.h>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <string.h>
-
 namespace zzj
 {
 class Session
@@ -24,10 +25,8 @@ class Session
         SessionTerminate
     };
     std::string sessionId;
+    std::optional<UserInfo> userInfo;
+    static std::optional<Session> GetActiveSessionInfo();
+    static std::optional<std::string> GetActiveSessionId();
 };
 } // namespace zzj
-std::string GetActiveConsoleUserName();
-std::string GetActiveConsoleSessionId();
-std::string GetActiveUserSid();
-
-#endif

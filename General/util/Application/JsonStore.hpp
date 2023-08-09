@@ -1,10 +1,12 @@
 #pragma once
+#include <General/util/config.h>
+#include <algorithm>
 #include <boost/filesystem.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #include <json.hpp>
 #include <mutex>
 #include <unordered_map>
 #include <variant>
-
 namespace zzj
 {
 class JsonStore
@@ -26,7 +28,7 @@ class JsonStore
         if (path.empty())
             return ExceptionOccured{"Path does not exist"};
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<std::mutex> lock(*mutexPtr);
+        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
 
         if (!boost::filesystem::exists(path))
         {
@@ -67,7 +69,7 @@ class JsonStore
             return ExceptionOccured{"Path does not exist"};
 
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<std::mutex> lock(*mutexPtr);
+        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
 
         if (!boost::filesystem::exists(path))
         {
@@ -113,7 +115,7 @@ class JsonStore
             return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<std::mutex> lock(*mutexPtr);
+        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
 
         try
         {
@@ -139,7 +141,7 @@ class JsonStore
             return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<std::mutex> lock(*mutexPtr);
+        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
 
         if (!boost::filesystem::exists(path))
         {
@@ -182,17 +184,22 @@ class JsonStore
 
   private:
     inline static std::mutex mapMutex;
-    inline static std::unordered_map<std::string, std::unique_ptr<std::mutex>> mutexes;
+    inline static std::unordered_map<std::string, std::unique_ptr<boost::interprocess::named_mutex>> mutexes;
 
-    std::mutex *GetMutexForPath(const boost::filesystem::path &path)
+    boost::interprocess::named_mutex *GetMutexForPath(const boost::filesystem::path &path)
     {
+        static const std::string suffix = "/zzj/jsonstore";
         std::lock_guard<std::mutex> lock(mapMutex);
+        std::hash<std::string> hasher;
+        std::string hashedName =
+            "/" + std::to_string(hasher(ClientDevLibConfig::clientDevLibUUID + path.string() + suffix));
         auto it = mutexes.find(path.string());
         if (it == mutexes.end())
         {
             // If the mutex for this path does not exist yet, create one
-            auto newMutexPtr       = std::make_unique<std::mutex>();
-            auto ptr               = newMutexPtr.get();
+            auto newMutexPtr = std::make_unique<boost::interprocess::named_mutex>(boost::interprocess::open_or_create,
+                                                                                  hashedName.c_str());
+            auto ptr         = newMutexPtr.get();
             mutexes[path.string()] = std::move(newMutexPtr);
             return ptr;
         }

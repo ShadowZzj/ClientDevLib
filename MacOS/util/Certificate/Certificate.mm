@@ -109,7 +109,10 @@ std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate
 
         if (storeType == Certificate::StoreType::CurrentUser)
         {
-            std::string userName = GetActiveConsoleUserName();
+            std::string userName;
+            auto userInfo = zzj::UserInfo::GetActiveUserInfo();
+            
+            userName = userInfo.has_value()? userInfo->userName:"";
             if (userName.empty())
             {
                 ret = -2;
@@ -224,7 +227,10 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
             };
         else
         {
-            std::string userName = GetActiveConsoleUserName();
+            std::string userName;
+            auto userInfo = zzj::UserInfo::GetActiveUserInfo();
+            
+            userName = userInfo.has_value()? userInfo->userName:"";
             if (userName.empty())
             {
                 result = -4;

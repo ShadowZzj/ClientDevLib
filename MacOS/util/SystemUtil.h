@@ -1,6 +1,4 @@
-#ifndef _MAC_COMPUTER_H_
-#define _MAC_COMPUTER_H_
-
+#pragma once
 #include <string>
 #include <vector>
 
@@ -12,11 +10,7 @@ class Computer
     static std::string GetIdentifier();
     static std::string GetUUID();
     static std::string GetCPUBrandString();
-    static std::string GetActiveConsoleSessionId();
-    static std::string GetActiveConsoleGroupId();
     static std::string GetCurrentTimeStamp();
-    static std::string GetCurrentUserName();
-    static std::string GetCurrentUserHomeDir();
 };
 class HardDrive
 {
@@ -24,5 +18,3 @@ class HardDrive
     static std::vector<std::string> GetRootHardDriveUUID();
 };
 } // namespace zzj
-
-#endif

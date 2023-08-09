@@ -1,8 +1,8 @@
-#include <Windows.h>
 #include "SystemHelper.h"
-#include <wtsapi32.h>
-#include <sddl.h>
+#include <Windows.h>
 #include <optional>
+#include <sddl.h>
+#include <wtsapi32.h>
 #pragma comment(lib, "Wtsapi32.lib")
 
 std::optional<zzj::SystemInfo::VersionInfo> zzj::SystemInfo::GetWindowsVersion()
@@ -16,5 +16,14 @@ std::optional<zzj::SystemInfo::VersionInfo> zzj::SystemInfo::GetWindowsVersion()
         return {};
     proc(&dwMajor, &dwMinor, &dwBuildNumber);
     return VersionInfo{(int)dwMajor, (int)dwMinor, (int)dwBuildNumber};
-    
+}
+
+std::optional<std::string> zzj::SystemInfo::GetComputerName()
+{
+    char szComputerName[1024];
+    DWORD dwLen  = 1024;
+    BOOL bStatus = GetComputerNameA(szComputerName, &dwLen);
+    if (bStatus)
+        return szComputerName;
+    return {};
 }

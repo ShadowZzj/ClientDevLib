@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include "SystemUtil.h"
+#include <General/util/User/User.h>
 #include <boost/filesystem.hpp>
 using namespace std;
 
@@ -42,7 +43,10 @@ std::string zzj::File::GetSystemAppDataFolder()
 
 std::string zzj::File::GetCurrentUserAppDataFolder() {
     @autoreleasepool {
-        std::string currentUserHomeDir = zzj::Computer::GetCurrentUserHomeDir();
+        std::string currentUserHomeDir;
+        auto userInfo = zzj::UserInfo::GetActiveUserInfo();
+        if(userInfo)
+            currentUserHomeDir = userInfo->homeDirectory;
         if(currentUserHomeDir.empty())
             return "";
         

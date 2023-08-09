@@ -1,112 +1,258 @@
-#include "UserInfo.h"
 #include <General/util/BaseUtil.hpp>
 #include <General/util/StrUtil.h>
+#include <General/util/System/System.h>
+#include <General/util/User/User.h>
 #include <Windows.h>
+#include <Windows/util/Process/ThreadHelper.h>
 #include <sddl.h>
 #include <spdlog/spdlog.h>
 #include <wtsapi32.h>
-#include <Windows/util/Process/ThreadHelper.h>
 #define SECURITY_WIN32
+#include <Windows/util/System/SystemHelper.h>
+#include <lm.h>
 #include <security.h>
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
+#pragma comment(lib, "netapi32.lib")
 
-zzj::UserInfo zzj::UserInfo::GetActiveUserInfo()
+std::optional<std::map<std::string, std::string>> GetUserGourpNameAndSidByName(const std::string &userName)
 {
-    LPSTR szUserName   = NULL;
-    LPSTR szDomainName = NULL;
+    LPGROUP_USERS_INFO_0 pBuf = NULL;
     DEFER
     {
-        if (szUserName)
-            WTSFreeMemory(szUserName);
-        if (szDomainName)
-            WTSFreeMemory(szDomainName);
+        if (pBuf != NULL)
+            NetApiBufferFree(pBuf);
     };
+    DWORD dwLevel        = 0;
+    DWORD dwPrefMaxLen   = MAX_PREFERRED_LENGTH;
+    DWORD dwEntriesRead  = 0;
+    DWORD dwTotalEntries = 0;
+    NET_API_STATUS nStatus;
 
-    DWORD dwLen = 0;
-    DWORD dwSessionId = 0xffffffff;
-    UserInfo ret;
-    WTS_SESSION_INFOA * pSessionInfo = NULL;
-    DWORD dwCount = 0;
-    
-    if (WTSEnumerateSessionsA(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSessionInfo, &dwCount) == FALSE)
-    {
-        return {};
-    }
-    for (DWORD i = 0; i < dwCount; i++)
-    {
-        WTS_SESSION_INFOA sessionInfo = pSessionInfo[i];
-        if (sessionInfo.State == WTSActive)
-            dwSessionId = sessionInfo.SessionId;
-    }
-    WTSFreeMemory(pSessionInfo);
+    std::wstring wUserName = zzj::str::utf82w(userName);
+    nStatus = NetUserGetGroups(NULL, wUserName.c_str(), dwLevel, (LPBYTE *)&pBuf, dwPrefMaxLen, &dwEntriesRead,
+                               &dwTotalEntries);
 
-    if (0xffffffff == dwSessionId || 0 == dwSessionId)
+    if (nStatus != NERR_Success)
         return {};
 
-    BOOL bStatus =
-        WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, dwSessionId, WTSDomainName, &szDomainName, &dwLen);
-    if (bStatus)
+    LPGROUP_USERS_INFO_0 pTmpBuf;
+    DWORD i;
+    DWORD dwTotalCount = 0;
+
+    std::map<std::string, std::string> ret;
+    if ((pTmpBuf = pBuf) != NULL)
     {
-        ret.domainName = str::ansi2utf8(szDomainName);
-        bStatus = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, dwSessionId, WTSUserName, &szUserName, &dwLen);
-        if (bStatus)
-            ret.userName = str::ansi2utf8(szUserName);
+        for (i = 0; i < dwEntriesRead; i++)
+        {
+            if (pTmpBuf == NULL)
+            {
+                break;
+            }
+            std::string groupName = zzj::str::w2utf8(pTmpBuf->grui0_name);
+            auto sid              = GetSidByName(groupName);
+            if (!sid)
+                continue;
+
+            ret[groupName] = *sid;
+            pTmpBuf++;
+        }
     }
-    std::string accName = std::string(szDomainName) + "\\" + szUserName;
-    LPSTR retDomainName = (LPSTR)GlobalAlloc(GPTR, sizeof(CHAR) * 1024);
-    DEFER
-    {
-        GlobalFree(retDomainName);
-    };
-    DWORD cchDomainName = 1024;
-    SID_NAME_USE eSidType;
+
+    return ret;
+}
+std::optional<std::string> GetSidByName(const std::string &acctName)
+{
     LPSTR sidString = nullptr;
     DEFER
     {
         if (sidString)
             LocalFree(sidString);
     };
-
-    char sid_buffer[1024];
-    DWORD cbSid = 1024;
-    SID *sid    = (SID *)sid_buffer;
-
-    if (!LookupAccountNameA(NULL, accName.c_str(), sid_buffer, &cbSid, retDomainName, &cchDomainName, &eSidType))
+    DWORD dwSize   = 0;
+    DWORD dwErr    = 0;
+    DWORD dwName   = 0;
+    DWORD dwDomain = 0;
+    SID_NAME_USE sidUse;
+    BOOL bStatus = LookupAccountNameA(NULL, acctName.c_str(), NULL, &dwSize, NULL, &dwDomain, &sidUse);
+    if (bStatus == FALSE)
     {
-        spdlog::info("LookupAccountNameA error with {}", GetLastError());
-        return {};
-    }
-
-    if (!ConvertSidToStringSidA(sid, &sidString))
-    {
-        spdlog::info("ConvertSidToStringSidA error with {}", GetLastError());
-        return {};
-    }
-    ret.sid = str::ansi2utf8(sidString);
-
-
-    zzj::Process currentProcess;
-    HANDLE impersonateHandle = NULL;
-    DEFER
-    {
-        if (impersonateHandle)
-            zzj::Thread::RevertToCurrentUser(impersonateHandle);
-    };
-    if (auto [result, res] = currentProcess.IsServiceProcess();result == 0 && res)
-    {
-        impersonateHandle = zzj::Thread::ImpersonateCurrentUser();
-        if (NULL == impersonateHandle)
+        dwErr = GetLastError();
+        if (dwErr != ERROR_INSUFFICIENT_BUFFER)
         {
-            spdlog::info("ImpersonateCurrentUser error with {}", GetLastError());
+            spdlog::error("LookupAccountNameA failed, error code: {}", dwErr);
             return {};
         }
     }
-    char guid[256 + 1]      = {};
-    DWORD sizeExtended              = ARRAYSIZE(guid);
+    std::vector<char> buf(dwSize);
+    bStatus = LookupAccountNameA(NULL, acctName.c_str(), buf.data(), &dwSize, NULL, &dwDomain, &sidUse);
+    if (bStatus == FALSE)
+    {
+        dwErr = GetLastError();
+        spdlog::error("LookupAccountNameA failed, error code: {}", dwErr);
+        return {};
+    }
+    PSID pSid = reinterpret_cast<PSID>(buf.data());
+    if (!ConvertSidToStringSidA(pSid, &sidString))
+    {
+        spdlog::error("ConvertSidToStringSidA failed, error code: {}", GetLastError());
+        return {};
+    }
+    return zzj::str::ansi2utf8(sidString);
+}
+std::optional<std::string> GetUserHomeDirectoryByName(const std::string &userName)
+{
+    DWORD dwLevel        = 1;
+    DWORD dwFilter       = FILTER_NORMAL_ACCOUNT; // 只获取普通用户，不包括系统账户等
+    DWORD dwPrefMaxLen   = MAX_PREFERRED_LENGTH;
+    DWORD dwEntriesRead  = 0;
+    DWORD dwTotalEntries = 0;
+    DWORD dwResumeHandle = 0;
+    USER_INFO_1 *pBuf    = nullptr;
+    USER_INFO_1 *pTmpBuf;
+    DEFER
+    {
+        if (pBuf)
+            NetApiBufferFree(pBuf);
+    };
 
-    GetUserNameExA(NameUniqueId, guid, &sizeExtended);
-    ret.guid = guid;
+    NET_API_STATUS nStatus;
+    std::optional<std::string> ret;
+
+    do
+    {
+        nStatus = NetUserEnum(NULL, dwLevel, dwFilter, (LPBYTE *)&pBuf, dwPrefMaxLen, &dwEntriesRead, &dwTotalEntries,
+                              &dwResumeHandle);
+        DEFER
+        {
+            if (pBuf)
+                NetApiBufferFree(pBuf);
+            pBuf = NULL;
+        };
+        if (nStatus != NERR_Success && nStatus != ERROR_MORE_DATA)
+            continue;
+
+        if ((pTmpBuf = pBuf) == NULL)
+            continue;
+
+        for (DWORD i = 0; i < dwEntriesRead; i++)
+        {
+            if (pTmpBuf == NULL)
+                break;
+
+            std::string tmpUserName = str::ansi2utf8(pBuf[i].usri1_name);
+            if (tmpUserName == userName)
+            {
+                ret = str::ansi2utf8(pBuf[i].usri1_home_dir);
+                break;
+            }
+        }
+    } while (nStatus == ERROR_MORE_DATA); // 如果缓冲区不够大，继续获取
+    return ret;
+}
+std::optional<zzj::UserInfo> zzj::GetUserInfoByUserName(const std::string &userName)
+{
+    auto computerName = zzj::SystemInfo::GetComputerName();
+    if (!computerName)
+        return {};
+
+    zzj::UserInfo ret;
+    ret.userName = userName;
+
+    std::string acctName = *computerName + "\\" + userName;
+    auto sid             = GetSidByName(acctName);
+    if (!sid)
+        return {};
+    ret.sid = *sid;
+
+    auto homeDir = GetUserHomeDirectoryByName(userName);
+    if (!homeDir)
+        return {};
+    ret.homeDirectory = *homeDir;
+    auto groupInfo = GetUserGroupInfoByName(userName);
+    if (!groupInfo)
+        return {};
+    ret.groupInfo = *groupInfo;
+    return ret;
+}
+
+std::optional<zzj::UserInfo> zzj::GetUserInfoBySessionId(const std::string &sessionId)
+{
+    LPSTR szUserName = NULL;
+    DWORD dwLen      = 0;
+    DEFER
+    {
+        if (szUserName)
+            WTSFreeMemory(szUserName);
+    };
+    DWORD dwSessionId = std::stoi(sessionId);
+
+    BOOL bStatus =
+        WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, dwSessionId, WTSUserName, &szUserName, &dwLen);
+    if (!bStatus)
+    {
+        spdlog::info("WTSQuerySessionInformationA WTSUserName error with {}", GetLastError());
+        return {};
+    }
+
+    return GetUserInfoByUserName(zzj::str::ansi2utf8(szUserName));
+}
+
+std::optional<zzj::UserInfo> zzj::UserInfo::GetActiveUserInfo()
+{
+    auto sessionId = zzj::Session::GetActiveSessionId();
+    if (!sessionId)
+        return {};
+    return GetUserInfoBySessionId(*sessionId);
+}
+
+std::vector<zzj::UserInfo> zzj::UserInfo::GetComputerUserInfos()
+{
+    DWORD dwLevel        = 1;
+    DWORD dwFilter       = FILTER_NORMAL_ACCOUNT; // 只获取普通用户，不包括系统账户等
+    DWORD dwPrefMaxLen   = MAX_PREFERRED_LENGTH;
+    DWORD dwEntriesRead  = 0;
+    DWORD dwTotalEntries = 0;
+    DWORD dwResumeHandle = 0;
+    USER_INFO_1 *pBuf    = nullptr;
+    USER_INFO_1 *pTmpBuf;
+    DEFER
+    {
+        if (pBuf)
+            NetApiBufferFree(pBuf);
+    };
+
+    NET_API_STATUS nStatus;
+
+    std::vector<zzj::UserInfo> ret;
+    do
+    {
+        nStatus = NetUserEnum(NULL, dwLevel, dwFilter, (LPBYTE *)&pBuf, dwPrefMaxLen, &dwEntriesRead, &dwTotalEntries,
+                              &dwResumeHandle);
+        DEFER
+        {
+            if (pBuf)
+                NetApiBufferFree(pBuf);
+            pBuf = NULL;
+        };
+        if (nStatus != NERR_Success && nStatus != ERROR_MORE_DATA)
+            continue;
+
+        if ((pTmpBuf = pBuf) == NULL)
+            continue;
+
+        for (DWORD i = 0; i < dwEntriesRead; i++)
+        {
+            if (pTmpBuf == NULL)
+                break;
+
+            std::string userName = str::ansi2utf8(pBuf[i].usri1_name);
+            auto userInfo        = GetUserInfoByUserName(userName);
+            if (userInfo)
+                ret.push_back(*userInfo);
+            pTmpBuf++;
+        }
+    } while (nStatus == ERROR_MORE_DATA); // 如果缓冲区不够大，继续获取
 
     return ret;
 }
