@@ -14,7 +14,7 @@ class SystemInfo
         int buildnumber;
     };
     static std::optional<VersionInfo> GetWindowsVersion();
-    static std::optional<std::string> GetComputerName();
+    static std::optional<std::string> GetComputerNameStr();
 };
 
 } // namespace zzj

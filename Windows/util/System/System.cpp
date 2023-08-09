@@ -1,10 +1,11 @@
 #include <General/util/System/System.h>
-#include <wtsapi32.h>
+#include <Windows.h>
 #define SECURITY_WIN32
 #include <security.h>
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 #include <sddl.h>
+#include <wtsapi32.h>
 
 namespace zzj
 {
@@ -12,6 +13,7 @@ std::optional<std::string> Session::GetActiveSessionId()
 {
     DWORD dwSessionId               = 0xffffffff;
     WTS_SESSION_INFOA *pSessionInfo = NULL;
+    DWORD dwCount                   = 0;
     if (WTSEnumerateSessionsA(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pSessionInfo, &dwCount) == FALSE)
     {
         return {};
@@ -36,7 +38,7 @@ std::optional<Session> Session::GetActiveSessionInfo()
     if (!sessionId)
         return {};
     Session ret;
-    ret.sessionId = sessionId;
+    ret.sessionId = *sessionId;
     ret.userInfo  = UserInfo::GetActiveUserInfo();
     return ret;
 }

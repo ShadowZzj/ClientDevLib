@@ -18,7 +18,7 @@ std::optional<zzj::SystemInfo::VersionInfo> zzj::SystemInfo::GetWindowsVersion()
     return VersionInfo{(int)dwMajor, (int)dwMinor, (int)dwBuildNumber};
 }
 
-std::optional<std::string> zzj::SystemInfo::GetComputerName()
+std::optional<std::string> zzj::SystemInfo::GetComputerNameStr()
 {
     char szComputerName[1024];
     DWORD dwLen  = 1024;

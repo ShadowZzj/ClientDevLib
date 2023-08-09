@@ -14,6 +14,7 @@ class UserInfo
     std::string homeDirectory;
 
 #ifdef _WIN32
+    std::optional<std::string> domainGUID;
 #else
     std::string uid;
     std::string gid;
