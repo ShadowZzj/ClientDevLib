@@ -7,6 +7,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <variant>
+#include <spdlog/spdlog.h>
 namespace zzj
 {
 class JsonStore
@@ -197,8 +198,10 @@ class JsonStore
         if (it == mutexes.end())
         {
             // If the mutex for this path does not exist yet, create one
+            boost::interprocess::permissions perm;
+            perm.set_unrestricted();
             auto newMutexPtr = std::make_unique<boost::interprocess::named_mutex>(boost::interprocess::open_or_create,
-                                                                                  hashedName.c_str());
+                                                                                  hashedName.c_str(), perm);
             auto ptr         = newMutexPtr.get();
             mutexes[path.string()] = std::move(newMutexPtr);
             return ptr;
