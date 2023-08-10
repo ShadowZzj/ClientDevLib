@@ -55,7 +55,8 @@ std::optional<std::string> GetSidByName(const std::string &name)
         int result = zzj::Process::CreateUserProcess("/usr/bin/dscl", name.c_str(), args, out);
         if (0 != result)
         {
-            spdlog::error("GetSidByName failed, result: {}", result) return {};
+            spdlog::error("GetSidByName failed, result: {}", result);
+            return {};
         }
 
         if (auto iter = out.find(L"\n"); iter != std::wstring::npos)
