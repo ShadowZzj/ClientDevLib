@@ -28,6 +28,10 @@ function(GenerateWindowsUtil)
 		)
 
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	else()
+	
+		list(APPEND WINDOWS_UTIL_LIB_FILES ${InterceptionLib})
+		list(APPEND WINDOWS_UTIL_DLL_FILES ${InterceptionDll})
 	endif()
 
 	if((NOT DEFINED FEATURE_DIRECTX) OR (NOT ${FEATURE_DIRECTX}))
@@ -142,7 +146,7 @@ function(GenerateWindowsUtil)
 	endif()
 
 	foreach(source IN LISTS WINDOWS_UTIL_FILES)
-	    #message(STATUS "Windows util file: ${source}")
+	    message(STATUS "Windows util file: ${source}")
 	    get_filename_component(source_path "${source}" PATH)
 	    string(REPLACE "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util" "WindowsUtil" source_path "${source_path}")
 	    string(REPLACE "/" "\\" source_path_msvc "${source_path}")

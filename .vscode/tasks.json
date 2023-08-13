@@ -57,6 +57,25 @@
                 "ClientDevLib Build"
             ],
             "dependsOrder":"sequence"
-        }
+        },
+        {
+            "type": "shell",
+            "label": "DriverInput Generate Project Files",
+            "command": "cmake",
+            "windows": {
+                "args": [
+                    "-G",
+                    "Visual Studio 17 2022",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}/Windows/DriverInput",
+                    "-A",
+                    "x64"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/Windows/DriverInput/build"
+                }
+            }
+        },
     ]
 }
