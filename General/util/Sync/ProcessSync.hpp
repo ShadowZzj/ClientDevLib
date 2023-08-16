@@ -4,6 +4,7 @@
 #include <direct.h>
 #include <windows.h>
 #include <AclAPI.h>
+#include <shlobj.h>
 #else
 #include <MacOS/util/FileUtil.h>
 #endif
@@ -12,7 +13,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
-#include <shlobj.h>
 #include <stdlib.h>
 #include <string>
 
@@ -39,7 +39,7 @@ class ProcessSync
             _mkdir(filePath.c_str());
         ret = filePath;
 #else
-        std::string filePath = zzj::File::GetSystemAppDataFolder() + "/" + dataFolderName;
+        std::string filePath = zzj::File::GetSystemAppDataFolder() + "/" + folderName;
         if (!zzj::IsDirExist(filePath.c_str()))
             zzj::File::MkdirRecursive(filePath, S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IRWXU);
         ret = filePath;
