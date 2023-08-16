@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <variant>
 #include <spdlog/spdlog.h>
+#include <General/util/Sync/ProcessSync.hpp>
 namespace zzj
 {
 class JsonStore
@@ -29,7 +30,7 @@ class JsonStore
         if (path.empty())
             return ExceptionOccured{"Path does not exist"};
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
+        std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
 
         if (!boost::filesystem::exists(path))
         {
@@ -70,7 +71,7 @@ class JsonStore
             return ExceptionOccured{"Path does not exist"};
 
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
+        std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
 
         if (!boost::filesystem::exists(path))
         {
@@ -116,7 +117,7 @@ class JsonStore
             return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
+        std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
 
         try
         {
@@ -142,7 +143,7 @@ class JsonStore
             return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
-        std::lock_guard<boost::interprocess::named_mutex> lock(*mutexPtr);
+        std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
 
         if (!boost::filesystem::exists(path))
         {
@@ -185,32 +186,14 @@ class JsonStore
 
   private:
     inline static std::mutex mapMutex;
-    inline static std::unordered_map<std::string, std::unique_ptr<boost::interprocess::named_mutex>> mutexes;
+    inline static std::unordered_map<std::string, std::unique_ptr<zzj::ProcessSync>> mutexes;
 
-    boost::interprocess::named_mutex *GetMutexForPath(const boost::filesystem::path &path)
+    zzj::ProcessSync GetMutexForPath(const boost::filesystem::path &path)
     {
         static const std::string suffix = "/zzj/jsonstore";
         std::lock_guard<std::mutex> lock(mapMutex);
-        std::hash<std::string> hasher;
-        std::string hashedName =
-            "/" + std::to_string(hasher(ClientDevLibConfig::clientDevLibUUID + path.string() + suffix));
-        auto it = mutexes.find(path.string());
-        if (it == mutexes.end())
-        {
-            // If the mutex for this path does not exist yet, create one
-            boost::interprocess::permissions perm;
-            perm.set_unrestricted();
-            auto newMutexPtr = std::make_unique<boost::interprocess::named_mutex>(boost::interprocess::open_or_create,
-                                                                                  hashedName.c_str(), perm);
-            auto ptr         = newMutexPtr.get();
-            mutexes[path.string()] = std::move(newMutexPtr);
-            return ptr;
-        }
-        else
-        {
-            // If the mutex for this path exists, return it
-            return it->second.get();
-        }
+        std::string uniqueName = ClientDevLibConfig::clientDevLibUUID + path.string() + suffix;
+        return zzj::ProcessSync(uniqueName);
     }
 };
 }; // namespace zzj
