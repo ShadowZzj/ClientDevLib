@@ -525,6 +525,9 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &time);
         time = time * 1000;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+        char *ip = nullptr;
+        curl_easy_getinfo(curl, CURLINFO_PRIMARY_IP, &ip);
+
         try
         {
             nlohmann::json retJson;
@@ -532,6 +535,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             retJson["header"]        = postRetHeader;
             retJson["body"]          = postRetContent;
             retJson["extra"]["time"] = time;
+            retJson["extra"]["remoteIp"] = ip == nullptr ? "" :  std::string(ip);
             retString                = retJson.dump();
         }
         catch (std::exception &e)
@@ -541,6 +545,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             retJson["code"]          = responseCode;
             retJson["header"]        = postRetHeader;
             retJson["extra"]["time"] = time;
+            retJson["extra"]["remoteIp"] = ip == nullptr ? "" : std::string(ip);
             retString                = retJson.dump();
         }
         return result;
@@ -630,7 +635,6 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
     int result = 0;
     char errBuf[CURL_ERROR_SIZE];
     char *version = curl_version();
-    printf("libcurl version: %s\n", version);
 
     struct curl_slist *http_headers = NULL;
     ret                             = "";
