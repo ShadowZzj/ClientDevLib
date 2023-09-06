@@ -7,3 +7,6 @@
 [submodule "General/ThirdParty/assimp/source"]
 	path = General/ThirdParty/assimp/source
 	url = https://github.com/assimp/assimp.git
+[submodule "General/ThirdParty/Catch2"]
+	path = General/ThirdParty/Catch2
+	url = https://github.com/catchorg/Catch2.git
