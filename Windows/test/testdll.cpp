@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <iostream>
-
+#include <Detours/build/include/detours.h>
 
 bool HookAddress(uintptr_t target, uintptr_t ourFunc, int hookLen)
 {
@@ -44,20 +44,22 @@ bool TrampolionHook(uintptr_t target, uintptr_t ourFunc, int hookLen)
     HookAddress(target, ourFunc, hookLen);
 	return true;
 }
+static BOOL (WINAPI *TrueCreateProcess)(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
+	DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation) = CreateProcessA;
 
-void  OurFunc()
+
+BOOL WINAPI HookedCreateProcess(LPCSTR lpApplicationName, LPSTR lpCommandLine,
+                                LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                        LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                        LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                        LPPROCESS_INFORMATION lpProcessInformation)
 {
-    spdlog::info("In hook");
-
+	spdlog::info("Hooked CreateProcess");
+    return TrueCreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
+					  dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 }
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
-    bool bHealth = false;
-    bool bAmmo   = false;
-    std::string processName = "ac_client.exe";
-    zzj::Process p;
-    zzj::Memory m(p);
-
     AllocConsole();
     FILE *f;
     freopen_s(&f, "CONOUT$", "w+t", stdout);
@@ -66,66 +68,25 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
     spdlog::set_level(spdlog::level::level_enum::info);
     spdlog::set_default_logger(console);
 
-
-    auto baseAddress = p.GetModuleBaseAddress(processName);
-    uintptr_t localPlayerPtr = baseAddress+0x0011E20C;
-
-    auto ammoAddress = m.FindMultiPleLevelAddress(localPlayerPtr, {0x374, 0x14, 0});
-    auto healthAddr  = m.FindMultiPleLevelAddress(localPlayerPtr, {0xf8});
-
-    spdlog::info("localPlayerPtr: {:#x}", localPlayerPtr);
-    spdlog::info("base address: {:#x}", baseAddress);
-    spdlog::info("ammo address: {:#x}", ammoAddress);
-    spdlog::info("health address: {:#x}", healthAddr);
-
-    auto testHookAddress = baseAddress + 0x62020;
-    bool isHook          = false;
-
-
-    while (p.IsAlive())
+    while (true)
     {
-        if (1)
+        if (GetAsyncKeyState(VK_HOME) & 1)
         {
-            bHealth = !bHealth;
-            spdlog::info("health: {}", bHealth);
-        }
-        if (2)
+			spdlog::info("Hooking");
+			DetourTransactionBegin();
+            DetourUpdateThread(GetCurrentThread());
+            DetourAttach(&(PVOID &)TrueCreateProcess, HookedCreateProcess);
+            DetourTransactionCommit();
+		}
+        if (GetAsyncKeyState(VK_END) & 1)
         {
-            bAmmo = !bAmmo;
-            if (bAmmo)
-            {
-                spdlog::info("ammo unlimited!");
-                m.Write(baseAddress + 0x637e9, {0xFF,0x6});
-            }
-            else
-            {
-                spdlog::info("ammo limited!");
-                m.Write(baseAddress + 0x637e9, {0xFF, 0xE});
-            }
-        }
-
-        if (3)
-        {
-            isHook = !isHook;
-            if (isHook)
-            {
-                spdlog::info("hook on");
-                HookAddress(testHookAddress, (uintptr_t)OurFunc, 6);
-            }
-            else
-            {
-                spdlog::info("hook off");
-                m.Write(testHookAddress, {0x55, 0x8B, 0xEC, 0x83, 0xE4, 0xF8});
-            }
-        }
-        if (4)
-        {
-            break;
-        }
-
-        if (bHealth)
-            m.Write(healthAddr, {100});
-        Sleep(10);
+            spdlog::info("Unhooking");
+            DetourTransactionBegin();
+            DetourUpdateThread(GetCurrentThread());
+            DetourDetach(&(PVOID &)TrueCreateProcess, HookedCreateProcess);
+            DetourTransactionCommit();
+		}
+		Sleep(100);
     }
 
     fclose(f);

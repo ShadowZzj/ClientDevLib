@@ -10,3 +10,6 @@
 [submodule "General/ThirdParty/Catch2"]
 	path = General/ThirdParty/Catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "General/ThirdParty/Detours/src"]
+	path = General/ThirdParty/Detours/src
+	url = git@github.com:microsoft/Detours.git

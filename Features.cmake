@@ -36,7 +36,7 @@ if(WIN32)
     set(AssimpDll ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/assimp/win/assimp-vc143-mt.dll)
     set(InterceptionLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/interception/library/x64/interception.lib)
     set(InterceptionDll ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/interception/library/x64/interception.dll)
-
+    set(DetoursLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/Detours/src/lib.X64/detours.lib)
     function(GenerateUtil)
         foreach(var_name ${ARGV})
             set (${var_name} ON)

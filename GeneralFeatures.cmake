@@ -76,7 +76,12 @@ function(GenerateGeneralUtil)
 		)
 		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
 	endif()
-
+	if(${FEATURE_DETOURS})
+		file(GLOB FEATURE_FILES
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/Detours/build/include/*.h"
+		)
+		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
+	endif()
 	foreach(source IN LISTS GENERAL_UTIL_FILES)
 	    #message(STATUS "General util file: ${source}")
 	    get_filename_component(source_path "${source}" PATH)
