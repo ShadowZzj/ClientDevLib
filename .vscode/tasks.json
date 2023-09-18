@@ -5,7 +5,7 @@
     "tasks": [
         {
             "type": "shell",
-            "label": "ClientDevLib Generate Project Files",
+            "label": "ClientDevLib Generate Project Files x64",
             "command": "cmake",
             "windows": {
                 "args": [
@@ -19,6 +19,37 @@
                 ],
                 "options": {
                     "cwd": "${workspaceFolder}/Windows/build/x64"
+                }
+            },
+            "osx": {
+                "args": [
+                    "-G",
+                    "Xcode",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}/MacOS"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/MacOS/build/x64"
+                }
+            }
+        },
+        {
+            "type": "shell",
+            "label": "ClientDevLib Generate Project Files x86",
+            "command": "cmake",
+            "windows": {
+                "args": [
+                    "-G",
+                    "Visual Studio 17 2022",
+                    "-D",
+                    "BUILD_TYPE=Release",
+                    "${workspaceFolder}/Windows",
+                    "-A",
+                    "Win32"
+                ],
+                "options": {
+                    "cwd": "${workspaceFolder}/Windows/build/x86"
                 }
             },
             "osx": {

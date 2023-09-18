@@ -1,25 +1,33 @@
+#include <Windows.h>
 #include <iostream>
-#include <Windows/util/Process/ProcessHelper.h>
-#include <General/util/Process/Process.h>
-#include <spdlog/spdlog.h>
-#include <General/ThirdParty/GHInjector/Injection.h>
-#include <filesystem>
-#include <Detours/build/include/detours.h>
+#include <vector>
+#pragma comment(lib, "ntdll.lib")
+extern "C" NTSTATUS NTAPI NtQuerySystemInformation(ULONG SystemInformationClass, PVOID SystemInformation,
+                                                   ULONG SystemInformationLength, PULONG ReturnLength);
+
+typedef struct _SYSTEM_MODULE
+{
+    ULONG Reserved1;
+    ULONG Reserved2;
+    PVOID ImageBaseAddress;
+    ULONG ImageSize;
+    ULONG Flags;
+    WORD Id;
+    WORD Rank;
+    WORD w018;
+    WORD NameOffset;
+    BYTE Name[256];
+} SYSTEM_MODULE, *PSYSTEM_MODULE;
+
+typedef struct _SYSTEM_MODULE_INFORMATION
+{
+    ULONG ModulesCount;
+    SYSTEM_MODULE Modules[1];
+} SYSTEM_MODULE_INFORMATION, *PSYSTEM_MODULE_INFORMATION;
 
 int main()
 {
-    while (true)
-    {
-        STARTUPINFOA si;
-        PROCESS_INFORMATION pi;
-
-        ZeroMemory(&si, sizeof(si));
-        si.cb = sizeof(si);
-        ZeroMemory(&pi, sizeof(pi));
-
-        auto id = GetProcessId(GetCurrentProcess());
-        CreateProcessA("ipconfig /all", NULL, NULL, NULL, false, NULL, NULL, NULL, &si, &pi);
-        printf("nihao %d", id);
-        Sleep(1000);
-    }
+    std::cout << "asdasdasd";
+    std::wcout << L"朱政嘉自行车哦带我去阿伯";
+    return 0;
 }

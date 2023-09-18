@@ -47,7 +47,7 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
-GenerateUtil(FEATURE_DIRECTX FEATURE_DIRECTXAPP FEATURE_IMGUI_WIN32_DIRECTX11 FEATURE_THIRDPARTY_ASSIMP FEATURE_SHADERS FEATURE_DETOURS)
+GenerateUtil(FEATURE_DETOURS)
 
 file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
 add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})

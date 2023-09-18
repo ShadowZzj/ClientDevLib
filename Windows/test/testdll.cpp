@@ -44,20 +44,15 @@ bool TrampolionHook(uintptr_t target, uintptr_t ourFunc, int hookLen)
     HookAddress(target, ourFunc, hookLen);
 	return true;
 }
-static BOOL (WINAPI *TrueCreateProcess)(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
-	DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation) = CreateProcessA;
 
+static std::uintptr_t moduleBase                                                   = NULL;
+static void(__fastcall *RecoilCalculationFunction)(void *thisptr, int edx, float a, float b) = nullptr;
 
-BOOL WINAPI HookedCreateProcess(LPCSTR lpApplicationName, LPSTR lpCommandLine,
-                                LPSECURITY_ATTRIBUTES lpProcessAttributes,
-                        LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
-                        LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
-                        LPPROCESS_INFORMATION lpProcessInformation)
+void __fastcall RecoilCalculationFunctionHook(void *thisptr, int edx, float a, float b)
 {
-	spdlog::info("Hooked CreateProcess");
-    return TrueCreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
-					  dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+    spdlog::info("Hooked RecoilCalculationFunction");
 }
+
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
     AllocConsole();
@@ -67,6 +62,9 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
     auto console = spdlog::stdout_color_mt("console2");
     spdlog::set_level(spdlog::level::level_enum::info);
     spdlog::set_default_logger(console);
+    moduleBase = (std::uintptr_t)GetModuleHandleA("ac_client.exe");
+    spdlog::info("Module Base: {0:x}", moduleBase);
+    RecoilCalculationFunction = reinterpret_cast<decltype(RecoilCalculationFunction)>(moduleBase + 0x62020);
 
     while (true)
     {
@@ -75,7 +73,7 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 			spdlog::info("Hooking");
 			DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
-            DetourAttach(&(PVOID &)TrueCreateProcess, HookedCreateProcess);
+            DetourAttach(&(PVOID &)RecoilCalculationFunction, RecoilCalculationFunctionHook);
             DetourTransactionCommit();
 		}
         if (GetAsyncKeyState(VK_END) & 1)
@@ -83,7 +81,7 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
             spdlog::info("Unhooking");
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
-            DetourDetach(&(PVOID &)TrueCreateProcess, HookedCreateProcess);
+            DetourDetach(&(PVOID &)RecoilCalculationFunction, RecoilCalculationFunctionHook);
             DetourTransactionCommit();
 		}
 		Sleep(100);

@@ -100,7 +100,8 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "*.rh": "cpp"
     },
     // Using the light mode
     "indentRainbow.indicatorStyle": "light",
@@ -112,5 +113,7 @@
         "rgba(127,255,127,0.3)",
         "rgba(255,127,255,0.3)",
         "rgba(79,236,236,0.3)"
-    ]
+    ],
+    "cmake.sourceDirectory": "D:/repos/red-pass/redpass-daemon/ClientDevLib/General/ThirdParty/assimp/source/contrib/pugixml",
+    "dotnet.defaultSolution": "disable"
 }
