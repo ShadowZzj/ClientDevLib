@@ -48,6 +48,9 @@ bool TrampolionHook(uintptr_t target, uintptr_t ourFunc, int hookLen)
 static std::uintptr_t moduleBase                                                   = NULL;
 static void(__fastcall *RecoilCalculationFunction)(void *thisptr, int edx, float a, float b) = nullptr;
 
+static HHOOK(WINAPI* SetWindowsHookExAFunction)(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId) = nullptr;
+static HHOOK(WINAPI* SetWindowsHookExWFunction)(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId) = nullptr;
+
 void __fastcall RecoilCalculationFunctionHook(void *thisptr, int edx, float a, float b)
 {
     spdlog::info("Hooked RecoilCalculationFunction");
@@ -62,9 +65,7 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
     auto console = spdlog::stdout_color_mt("console2");
     spdlog::set_level(spdlog::level::level_enum::info);
     spdlog::set_default_logger(console);
-    moduleBase = (std::uintptr_t)GetModuleHandleA("ac_client.exe");
-    spdlog::info("Module Base: {0:x}", moduleBase);
-    RecoilCalculationFunction = reinterpret_cast<decltype(RecoilCalculationFunction)>(moduleBase + 0x62020);
+    
 
     while (true)
     {

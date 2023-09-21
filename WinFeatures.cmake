@@ -1,10 +1,11 @@
 set(WINDOWS_FEATURES_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
-
+enable_language(ASM_MASM)
 function(GenerateWindowsUtil)
 	file(GLOB_RECURSE WINDOWS_UTIL_FILES 
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.h" 
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.cpp"
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hpp"
+	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.asm"
 	)
 	file(GLOB_RECURSE TEST_FILES_TO_REMOVE
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/test/*.cpp"
@@ -18,7 +19,41 @@ function(GenerateWindowsUtil)
 	file(GLOB WINDOWS_UTIL_DLL_FILES)
 	set(WINDOWS_UTIL_INCLUDE_DIRS)
 
+	# 64位编译时，移除32位的文件
+	if(CMAKE_VS_PLATFORM_NAME STREQUAL "x64")
+		file(GLOB FEATURE_FILES 
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/AssemblyX86.asm"
+		)
+		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	elseif(CMAKE_VS_PLATFORM_NAME STREQUAL "Win32")
+		file(GLOB FEATURE_FILES 
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/AssemblyX64.asm"
+		)
+		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	endif()
 	# 默认所有文件都会被包含，下面开始根据特性决定是否移除某些文件
+	if ((NOT DEFINED FEATURE_ANTIDEBUG_TLSCALLBACK) OR (NOT ${FEATURE_ANTIDEBUG_TLSCALLBACK}))
+		message(STATUS "AntiDebug-TLSCallBack feature: ${FEATURE_ANTIDEBUG_TLSCALLBACK}")
+		file(GLOB FEATURE_FILES 
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/TLSCallBack.h"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/TLSCallBack.cpp"
+		)
+
+		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	endif()
+
+	if ((NOT DEFINED FEATURE_ANTIDEBUG) OR (NOT ${FEATURE_ANTIDEBUG}))
+		message(STATUS "AntiDebug feature: ${FEATURE_ANTIDEBUG_TLSCALLBACK}")
+		file(GLOB FEATURE_FILES 
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.h"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.cpp"
+		)
+
+		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	else()
+		message(STATUS "AntiDebug opened, you need to disable safeseh in linker options")
+	endif()
+
 	if ((NOT DEFINED FEATURE_INTERCEPTION) OR (NOT ${FEATURE_INTERCEPTION}))
 		message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
 		file(GLOB FEATURE_FILES 

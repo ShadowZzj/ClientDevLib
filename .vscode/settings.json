@@ -101,7 +101,8 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "*.ipp": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "resumable": "cpp"
     },
     // Using the light mode
     "indentRainbow.indicatorStyle": "light",

@@ -4,9 +4,10 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
+
 int IsProcessWithIdRunning(const char *id);
 int AddCrashHandler();
 
@@ -54,6 +55,15 @@ class ProcessV2
         std::optional<int64_t> memoryUsed;
     };
 
+    class Module
+    {
+      public:
+        std::string name;
+        std::string path;
+        std::uintptr_t base;
+        std::uintptr_t size;
+    };
+
   public:
     ProcessV2();
     /**
@@ -90,6 +100,8 @@ class ProcessV2
      * @return 0 if succeed
      */
     int GetStatistic(StatisticTimePoint &statictic);
+
+    int GetModules(std::vector<Module> &modules);
     /**
      * @brief Get the Process Id By Name object
      *
@@ -160,8 +172,6 @@ class ProcessV2
     std::string processName;
     StatisticTimePoint statisticTimePoint;
     StatisticCycle statisticCycle;
-
-
 };
 }; // namespace zzj
 #endif

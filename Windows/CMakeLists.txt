@@ -47,7 +47,7 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
-GenerateUtil(FEATURE_DETOURS)
+GenerateUtil(FEATURE_DETOURS FEATURE_ANTIDEBUG)
 
 file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
 add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})
@@ -57,13 +57,12 @@ add_executable(${PROJECT_NAME}_test test/test.cpp)
 add_executable(${PROJECT_NAME}_testWindow test/testWindow.cpp ${ProjectUtil})
 add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp)
 
-message(STATUS "WINDOWS_UTIL_INCLUDE_DIRSasdasd:  ${WINDOWS_UTIL_INCLUDE_DIRS}")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
 target_include_directories(${PROJECT_NAME}_test PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
-
+target_link_options(${PROJECT_NAME}_test PRIVATE "/SAFESEH:NO")
 
 target_link_libraries(${PROJECT_NAME}_testWindow 
 ${PROJECT_NAME}

@@ -1,11 +1,12 @@
 #include <General/util/BaseUtil.hpp>
 #include <General/util/Process/Process.h>
-#include <General/util/StrUtil.h>
 #include <General/util/Process/Thread.h>
+#include <General/util/StrUtil.h>
 #include <Windows.h>
 #include <psapi.h>
 #include <set>
 #include <tlhelp32.h>
+
 namespace zzj
 {
 ProcessV2::ProcessV2()
@@ -223,7 +224,7 @@ bool ProcessV2::SuspendPid(int pid)
     auto threads = GetProcessThreadsCache(pid);
     for (auto &t : threads)
     {
-        if(t.tid == GetCurrentThreadId())
+        if (t.tid == GetCurrentThreadId())
             continue;
         auto handle = OpenThread(THREAD_SUSPEND_RESUME, false, t.tid);
         if (NULL == handle)
@@ -248,7 +249,41 @@ bool ProcessV2::ResumePid(int pid)
     }
     return true;
 }
+int ProcessV2::GetModules(std::vector<ProcessV2::Module> &modules)
+{
+    auto handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+    if (NULL == handle)
+        return -1;
+    DEFER
+    {
+        CloseHandle(handle);
+    };
+    DWORD requiredSize = 0;
+    EnumProcessModulesEx(handle, NULL, 0, &requiredSize, LIST_MODULES_ALL);
 
+    std::vector<HMODULE> moduleHandles(requiredSize / sizeof(HMODULE));
+    auto result = EnumProcessModulesEx(handle, moduleHandles.data(), requiredSize, &requiredSize, LIST_MODULES_ALL);
+    if (!result)
+        return -2;
+
+    for (auto &h : moduleHandles)
+    {
+        ProcessV2::Module module;
+        std::vector<char> path(MAX_PATH);
+
+        GetModuleFileNameExA(handle, h, path.data(), MAX_PATH);
+        module.path = path.data();
+        module.name = path.data() + module.path.find_last_of('\\') + 1;
+        module.base = (uint64_t)h;
+
+        MODULEINFO info;
+        GetModuleInformation(handle, h, &info, sizeof(info));
+        module.size = info.SizeOfImage;
+
+        modules.push_back(module);
+    }
+    return 0;
+}
 std::vector<std::pair<int, std::string>> ProcessV2::GetProcessInfo(const std::set<std::string> proccessList,
                                                                    std::map<std::string, zzj::ProcessV2> &processes)
 {
