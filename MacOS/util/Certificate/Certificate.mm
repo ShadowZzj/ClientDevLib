@@ -4,6 +4,25 @@
 #include <General/util/System/System.h>
 #include <MacOS/util/FileUtil.h>
 using namespace zzj;
+std::tuple<int,bool> IsCertificateTrusted(SecCertificateRef certificate) {
+    @autoreleasepool {
+        CFArrayRef certArray = CFArrayCreate(kCFAllocatorDefault, (const void **)&certificate, 1, NULL);
+        SecPolicyRef policy = SecPolicyCreateBasicX509();
+        SecTrustRef trust = NULL;
+        OSStatus status = SecTrustCreateWithCertificates(certArray, policy, &trust);
+        DEFER{
+            CFRelease(certArray);
+            CFRelease(policy);
+            if(trust)
+                CFRelease(trust);
+        };
+        
+        if (status != errSecSuccess) {
+            return {-1,false};
+        }
+        return {0,SecTrustEvaluateWithError(trust, nil)};
+    }
+}
 
 std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef certificate)
 {
@@ -55,7 +74,6 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         {
             [hexString appendString:[NSString stringWithFormat:@"%02lx", (unsigned long)dataBuffer[j]]];
         }
-
         result = zzj::str::HexStrToDecStr([hexString UTF8String], retStr);
         if (0 != result)
         {
@@ -66,6 +84,10 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         cert._name     = commanName;
         cert._issuer   = signerName;
         cert._sequence = serialNumber;
+        auto [trustedResult,trustedBool] = IsCertificateTrusted(certificate);
+        if(0 != trustedResult)
+            return {-3,cert};
+        cert._isTrust = trustedBool;
         return {result, cert};
     }
 }
@@ -111,8 +133,8 @@ std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate
         {
             std::string userName;
             auto userInfo = zzj::UserInfo::GetActiveUserInfo();
-            
-            userName = userInfo.has_value()? userInfo->userName:"";
+
+            userName = userInfo.has_value() ? userInfo->userName : "";
             if (userName.empty())
             {
                 ret = -2;
@@ -214,23 +236,30 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
         NSArray *certificates = nil;
         NSString *ret         = nil;
         NSDictionary *options;
-        SecKeychainRef userKeychain = NULL;
+        SecKeychainRef userKeychain   = NULL;
+        SecKeychainRef systemKeychain = NULL;
         std::string userLoginKeychainPath;
+        std::string systemKeychainPath  = "/Library/Keychains/System.keychain";
         CFArrayRef searchKeychain       = NULL;
         NSString *homeDir               = nil;
-        CFMutableArrayRef newSearchList = NULL;
+        CFMutableArrayRef newSearchList = CFArrayCreateMutable(NULL, 0, NULL);
 
         if (storeType == Certificate::StoreType::LocalMachine)
-            options = @{
-                (__bridge id)kSecClass : (__bridge id)kSecClassIdentity,
-                (__bridge id)kSecMatchLimit : (__bridge id)kSecMatchLimitAll
-            };
+        {
+            status = SecKeychainOpen(systemKeychainPath.c_str(), &systemKeychain);
+            if (errSecSuccess != status)
+            {
+                result = -2;
+                goto exit;
+            }
+            CFArrayAppendValue(newSearchList, systemKeychain);
+        }
         else
         {
             std::string userName;
             auto userInfo = zzj::UserInfo::GetActiveUserInfo();
-            
-            userName = userInfo.has_value()? userInfo->userName:"";
+
+            userName = userInfo.has_value() ? userInfo->userName : "";
             if (userName.empty())
             {
                 result = -4;
@@ -251,16 +280,13 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
                 result = -2;
                 goto exit;
             }
-            SecKeychainCopySearchList(&searchKeychain);
-            newSearchList = CFArrayCreateMutableCopy(NULL, 5, searchKeychain);
             CFArrayAppendValue(newSearchList, userKeychain);
-            options = @{
-                (id)kSecClass : (id)kSecClassIdentity,
-                (id)kSecMatchSearchList : (__bridge id)newSearchList,
-                (id)kSecMatchLimit : (__bridge id)kSecMatchLimitAll
-            };
         }
-
+        options = @{
+            (id)kSecClass : (id)kSecClassCertificate,
+            (id)kSecMatchSearchList : (__bridge id)newSearchList,
+            (id)kSecMatchLimit : (__bridge id)kSecMatchLimitAll
+        };
         status = SecItemCopyMatching((__bridge CFDictionaryRef)options, (CFTypeRef *)&certs);
         if (errSecItemNotFound == status)
         {
@@ -277,15 +303,12 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
 
         for (int i = 0; i < [certificates count]; i++)
         {
-            SecIdentityRef identity       = (__bridge SecIdentityRef)([certificates objectAtIndex:i]);
-            SecCertificateRef certificate = nil;
-            SecIdentityCopyCertificate(identity, &certificate);
-            bool isPredicateOk = false;
+            SecCertificateRef certificate = (__bridge SecCertificateRef)([certificates objectAtIndex:i]);
+            bool isPredicateOk            = false;
 
             auto [res, cert] = GetCertificateInfo(certificate);
             if (0 != res)
             {
-                CFRelease(certificate);
                 goto exit;
             }
             switch (templateType)
@@ -346,12 +369,12 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
                     CFRelease(cfItemList);
                 }
             }
-            if (certificate)
-                CFRelease(certificate);
         }
     exit:
         if (userKeychain)
             CFRelease(userKeychain);
+        if (systemKeychain)
+            CFRelease(systemKeychain);
         if (searchKeychain)
             CFRelease(searchKeychain);
         if (newSearchList)
@@ -416,24 +439,28 @@ std::tuple<int, std::vector<Certificate>> zzj::Certificate::GetCerticifateByIssu
 std::tuple<int, std::vector<Certificate>> zzj::Certificate::GetCerticifateByName(const std::string &name,
                                                                                  const StoreType &storeType)
 {
-    return GetCerticifateTemplate(StoreType::CurrentUser,
+    return GetCerticifateTemplate(storeType,
                                   {[name](std::string _name) { return _name.find(name) != std::string::npos; }},
                                   CertificateTemplateType::Name);
 }
 std::tuple<int, std::vector<Certificate>> zzj::Certificate::GetCerticifateBySequence(const std::string &sequence,
                                                                                      const StoreType &storeType)
 {
-    return GetCerticifateTemplate(StoreType::CurrentUser,
-                                  {[sequence](std::string _sequence) { return sequence == _sequence; }},
+    return GetCerticifateTemplate(storeType, {[sequence](std::string _sequence) { return sequence == _sequence; }},
                                   CertificateTemplateType::Sequence);
 }
 int zzj::Certificate::Delete()
 {
-    auto [result, _] = GetCerticifateTemplate(StoreType::CurrentUser,
-                                              {[this](std::string _sequence) { return this->_sequence == _sequence; },
-                                               [this](std::string _name) { return this->_name == _name; },
-                                               [this](std::string _issuer) { return this->_issuer == _issuer; }},
-                                              CertificateTemplateType::Sequence);
+    auto [result, _1]  = GetCerticifateTemplate(StoreType::CurrentUser,
+                                                {[this](std::string _sequence) { return this->_sequence == _sequence; },
+                                                 [this](std::string _name) { return this->_name == _name; },
+                                                 [this](std::string _issuer) { return this->_issuer == _issuer; }},
+                                                CertificateTemplateType::Sequence);
+    auto [result2, _2] = GetCerticifateTemplate(StoreType::LocalMachine,
+                                                {[this](std::string _sequence) { return this->_sequence == _sequence; },
+                                                 [this](std::string _name) { return this->_name == _name; },
+                                                 [this](std::string _issuer) { return this->_issuer == _issuer; }},
+                                                CertificateTemplateType::Sequence);
     return result;
 }
 std::tuple<int, std::vector<Certificate>> zzj::Certificate::AddFromContent(const std::string &content,

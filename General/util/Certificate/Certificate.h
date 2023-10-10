@@ -70,6 +70,10 @@ class Certificate
                                                                      const std::string &passwd, StoreType storeType,
                                                                      CertLocation certLocation);
 #else
+    bool isTrust() const
+    {
+        return _isTrust;
+    }
     int Delete();
     static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(const std::string &issuer,
                                                                             const StoreType &storeType);
@@ -88,6 +92,10 @@ class Certificate
                                                                      const std::string &passwd, StoreType storeType);
 #endif
   private:
+#ifdef _WIN32
+#else
+    bool _isTrust;
+#endif
     std::string _name;
     std::string _sequence;
     std::string _issuer;
