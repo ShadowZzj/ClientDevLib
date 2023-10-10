@@ -1,7 +1,9 @@
 #include "FileHelper.h"
 #include <General/util/BaseUtil.hpp>
+#include <General/util/Process/Process.h>
 #include <Shlobj.h>
 #include <Windows/util/HandleHelper.h>
+#include <Windows/util/Process/ProcessHelper.h>
 #include <Windows/util/Process/ThreadHelper.h>
 #include <algorithm>
 #include <direct.h>
@@ -11,8 +13,7 @@
 #include <tchar.h>
 #include <windows.h>
 #include <wtsapi32.h>
-#include <Windows/util/Process/ProcessHelper.h>
-#include <General/util/Process/Process.h>
+
 using namespace zzj;
 
 bool FileHelper::ReadFileAtOffset(std::string fileName, void *buffer, unsigned long numToRead, unsigned long fileOffset)
@@ -214,7 +215,8 @@ std::string zzj::FileHelper::GetCurrentUserProgramDataFolder()
     if (auto [result, res] = currentProcess.IsServiceProcess(); result == 0)
     {
         HANDLE handle = NULL;
-        DEFER{
+        DEFER
+        {
             if (handle != NULL)
                 zzj::Thread::RevertToCurrentUser(handle);
         };
@@ -239,8 +241,7 @@ std::string zzj::FileHelper::GetCurrentUserProgramDataFolder()
 
     return "";
 }
-
-std::string zzj::FileHelper::GetProgramDataPath(std::string appDir)
+std::string zzj::FileHelper::GetProgramDataPath()
 {
     std::string ret;
     HRESULT hResult      = S_OK;
@@ -250,11 +251,8 @@ std::string zzj::FileHelper::GetProgramDataPath(std::string appDir)
     hResult              = SHGetFolderPathA(NULL, CSIDL_COMMON_APPDATA, NULL, 0, sPath);
     if (S_OK != hResult)
     {
-        OutputDebugStringW(L"��ȡĿ¼ʧ��");
         return "";
     }
-    strcat_s(sPath, "\\");
-    strcat_s(sPath, appDir.c_str());
 
     iRet = _access(sPath, 0);
     if (iRet == -1)
@@ -278,6 +276,37 @@ std::string zzj::FileHelper::GetProgramDataPath(std::string appDir)
     }
     ret = sPath;
     return ret;
+}
+
+std::string zzj::FileHelper::GetProgramDataPath(std::string appDir)
+{
+    std::string programDataFolder = GetProgramDataPath();
+    char sPath[MAX_PATH]          = {0};
+    strcpy_s(sPath, programDataFolder.c_str());
+    strcat_s(sPath, "\\");
+    strcat_s(sPath, appDir.c_str());
+
+    int iRet = _access(sPath, 0);
+    if (iRet == -1)
+    {
+        _mkdir(sPath);
+    }
+
+    iRet = _access(sPath, 0);
+    if (iRet == -1)
+    {
+        SECURITY_ATTRIBUTES SecAttr;
+        SECURITY_DESCRIPTOR SecDesc;
+
+        SecAttr.nLength              = sizeof(SecAttr);
+        SecAttr.bInheritHandle       = FALSE;
+        SecAttr.lpSecurityDescriptor = &SecDesc;
+
+        InitializeSecurityDescriptor(&SecDesc, SECURITY_DESCRIPTOR_REVISION);
+        SetSecurityDescriptorDacl(&SecDesc, TRUE, 0, FALSE);
+        CreateFileA(sPath, 0, 0, &SecAttr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0);
+    }
+    return sPath;
 }
 
 zzj::File zzj::FileHelper::GetFileInstance(const std::string &imagePath)

@@ -18,6 +18,7 @@ class FileHelper
     static std::string GetExecutablePath();
     static std::string GetDllPath(void *dllAnyFunctionAddress);
     static std::string GetProgramDataPath(std::string appDir);
+    static std::string GetProgramDataPath();
     static std::string GetProgramPath();
     static std::string GetCurrentUserProgramDataFolder();
     static zzj::File GetFileInstance(const std::string &imagePath);

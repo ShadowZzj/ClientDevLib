@@ -573,12 +573,14 @@ int zzj::Http::PostFile(const std::string &apiPath, std::map<std::string, std::s
     {
         /* Create the form */
         form = curl_mime_init(curl);
-
+        curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "UTF-8");
         for (auto it = bodyParam.begin(); it != bodyParam.end(); it++)
         {
             field = curl_mime_addpart(form);
-            curl_mime_name(field, it->first.c_str());
-            curl_mime_data(field, it->second.c_str(), CURL_ZERO_TERMINATED);
+            std::string firstUtf8 = zzj::str::ansi2utf8(it->first);
+            std::string secondUtf8 = zzj::str::ansi2utf8(it->second);
+            curl_mime_name(field, firstUtf8.c_str());
+            curl_mime_data(field, secondUtf8.c_str(), CURL_ZERO_TERMINATED);
         }
 
         /* Fill in the file upload field */
