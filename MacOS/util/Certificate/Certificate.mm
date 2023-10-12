@@ -51,8 +51,7 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         CFStringRef name;
         NSString *tmp;
         SecCertificateCopyCommonName((SecCertificateRef)certificate, &name);
-        tmp = (__bridge NSString *)name;
-        CFRelease(name);
+        tmp = CFBridgingRelease(name);
         commanName = [tmp UTF8String];
 
         CFErrorRef err                  = nil;
