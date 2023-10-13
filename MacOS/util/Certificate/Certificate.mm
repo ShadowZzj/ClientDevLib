@@ -3,6 +3,7 @@
 #include <General/util/StrUtil.h>
 #include <General/util/System/System.h>
 #include <MacOS/util/FileUtil.h>
+#include <spdlog/spdlog.h>
 using namespace zzj;
 std::tuple<int,bool> IsCertificateTrusted(SecCertificateRef certificate) {
     @autoreleasepool {
@@ -36,6 +37,7 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         ndic                = [ndic objectForKey:(__bridge NSString *)kSecOIDX509V1IssuerName];
         std::string signerName;
         NSArray *issuerNameArr = [ndic objectForKey:@"value"];
+
         for (int j = 0; j < [issuerNameArr count]; j++)
         {
 
@@ -48,13 +50,22 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         std::string serialNumber;
         std::string commanName;
 
-        CFStringRef name;
+        CFStringRef name = nil;
         NSString *tmp;
         SecCertificateCopyCommonName((SecCertificateRef)certificate, &name);
+        if (nil == name)
+        {
+            result = -4;
+            return {result, cert};
+        }
         tmp = CFBridgingRelease(name);
         commanName = [tmp UTF8String];
 
         CFErrorRef err                  = nil;
+        DEFER{
+            if(err)
+                CFRelease(err);
+        };
         NSData *serialNumberData        = nil;
         const unsigned char *dataBuffer = nullptr;
         NSMutableString *hexString      = nil;
@@ -63,9 +74,9 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         if (nil != err)
         {
             result = -1;
-            CFRelease(err);
             return {result, cert};
         }
+
         serialNumberData = CFBridgingRelease(serialNumberCData);
         dataBuffer       = (const unsigned char *)serialNumberData.bytes;
         hexString        = [NSMutableString stringWithCapacity:serialNumberData.length * 2];
@@ -73,6 +84,7 @@ std::tuple<int, Certificate> Certificate::GetCertificateInfo(SecCertificateRef c
         {
             [hexString appendString:[NSString stringWithFormat:@"%02lx", (unsigned long)dataBuffer[j]]];
         }
+
         result = zzj::str::HexStrToDecStr([hexString UTF8String], retStr);
         if (0 != result)
         {
@@ -307,9 +319,7 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
 
             auto [res, cert] = GetCertificateInfo(certificate);
             if (0 != res)
-            {
-                goto exit;
-            }
+                continue;
             switch (templateType)
             {
             case CertificateTemplateType::Issuer:
