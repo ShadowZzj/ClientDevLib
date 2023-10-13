@@ -432,7 +432,7 @@ std::tuple<int, std::vector<Certificate>> zzj::Certificate::DoFromFileTemplate(
 std::tuple<int, std::vector<Certificate>> zzj::Certificate::GetCerticifateByIssuer(const std::string &issuer,
                                                                                    const StoreType &storeType)
 {
-    return GetCerticifateTemplate(StoreType::CurrentUser, {[issuer](std::string _issuer) { return issuer == _issuer; }},
+    return GetCerticifateTemplate(storeType, {[issuer](std::string _issuer) { return issuer == _issuer; }},
                                   CertificateTemplateType::Issuer);
 }
 std::tuple<int, std::vector<Certificate>> zzj::Certificate::GetCerticifateByName(const std::string &name,
