@@ -7,8 +7,8 @@ function(GenerateGeneralUtil)
 	"${GENERAL_FEATURES_CMAKE_DIR}/General/util/*.hpp"
 	)
 	
-	message(STATUS "AES FEATURE: ${FEATURE_AES}")
 	if (${FEATURE_AES})
+		message(STATUS "AES FEATURE: ${FEATURE_AES}")
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/AES/*.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/AES/*.cpp"
@@ -17,8 +17,8 @@ function(GenerateGeneralUtil)
 		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "SQLITE3PP FEATURE: ${FEATURE_SQLITE3PP}")
 	if(${FEATURE_SQLITE3PP})
+		message(STATUS "SQLITE3PP FEATURE: ${FEATURE_SQLITE3PP}")
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/sqlite3pp/*.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/sqlite3pp/*.cpp"
@@ -34,8 +34,10 @@ function(GenerateGeneralUtil)
 		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "PLIST FEATURE: ${FEATURE_PLIST}")
 	if((${FEATURE_PLIST}) OR (DEFINED APPLE))
+		if(${FEATURE_PLIST})
+			message(STATUS "PLIST FEATURE: ${FEATURE_PLIST}")
+		endif()
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/plist/*.hpp"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/plist/*.cpp"
@@ -46,26 +48,28 @@ function(GenerateGeneralUtil)
 		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-	message(STATUS "LUA FEATURE: ${FEATURE_LUA}")
 	if ((NOT DEFINED FEATURE_LUA) OR (NOT ${FEATURE_LUA}))
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Lua/LuaUtil.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Lua/LuaUtil.cpp"
 		)
 		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
+	else()
+		message(STATUS "LUA FEATURE: ${FEATURE_LUA}")
 	endif()
 
-	message(STATUS "CURL FEATURE: ${FEATURE_CURL}")
 	if ((NOT DEFINED FEATURE_CURL) OR (NOT ${FEATURE_CURL}))
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/Http.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/Http.cpp"
 		)
 		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
+	else()
+		message(STATUS "CURL FEATURE: ${FEATURE_CURL}")
 	endif()
 
-	message(STATUS "imgui	FEATURE: ${FEATURE_IMGUI_WIN32_DIRECTX11}")
 	if (${FEATURE_IMGUI_WIN32_DIRECTX11})
+		message(STATUS "imgui FEATURE: ${FEATURE_IMGUI_WIN32_DIRECTX11}")
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.cpp"

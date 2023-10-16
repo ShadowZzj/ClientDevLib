@@ -13,7 +13,6 @@ function(GenerateMacOSUtil)
 	set(MACOS_UTIL_INCLUDE_DIRS)
 
     if ((NOT DEFINED FEATURE_PCAP) OR (NOT ${FEATURE_PCAP}))
-		message(STATUS "PCAP FEATURE: ${FEATURE_PCAP}")
 		file(GLOB FEATURE_FILES 
 		"${MACOS_FEATURES_CMAKE_DIR}/MacOS/util/Network/Pcap/*.h"
 		"${MACOS_FEATURES_CMAKE_DIR}/MacOS/util/Network/Pcap/*.cpp"
@@ -22,7 +21,18 @@ function(GenerateMacOSUtil)
 
 		list(REMOVE_ITEM MACOS_UTIL_FILES ${FEATURE_FILES})
 	else()
+		message(STATUS "PCAP FEATURE: ${FEATURE_PCAP}")
 		list(APPEND MACOS_UTIL_LIB_FILES pcap)
+	endif()
+
+	if ((NOT DEFINED FEATURE_RESOLVE) OR (NOT ${FEATURE_RESOLVE}))
+		file(GLOB FEATURE_FILES 
+		"${MACOS_FEATURES_CMAKE_DIR}/MacOS/util/Network/DnsHelper.mm"
+		)
+		list(REMOVE_ITEM MACOS_UTIL_FILES ${FEATURE_FILES})
+	else()
+		message(STATUS "RESOLVE FEATURE: ${FEATURE_RESOLVE}")
+		list(APPEND MACOS_UTIL_LIB_FILES resolv)
 	endif()
 
 	if(${FEATURE_SQLITE3PP})
