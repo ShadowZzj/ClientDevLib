@@ -18,7 +18,6 @@ std::string LoadedDlls()
         "avghooka.dll",  // AVG
         "snxhk.dll",     // Avast
         "sbiedll.dll",   // Sandboxie
-        "dbghelp.dll",   // WindBG
         "api_log.dll",   // iDefense Lab
         "dir_watch.dll", // iDefense Lab
         "pstorec.dll",   // SunBelt Sandbox
