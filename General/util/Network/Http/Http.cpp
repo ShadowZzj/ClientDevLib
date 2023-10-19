@@ -94,6 +94,7 @@ std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int co
         fp = fopen(outFileFullPath.string().c_str(), "wb");
         if (!fp)
         {
+            spdlog::error("DownloadFromUrl open file error");
             ret = "";
             goto exit;
         }
@@ -109,6 +110,7 @@ std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int co
         char *curlVer = curl_version();
         if (res != CURLE_OK)
         {
+            spdlog::error("curl_easy_perform() failed: {}", curl_easy_strerror(res));
             ret = "";
             goto exit;
         }
