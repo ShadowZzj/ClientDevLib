@@ -6,11 +6,13 @@
 #include <General/util/User/User.h>
 #include <MacOS/util/Process.h>
 #include <MacOS/util/SystemUtil.h>
+#import <OpenDirectory/OpenDirectory.h>
 #import <Security/SecBase.h>
 #import <grp.h>
 #include <optional>
-#import <pwd.h>
+#include <pwd.h>
 #include <spdlog/spdlog.h>
+#include <uuid/uuid.h>
 namespace zzj
 {
 std::optional<std::map<std::string, std::string>> UserInfo::GetUserLocalGourpNameAndSidByName(
@@ -34,41 +36,60 @@ std::optional<std::map<std::string, std::string>> UserInfo::GetUserLocalGourpNam
     free(groups);
     return ret;
 }
+
 std::optional<std::string> GetSidByName(const std::string &name)
 {
-    static std::mutex lck;
-    std::lock_guard<std::mutex> guard(lck);
-    static std::map<std::string, std::string> userSidMap;
-
-    auto it = userSidMap.find(name);
-    if (it == userSidMap.end())
+    @autoreleasepool
     {
-        std::vector<std::string> args;
-        args.push_back("localhost");
-        args.push_back("-read");
-        args.push_back("/Search/Users/" + name);
-        args.push_back("GeneratedUID");
-        args.push_back("|");
-        args.push_back("cut");
-        args.push_back("-c15-");
-        std::wstring out;
-        int result = zzj::Process::CreateUserProcess("/usr/bin/dscl", name.c_str(), args, out);
-        if (0 != result)
+        NSError *error = nil;
+
+        ODSession *session = [ODSession defaultSession];
+        ODNode *node       = [ODNode nodeWithSession:session name:@"/Search" error:&error];
+
+        if (error)
         {
-            spdlog::error("GetSidByName failed, result: {}", result);
-            return {};
+            auto errorDes = [error localizedDescription];
+            spdlog::error("Error creating node: {}", [errorDes UTF8String]);
+            return std::nullopt;
         }
 
-        if (auto iter = out.find(L"\n"); iter != std::wstring::npos)
-            out.erase(iter);
-        std::string ret = zzj::str::w2utf8(out);
+        ODQuery *query = [ODQuery queryWithNode:node
+                                 forRecordTypes:kODRecordTypeUsers
+                                      attribute:kODAttributeTypeRecordName
+                                      matchType:kODMatchEqualTo
+                                    queryValues:[NSString stringWithUTF8String:name.c_str()]
+                               returnAttributes:@"dsAttrTypeStandard:GeneratedUID"
+                                 maximumResults:0
+                                          error:&error];
 
-        userSidMap.emplace(name, ret);
-        return ret;
-    }
-    else
-    {
-        return it->second;
+        if (error)
+        {
+            spdlog::error("Error creating query: {}", [error.localizedDescription UTF8String]);
+            return std::nullopt;
+        }
+
+        NSArray *results = [query resultsAllowingPartial:NO error:&error];
+
+        if (error)
+        {
+            spdlog::error("Error executing query: {}", [error.localizedDescription UTF8String]);
+            return std::nullopt;
+        }
+
+        if (results.count == 0)
+        {
+            return std::nullopt;
+        }
+
+        ODRecord *record   = results[0];
+        NSArray *uidValues = [record valuesForAttribute:@"dsAttrTypeStandard:GeneratedUID" error:nil];
+
+        if (uidValues.count > 0)
+        {
+            return [uidValues[0] UTF8String];
+        }
+
+        return std::nullopt;
     }
 }
 std::optional<std::string> GetUserHomeDirectoryByName(const std::string &userName)
