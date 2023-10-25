@@ -76,11 +76,11 @@ class Certificate
     }
     int Delete();
     static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(const std::string &issuer,
-                                                                            const StoreType &storeType);
+                                                                            const StoreType &storeType,bool trusted = false);
     static std::tuple<int, std::vector<Certificate>> GetCerticifateByName(const std::string &name,
-                                                                          const StoreType &storeType);
+                                                                          const StoreType &storeType,bool trusted = false);
     static std::tuple<int, std::vector<Certificate>> GetCerticifateBySequence(const std::string &sequence,
-                                                                              const StoreType &storeType);
+                                                                              const StoreType &storeType,bool trusted = false);
 
     static std::tuple<int, std::vector<Certificate>> AddFromFile(const std::string &filePath, const std::string &passwd,
                                                                  StoreType storeType);
@@ -121,6 +121,9 @@ class Certificate
         Issuer,
         Sequence,
         Name,
+        TrustedAndIssuer,
+        TrustedAndSequence,
+        TrustedAndName,
     };
     static std::tuple<int, std::vector<Certificate>> GetCerticifateTemplate(
         const Certificate::StoreType &storeType, std::vector<std::function<bool(std::string)>> predicate,
