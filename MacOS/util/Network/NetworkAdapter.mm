@@ -137,6 +137,9 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr, const std::string &toIP)
     char *source_address;
     int sockHandle = 0;
     int AddrLen;
+    struct timeval timeout;
+    timeout.tv_sec = 2;  // Timeout in seconds
+    timeout.tv_usec = 0;          // Not setting microseconds
 
     destination_address  = toIP.c_str();
     Addr                 = {0};
@@ -145,23 +148,33 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr, const std::string &toIP)
     Addr.sin_family      = AF_INET;
     Addr.sin_port        = htons(9); // 9 is discard port
     sockHandle           = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    AddrLen              = sizeof(Addr);
-    result               = connect(sockHandle, (sockaddr *)&Addr, AddrLen);
-    if (0 != result)
+    if (sockHandle < 0)
+    {
+        result = -1;
+        goto exit;
+    }
+    if (setsockopt(sockHandle, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
     {
         result = -2;
         goto exit;
     }
-    result = getsockname(sockHandle, (sockaddr *)&Addr, (socklen_t *)&AddrLen);
+    AddrLen              = sizeof(Addr);
+    result               = connect(sockHandle, (sockaddr *)&Addr, AddrLen);
     if (0 != result)
     {
         result = -3;
         goto exit;
     }
+    result = getsockname(sockHandle, (sockaddr *)&Addr, (socklen_t *)&AddrLen);
+    if (0 != result)
+    {
+        result = -4;
+        goto exit;
+    }
     source_address = inet_ntoa(((struct sockaddr_in *)&Addr)->sin_addr);
     ipAddr         = source_address;
 exit:
-    if (sockHandle)
+    if (sockHandle > 0)
         close(sockHandle);
     return result;
 }

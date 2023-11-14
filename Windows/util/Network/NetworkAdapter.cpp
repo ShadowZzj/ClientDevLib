@@ -46,11 +46,11 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
     for (PIP_ADAPTER_ADDRESSES tp = p; tp != NULL; tp = tp->Next)
     {
         NetworkAdapter adapter;
-        adapter.name         = tp->AdapterName;
+        adapter.name = tp->AdapterName;
         if (tp->FriendlyName)
             adapter.friendlyName = str::w2utf8(tp->FriendlyName);
         if (tp->Description)
-            adapter.description  = str::w2utf8(tp->Description);
+            adapter.description = str::w2utf8(tp->Description);
         switch (tp->IfType)
         {
         case IF_TYPE_SOFTWARE_LOOPBACK:
@@ -166,14 +166,14 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
         }
         if (tp->DnsSuffix)
             adapter.dnsSuffixes = str::w2utf8(tp->DnsSuffix);
-        adapter.flags       = tp->Flags;
-        adapter.mtu         = tp->Mtu;
+        adapter.flags = tp->Flags;
+        adapter.mtu   = tp->Mtu;
         if (tp->OperStatus == IfOperStatusUp)
             adapter.status = NetworkAdapter::NetworkStatus::Up;
         else
             adapter.status = NetworkAdapter::NetworkStatus::DOWN;
 
-         if (tp->PhysicalAddressLength != 0)
+        if (tp->PhysicalAddressLength != 0)
         {
             // Get mac address hex string
             char mac_addr[19] = {0};
@@ -187,7 +187,7 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
     }
     return adapters;
 }
-int NetworkHelper::GetOutIpAddress(std::string &ipAddr,const std::string& toIP)
+int NetworkHelper::GetOutIpAddress(std::string &ipAddr, const std::string &toIP)
 {
     WSADATA wsaData;
     int result = 0;
@@ -198,7 +198,7 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr,const std::string& toIP)
     char *source_address;
     int sockHandle = 0;
     int AddrLen;
-
+    struct timeval timeout;
     result = WSAStartup(wVersionRequested, &wsaData);
     if (0 != result)
     {
@@ -212,24 +212,46 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr,const std::string& toIP)
     ((struct sockaddr_in *)&Addr)->sin_family      = AF_INET;
     ((struct sockaddr_in *)&Addr)->sin_port        = htons(9); // 9 is discard port
     sockHandle                                     = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    AddrLen                                    = sizeof(Addr);
-    result                                            = connect(sockHandle, (sockaddr *)&Addr, AddrLen);
-    if (0!=result)
+    if (INVALID_SOCKET == sockHandle)
+    {
+        result = -1;
+        goto exit;
+    }
+    AddrLen = sizeof(Addr);
+
+    // Set timeout value
+
+    timeout.tv_sec  = 2; // Timeout in seconds
+    timeout.tv_usec = 0; // ... and microseconds
+
+    if (setsockopt(sockHandle, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+    {
+        result = -4;
+        goto exit;
+    }
+
+    if (setsockopt(sockHandle, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+    {
+        result = -4;
+        goto exit;
+    }
+    result = connect(sockHandle, (sockaddr *)&Addr, AddrLen);
+    if (0 != result)
     {
         result = -2;
         goto exit;
     }
-    result                                           = getsockname(sockHandle, (sockaddr *)&Addr, &AddrLen);
+    result = getsockname(sockHandle, (sockaddr *)&Addr, &AddrLen);
     if (0 != result)
     {
         result = -3;
         goto exit;
     }
-    source_address                           = inet_ntoa(((struct sockaddr_in *)&Addr)->sin_addr);
-    ipAddr = source_address;
+    source_address = inet_ntoa(((struct sockaddr_in *)&Addr)->sin_addr);
+    ipAddr         = source_address;
 exit:
     if (sockHandle)
-    closesocket(sockHandle);
+        closesocket(sockHandle);
     WSACleanup();
     return result;
 }
