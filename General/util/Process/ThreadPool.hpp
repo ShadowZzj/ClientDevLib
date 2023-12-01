@@ -17,17 +17,20 @@ template <typename T> class ThreadPoolTask
 {
   public:
     T id;
+    static std::mutex mutex;
     std::function<void()> task;
     static T GetDefaultId();
 };
 
 template <> inline int ThreadPoolTask<int>::GetDefaultId()
 {
+    std::lock_guard<std::mutex> lock(mutex);
     static int id = 0;
     return id++;
 }
 template <> inline std::string ThreadPoolTask<std::string>::GetDefaultId()
 {
+    std::lock_guard<std::mutex> lock(mutex);
     static int id      = 0;
     std::string prefix = "zzj_threadpool_task_";
 
@@ -37,7 +40,7 @@ template <> inline std::string ThreadPoolTask<std::string>::GetDefaultId()
 template <typename T> class ThreadPool
 {
   public:
-    ThreadPool(size_t);
+    ThreadPool(size_t threads);
     template <class F, class... Args>
     auto enqueue(F &&f, Args &&...args) -> std::future<typename std::result_of<F(Args...)>::type>;
 

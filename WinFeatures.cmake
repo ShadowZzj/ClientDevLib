@@ -47,6 +47,7 @@ function(GenerateWindowsUtil)
 		file(GLOB FEATURE_FILES 
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.h"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.cpp"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.asm"
 		)
 
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})

@@ -1,5 +1,4 @@
-#ifndef _G_PROCESS_H_
-#define _G_PROCESS_H_
+#pragma once
 #include <chrono>
 #include <map>
 #include <mutex>
@@ -7,12 +6,16 @@
 #include <set>
 #include <string>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 int IsProcessWithIdRunning(const char *id);
 int AddCrashHandler();
 
 namespace zzj
 {
+  
 class ThreadV2;
 /**
  * @brief new process class with object oriented
@@ -22,6 +25,18 @@ class ProcessV2
 {
 
   public:
+    class Snapshot
+    {
+      public:
+        Snapshot();
+        ~Snapshot();
+        std::vector<ProcessV2> GetProcesses(const std::string &processName);
+
+      private:
+#ifdef _WIN32
+        HANDLE snapshot;
+#endif
+    };
     /**
      * @brief cycle statistic such as cpu precentage
      *
@@ -174,4 +189,3 @@ class ProcessV2
     StatisticCycle statisticCycle;
 };
 }; // namespace zzj
-#endif

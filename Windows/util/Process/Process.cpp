@@ -354,4 +354,69 @@ std::vector<std::pair<int, std::string>> ProcessV2::GetProcessInfo(const std::se
     return ret;
 }
 
+ProcessV2::Snapshot::Snapshot()
+{
+    snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+}
+ProcessV2::Snapshot::~Snapshot()
+{
+    if (snapshot != INVALID_HANDLE_VALUE)
+        CloseHandle(snapshot);
+}
+std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &processName)
+{
+    std::vector<ProcessV2> ret;
+    PROCESSENTRY32W entry;
+    entry.dwSize = sizeof(PROCESSENTRY32W);
+    if (Process32FirstW(snapshot, &entry) != TRUE)
+        return ret;
+
+    while (Process32NextW(snapshot, &entry) == TRUE)
+    {
+        if (processName == str::w2utf8(entry.szExeFile))
+        {
+            ProcessV2 process;
+            process.pid         = entry.th32ProcessID;
+            process.processName = processName;
+            auto handle =
+                OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION, false, process.pid);
+            DEFER
+            {
+                if (handle != NULL)
+                    CloseHandle(handle);
+            };
+            if (NULL == handle)
+                continue;
+
+            FILETIME createTime;
+            FILETIME exitTime;
+            FILETIME kernelTime;
+            FILETIME userTime;
+
+            auto timeRet = GetProcessTimes(handle, &createTime, &exitTime, &kernelTime, &userTime);
+            if (!timeRet)
+                continue;
+
+            ULARGE_INTEGER ns100UserTime;
+            ns100UserTime.LowPart  = userTime.dwLowDateTime;
+            ns100UserTime.HighPart = userTime.dwHighDateTime;
+
+            ULARGE_INTEGER ns100KernelTime;
+            ns100KernelTime.LowPart  = kernelTime.dwLowDateTime;
+            ns100KernelTime.HighPart = kernelTime.dwHighDateTime;
+
+            int64_t totalCpuTimeMs             = (ns100UserTime.QuadPart + ns100KernelTime.QuadPart) / 10000;
+            process.statisticTimePoint.cpuUsed = std::chrono::milliseconds(totalCpuTimeMs);
+
+            PROCESS_MEMORY_COUNTERS pmc;
+            auto memoryRet = GetProcessMemoryInfo(handle, &pmc, sizeof(pmc));
+            if (!memoryRet)
+                continue;
+            process.statisticTimePoint.memoryUsed = pmc.WorkingSetSize;
+            ret.push_back(process);
+        }
+    }
+
+    return ret;
+}
 } // namespace zzj

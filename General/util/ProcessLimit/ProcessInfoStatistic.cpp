@@ -1,233 +1,168 @@
 #include "ProcessInfoStatistic.h"
-#include <thread>
 #include <General/util/Process/Process.h>
-#include "ProcessLimit.h"
-#include "ProcessLimitParameter.hpp"
-
-ProcessInfoStatistic::~ProcessInfoStatistic()
+#include <iostream>
+#include <thread>
+namespace zzj
 {
+
+void ProcessInfoStatistic::SetMonitorProcessSet(std::set<std::string> processNames)
+{
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+    m_monitorProcessSet = processNames;
 }
 
-void ProcessInfoStatistic::SetParam(std::shared_ptr<ProcessLimitParameters> param)
-{
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_processLimitParametersList.push_back(param);
-}
-
-std::pair<std::int32_t, std::string> ProcessInfoStatistic::Start()
+int ProcessInfoStatistic::Start()
 {
     if (nullptr != m_thread)
-        return std::make_pair(-1, "ProcessInfoStatistic is already running");
-
-    if (m_processLimitParametersList.empty())
-        return std::make_pair(-2, "No process limit parameters");
-
-    // get smail  m_timeSlot
-    for (auto &param : m_processLimitParametersList)
-    {
-        if (m_timeSlot == 0)
-        {
-            m_timeSlot = param->GetTimeSlot();
-        }
-        else
-        {
-            if (m_timeSlot > param->GetTimeSlot())
-            {
-                m_timeSlot = param->GetTimeSlot();
-            }
-        }
-    }
-    if (m_timeSlot == 0)
-        return std::make_pair(-3, "No time slot");
-
-    // get processNameList
-    for (auto &param : m_processLimitParametersList)
-    {
-        for (auto &processName : param->GetProcessNameList())
-        {
-            m_processNameList.insert(processName);
-        }
-    }
-    if (m_processNameList.empty())
-        return std::make_pair(-4, "No process name list");
+        return -1;
 
     m_isStop = false;
     std::thread tempThread(&ProcessInfoStatistic::Run, this);
     m_thread = std::make_unique<std::thread>(std::move(tempThread));
-    if (!m_thread->joinable())
-        return std::make_pair(-5, "Thread is not joinable");
+    return 0;
+}
 
-    return std::make_pair(0, "success");
+void ProcessInfoStatistic::CalculateNotExistProcessCpuPercentage(std::vector<ProcessV2 *> &notExistBeforeProcessObjects,
+                                                                 std::chrono::steady_clock::time_point preTime)
+{
+    if (notExistBeforeProcessObjects.empty())
+        return;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    auto nowTime = std::chrono::steady_clock::now();
+
+    auto nowProcessObjects = GetCurrentProcessObjects(m_monitorProcessSet);
+    nowProcessObjects.erase(
+        std::remove_if(nowProcessObjects.begin(), nowProcessObjects.end(),
+                       [&notExistBeforeProcessObjects](const ProcessV2 &processObject) {
+                           return std::find_if(notExistBeforeProcessObjects.begin(), notExistBeforeProcessObjects.end(),
+                                               [&processObject](const ProcessV2 *processObject2) {
+                                                   return processObject.pid == processObject2->pid &&
+                                                          processObject.processName == processObject2->processName;
+                                               }) == notExistBeforeProcessObjects.end();
+                       }),
+        nowProcessObjects.end());
+
+    for (auto &nowProcessObject : nowProcessObjects)
+    {
+        auto preProcessObjectIter =
+            std::find_if(notExistBeforeProcessObjects.begin(), notExistBeforeProcessObjects.end(),
+                         [&nowProcessObject](const ProcessV2 *processObject) {
+                             return processObject->pid == nowProcessObject.pid &&
+                                    processObject->processName == nowProcessObject.processName;
+                         });
+        auto deltaMilliSeconds = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - preTime).count();
+        CalculateCpuPercentage(**preProcessObjectIter, nowProcessObject, std::chrono::milliseconds(deltaMilliSeconds));
+        **preProcessObjectIter = nowProcessObject;
+    }
+}
+void ProcessInfoStatistic::CalculateCpuPercentage(const ProcessV2 &lastProcess, ProcessV2 &nowProcess,
+                                                  std::chrono::milliseconds deltaTimeMilliSeconds)
+{
+    const double alfa       = 0.08;
+    auto lastProcessCpuUsed = lastProcess.statisticTimePoint.cpuUsed.value();
+    auto nowProcessCpuUsed  = nowProcess.statisticTimePoint.cpuUsed.value();
+#ifdef _WIN32
+    const auto processor_count = std::thread::hardware_concurrency();
+    double directCpuPercentage = (double)(nowProcessCpuUsed - lastProcessCpuUsed).count() /
+                                 (double)(deltaTimeMilliSeconds.count() * processor_count);
+#else
+    double directCpuPercentage =
+        (double)(nowProcessCpuUsed - lastProcessCpuUsed).count() / (double)(deltaTimeMilliSeconds.count());
+#endif
+
+    if (lastProcess.statisticCycle.cpuPercentage.has_value())
+    {
+        nowProcess.statisticCycle.cpuPercentage =
+            alfa * directCpuPercentage + (1 - alfa) * lastProcess.statisticCycle.cpuPercentage.value();
+    }
+    else
+    {
+        nowProcess.statisticCycle.cpuPercentage = directCpuPercentage;
+    }
+}
+std::vector<ProcessV2> ProcessInfoStatistic::GetCurrentProcessObjects(const std::set<std::string> &processNames)
+{
+    std::vector<ProcessV2> ret;
+    zzj::ProcessV2::Snapshot snapshot;
+    for (auto &processName : processNames)
+        for (auto &processObject : snapshot.GetProcesses(processName))
+            ret.push_back(processObject);
+    return ret;
+}
+std::vector<ProcessV2> ProcessInfoStatistic::GetProcessStatistics()
+{
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    return m_lastProcessObjects;
+}
+std::optional<ProcessV2> ProcessInfoStatistic::GetProcessStatistic(const int pid, const std::string &processName)
+{
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    auto iter = std::find_if(m_lastProcessObjects.begin(), m_lastProcessObjects.end(),
+                             [&pid, &processName](const ProcessV2 &processObject) {
+                                 return processObject.pid == pid && processObject.processName == processName;
+                             });
+    if (iter == m_lastProcessObjects.end())
+        return std::nullopt;
+    return *iter;
 }
 
 void ProcessInfoStatistic::Run()
 {
     const double alfa = 0.08;
 
-    while (true)
+    do
     {
         if (m_isStop.load())
             break;
 
-        m_processNamePidMap.clear();
-        auto getRet = zzj::ProcessV2::GetProcessInfo(m_processNameList, m_processNamePidMap);
-        for (auto &retIt : getRet)
+        //进行写锁定
+        std::unique_lock<std::shared_mutex> lock(m_mutex);
+        std::vector<ProcessV2> nowProcessObjects = GetCurrentProcessObjects(m_monitorProcessSet);
+        auto nowTime                             = std::chrono::steady_clock::now();
+        auto deltaTimeMilliSeconds =
+            std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - m_lastTime).count();
+        std::vector<ProcessV2 *> notExistBeforeProcessObjects;
+        for (auto &nowProcessObject : nowProcessObjects)
         {
-            if (retIt.first != 0)
-            {
-                // std::cout << "GetProcessInfo failed, ret = " << retIt.first << ", msg = " << retIt.second <<
-                // std::endl;
-            }
+            auto lastProcessObjectIter =
+                std::find_if(m_lastProcessObjects.begin(), m_lastProcessObjects.end(),
+                             [&nowProcessObject](const ProcessV2 &processObject) {
+                                 return processObject.pid == nowProcessObject.pid &&
+                                        processObject.processName == nowProcessObject.processName;
+                             });
+            // 对于之前已经存在的进程，结合之前的cpu使用率进行线性计算cpu使用率
+            if (lastProcessObjectIter != m_lastProcessObjects.end())
+                CalculateCpuPercentage(*lastProcessObjectIter, nowProcessObject,
+                                       std::chrono::milliseconds(deltaTimeMilliSeconds));
+            else
+                notExistBeforeProcessObjects.push_back(&nowProcessObject);
         }
 
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_processIdListMap.clear();
-        for (auto &param : m_processLimitParametersList)
+        // 对于之前不存在的进程，直接计算cpu使用率
+        CalculateNotExistProcessCpuPercentage(notExistBeforeProcessObjects, nowTime);
+        for (auto &nowProcessObject : nowProcessObjects)
         {
-            for (auto &it : param->GetProcessNameList())
-            {
-                auto oldIt = m_oldProcessNamePidMap.find(it);
-                auto newIt = m_processNamePidMap.find(it);
-
-                if (newIt == m_processNamePidMap.end())
-                    continue;
-
-                else if (oldIt == m_oldProcessNamePidMap.end() && newIt != m_processNamePidMap.end())
-                {
-                    m_oldProcessNamePidMap.insert(*newIt);
-                    continue;
-                }
-
-                else if (oldIt != m_oldProcessNamePidMap.end() && newIt != m_processNamePidMap.end())
-                {
-                    {
-                        m_processIdListMap[param->GetResourceName()].insert(newIt->second.pid);
-
-                        if (newIt->second.pid != oldIt->second.pid)
-                        {
-                            oldIt->second = newIt->second;
-                            continue;
-                        }
-
-                        if (!newIt->second.statisticTimePoint.cpuUsed || !oldIt->second.statisticTimePoint.cpuUsed)
-                        {
-                            oldIt->second = newIt->second;
-                            continue;
-                        }
-
-#ifdef _WIN32
-                        static const auto processor_count = std::thread::hardware_concurrency();
-                        double directCpuPercentage        = (double)(newIt->second.statisticTimePoint.cpuUsed.value() -
-                                                              oldIt->second.statisticTimePoint.cpuUsed.value())
-                                                         .count() /
-                                                     (double)(m_timeSlot * processor_count);
-#else
-                        double directCpuPercentage = (double)(newIt->second.statisticTimePoint.cpuUsed.value() -
-                                                              oldIt->second.statisticTimePoint.cpuUsed.value())
-                                                         .count() /
-                                                     (double)(m_timeSlot);
-#endif
-                        auto processStatisticIt = m_processStatisticMap.find(it);
-                        if (processStatisticIt == m_processStatisticMap.end())
-                        {
-                            m_processStatisticMap[it] = ProcessstatisticParam();
-
-                            oldIt->second.statisticCycle.cpuPercentage = directCpuPercentage;
-
-                            m_processStatisticMap[it].m_cpu     = oldIt->second.statisticCycle.cpuPercentage;
-                            m_processStatisticMap[it].m_memory = newIt->second.statisticTimePoint.memoryUsed;
-                            m_processStatisticMap[it].m_num     = 1;
-                        }
-                        else
-                        {
-                            oldIt->second.statisticCycle.cpuPercentage =
-                                (1.0 - alfa) * oldIt->second.statisticCycle.cpuPercentage.value() +
-                                alfa * directCpuPercentage;
-
-                            m_processStatisticMap[it].m_cpu = m_processStatisticMap[it].m_cpu.value() +
-                                                               oldIt->second.statisticCycle.cpuPercentage.value();
-
-                            m_processStatisticMap[it].m_memory = m_processStatisticMap[it].m_memory.value() +
-                                                                  newIt->second.statisticTimePoint.memoryUsed.value();
-                            m_processStatisticMap[it].m_num = m_processStatisticMap[it].m_num.value() + 1;
-                        }
-                    }
-                }
-            }
+            std::cout << nowProcessObject.processName << " " << nowProcessObject.pid << " "
+                      << nowProcessObject.statisticCycle.cpuPercentage.value() << " "
+                      << nowProcessObject.statisticTimePoint.memoryUsed.value() / 1024 << std::endl;
         }
+        m_lastProcessObjects = nowProcessObjects;
+        m_lastTime           = nowTime;
 
-        for (auto &it : m_processNamePidMap)
-        {
-            auto oldIt = m_oldProcessNamePidMap.find(it.first);
-            if (oldIt != m_oldProcessNamePidMap.end())
-            {
-                oldIt->second.statisticTimePoint = it.second.statisticTimePoint;
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(m_timeSlot));
-    }
+    } while (std::this_thread::sleep_for(std::chrono::milliseconds(100)), true);
 }
-
 void ProcessInfoStatistic::Stop()
 {
     m_isStop.store(true);
-    m_thread->join();
-
-    m_thread.reset();
-    m_processLimitParametersList = {};
-    m_processNameList            = {};
-    m_processNamePidMap          = {};
-    m_oldProcessNamePidMap       = {};
-    m_processIdListMap           = {};
-    m_processStatisticMap        = {};
-}
-
-std::map<std::string, ProcessstatisticParam> ProcessInfoStatistic::GetProcessInfo(std::string resourceName)
-{
-    if (m_processStatisticMap.empty())
-        return {};
-
-    std::map<std::string, ProcessstatisticParam> tempMap;
-    tempMap["ALL"] = ProcessstatisticParam();
-
-    std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto &param : m_processLimitParametersList)
+    if (m_thread)
     {
-        if (param->GetResourceName() == resourceName)
-        {
-            for (auto &it : param->GetProcessNameList())
-            {
-                auto processStatisticIt = m_processStatisticMap.find(it);
-                if (processStatisticIt != m_processStatisticMap.end())
-                {
-                    if (!processStatisticIt->second.m_cpu.has_value() ||
-                        !processStatisticIt->second.m_memory.has_value())
-                        continue;
-
-                    auto tempCpu = processStatisticIt->second.m_cpu.value() / processStatisticIt->second.m_num.value();
-                    auto tempMem =
-                        processStatisticIt->second.m_memory.value() / processStatisticIt->second.m_num.value();
-
-                    tempMap[processStatisticIt->first] = ProcessstatisticParam(tempCpu, tempMem);
-
-                    tempMap["ALL"].m_cpu    = tempMap["ALL"].m_cpu.value() + tempCpu;
-                    tempMap["ALL"].m_memory = tempMap["ALL"].m_memory.value() + tempMem;
-                    m_processStatisticMap.erase(processStatisticIt);
-                }
-            }    
-        }
+        m_thread->join();
+        m_thread.reset();
     }
-    return tempMap;
+
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+    m_lastProcessObjects.clear();
+    m_lastTime = std::chrono::steady_clock::now();
 }
 
-std::set<std::int32_t> ProcessInfoStatistic::GetProcessId(std::string resourceName)
-{
-    std::set<std::int32_t> tempSet;
-    std::lock_guard<std::mutex> lock(m_mutex);
-    auto it = m_processIdListMap.find(resourceName);
-    if (it != m_processIdListMap.end())
-    {
-        tempSet = it->second;
-    }
-    return tempSet;
-}
+} // namespace zzj
