@@ -8,6 +8,9 @@
 #include <vector>
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include "MacOS/util/ProcessIterator/process_iterator.h"
+#include "MacOS/util/ProcessIterator/process_iterator_apple.h"
 #endif
 
 int IsProcessWithIdRunning(const char *id);
@@ -15,7 +18,7 @@ int AddCrashHandler();
 
 namespace zzj
 {
-  
+
 class ThreadV2;
 /**
  * @brief new process class with object oriented
@@ -35,6 +38,9 @@ class ProcessV2
       private:
 #ifdef _WIN32
         HANDLE snapshot;
+#else
+        process_iterator i;
+        process_filter filter = {0};
 #endif
     };
     /**

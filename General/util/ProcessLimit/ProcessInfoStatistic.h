@@ -14,7 +14,7 @@ namespace zzj
 class ProcessInfoStatistic
 {
   public:
-    void ProcessInfoStatistic::SetMonitorProcessSet(std::set<std::string> processNames);
+    void SetMonitorProcessSet(std::set<std::string> processNames);
 
     int Start();
     void Stop();

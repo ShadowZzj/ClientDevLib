@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <dirent.h>
-
+#include <string>
 //USER_HZ detection, from openssl code
 #ifndef HZ
 # if defined(_SC_CLK_TCK) \
@@ -62,7 +62,7 @@ struct process {
 	//actual cpu usage estimation (value in range 0-1)
 	double cpu_usage;
 	//absolute path of the executable file
-	char command[PATH_MAX+1];
+    std::string command;
 };
 
 struct process_filter {

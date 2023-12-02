@@ -29,6 +29,7 @@ class Process
     static int CloseApplication(std::string applicationBundleName);
     static int ActivateApplication(const std::string& applicationBundleName);
     static bool IsCurrentProcessBeingDebugged();
+    static bool IsCurrentProcessRunningTranslated();
     DECLARE_LUA_EXPORT(Process);
 };
 class Thread

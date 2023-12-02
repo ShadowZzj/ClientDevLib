@@ -1,6 +1,7 @@
 #include "ProcessInfoStatistic.h"
 #include <General/util/Process/Process.h>
 #include <iostream>
+#include <spdlog/spdlog.h>
 #include <thread>
 namespace zzj
 {
@@ -68,6 +69,8 @@ void ProcessInfoStatistic::CalculateCpuPercentage(const ProcessV2 &lastProcess, 
 #else
     double directCpuPercentage =
         (double)(nowProcessCpuUsed - lastProcessCpuUsed).count() / (double)(deltaTimeMilliSeconds.count());
+    std::cout<<"now - last cpuUsed: "<<(nowProcessCpuUsed - lastProcessCpuUsed).count()<<std::endl;
+    std::cout<<"deltaTimeCount: "<<deltaTimeMilliSeconds.count()<<std::endl;
 #endif
 
     if (lastProcess.statisticCycle.cpuPercentage.has_value())
@@ -83,10 +86,21 @@ void ProcessInfoStatistic::CalculateCpuPercentage(const ProcessV2 &lastProcess, 
 std::vector<ProcessV2> ProcessInfoStatistic::GetCurrentProcessObjects(const std::set<std::string> &processNames)
 {
     std::vector<ProcessV2> ret;
-    zzj::ProcessV2::Snapshot snapshot;
-    for (auto &processName : processNames)
-        for (auto &processObject : snapshot.GetProcesses(processName))
-            ret.push_back(processObject);
+    try
+    {
+        zzj::ProcessV2::Snapshot snapshot;
+        for (auto &processName : processNames)
+            for (auto &processObject : snapshot.GetProcesses(processName))
+                ret.push_back(processObject);
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("Exeption in ProcessInfoStatistic: {}", e.what());
+    }
+    catch (...)
+    {
+        spdlog::error("Exeption in ProcessInfoStatistic");
+    }
     return ret;
 }
 std::vector<ProcessV2> ProcessInfoStatistic::GetProcessStatistics()
@@ -115,7 +129,7 @@ void ProcessInfoStatistic::Run()
         if (m_isStop.load())
             break;
 
-        //进行写锁定
+        // 进行写锁定
         std::unique_lock<std::shared_mutex> lock(m_mutex);
         std::vector<ProcessV2> nowProcessObjects = GetCurrentProcessObjects(m_monitorProcessSet);
         auto nowTime                             = std::chrono::steady_clock::now();
@@ -139,7 +153,8 @@ void ProcessInfoStatistic::Run()
         }
 
         // 对于之前不存在的进程，直接计算cpu使用率
-        CalculateNotExistProcessCpuPercentage(notExistBeforeProcessObjects, nowTime);
+        if (0 != notExistBeforeProcessObjects.size())
+            CalculateNotExistProcessCpuPercentage(notExistBeforeProcessObjects, nowTime);
         for (auto &nowProcessObject : nowProcessObjects)
         {
             std::cout << nowProcessObject.processName << " " << nowProcessObject.pid << " "
@@ -149,7 +164,7 @@ void ProcessInfoStatistic::Run()
         m_lastProcessObjects = nowProcessObjects;
         m_lastTime           = nowTime;
 
-    } while (std::this_thread::sleep_for(std::chrono::milliseconds(100)), true);
+    } while (std::this_thread::sleep_for(std::chrono::milliseconds(250)), true);
 }
 void ProcessInfoStatistic::Stop()
 {

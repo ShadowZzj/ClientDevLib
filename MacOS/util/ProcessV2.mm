@@ -2,9 +2,10 @@
 #include "ProcessIterator/process_iterator_apple.h"
 #include <General/util/BaseUtil.hpp>
 #include <General/util/Process/Process.h>
-#include <General/util/StrUtil.h>
 #include <General/util/Process/Thread.h>
+#include <General/util/StrUtil.h>
 #include <chrono>
+#include <libproc.h>
 #include <mach/mach_host.h>
 #include <mach/mach_init.h>
 #include <mach/mach_port.h>
@@ -17,11 +18,11 @@
 #include <mach/vm_map.h>
 #include <mach/vm_region.h>
 #include <signal.h>
+#include <spdlog/spdlog.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/vmmeter.h>
-
-
+#include <boost/filesystem.hpp>
 namespace zzj
 {
 ProcessV2::ProcessV2()
@@ -139,7 +140,7 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
         ti.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
     }
 
-    statictic.memoryUsed   = ti.resident_size;
+    statictic.memoryUsed = ti.resident_size;
     mach_port_deallocate(mach_task_self(), task);
     return 0;
 }
@@ -157,13 +158,12 @@ int ProcessV2::GetProcessIdByName(const std::string &name)
 
 std::string ProcessV2::GetProcessNameById(const int &pid)
 {
-    auto ret = GetRunningProcesses();
-    for (auto &p : ret)
-    {
-        if (p.pid == pid)
-            return p.processName;
-    }
-    return "";
+    char pathBuffer[PROC_PIDPATHINFO_MAXSIZE]{0};
+    int result = proc_pidpath(pid, pathBuffer, sizeof(pathBuffer));
+    if (result <= 0)
+        return "";
+    boost::filesystem::path path(pathBuffer);
+    return path.filename().string();
 }
 
 bool ProcessV2::IsProcessAlive(const std::string &name)
@@ -184,9 +184,9 @@ bool ProcessV2::IsProcessAlive(const std::string &name)
             break;
         }
     }
-    if (auto ret = close_process_iterator(&it) ;ret!= 0)
+    if (auto ret = close_process_iterator(&it); ret != 0)
     {
-        std::cout<<"close_process_iterator error:"<<ret<<std::endl;
+        std::cout << "close_process_iterator error:" << ret << std::endl;
         return false;
     }
     if (pid >= 0)
@@ -221,70 +221,81 @@ bool ProcessV2::ResumePid(int pid)
     return false;
 }
 
-std::vector<std::pair<int, std::string>> ProcessV2::GetProcessInfo(const std::set<std::string> proccessList,
-                                                                   std::map<std::string, zzj::ProcessV2> &processes)
+ProcessV2::Snapshot::Snapshot()
 {
-    std::vector<std::pair<int, std::string>> ret;
-    struct process_iterator it;
-    struct process proc;
-    struct process_filter filter;
-    filter.pid              = 0;
-    filter.include_children = 0;
-    init_process_iterator(&it, &filter);
-    while (get_next_process(&it, &proc) != -1)
+
+    int res = init_process_iterator(&i, &filter);
+    if (res != 0)
     {
-        ProcessV2 process;
-        process.pid         = proc.pid;
-        process.processName = str::ansi2utf8(proc.command);
-        
-        if (proccessList.find(process.processName) != proccessList.end())
+        throw std::runtime_error("init_process_iterator failed");
+    }
+}
+ProcessV2::Snapshot::~Snapshot()
+{
+    close_process_iterator(&i);
+}
+std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &processName)
+{
+    std::vector<ProcessV2> ret;
+    try
+    {
+        struct process proc;
+        i.i = 0;
+        while (get_next_process(&i, &proc) != -1)
         {
-            process.statisticTimePoint.cpuUsed  = std::chrono::milliseconds(proc.cputime);
-            pid_t pid = -1;
-            task_t task;
-            kern_return_t error;
-            mach_msg_type_number_t count;
-            struct task_basic_info ti;
-            error = task_for_pid(mach_task_self(), pid, &task);
-            if (error != KERN_SUCCESS)
+            std::string cmdString = proc.command;
+            if (cmdString.find(processName) != cmdString.npos)
             {
-                ret.push_back(
-                        std::make_pair(-3, "task_for_pid fail,the process name is " + process.processName));
+                ProcessV2 process;
+                process.pid                        = proc.pid;
+                process.processName                = str::ansi2utf8(proc.command);
+                process.statisticTimePoint.cpuUsed = std::chrono::milliseconds(proc.cputime);
+                task_t task;
+                kern_return_t error;
+                mach_msg_type_number_t count;
+                struct task_basic_info ti;
+                error = task_for_pid(mach_task_self(), process.pid, &task);
+                if (error != KERN_SUCCESS)
+                    continue;
+                DEFER
+                {
+                    mach_port_deallocate(mach_task_self(), task);
+                };
+                count = TASK_BASIC_INFO_COUNT;
+                error = task_info(task, TASK_BASIC_INFO, (task_info_t)&ti, &count);
+                if (error != KERN_SUCCESS)
+                {
+                    continue;
+                }
+                vm_region_basic_info_data_64_t b_info;
+                vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
+                vm_size_t size;
+                mach_port_t object_name;
+                count = VM_REGION_BASIC_INFO_COUNT_64;
+                error = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count,
+                                     &object_name);
+                if (error != KERN_SUCCESS)
+                {
+                    continue;
+                }
+                if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
+                    ti.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
+                {
+                    ti.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
+                }
+                process.statisticTimePoint.memoryUsed = ti.resident_size;
+                ret.push_back(process);
             }
-            count = TASK_BASIC_INFO_COUNT;
-            error = task_info(task, TASK_BASIC_INFO, (task_info_t)&ti, &count);
-            if (error != KERN_SUCCESS)
-            {
-                ret.push_back(
-                        std::make_pair(-3, "task_info fail,the process name is " + process.processName));
-            }
-            vm_region_basic_info_data_64_t b_info;
-            vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
-            vm_size_t size;
-            mach_port_t object_name;
-            count = VM_REGION_BASIC_INFO_COUNT_64;
-            error = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count, &object_name);
-            if (error != KERN_SUCCESS)
-            {                
-                ret.push_back(
-                        std::make_pair(-3, "vm_region_64 fail,the process name is " + process.processName));
-            }
-            if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
-                ti.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
-            {
-                ti.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
-            }
-            process.statisticTimePoint.memoryUsed = ti.resident_size;
-            mach_port_deallocate(mach_task_self(), task);
-            processes[process.processName]        = process;
         }
     }
-
-    if (close_process_iterator(&it) != 0)
-        return {};
-
+    catch (const std::exception &e)
+    {
+        spdlog::error("Exeption in ProcessV2::Snapshot::GetProcesses: {}", e.what());
+    }
+    catch (...)
+    {
+        spdlog::error("Exeption in ProcessV2::Snapshot::GetProcesses");
+    }
     return ret;
 }
-
-
-}; // namespace zzj
+} // namespace zzj

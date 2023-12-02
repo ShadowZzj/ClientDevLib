@@ -27,6 +27,8 @@
 #include <libproc.h>
 #include <iostream>
 #include "process_iterator.h"
+#include <MacOS/util/SystemUtil.h>
+#include <General/util/Process/Process.h>
 int unique_nonzero_ints(int* arr_in, int len_in, int* arr_out) {
 	int* source = arr_in;
 	if (arr_out == NULL) return -1;
@@ -74,13 +76,17 @@ int init_process_iterator(process_iterator *it, process_filter *filter){
 }
 
 static int pti2proc(proc_taskallinfo *ti, process *process){
+    static double nanoPerTick = zzj::Computer::CalculateNanosecondsPerMachTick();
 	int bytes;
 	process->pid = ti->pbsd.pbi_pid;
 	process->ppid = ti->pbsd.pbi_ppid;
 	process->starttime = ti->pbsd.pbi_start_tvsec;
-	process->cputime = (ti->ptinfo.pti_total_user + ti->ptinfo.pti_total_system) / 1000000;
-	bytes = strlen(ti->pbsd.pbi_comm);
-	memcpy(process->command, ti->pbsd.pbi_comm, (bytes < PATH_MAX ? bytes : PATH_MAX) + 1);
+	uint64_t totalUserNano = ti->ptinfo.pti_total_user * nanoPerTick;
+	uint64_t totalSystemNano = ti->ptinfo.pti_total_system * nanoPerTick;
+	process->cputime = (totalUserNano + totalSystemNano) / 1000000;
+    process->command = zzj::ProcessV2::GetProcessNameById(process->pid);
+	//bytes = strlen(ti->pbsd.pbi_comm);
+	//#memcpy(process->command, ti->pbsd.pbi_comm, (bytes < PATH_MAX ? bytes : PATH_MAX) + 1);
 	return 0;
 }
 
