@@ -244,46 +244,18 @@ std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &proc
         while (get_next_process(&i, &proc) != -1)
         {
             std::string cmdString = proc.command;
-            if (cmdString.find(processName) != cmdString.npos)
+            if (cmdString == processName)
             {
                 ProcessV2 process;
                 process.pid                        = proc.pid;
                 process.processName                = str::ansi2utf8(proc.command);
                 process.statisticTimePoint.cpuUsed = std::chrono::milliseconds(proc.cputime);
-                task_t task;
-                kern_return_t error;
-                mach_msg_type_number_t count;
-                struct task_basic_info ti;
-                error = task_for_pid(mach_task_self(), process.pid, &task);
-                if (error != KERN_SUCCESS)
+                struct rusage_info_v1 rusageInfo;
+                int rusageRet = proc_pid_rusage(proc.pid, RUSAGE_INFO_V1, (rusage_info_t *)&rusageInfo);
+                if (rusageRet != 0)
                     continue;
-                DEFER
-                {
-                    mach_port_deallocate(mach_task_self(), task);
-                };
-                count = TASK_BASIC_INFO_COUNT;
-                error = task_info(task, TASK_BASIC_INFO, (task_info_t)&ti, &count);
-                if (error != KERN_SUCCESS)
-                {
-                    continue;
-                }
-                vm_region_basic_info_data_64_t b_info;
-                vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
-                vm_size_t size;
-                mach_port_t object_name;
-                count = VM_REGION_BASIC_INFO_COUNT_64;
-                error = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count,
-                                     &object_name);
-                if (error != KERN_SUCCESS)
-                {
-                    continue;
-                }
-                if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
-                    ti.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
-                {
-                    ti.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
-                }
-                process.statisticTimePoint.memoryUsed = ti.resident_size;
+                    
+                process.statisticTimePoint.memoryUsed = rusageInfo.ri_phys_footprint;
                 ret.push_back(process);
             }
         }
