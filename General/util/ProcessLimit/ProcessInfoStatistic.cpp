@@ -155,12 +155,20 @@ void ProcessInfoStatistic::Run()
         // 对于之前不存在的进程，直接计算cpu使用率
         if (0 != notExistBeforeProcessObjects.size())
             CalculateNotExistProcessCpuPercentage(notExistBeforeProcessObjects, nowTime);
-        for (auto &nowProcessObject : nowProcessObjects)
+        for (auto iter = nowProcessObjects.begin(); iter != nowProcessObjects.end();)
         {
-            std::cout << nowProcessObject.processName << " " << nowProcessObject.pid << " "
-                      << nowProcessObject.statisticCycle.cpuPercentage.value() << " "
-                      << nowProcessObject.statisticTimePoint.memoryUsed.value() / 1024 << std::endl;
+            // if cpupercentage or memoryused is not valid, remove it
+            if (!iter->statisticCycle.cpuPercentage.has_value() || !iter->statisticTimePoint.memoryUsed.has_value())
+                iter = nowProcessObjects.erase(iter);
+            else
+                ++iter;
         }
+        //for (auto &nowProcessObject : nowProcessObjects)
+        //{
+        //    std::cout << nowProcessObject.processName << " " << nowProcessObject.pid << " "
+        //              << nowProcessObject.statisticCycle.cpuPercentage.value() << " "
+        //              << nowProcessObject.statisticTimePoint.memoryUsed.value() / 1024 << std::endl;
+        //}
         m_lastProcessObjects = nowProcessObjects;
         m_lastTime           = nowTime;
 
