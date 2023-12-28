@@ -6,11 +6,11 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 #include <string>
-#include "GameSetting.h"
+
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
     FILE *f;
-    std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<GameSetting>();
+    std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<zzj::D3D::Setting>();
     try
     {
         AllocConsole();

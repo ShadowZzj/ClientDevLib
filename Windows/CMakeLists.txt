@@ -55,7 +55,7 @@ add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory}
 add_library(${PROJECT_NAME} STATIC ${WINDOWS_UTIL_FILES} ${GENERAL_UTIL_FILES})
 add_executable(${PROJECT_NAME}_test test/test.cpp)
 add_executable(${PROJECT_NAME}_testWindow test/testWindow.cpp ${ProjectUtil})
-add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp)
+add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp test/GameSetting.h test/GameSetting.cpp)
 
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
