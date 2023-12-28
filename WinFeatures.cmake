@@ -69,7 +69,16 @@ function(GenerateWindowsUtil)
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${InterceptionLib})
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${InterceptionDll})
 	endif()
+	if ((NOT DEFINED FEATURE_INTERCEPTION) OR (NOT ${FEATURE_INTERCEPTION}))
+		message(STATUS "Interception feature: ${FEATURE_INTERCEPTION}")
+		file(GLOB FEATURE_FILES 
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Interception/*.h"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Interception/*.cpp"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Device/Interception/*.hpp"
+		)
 
+		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	endif()
 	if((NOT DEFINED FEATURE_DIRECTX) OR (NOT ${FEATURE_DIRECTX}))
 		message(STATUS "DirectX feature: ${FEATURE_DIRECTX}")
 	    file(GLOB FEATURE_FILES 
@@ -79,18 +88,19 @@ function(GenerateWindowsUtil)
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
-
-	if((NOT DEFINED FEATURE_DIRECTX) OR (NOT ${FEATURE_DIRECTX}) OR (NOT DEFINED FEATURE_DIRECTXAPP) OR (NOT ${FEATURE_DIRECTXAPP}))
-		message(STATUS "DirectXApp feature: ${FEATURE_DIRECTXAPP}")
-	    file(GLOB FEATURE_FILES 
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/App.h"
-	    "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/App.cpp"
-	    )
-
-	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
+	if(${FEATURE_D3D9})
+		message(STATUS "D3D9Hook feature: ${FEATURE_D3D9}")
+		set (FEATURE_DETOURS ON)
+		set (FEATURE_IMGUI_WIN32_DIRECTX9 ON)
+	else()
+		message(STATUS "D3D9Hook feature: ${FEATURE_D3D9}")
+		file(GLOB FEATURE_FILES 
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.h"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.cpp"
+		
+		)
+		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
-
-
 	if ((NOT DEFINED FEATURE_ETW) OR (NOT ${FEATURE_ETW}))
 		message(STATUS "ETW feature: ${FEATURE_ETW}")
 	    file(GLOB FEATURE_FILES 
@@ -101,6 +111,7 @@ function(GenerateWindowsUtil)
 
 	    list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
+
 
 	
 	if(${FEATURE_SHADERS})
@@ -141,10 +152,14 @@ function(GenerateWindowsUtil)
 	endif()
 
 	if (${FEATURE_IMGUI_WIN32_DIRECTX11})
-		message(STATUS "ImGui feature: ${FEATURE_IMGUI}")
+		message(STATUS "ImGui feature: ON")
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui)
 	endif()
 
+	if (${FEATURE_IMGUI_WIN32_DIRECTX9})
+		message(STATUS "ImGui feature: ON")
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui)
+	endif()
 
 	if (${FEATURE_CURL})
 		message(STATUS "Curl feature: ${FEATURE_CURL}")

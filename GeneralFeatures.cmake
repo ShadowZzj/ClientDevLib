@@ -67,7 +67,11 @@ function(GenerateGeneralUtil)
 	else()
 		message(STATUS "CURL FEATURE: ${FEATURE_CURL}")
 	endif()
-
+	if(${FEATURE_D3D9})
+		message(STATUS "D3D9Hook feature: ${FEATURE_D3D9}")
+		set (FEATURE_IMGUI_WIN32_DIRECTX9 ON)
+		set (FEATURE_DETOURS ON)
+	endif()
 	if (${FEATURE_IMGUI_WIN32_DIRECTX11})
 		message(STATUS "imgui FEATURE: ${FEATURE_IMGUI_WIN32_DIRECTX11}")
 		file(GLOB FEATURE_FILES
@@ -75,6 +79,18 @@ function(GenerateGeneralUtil)
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.cpp"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_dx11.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_dx11.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/*.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/*.cpp"
+		)
+		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
+	endif()
+	if (${FEATURE_IMGUI_WIN32_DIRECTX9})
+		message(STATUS "imgui FEATURE: ${FEATURE_IMGUI_WIN32_DIRECTX9}")
+		file(GLOB FEATURE_FILES
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_win32.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_dx9.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/backends/imgui_impl_dx9.cpp"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/*.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/imgui/*.cpp"
 		)

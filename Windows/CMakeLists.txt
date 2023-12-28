@@ -47,7 +47,7 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
-GenerateUtil(FEATURE_DETOURS FEATURE_ANTIDEBUG)
+GenerateUtil(FEATURE_ANTIDEBUG FEATURE_D3D9)
 
 file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
 add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})

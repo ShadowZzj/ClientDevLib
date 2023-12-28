@@ -1,98 +1,48 @@
-#include <Windows.h>
-#include <string>
-#include <Windows/util/Process/ProcessHelper.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows/util/DirectX/D3D9Hook.h>
 #include <General/util/Process/Process.h>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <Windows.h>
 #include <iostream>
-#include <Detours/build/include/detours.h>
-
-bool HookAddress(uintptr_t target, uintptr_t ourFunc, int hookLen)
-{
-    
-    if (hookLen < 5)
-        return false;
-
-    zzj::Process p;
-    zzj::Memory m(p);
-
-    zzj::ProcessV2::SuspendPid(p.GetProcessId());
-    DWORD oldProtect;
-    VirtualProtectEx(GetCurrentProcess(), (LPVOID)target, hookLen, PAGE_GRAPHICS_EXECUTE_READWRITE, &oldProtect);
-    std::vector<uint8_t> data(hookLen, 0x90);
-    m.Write(target, data);
-    
-    auto detourAddress = ourFunc - target - 5;
-    m.Write(target, {0xE9});
-    m.Write(target + 1, &detourAddress, sizeof(detourAddress));
-    VirtualProtectEx(GetCurrentProcess(), (LPVOID)target, hookLen, oldProtect, &oldProtect);
-    Sleep(3000);
-    zzj::ProcessV2::ResumePid(p.GetProcessId());
-    return true;
-}
-
-bool TrampolionHook(uintptr_t target, uintptr_t ourFunc, int hookLen)
-{
-    zzj::Process p;
-    zzj::Memory m(p);
-    auto gateway = m.Alloc(hookLen);
-    m.Write(gateway, (void*)target, hookLen);
-    m.Write(gateway + hookLen, {0xE9});
-    auto relativeAddress = target - gateway - 5;
-    m.Write(gateway+hookLen+1,&relativeAddress,sizeof(relativeAddress));
-
-    HookAddress(target, ourFunc, hookLen);
-	return true;
-}
-
-static std::uintptr_t moduleBase                                                   = NULL;
-static void(__fastcall *RecoilCalculationFunction)(void *thisptr, int edx, float a, float b) = nullptr;
-
-static HHOOK(WINAPI* SetWindowsHookExAFunction)(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId) = nullptr;
-static HHOOK(WINAPI* SetWindowsHookExWFunction)(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId) = nullptr;
-
-void __fastcall RecoilCalculationFunctionHook(void *thisptr, int edx, float a, float b)
-{
-    spdlog::info("Hooked RecoilCalculationFunction");
-}
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
+#include <string>
 
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
-    AllocConsole();
     FILE *f;
-    freopen_s(&f, "CONOUT$", "w+t", stdout);
-    spdlog::flush_on(spdlog::level::level_enum::info);
-    auto console = spdlog::stdout_color_mt("console2");
-    spdlog::set_level(spdlog::level::level_enum::info);
-    spdlog::set_default_logger(console);
-    
-
-    while (true)
+    std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<zzj::D3D::Setting>();
+    try
     {
-        if (GetAsyncKeyState(VK_HOME) & 1)
+        AllocConsole();
+        freopen_s(&f, "CONOUT$", "w+t", stdout);
+        spdlog::flush_on(spdlog::level::level_enum::info);
+        auto console = spdlog::stdout_color_mt("console2");
+        spdlog::set_level(spdlog::level::level_enum::info);
+        spdlog::set_default_logger(console);
+        spdlog::info("Start");
+        zzj::D3D::D3D9Hook::Setup(setting);
+        spdlog::info("SetupDone");
+        while (true)
         {
-			spdlog::info("Hooking");
-			DetourTransactionBegin();
-            DetourUpdateThread(GetCurrentThread());
-            DetourAttach(&(PVOID &)RecoilCalculationFunction, RecoilCalculationFunctionHook);
-            DetourTransactionCommit();
-		}
-        if (GetAsyncKeyState(VK_END) & 1)
-        {
-            spdlog::info("Unhooking");
-            DetourTransactionBegin();
-            DetourUpdateThread(GetCurrentThread());
-            DetourDetach(&(PVOID &)RecoilCalculationFunction, RecoilCalculationFunctionHook);
-            DetourTransactionCommit();
-		}
-		Sleep(100);
+            if (GetAsyncKeyState(VK_END) & 1)
+            {
+                break;
+            }
+            Sleep(100);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        MessageBeep(MB_ICONERROR);
+        MessageBoxA(NULL, e.what(), "hack Error", MB_OK | MB_ICONERROR);
     }
 
+    zzj::D3D::D3D9Hook::Destroy();
     fclose(f);
     FreeConsole();
+    setting.reset();
     FreeLibraryAndExitThread((HMODULE)lpThreadParameter, 0);
     return 0;
-
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
