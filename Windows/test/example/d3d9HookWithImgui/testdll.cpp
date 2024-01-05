@@ -15,7 +15,6 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
     {
         AllocConsole();
         freopen_s(&f, "CONOUT$", "w+t", stdout);
-        system("chcp 65001");
         spdlog::flush_on(spdlog::level::level_enum::info);
         auto console = spdlog::stdout_color_mt("console2");
         spdlog::set_level(spdlog::level::level_enum::info);
@@ -38,7 +37,6 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
         MessageBoxA(NULL, e.what(), "hack Error", MB_OK | MB_ICONERROR);
     }
 
-    setting->End();
     zzj::D3D::D3D9Hook::Destroy();
     fclose(f);
     FreeConsole();

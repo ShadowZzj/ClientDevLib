@@ -201,6 +201,11 @@ function(GenerateWindowsUtil)
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/zipper/include)
 	endif()
 
+	if(${FEATURE_GHINJECTOR})
+		message(STATUS "GHInjector feature: ${FEATURE_GHINJECTOR}")
+		list(APPEND WINDOWS_UTIL_DLL_FILES ${GHInjectorDll})
+	endif()
+	
 	foreach(source IN LISTS WINDOWS_UTIL_FILES)
 	    get_filename_component(source_path "${source}" PATH)
 	    string(REPLACE "${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util" "WindowsUtil" source_path "${source_path}")

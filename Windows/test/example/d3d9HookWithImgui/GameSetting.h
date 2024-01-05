@@ -4,13 +4,9 @@
 class GameSetting : public zzj::D3D::Setting
 {
   public:
-    virtual void InitImguiConfig() override;
-    virtual void UninitImguiConfig() override;
     virtual void Render(bool &open);
     virtual DWORD GetToggleMenuKey()
     {
         return VK_INSERT;
     }
-
-    virtual void End() override;
 };

@@ -10,7 +10,7 @@
 int argument = 2;
 void *hookAddress = (void*)0x005A09B7;
 
-void *retAddress;
+void *attackRangeRetAddress;
 DWORD attackRange = 1;
 int __declspec(naked) HookedMessageBoxA()
 {
@@ -18,7 +18,7 @@ int __declspec(naked) HookedMessageBoxA()
     {
         pushad
     }
-    retAddress = (void *)((uintptr_t)hookAddress + 10);
+    attackRangeRetAddress = (void *)((uintptr_t)hookAddress + 10);
     __asm
     {
         mov eax,attackRange

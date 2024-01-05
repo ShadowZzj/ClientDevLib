@@ -370,7 +370,47 @@ typedef struct  _GUID
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+struct _DETOUR_ALIGN
+{
+    BYTE    obTarget        : 3;
+    BYTE    obTrampoline    : 5;
+};
 
+C_ASSERT(sizeof(_DETOUR_ALIGN) == 1);
+#ifdef __WIN64
+struct _DETOUR_TRAMPOLINE
+{
+    // An X64 instuction can be 15 bytes long.
+    // In practice 11 seems to be the limit.
+    BYTE            rbCode[30];     // target code + jmp to pbRemain.
+    BYTE            cbCode;         // size of moved target code.
+    BYTE            cbCodeBreak;    // padding to make debugging easier.
+    BYTE            rbRestore[30];  // original target code.
+    BYTE            cbRestore;      // size of original target code.
+    BYTE            cbRestoreBreak; // padding to make debugging easier.
+    _DETOUR_ALIGN   rAlign[8];      // instruction alignment array.
+    PBYTE           pbRemain;       // first instruction after moved code. [free list]
+    PBYTE           pbDetour;       // first instruction of detour function.
+    BYTE            rbCodeIn[8];    // jmp [pbDetour]
+};
+
+C_ASSERT(sizeof(_DETOUR_TRAMPOLINE) == 96);
+#else
+struct _DETOUR_TRAMPOLINE
+{
+    BYTE            rbCode[30];     // target code + jmp to pbRemain
+    BYTE            cbCode;         // size of moved target code.
+    BYTE            cbCodeBreak;    // padding to make debugging easier.
+    BYTE            rbRestore[22];  // original target code.
+    BYTE            cbRestore;      // size of original target code.
+    BYTE            cbRestoreBreak; // padding to make debugging easier.
+    _DETOUR_ALIGN   rAlign[8];      // instruction alignment array.
+    PBYTE           pbRemain;       // first instruction after moved code. [free list]
+    PBYTE           pbDetour;       // first instruction of detour function.
+};
+C_ASSERT(sizeof(_DETOUR_TRAMPOLINE) == 72);
+
+#endif
 /////////////////////////////////////////////////// Instruction Target Macros.
 //
 #define DETOUR_INSTRUCTION_TARGET_NONE          ((PVOID)0)
@@ -473,6 +513,7 @@ C_ASSERT(sizeof(IMAGE_NT_HEADERS64) == 0x108);
 
 // The size can change, but assert for clarity due to the muddying #ifdefs.
 #ifdef _WIN64
+
 C_ASSERT(sizeof(DETOUR_EXE_RESTORE) == 0x688);
 #else
 C_ASSERT(sizeof(DETOUR_EXE_RESTORE) == 0x678);

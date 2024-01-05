@@ -47,20 +47,25 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
-GenerateUtil(FEATURE_ANTIDEBUG FEATURE_D3D9)
+GenerateUtil(FEATURE_ANTIDEBUG FEATURE_D3D9 FEATURE_GHINJECTOR)
 
 file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
-add_subdirectory(${PRO_SUP}/General/ThirdParty/GHInjector/src ${OutputDirectory})
 
 add_library(${PROJECT_NAME} STATIC ${WINDOWS_UTIL_FILES} ${GENERAL_UTIL_FILES})
+target_link_libraries(${PROJECT_NAME}
+${PRO_SUP}/General/ThirdParty/boost_1_75_0/lib/win/x86/static/libboost_locale-vc142-mt-s-x32-1_75.lib
+)
 add_executable(${PROJECT_NAME}_test test/test.cpp)
 add_executable(${PROJECT_NAME}_testWindow test/testWindow.cpp ${ProjectUtil})
-add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp test/GameSetting.h test/GameSetting.cpp)
+add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp test/GameSetting.h test/GameSetting.cpp test/GameManager.h test/GameManager.cpp test/SpeedHack.h test/SpeedHack.cpp)
 
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 
-target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
+target_link_libraries(${PROJECT_NAME}_test 
+${PROJECT_NAME} 
+${WINDOWS_UTIL_LIB_FILES} 
+)
 target_include_directories(${PROJECT_NAME}_test PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 target_link_options(${PROJECT_NAME}_test PRIVATE "/SAFESEH:NO")
 
@@ -91,10 +96,3 @@ PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 foreach(dll ${WINDOWS_UTIL_DLL_FILES})
   file(COPY ${dll} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
 endforeach()
-
-file(COPY test/resource/kappa50.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
-file(COPY test/resource/cube.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
-file(COPY test/resource/nano.gltf DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
-file(COPY test/resource/suzanne.obj DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
-# copy test/resource/nano_textured dir to ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO}
-file(COPY test/resource/nano_textured DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
