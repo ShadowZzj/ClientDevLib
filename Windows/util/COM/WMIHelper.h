@@ -38,7 +38,7 @@ class WMIWrapper
     IWbemServices *pSvc                      = nullptr;
     IEnumWbemClassObject *pEnumerator        = nullptr;
     IWbemClassObject *pclsObj                = nullptr;
-    COMHelper::COMWrapper comWrapper;
+    zzj::COMWrapper comWrapper;
 };
 
 } // namespace zzj
