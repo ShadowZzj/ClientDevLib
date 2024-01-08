@@ -69,8 +69,8 @@ void ProcessInfoStatistic::CalculateCpuPercentage(const ProcessV2 &lastProcess, 
 #else
     double directCpuPercentage =
         (double)(nowProcessCpuUsed - lastProcessCpuUsed).count() / (double)(deltaTimeMilliSeconds.count());
-    std::cout<<"now - last cpuUsed: "<<(nowProcessCpuUsed - lastProcessCpuUsed).count()<<std::endl;
-    std::cout<<"deltaTimeCount: "<<deltaTimeMilliSeconds.count()<<std::endl;
+    //std::cout<<"now - last cpuUsed: "<<(nowProcessCpuUsed - lastProcessCpuUsed).count()<<std::endl;
+    //std::cout<<"deltaTimeCount: "<<deltaTimeMilliSeconds.count()<<std::endl;
 #endif
 
     if (lastProcess.statisticCycle.cpuPercentage.has_value())
