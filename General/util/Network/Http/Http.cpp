@@ -31,7 +31,21 @@ size_t WriteHeader(void *ptr, size_t size, size_t nmemb, void *stream)
     nlohmann::json *json = (nlohmann::json *)stream;
     std::string key      = header.substr(0, header.find(":"));
     std::string value    = header.substr(header.find(":") + 1);
-    (*json)[key]         = value;
+    if (json->find(key) != json->end())
+    {
+        // if the value type is string, then make it array
+        if ((*json)[key].is_string())
+        {
+            nlohmann::json tmp = (*json)[key];
+            (*json)[key]       = nlohmann::json::array();
+            (*json)[key].push_back(tmp);
+        }
+        (*json)[key].push_back(value);
+    }
+    else
+    {
+        (*json)[key] = value;
+    }
     return size * nmemb;
 }
 int zzj::Http::Put(const char *apiPath, const char *str, std::string &ret)
@@ -457,6 +471,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                 std::string header = it.key() + ":" + it.value().get<std::string>();
                 http_headers       = curl_slist_append(http_headers, header.c_str());
             }
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_headers);
         }
         if (setting.find("timeout") != setting.end())
         {
