@@ -1,25 +1,106 @@
+#include <General/util/StrUtil.h>
+#include <boost/locale.hpp>
 #include <codecvt>
 #include <iostream>
-#include <vector>
-#include <boost/locale.hpp>
 #include <spdlog/spdlog.h>
-#include <General/util/StrUtil.h>
-int main()
+#include <vector>
+
+#include <General/util/File/File.h>
+#include <Windows/util/Service/Service.h>
+#include <string>
+class Watcher : public zzj::Service
 {
-    system("chcp 65001");
-    // 假设你的输入是一个包含Big5编码的std::vector<uint8_t>
-    std::vector<uint8_t> big5Data = {static_cast<uint8_t>('\xa4'), static_cast<uint8_t>('\x40'),
-                                     static_cast<uint8_t>('\xc0'), static_cast<uint8_t>('\xbb')};
+  public:
+    virtual void ServiceFunc() override
+    {
+        while (1)
+        {
+            static uint32_t loopCount = 0;
+            if (auto checkStatus = CheckSafeStop(5); zzj::ServiceInterface::ControlStatus::RequestStop == checkStatus)
+            {
+                spdlog::info("Running");
+                break;
+            }
+        }
+    }
+    virtual void OnStop() override
+    {
+    }
+    Watcher(std::string _binPath, std::string name, std::string description, std::string displayName)
+        : zzj::Service(name, _binPath, description, displayName)
+    {
+        serviceName = name;
+    }
 
-    std::string big5String = "\xa4\x40\xc0\xbb\x00\x00";
-    // Convert Big5 string to Unicode wide string using Boost Locale
-    std::string unicodeString = boost::locale::conv::to_utf<char>(big5String, "Big5");
+  protected:
+    std::string version;
+};
 
-   // Convert wide string to UTF - 8 std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8Converter;
-    //std::string narrowString = zzj::str::w2utf8(unicodeString);
+int MyChangeServiceConfig()
+{
+    char current_proc_path[MAX_PATH] = {0};
+    ::GetModuleFileNameA(NULL, current_proc_path, MAX_PATH);
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_EXECUTE);
+    if (hSC == NULL)
+        return -1;
 
-    // Use spdlog to log the narrow string
-    spdlog::info("Unicode String (Narrow): {}", unicodeString);
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, "testservice", SERVICE_CHANGE_CONFIG | SERVICE_QUERY_STATUS);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return -2;
+    }
 
+    SERVICE_STATUS status;
+    if (::QueryServiceStatus(hSvc, &status) == FALSE)
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -3;
+    }
+
+    // change service to auto start
+    if (!ChangeServiceConfigA(hSvc, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, current_proc_path, NULL,
+                              NULL, NULL, NULL, NULL, NULL))
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -4;
+    }
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return 0;
+}
+int main(int argc, char *argv[])
+{
+    char current_proc_path[MAX_PATH] = {0};
+    ::GetModuleFileNameA(NULL, current_proc_path, MAX_PATH);
+    Watcher *watcher = new Watcher("C:\\Windows\\System32\\svchost.exe", "testservice", "testservice", "testservice");
+
+    if (argc == 1)
+    {
+        watcher->Run();
+        return 0;
+    }
+    string cmd = argv[1];
+
+    if (cmd == "-uninstall")
+    {
+        watcher->Uninstall();
+    }
+    if (cmd == "-install")
+    {
+        watcher->Install();
+        MyChangeServiceConfig();
+    }
+    if (cmd == "-start")
+    {
+        watcher->Start();
+    }
+
+    if (cmd == "-stop")
+    {
+        watcher->Stop();
+    }
     return 0;
 }
