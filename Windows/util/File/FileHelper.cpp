@@ -387,3 +387,13 @@ bool zzj::FileHelper::DeleteDirPossible(const std::string &filePathName)
     } while (::FindNextFileA(hFind, &wfd));
     return bRet;
 }
+std::string zzj::FileHelper::GetProgramFilesFolder()
+{
+    char path[MAX_PATH];
+    if (SHGetFolderPathA(NULL, CSIDL_PROGRAM_FILES, NULL, 0, path) == S_OK)
+    {
+        return std::string(path);
+    }
+    else
+        return "";
+}

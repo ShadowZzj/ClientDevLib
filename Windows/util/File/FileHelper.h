@@ -22,8 +22,9 @@ class FileHelper
     static std::string GetProgramPath();
     static std::string GetCurrentUserProgramDataFolder();
     static zzj::File GetFileInstance(const std::string &imagePath);
-
-  protected:
+    static std::string GetProgramFilesFolder();
+     
+    protected: 
     DECLARE_LUA_EXPORT(FileHelper)
 };
 } // namespace zzj
