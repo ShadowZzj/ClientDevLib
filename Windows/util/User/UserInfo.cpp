@@ -17,46 +17,6 @@
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "Wtsapi32.lib")
 #pragma comment(lib, "netapi32.lib")
-std::optional<std::string> GetSidByName(const std::string &acctName)
-{
-    LPSTR sidString = nullptr;
-    DEFER
-    {
-        if (sidString)
-            LocalFree(sidString);
-    };
-    DWORD dwSize   = 0;
-    DWORD dwErr    = 0;
-    DWORD dwName   = 0;
-    DWORD dwDomain = 0;
-    SID_NAME_USE sidUse;
-    BOOL bStatus = LookupAccountNameA(NULL, acctName.c_str(), NULL, &dwSize, NULL, &dwDomain, &sidUse);
-    if (bStatus == FALSE)
-    {
-        dwErr = GetLastError();
-        if (dwErr != ERROR_INSUFFICIENT_BUFFER)
-        {
-            spdlog::error("LookupAccountNameA failed, error code: {}", dwErr);
-            return {};
-        }
-    }
-    std::vector<char> buf(dwSize);
-    std::vector<char> domainBuf(dwDomain);
-    bStatus = LookupAccountNameA(NULL, acctName.c_str(), buf.data(), &dwSize, domainBuf.data(), &dwDomain, &sidUse);
-    if (bStatus == FALSE)
-    {
-        dwErr = GetLastError();
-        spdlog::error("LookupAccountNameA failed, error code: {}", dwErr);
-        return {};
-    }
-    PSID pSid = reinterpret_cast<PSID>(buf.data());
-    if (!ConvertSidToStringSidA(pSid, &sidString))
-    {
-        spdlog::error("ConvertSidToStringSidA failed, error code: {}", GetLastError());
-        return {};
-    }
-    return zzj::str::ansi2utf8(sidString);
-}
 std::optional<std::string> GetSidByName(const std::wstring &acctName)
 {
     LPWSTR sidString = nullptr;
@@ -96,6 +56,11 @@ std::optional<std::string> GetSidByName(const std::wstring &acctName)
         return {};
     }
     return zzj::str::w2utf8(sidString);
+}
+std::optional<std::string> GetSidByName(const std::string &acctName)
+{
+    std::wstring wAcctName = zzj::str::utf82w(acctName);
+    return GetSidByName((const std::wstring &)wAcctName);
 }
 std::optional<std::string> GetUserDomainByName(const std::string &userName)
 {
