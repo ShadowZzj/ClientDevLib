@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_SEGMENT_COMMAND_H_
-#define LIEF_MACHO_SEGMENT_COMMAND_H_
+#ifndef LIEF_MACHO_SEGMENT_COMMAND_H
+#define LIEF_MACHO_SEGMENT_COMMAND_H
 
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 #include <memory>
 
 #include "LIEF/span.hpp"
@@ -88,7 +88,7 @@ class LIEF_API SegmentCommand : public LoadCommand {
 
   SegmentCommand* clone() const override;
 
-  virtual ~SegmentCommand();
+  ~SegmentCommand() override;
 
   //! Name of the segment (e.g. ``__TEXT``)
   const std::string& name() const;
@@ -129,13 +129,17 @@ class LIEF_API SegmentCommand : public LoadCommand {
   it_relocations relocations();
   it_const_relocations relocations() const;
 
+  //! Get the section with the given name
+  const Section* get_section(const std::string& name) const;
+  Section* get_section(const std::string& name);
+
   //! The raw content of this segment
-  inline span<const uint8_t> content() const {
+  span<const uint8_t> content() const {
     return data_;
   }
 
   //! The original index of this segment
-  inline int8_t index() const {
+  int8_t index() const {
     return this->index_;
   }
 
@@ -162,8 +166,6 @@ class LIEF_API SegmentCommand : public LoadCommand {
   //! Check if the current segment embeds the given section name
   bool has_section(const std::string& section_name) const;
 
-  bool operator==(const SegmentCommand& rhs) const;
-  bool operator!=(const SegmentCommand& rhs) const;
 
   std::ostream& print(std::ostream& os) const override;
 
@@ -171,23 +173,23 @@ class LIEF_API SegmentCommand : public LoadCommand {
 
   static bool classof(const LoadCommand* cmd);
 
-  private:
-  inline span<uint8_t> writable_content() {
+  protected:
+  span<uint8_t> writable_content() {
     return data_;
   }
 
   void content_resize(size_t size);
   void content_insert(size_t where, size_t size);
 
-  inline void content_extend(size_t width) {
+  void content_extend(size_t width) {
     content_resize(data_.size() + width);
   }
 
-  template<typename Func>
-  LIEF_LOCAL void update_data(Func f);
+  using update_fnc_t    = std::function<void(std::vector<uint8_t>&)>;
+  using update_fnc_ws_t = std::function<void(std::vector<uint8_t>&, size_t, size_t)>;
 
-  template<typename Func>
-  LIEF_LOCAL void update_data(Func f, size_t where, size_t size);
+  LIEF_LOCAL virtual void update_data(update_fnc_t f);
+  LIEF_LOCAL virtual void update_data(update_fnc_ws_t f, size_t where, size_t size);
 
   std::string name_;
   uint64_t virtual_address_ = 0;
@@ -202,8 +204,6 @@ class LIEF_API SegmentCommand : public LoadCommand {
   content_t data_;
   sections_t sections_;
   relocations_t relocations_;
-
-  DyldInfo* dyld_ = nullptr; //x-ref to keep the spans in a consistent state
 };
 
 }

@@ -19,28 +19,28 @@ int AddCrashHandler();
 namespace zzj
 {
 
-class ThreadV2;
-/**
- * @brief new process class with object oriented
- *
- */
-class ProcessV2
-{
+  class ThreadV2;
+  /**
+   * @brief new process class with object oriented
+   *
+   */
+  class ProcessV2
+  {
 
   public:
     class Snapshot
     {
-      public:
-        Snapshot();
-        ~Snapshot();
-        std::vector<ProcessV2> GetProcesses(const std::string &processName);
+    public:
+      Snapshot();
+      ~Snapshot();
+      std::vector<ProcessV2> GetProcesses(const std::string &processName);
 
-      private:
+    private:
 #ifdef _WIN32
-        HANDLE snapshot;
+      HANDLE snapshot;
 #else
-        process_iterator i;
-        process_filter filter = {0};
+      process_iterator i;
+      process_filter filter = {0};
 #endif
     };
     /**
@@ -49,12 +49,12 @@ class ProcessV2
      */
     class StatisticCycle
     {
-      public:
-        /**
-         * @brief cpu used cycle. percentage
-         *
-         */
-        std::optional<double> cpuPercentage;
+    public:
+      /**
+       * @brief cpu used cycle. percentage
+       *
+       */
+      std::optional<double> cpuPercentage;
     };
     /**
      * @brief timepoint statistic  like cputime since the process started
@@ -62,29 +62,43 @@ class ProcessV2
      */
     class StatisticTimePoint
     {
-      public:
-        /**
-         * @brief cpu used since start. milliseconds
-         *
-         */
-        std::optional<std::chrono::milliseconds> cpuUsed;
+    public:
+      /**
+       * @brief cpu used since start. milliseconds
+       *
+       */
+      std::optional<std::chrono::milliseconds> cpuUsed;
 
-        /**
-         * @brief memory used since start. Byte
-         *
-         */
-        std::optional<int64_t> memoryUsed;
+      /**
+       * @brief memory used since start. Byte
+       *
+       */
+      std::optional<int64_t> memoryUsed;
     };
 
     class Module
     {
+    public:
+      class Section
+      {
       public:
         std::string name;
-        std::string path;
         std::uintptr_t base;
         std::uintptr_t size;
-    };
+        bool readable;
+        bool writable;
+        bool executable;
+      };
+      std::string name;
+      std::string path;
+      std::uintptr_t base;
+      std::uintptr_t size;
+      std::vector<Section> sections;
 
+      std::vector<Section> GetSections(DWORD pid);
+    };
+    using EnviromentVariable = std::map<std::string, std::string>;
+    
   public:
     ProcessV2();
     /**
@@ -99,7 +113,7 @@ class ProcessV2
      * @param name
      */
     ProcessV2(const std::string &name);
-
+    std::string GetExecutableFilePath();
     /**
      * @brief Get Pid
      *
@@ -193,5 +207,5 @@ class ProcessV2
     std::string processName;
     StatisticTimePoint statisticTimePoint;
     StatisticCycle statisticCycle;
-};
+  };
 }; // namespace zzj

@@ -23,7 +23,7 @@ bool FileHelper::ReadFileAtOffset(std::string fileName, void *buffer, unsigned l
         return false;
 
     ScopeKernelHandle fileHandle =
-        CreateFileA(fileName.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+        CreateFileA(fileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (fileHandle == INVALID_HANDLE_VALUE)
         return false;

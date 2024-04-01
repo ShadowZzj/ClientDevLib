@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_TYPES_H_
-#define LIEF_TYPES_H_
-#include <stdint.h>
-#include <inttypes.h>
+#ifndef LIEF_TYPES_H
+#define LIEF_TYPES_H
+#include <cstdint>
+#include <cinttypes>
 #include <cstddef>
 
 #if defined(_MSC_VER)

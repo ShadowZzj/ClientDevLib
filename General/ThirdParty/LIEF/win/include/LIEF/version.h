@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_VERSION_H_
-#define LIEF_VERSION_H_
+#ifndef LIEF_VERSION_H
+#define LIEF_VERSION_H
 
 #if defined(NDEBUG)
   #define LIEF_NAME "LIEF"
@@ -22,10 +22,10 @@
   #define LIEF_NAME "LIEF (Debug)"
 #endif
 
-#define LIEF_VERSION "0.12.1-c7b3ce3b"
+#define LIEF_VERSION "0.14.1-bae887e0"
 #define LIEF_TAGGED 1
-#define LIEF_TAG    "0.12.1"
-#define LIEF_COMMIT "c7b3ce3b"
+#define LIEF_TAG    "0.14.1"
+#define LIEF_COMMIT "bae887e0"
 
 #define HUMAN_VERSION " v" LIEF_VERSION
 #define HUMAN_NAME NAME HUMAN_VERSION

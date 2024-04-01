@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_DYNAMIC_ENTRY_ARRAY_H_
-#define LIEF_ELF_DYNAMIC_ENTRY_ARRAY_H_
-
-#include <string>
+#ifndef LIEF_ELF_DYNAMIC_ENTRY_ARRAY_H
+#define LIEF_ELF_DYNAMIC_ENTRY_ARRAY_H
 
 #include "LIEF/visibility.h"
-
 #include "LIEF/ELF/DynamicEntry.hpp"
 
 namespace LIEF {
@@ -74,7 +71,7 @@ class LIEF_API DynamicEntryArray : public DynamicEntry {
 
   std::ostream& print(std::ostream& os) const override;
 
-  virtual ~DynamicEntryArray();
+  ~DynamicEntryArray() override;
 
   static bool classof(const DynamicEntry* entry);
 

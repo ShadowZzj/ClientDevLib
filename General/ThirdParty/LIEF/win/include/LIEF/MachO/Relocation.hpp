@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_RELOCATION_COMMAND_H_
-#define LIEF_MACHO_RELOCATION_COMMAND_H_
+#ifndef LIEF_MACHO_RELOCATION_COMMAND_H
+#define LIEF_MACHO_RELOCATION_COMMAND_H
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 #include <array>
 
 #include "LIEF/Abstract/Relocation.hpp"
@@ -30,14 +30,17 @@
 
 namespace LIEF {
 namespace MachO {
-
 class BinaryParser;
+class Section;
+class SegmentCommand;
+class Symbol;
 
 //! Class that represents a Mach-O relocation
 //!
 //! @see:
 //!   * MachO::RelocationObject
 //!   * MachO::RelocationDyld
+//!   * MachO::RelocationFixup
 class LIEF_API Relocation : public LIEF::Relocation {
 
   friend class BinaryParser;
@@ -109,8 +112,6 @@ class LIEF_API Relocation : public LIEF::Relocation {
   virtual void pc_relative(bool val) = 0;
   virtual void type(uint8_t type);
 
-  bool operator==(const Relocation& rhs) const;
-  bool operator!=(const Relocation& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

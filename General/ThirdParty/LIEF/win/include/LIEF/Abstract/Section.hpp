@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ABSTRACT_SECTION_H_
-#define LIEF_ABSTRACT_SECTION_H_
+#ifndef LIEF_ABSTRACT_SECTION_H
+#define LIEF_ABSTRACT_SECTION_H
 
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/types.hpp"
 #include "LIEF/span.hpp"
@@ -34,7 +34,7 @@ class LIEF_API Section : public Object {
   Section();
   Section(std::string name);
 
-  virtual ~Section();
+  ~Section() override;
 
   Section& operator=(const Section&);
   Section(const Section&);
@@ -92,8 +92,6 @@ class LIEF_API Section : public Object {
   //! @brief Method so that the ``visitor`` can visit us
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Section& rhs) const;
-  bool operator!=(const Section& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Section& entry);
 

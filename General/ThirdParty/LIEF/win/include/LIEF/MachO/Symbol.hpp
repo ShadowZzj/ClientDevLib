@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_SYMBOL_H_
-#define LIEF_MACHO_SYMBOL_H_
+#ifndef LIEF_MACHO_SYMBOL_H
+#define LIEF_MACHO_SYMBOL_H
 
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/types.hpp"
 #include "LIEF/visibility.h"
@@ -33,6 +33,7 @@ class BinaryParser;
 class BindingInfo;
 class ExportInfo;
 class DylibCommand;
+class Binary;
 
 namespace details {
 struct nlist_32;
@@ -48,8 +49,21 @@ struct nlist_64;
 class LIEF_API Symbol : public LIEF::Symbol {
 
   friend class BinaryParser;
+  friend class Binary;
 
   public:
+
+  //! Category of the symbol when the symbol comes from the `LC_SYMTAB` command.
+  //! The category is defined according to the `LC_DYSYMTAB` (DynamicSymbolCommand) command.
+  enum class CATEGORY {
+    NONE = 0,
+    LOCAL,
+    EXTERNAL,
+    UNDEFINED,
+
+    INDIRECT_ABS,
+    INDIRECT_LOCAL,
+  };
   Symbol();
 
   Symbol(const details::nlist_32& cmd);
@@ -98,16 +112,21 @@ class LIEF_API Symbol : public LIEF::Symbol {
 
   //! Return the library in which the symbol is defined.
   //! It returns a null pointer if the library can't be resolved
-  inline const DylibCommand* library() const {
+  const DylibCommand* library() const {
     return library_;
   }
 
-  inline DylibCommand* library() {
+  DylibCommand* library() {
     return library_;
   }
 
   //! Return the origin of the symbol: from LC_SYMTAB command or from the Dyld information
   SYMBOL_ORIGINS origin() const;
+
+  //! Category of the symbol according to the `LC_DYSYMTAB` command
+  CATEGORY category() const {
+    return category_;
+  }
 
   void type(uint8_t type);
   void numberof_sections(uint8_t nbsections);
@@ -115,13 +134,15 @@ class LIEF_API Symbol : public LIEF::Symbol {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Symbol& rhs) const;
-  bool operator!=(const Symbol& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Symbol& symbol);
 
+  static const Symbol& indirect_abs();
+  static const Symbol& indirect_local();
+
   private:
-  inline void library(DylibCommand& library) {
+  Symbol(CATEGORY cat);
+  void library(DylibCommand& library) {
     this->library_ = &library;
   }
 
@@ -135,6 +156,7 @@ class LIEF_API Symbol : public LIEF::Symbol {
   DylibCommand* library_ = nullptr;
 
   SYMBOL_ORIGINS origin_ = SYMBOL_ORIGINS::SYM_ORIGIN_UNKNOWN;
+  CATEGORY category_ = CATEGORY::NONE;
 };
 
 }

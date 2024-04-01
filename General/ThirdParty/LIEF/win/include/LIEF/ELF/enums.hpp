@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_ENUMS_H_
-#define LIEF_ELF_ENUMS_H_
+#ifndef LIEF_ELF_ENUMS_H
+#define LIEF_ELF_ENUMS_H
 #include "LIEF/enums.hpp"
 #include "LIEF/ELF/undef.h"
-#include <map>
 #include <cstdint>
 #include <cstddef>
 
@@ -248,7 +247,8 @@ enum class ARCH: size_t  {
   EM_CSR_KALIMBA   = 219, /**< CSR Kalimba architecture family */
   EM_AMDGPU        = 224, /**< AMD GPU architecture */
   EM_RISCV         = 243, /**< RISC-V */
-  EM_BPF           = 247  /**< eBPF Filter */
+  EM_BPF           = 247,  /**< eBPF Filter */
+  EM_LOONGARCH     = 258  /**< LoongArch */
 };
 
 
@@ -345,6 +345,11 @@ enum class RELOC_SYSTEMZ: size_t  {
 /* ELF Relocation type for Sparc. */
 enum class RELOC_SPARC: size_t  {
   #include "LIEF/ELF/Relocations/Sparc.def"
+};
+
+/* ELF Relocation types for LoongArch. */
+enum class RELOC_LOONGARCH: size_t  {
+  #include "LIEF/ELF/Relocations/LoongArch.def"
 };
 
 #undef ELF_RELOC
@@ -450,7 +455,12 @@ enum class HEXAGON_EFLAGS: size_t  {
   EF_HEXAGON_ISA_V5       = 0x00000040    /* Hexagon V5 ISA */
 };
 
-
+/* LoongArch Specific e_flags */
+enum class LOONGARCH_EFLAGS: size_t  {
+  EF_LOONGARCH_ABI_SOFT_FLOAT    = 0x1,
+  EF_LOONGARCH_ABI_SINGLE_FLOAT  = 0x2,
+  EF_LOONGARCH_ABI_DOUBLE_FLOAT  = 0x3
+};
 
 
 /** Special section indices. */
@@ -703,6 +713,10 @@ enum class DYNAMIC_TAGS: size_t  {
 
   DT_PREINIT_ARRAY              = 32,         /**< Pointer to array of preinit functions. */
   DT_PREINIT_ARRAYSZ            = 33,         /**< Size of the DT_PREINIT_ARRAY array. */
+  DT_SYMTAB_SHNDX               = 34,         /**< Address of SYMTAB_SHNDX section */
+  DT_RELRSZ                     = 35,         /**< Total size of RELR relative relocations */
+  DT_RELR                       = 36,         /**< Address of RELR relative relocations */
+  DT_RELRENT                    = 37,         /**< Size of one RELR relative relocaction */
 
   DT_LOOS                       = 0x60000000, /**< Start of environment specific tags. */
   DT_HIOS                       = 0x6FFFFFFF, /**< End of environment specific tags. */
@@ -774,10 +788,10 @@ enum class DYNAMIC_TAGS: size_t  {
   DT_ANDROID_RELSZ              = 0x60000010, /**< The size of packed relocation data in bytes (Android specific). */
   DT_ANDROID_RELA               = 0x60000011, /**< The offset of packed relocation data (Android specific). */
   DT_ANDROID_RELASZ             = 0x60000012, /**< The size of packed relocation data in bytes (Android specific). */
-  DT_RELR                       = 0x6FFFE000, /**< The offset of new relr relocation data (Android specific). */
-  DT_RELRSZ                     = 0x6FFFE001, /**< The size of nre relr relocation data in bytes (Android specific). */
-  DT_RELRENT                    = 0x6FFFE003, /**< The size of a new relr relocation entry (Android specific). */
-  DT_RELRCOUNT                  = 0x6FFFE005 /**< Specifies the relative count of new relr relocation entries (Android specific). */
+  DT_ANDROID_RELR               = 0x6FFFE000, /**< The offset of new relr relocation data (Android specific). */
+  DT_ANDROID_RELRSZ             = 0x6FFFE001, /**< The size of nre relr relocation data in bytes (Android specific). */
+  DT_ANDROID_RELRENT            = 0x6FFFE003, /**< The size of a new relr relocation entry (Android specific). */
+  DT_ANDROID_RELRCOUNT          = 0x6FFFE005  /**< Specifies the relative count of new relr relocation entries (Android specific). */
 };
 
 /** DT_FLAGS and DT_FLAGS_1 values. */
@@ -871,64 +885,6 @@ enum {
   VER_NEED_CURRENT = 1
 };
 
-
-enum class AUX_TYPE: size_t  {
-
-   AT_NULL          = 0,     /**< End of vector */
-   AT_IGNORE        = 1,     /**< Entry should be ignored */
-   AT_EXECFD        = 2,     /**< File descriptor of program */
-   AT_PHDR          = 3,     /**< Program headers for program */
-   AT_PHENT         = 4,     /**< Size of program header entry */
-   AT_PHNUM         = 5,     /**< Number of program headers */
-   AT_PAGESZ        = 6,     /**< System page size */
-   AT_BASE          = 7,     /**< Base address of interpreter */
-   AT_FLAGS         = 8,     /**< Flags */
-   AT_ENTRY         = 9,     /**< Entry point of program */
-   AT_NOTELF        = 10,    /**< Program is not ELF */
-   AT_UID           = 11,    /**< Real uid */
-   AT_EUID          = 12,    /**< Effective uid */
-   AT_GID           = 13,    /**< Real gid */
-   AT_EGID          = 14,    /**< Effective gid */
-   AT_CLKTCK        = 17,    /**< Frequency of times() */
-
-   /* Some more special a_type values describing the hardware.  */
-
-   AT_PLATFORM      = 15,    /**< String identifying platform.  */
-   AT_HWCAP         = 16,    /**< Machine dependent hints about processor capabilities.  */
-
-   /* This entry gives some information about the FPU initialization
-      performed by the kernel. */
-
-   AT_FPUCW        = 18,    /**< Used FPU control word.  */
-
-   /* Cache block sizes. */
-   AT_DCACHEBSIZE   = 19,    /**< Data cache block size.  */
-   AT_ICACHEBSIZE   = 20,    /**< Instruction cache block size.  */
-   AT_UCACHEBSIZE   = 21,    /**< Unified cache block size.  */
-
-   /* A special ignored value for PPC, used by the kernel to control the
-      interpretation of the AUXV. Must be > 16.  */
-
-   AT_IGNOREPPC     = 22,    /**< Entry should be ignored.  */
-   AT_SECURE        = 23,    /**< Boolean, was exec setuid-like?  */
-   AT_BASE_PLATFORM = 24,    /**< String identifying real platforms.*/
-   AT_RANDOM        = 25,    /**< Address of 16 random bytes.  */
-   AT_HWCAP2        = 26,    /**< Extension of AT_HWCAP.  */
-   AT_EXECFN        = 31,    /**< Filename of executable.  */
-
-   /* Pointer to the global system page used for system calls and other
-      nice things. */
-   AT_SYSINFO       = 32,
-   AT_SYSINFO_EHDR  = 33,
-
-   /* Shapes of the caches.  Bits 0-3 contains associativity; bits 4-7 contains
-      log2 of line size; mask those to get cache size.  */
-   AT_L1I_CACHESHAPE  = 34,
-   AT_L1D_CACHESHAPE  = 35,
-   AT_L2_CACHESHAPE   = 36,
-   AT_L3_CACHESHAPE   = 37
-};
-
 /** Methods that can be used by the LIEF::ELF::Parser
     to count the number of dynamic symbols */
 enum class DYNSYM_COUNT_METHODS: size_t  {
@@ -938,76 +894,12 @@ enum class DYNSYM_COUNT_METHODS: size_t  {
   COUNT_RELOCATIONS = 3, /**< Count based on PLT/GOT relocations (very reliable but not accurate) */
 };
 
-enum class NOTE_TYPES: size_t  {
-  NT_UNKNOWN             = 0,
-  NT_GNU_ABI_TAG         = 1,
-  NT_GNU_HWCAP           = 2,
-  NT_GNU_BUILD_ID        = 3,
-  NT_GNU_GOLD_VERSION    = 4,
-  NT_GNU_PROPERTY_TYPE_0 = 5,
-  NT_CRASHPAD            = 0x4f464e49,
-};
-
-enum class NOTE_TYPES_CORE: size_t  {
-  NT_CORE_UNKNOWN     = 0,
-  NT_PRSTATUS         = 1,
-  NT_PRFPREG          = 2,
-  NT_PRPSINFO         = 3,
-  NT_TASKSTRUCT       = 4,
-  NT_AUXV             = 6,
-  NT_SIGINFO          = 0x53494749,
-  NT_FILE             = 0x46494c45,
-  NT_PRXFPREG         = 0x46e62b7f,
-
-  NT_ARM_VFP          = 0x400,
-  NT_ARM_TLS          = 0x401,
-  NT_ARM_HW_BREAK     = 0x402,
-  NT_ARM_HW_WATCH     = 0x403,
-  NT_ARM_SYSTEM_CALL  = 0x404,
-  NT_ARM_SVE          = 0x405,
-
-  NT_386_TLS          = 0x200,
-  NT_386_IOPERM       = 0x201,
-  NT_386_XSTATE       = 0x202,
-
-};
-
-
-enum class NOTE_ABIS: size_t  {
-  ELF_NOTE_UNKNOWN     = ~(unsigned int)(0),
-  ELF_NOTE_OS_LINUX    = 0,
-  ELF_NOTE_OS_GNU      = 1,
-  ELF_NOTE_OS_SOLARIS2 = 2,
-  ELF_NOTE_OS_FREEBSD  = 3,
-  ELF_NOTE_OS_NETBSD   = 4,
-  ELF_NOTE_OS_SYLLABLE = 5,
-};
-
 enum class RELOCATION_PURPOSES: size_t  {
   RELOC_PURPOSE_NONE    = 0,
   RELOC_PURPOSE_PLTGOT  = 1,
   RELOC_PURPOSE_DYNAMIC = 2,
   RELOC_PURPOSE_OBJECT  = 3,
 };
-
-
-using note_to_section_map_t = std::multimap<NOTE_TYPES, const char*>;
-
-static const note_to_section_map_t note_to_section_map = {
-  { NOTE_TYPES::NT_GNU_ABI_TAG,         ".note.ABI-tag"          },
-  { NOTE_TYPES::NT_GNU_ABI_TAG,         ".note.android.ident"    },
-
-  { NOTE_TYPES::NT_GNU_HWCAP,           ".note.gnu.hwcap"        },
-  { NOTE_TYPES::NT_GNU_BUILD_ID,        ".note.gnu.build-id"     },
-  { NOTE_TYPES::NT_GNU_BUILD_ID,        ".note.stapsdt"          }, // Alternative name
-  { NOTE_TYPES::NT_GNU_GOLD_VERSION,    ".note.gnu.gold-version" },
-  { NOTE_TYPES::NT_GNU_GOLD_VERSION,    ".note.go.buildid"       },
-  { NOTE_TYPES::NT_GNU_PROPERTY_TYPE_0, ".note.gnu.property"     },
-  { NOTE_TYPES::NT_CRASHPAD,            ".note.crashpad.info"    },
-
-  { NOTE_TYPES::NT_UNKNOWN,             ".note"                  },
-};
-
 
 }
 }
@@ -1016,6 +908,7 @@ ENABLE_BITMASK_OPERATORS(LIEF::ELF::ELF_SEGMENT_FLAGS)
 ENABLE_BITMASK_OPERATORS(LIEF::ELF::ARM_EFLAGS)
 ENABLE_BITMASK_OPERATORS(LIEF::ELF::MIPS_EFLAGS)
 ENABLE_BITMASK_OPERATORS(LIEF::ELF::HEXAGON_EFLAGS)
+ENABLE_BITMASK_OPERATORS(LIEF::ELF::LOONGARCH_EFLAGS)
 ENABLE_BITMASK_OPERATORS(LIEF::ELF::ELF_SECTION_FLAGS)
 ENABLE_BITMASK_OPERATORS(LIEF::ELF::DYNAMIC_FLAGS)
 ENABLE_BITMASK_OPERATORS(LIEF::ELF::DYNAMIC_FLAGS_1)

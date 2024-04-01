@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_UTILS_H_
-#define LIEF_MACHO_UTILS_H_
+#ifndef LIEF_MACHO_UTILS_H
+#define LIEF_MACHO_UTILS_H
 
 #include "LIEF/types.hpp"
 #include "LIEF/visibility.h"
@@ -23,8 +23,13 @@
 #include <vector>
 
 namespace LIEF {
+class BinaryStream;
 namespace MachO {
 class Binary;
+class FatBinary;
+
+//! Check if the given stream wraps a Mach-O binary
+LIEF_API bool is_macho(BinaryStream& stream);
 
 //! Check if the given file is a Mach-O binary
 LIEF_API bool is_macho(const std::string& file);
@@ -41,6 +46,10 @@ LIEF_API bool is_64(const std::string& file);
 //! Check the layout of the given Mach-O binary. It checks if it can be signed
 //! according to cctools-921/libstuff/checkout.c
 LIEF_API bool check_layout(const Binary& binary, std::string* error = nullptr);
+
+//! Check the layout of the given FAT Mach-O by checking individually the layout
+//! of the binaries embedded in the FAT
+LIEF_API bool check_layout(const FatBinary& binary, std::string* error = nullptr);
 }
 }
 

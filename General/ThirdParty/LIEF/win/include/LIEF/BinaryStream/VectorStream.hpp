@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@
 namespace LIEF {
 class VectorStream : public BinaryStream {
   public:
+  using BinaryStream::p;
+  using BinaryStream::end;
+  using BinaryStream::start;
+
   static result<VectorStream> from_file(const std::string& file);
   VectorStream(std::vector<uint8_t> data);
 
@@ -36,52 +40,28 @@ class VectorStream : public BinaryStream {
   VectorStream(VectorStream&& other);
   VectorStream& operator=(VectorStream&& other);
 
-  inline uint64_t size() const override {
+  uint64_t size() const override {
     return size_;
   }
 
   const std::vector<uint8_t>& content() const;
 
-  inline std::vector<uint8_t>&& move_content() {
+  std::vector<uint8_t>&& move_content() {
     size_ = 0;
     return std::move(binary_);
   }
 
-  inline uint8_t* p() {
+  const uint8_t* p() const override {
     return this->binary_.data() + this->pos();
   }
 
-  inline const uint8_t* p() const {
-    return this->binary_.data() + this->pos();
-  }
-
-  inline uint8_t* start() {
+  const uint8_t* start() const override {
     return this->binary_.data();
   }
 
-  inline const uint8_t* start() const {
-    return this->binary_.data();
-  }
-
-  inline uint8_t* end() {
+  const uint8_t* end() const override {
     return this->binary_.data() + this->binary_.size();
   }
-
-  inline const uint8_t* end() const {
-    return this->binary_.data() + this->binary_.size();
-  }
-
-  result<size_t> asn1_read_tag(int tag) override;
-  result<size_t> asn1_read_len() override;
-  result<std::string> asn1_read_alg() override;
-  result<std::string> asn1_read_oid() override;
-  result<int32_t> asn1_read_int() override;
-  result<std::vector<uint8_t>> asn1_read_bitstring() override;
-  result<std::vector<uint8_t>> asn1_read_octet_string() override;
-  result<std::unique_ptr<mbedtls_x509_crt>> asn1_read_cert() override;
-  result<std::string> x509_read_names() override;
-  result<std::vector<uint8_t>> x509_read_serial() override;
-  result<std::unique_ptr<mbedtls_x509_time>> x509_read_time() override;
 
   static bool classof(const BinaryStream& stream);
 

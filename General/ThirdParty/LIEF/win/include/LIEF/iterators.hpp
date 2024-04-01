@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  * Copyright 2017 - 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ITERATORS_H_
-#define LIEF_ITERATORS_H_
-#include <iostream>
+#ifndef LIEF_ITERATORS_H
+#define LIEF_ITERATORS_H
+#include <ostream>
 #include <cmath>
 #include <cstddef>
 #include <cassert>
@@ -26,7 +26,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "LIEF/exception.hpp"
 
 namespace LIEF {
 
@@ -46,13 +45,14 @@ using add_lvalue_reference_t = typename std::add_lvalue_reference<T>::type;
 //! Iterator which returns reference on container's values
 template<class T, typename U = typename decay_t<T>::value_type,
          class ITERATOR_T = typename decay_t<T>::iterator>
-class ref_iterator : public std::iterator<
-                     std::bidirectional_iterator_tag,
-                     decay_t<U>,
-                     ptrdiff_t,
-                     typename std::remove_pointer<U>::type*,
-                     typename std::remove_pointer<U>::type&> {
+class ref_iterator {
   public:
+  using iterator_category = std::bidirectional_iterator_tag;
+  using value_type = decay_t<U>;
+  using difference_type = ptrdiff_t;
+  using pointer = typename std::remove_pointer<U>::type*;
+  using reference = typename std::remove_pointer<U>::type&;
+
   using container_type = T;          // e.g. std::vector<Section*>&
   using DT_VAL         = U;          // e.g. Section*
   using DT             = decay_t<T>; // e.g. std::vector<Section>
@@ -60,8 +60,7 @@ class ref_iterator : public std::iterator<
   using pointer_t      = typename ref_iterator::pointer;
 
   ref_iterator(T container) :
-    container_{std::forward<T>(container)},
-    distance_{0}
+    container_{std::forward<T>(container)}
   {
     it_ = std::begin(container_);
   }
@@ -75,7 +74,7 @@ class ref_iterator : public std::iterator<
   }
 
 
-  ref_iterator operator=(ref_iterator other) {
+  ref_iterator& operator=(ref_iterator other) {
     swap(other);
     return *this;
   }
@@ -136,7 +135,7 @@ class ref_iterator : public std::iterator<
   add_const_t<ref_t> operator[](size_t n) const {
     assert(n < size() && "integrity error: out of bound");
 
-    ref_iterator* no_const_this = const_cast<ref_iterator*>(this);
+    auto* no_const_this = const_cast<ref_iterator*>(this);
 
     typename ref_iterator::difference_type saved_dist = std::distance(std::begin(no_const_this->container_), no_const_this->it_);
     no_const_this->it_ = std::begin(no_const_this->container_);
@@ -229,7 +228,7 @@ class ref_iterator : public std::iterator<
   typename std::enable_if<std::is_pointer<V>::value, add_const_t<ref_t>>::type
   operator*() const {
     assert(*it_ && "integrity error: nullptr");
-    return const_cast<add_const_t<ref_t>>(**it_);
+    return const_cast<add_const_t<ref_t>>(static_cast<ref_t>(**it_));
   }
 
   template<typename V = DT_VAL>
@@ -251,7 +250,7 @@ class ref_iterator : public std::iterator<
   protected:
   T container_;
   ITERATOR_T it_;
-  typename ref_iterator::difference_type distance_;
+  typename ref_iterator::difference_type distance_{};
 };
 
 
@@ -263,14 +262,15 @@ using const_ref_iterator = ref_iterator<CT, U, typename decay_t<CT>::const_itera
 //! Iterator which return a ref on container's values given predicates
 template<class T, typename U = typename decay_t<T>::value_type,
          class ITERATOR_T = typename decay_t<T>::iterator>
-class filter_iterator : public std::iterator<
-                        std::forward_iterator_tag,
-                        decay_t<U>,
-                        ptrdiff_t,
-                        typename std::remove_pointer<U>::type*,
-                        typename std::remove_pointer<U>::type&> {
+class filter_iterator {
 
   public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = decay_t<U>;
+  using difference_type = ptrdiff_t;
+  using pointer = typename std::remove_pointer<U>::type*;
+  using reference = typename std::remove_pointer<U>::type&;
+
   using container_type = T;
   using DT_VAL         = U;
   using DT        = decay_t<T>;
@@ -279,10 +279,8 @@ class filter_iterator : public std::iterator<
   using filter_t  = std::function<bool (const typename DT::value_type&)>;
 
   filter_iterator(T container, filter_t filter) :
-    size_c_{0},
     container_{std::forward<T>(container)},
-    filters_{},
-    distance_{0}
+    filters_{}
   {
 
     it_ = std::begin(container_);
@@ -298,10 +296,8 @@ class filter_iterator : public std::iterator<
   }
 
   filter_iterator(T container, const std::vector<filter_t>& filters) :
-    size_c_{0},
     container_{std::forward<T>(container)},
-    filters_{filters},
-    distance_{0}
+    filters_{filters}
   {
 
     it_ = std::begin(container_);
@@ -314,16 +310,13 @@ class filter_iterator : public std::iterator<
   }
 
   filter_iterator(T container) :
-    size_c_{0},
     container_{std::forward<T>(container)},
-    filters_{},
-    distance_{0}
+    filters_{}
   {
     it_ = std::begin(container_);
   }
 
   filter_iterator(const filter_iterator& copy) :
-    size_c_{0},
     container_{copy.container_},
     it_{std::begin(container_)},
     filters_{copy.filters_},
@@ -332,7 +325,7 @@ class filter_iterator : public std::iterator<
     std::advance(it_, distance_);
   }
 
-  filter_iterator operator=(filter_iterator other) {
+  filter_iterator& operator=(filter_iterator other) {
     swap(other);
     return *this;
   }
@@ -394,7 +387,7 @@ class filter_iterator : public std::iterator<
   typename std::enable_if<std::is_pointer<V>::value, add_const_t<ref_t>>::type
   operator*() const {
     assert(*it_ && "integrity error: nullptr");
-    return const_cast<add_const_t<ref_t>>(**it_);
+    return const_cast<add_const_t<ref_t>>(static_cast<ref_t>(**it_));
   }
 
   template<typename V = DT_VAL>
@@ -428,7 +421,7 @@ class filter_iterator : public std::iterator<
   }
 
   size_t size() const {
-    if (filters_.size() == 0) {
+    if (filters_.empty()) {
       return container_.size();
     }
 
@@ -475,11 +468,11 @@ class filter_iterator : public std::iterator<
   }
 
 
-  mutable size_t size_c_;
+  mutable size_t size_c_ = 0;
   T container_;
   ITERATOR_T it_;
   std::vector<filter_t> filters_;
-  typename filter_iterator::difference_type distance_;
+  typename filter_iterator::difference_type distance_ = 0;
 };
 
 //! Iterator which return a const ref on container's values given predicates

@@ -25,6 +25,8 @@ class File
         std::string m_imageName;
     };
     File(const std::string &imageName);
+    std::vector<BYTE> Read(std::uintptr_t offset, std::size_t size);
+
     ~File();
     FileInfo GetFileInfo();
   private:

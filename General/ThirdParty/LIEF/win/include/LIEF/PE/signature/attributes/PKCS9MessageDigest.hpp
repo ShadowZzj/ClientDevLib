@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_ATTRIBUTES_PKCS9_MESSAGE_DIGEST_H_
-#define LIEF_PE_ATTRIBUTES_PKCS9_MESSAGE_DIGEST_H_
+#ifndef LIEF_PE_ATTRIBUTES_PKCS9_MESSAGE_DIGEST_H
+#define LIEF_PE_ATTRIBUTES_PKCS9_MESSAGE_DIGEST_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/errors.hpp"
 #include "LIEF/PE/signature/Attribute.hpp"
+#include "LIEF/span.hpp"
+
+#include <vector>
 
 namespace LIEF {
 class VectorStream;
@@ -48,24 +51,34 @@ class LIEF_API PKCS9MessageDigest : public Attribute {
   friend class SignatureParser;
 
   public:
-  PKCS9MessageDigest();
-  PKCS9MessageDigest(std::vector<uint8_t> digest);
-  PKCS9MessageDigest(const PKCS9MessageDigest&);
-  PKCS9MessageDigest& operator=(const PKCS9MessageDigest&);
+  PKCS9MessageDigest() = delete;
+  PKCS9MessageDigest(std::vector<uint8_t> digest) :
+    Attribute(Attribute::TYPE::PKCS9_MESSAGE_DIGEST),
+    digest_{std::move(digest)}
+  {}
 
-  std::unique_ptr<Attribute> clone() const override;
+  PKCS9MessageDigest(const PKCS9MessageDigest&) = default;
+  PKCS9MessageDigest& operator=(const PKCS9MessageDigest&) = default;
+
+  std::unique_ptr<Attribute> clone() const override {
+    return std::unique_ptr<Attribute>(new PKCS9MessageDigest{*this});
+  }
 
   //! Message digeset as a blob of bytes as described in the RFC
-  inline const std::vector<uint8_t>& digest() const {
+  span<const uint8_t> digest() const {
     return digest_;
   }
 
   //! Print information about the attribute
   std::string print() const override;
 
+  static bool classof(const Attribute* attr) {
+    return attr->type() == Attribute::TYPE::PKCS9_MESSAGE_DIGEST;
+  }
+
   void accept(Visitor& visitor) const override;
 
-  virtual ~PKCS9MessageDigest();
+  ~PKCS9MessageDigest() override = default;
 
   private:
   std::vector<uint8_t> digest_;

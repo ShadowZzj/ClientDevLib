@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_PARSER_H_
-#define LIEF_PE_PARSER_H_
+#ifndef LIEF_PE_PARSER_H
+#define LIEF_PE_PARSER_H
 
 #include <set>
 #include <string>
@@ -26,8 +26,7 @@
 
 #include "LIEF/Abstract/Parser.hpp"
 #include "LIEF/PE/enums.hpp"
-
-struct Profiler;
+#include "LIEF/PE/ParserConfig.hpp"
 
 namespace LIEF {
 class BinaryStream;
@@ -40,13 +39,13 @@ class DelayImport;
 
 namespace details {
 struct pe_resource_directory_table;
+struct pe_debug;
 }
 
 //! Main interface to parse PE binaries. In particular the **static** functions:
 //! Parser::parse should be used to get a LIEF::PE::Binary
 class LIEF_API Parser : public LIEF::Parser {
   public:
-  friend struct ::Profiler;
 
   //! Maximum size of the data read
   static constexpr size_t MAX_DATA_SIZE = 3_GB;
@@ -76,10 +75,16 @@ class LIEF_API Parser : public LIEF::Parser {
 
   public:
   //! Parse a PE binary from the given filename
-  static std::unique_ptr<Binary> parse(const std::string& filename);
+  static std::unique_ptr<Binary> parse(const std::string& filename,
+                                       const ParserConfig& conf = ParserConfig::all());
 
   //! Parse a PE binary from a data buffer
-  static std::unique_ptr<Binary> parse(std::vector<uint8_t> data, const std::string& name = "");
+  static std::unique_ptr<Binary> parse(std::vector<uint8_t> data,
+                                       const ParserConfig& conf = ParserConfig::all());
+
+  //! Parse a PE binary from the given BinaryStream
+  static std::unique_ptr<Binary> parse(std::unique_ptr<BinaryStream> stream,
+                                       const ParserConfig& conf = ParserConfig::all());
 
   Parser& operator=(const Parser& copy) = delete;
   Parser(const Parser& copy)            = delete;
@@ -87,11 +92,12 @@ class LIEF_API Parser : public LIEF::Parser {
   private:
   Parser(const std::string& file);
   Parser(std::vector<uint8_t> data);
+  Parser(std::unique_ptr<BinaryStream> stream);
 
-  ~Parser();
+  ~Parser() override;
   Parser();
 
-  void init(const std::string& name = "");
+  void init(const ParserConfig& config);
 
   template<typename PE_T>
   ok_error_t parse();
@@ -118,8 +124,10 @@ class LIEF_API Parser : public LIEF::Parser {
 
   ok_error_t parse_export_table();
   ok_error_t parse_debug();
-  ok_error_t parse_debug_code_view(Debug& debug_info);
-  ok_error_t parse_debug_pogo(Debug& debug_info);
+
+  std::unique_ptr<Debug> parse_code_view(const details::pe_debug& debug_info);
+  std::unique_ptr<Debug> parse_pogo(const details::pe_debug& debug_info);
+  std::unique_ptr<Debug> parse_repro(const details::pe_debug& debug_info);
 
   template<typename PE_T>
   ok_error_t parse_tls();
@@ -147,6 +155,7 @@ class LIEF_API Parser : public LIEF::Parser {
   std::unique_ptr<Binary> binary_;
   std::set<uint32_t> resource_visited_;
   std::unique_ptr<BinaryStream> stream_;
+  ParserConfig config_;
 };
 
 

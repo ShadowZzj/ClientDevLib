@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_DEX_PROTOTYPE_H_
-#define LIEF_DEX_PROTOTYPE_H_
+#ifndef LIEF_DEX_PROTOTYPE_H
+#define LIEF_DEX_PROTOTYPE_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
@@ -48,12 +48,10 @@ class LIEF_API Prototype : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Prototype& rhs) const;
-  bool operator!=(const Prototype& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Prototype& type);
 
-  virtual ~Prototype();
+  ~Prototype() override;
 
   private:
   Type* return_type_ = nullptr;

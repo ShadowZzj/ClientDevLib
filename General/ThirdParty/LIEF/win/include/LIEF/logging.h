@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,6 @@
 #ifndef C_LIEF_LOGGING_H_
 #define C_LIEF_LOGGING_H_
 
-/** @defgroup logging_c_api Logging
- *  @brief Logging C API
- *
- *  @{
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,6 +36,5 @@ LIEF_API void lief_logging_set_level(uint32_t level);
 }
 #endif
 
-/** @} */
 #endif
 

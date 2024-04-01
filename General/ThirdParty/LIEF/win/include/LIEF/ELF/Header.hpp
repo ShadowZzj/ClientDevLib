@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_HEADER_H_
-#define LIEF_ELF_HEADER_H_
+#ifndef LIEF_ELF_HEADER_H
+#define LIEF_ELF_HEADER_H
 
-#include <iostream>
+#include <ostream>
 #include <array>
 #include <vector>
+#include <set>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
@@ -50,6 +51,7 @@ class LIEF_API Header : public Object {
   using mips_flags_list_t    = flags_list_t<MIPS_EFLAGS>;
   using hexagon_flags_list_t = flags_list_t<HEXAGON_EFLAGS>;
   using ppc64_flags_list_t   = flags_list_t<PPC64_EFLAGS>;
+  using loongarch_flags_list_t   = flags_list_t<LOONGARCH_EFLAGS>;
 
   public:
   Header();
@@ -59,7 +61,7 @@ class LIEF_API Header : public Object {
   Header& operator=(const Header&);
   Header(const Header&);
 
-  virtual ~Header();
+  ~Header() override;
 
   //! Define the object file type. (e.g. executable, library...)
   E_TYPE file_type() const;
@@ -116,6 +118,12 @@ class LIEF_API Header : public Object {
 
   //! Return a list of HEXAGON_EFLAGS present in processor_flag()
   hexagon_flags_list_t hexagon_flags_list() const;
+
+  //! Check if the given flag is present in processor_flag()
+  bool has(LOONGARCH_EFLAGS f) const;
+
+  //! Return a list of LOONGARCH_EFLAGS present in processor_flag()
+  loongarch_flags_list_t loongarch_flags_list() const;
 
   //! Size of the current header
   //!
@@ -186,8 +194,6 @@ class LIEF_API Header : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Header& rhs) const;
-  bool operator!=(const Header& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Header& hdr);
 

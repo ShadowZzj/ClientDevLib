@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 #ifndef C_LIEF_PE_H_
 #define C_LIEF_PE_H_
-
-//! @defgroup pe_c_api PE C API
 
 #include "LIEF/PE/Binary.h"
 #include "LIEF/PE/EnumToString.h"

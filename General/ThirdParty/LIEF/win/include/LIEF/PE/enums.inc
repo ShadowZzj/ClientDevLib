@@ -4,35 +4,6 @@ enum _LIEF_EN(PE_TYPES) {
     _LIEF_EI(PE32_PLUS) = 0x20b  /** 64 bits */
 };
 
-enum _LIEF_EN(MACHINE_TYPES) {
-  _LIEF_EI(MT_Invalid) = 0xffff,
-  _LIEF_EI(IMAGE_FILE_MACHINE_UNKNOWN)   = 0x0,
-  _LIEF_EI(IMAGE_FILE_MACHINE_AM33)      = 0x1D3,  /**< Matsushita AM33               */
-  _LIEF_EI(IMAGE_FILE_MACHINE_AMD64)     = 0x8664, /**< AMD x64                        */
-  _LIEF_EI(IMAGE_FILE_MACHINE_ARM)       = 0x1C0,  /**< ARM little endian              */
-  _LIEF_EI(IMAGE_FILE_MACHINE_ARMNT)     = 0x1C4,  /**< ARMv7 Thumb mode only          */
-  _LIEF_EI(IMAGE_FILE_MACHINE_ARM64)     = 0xAA64, /**< ARMv8 in 64-bits mode          */
-  _LIEF_EI(IMAGE_FILE_MACHINE_EBC)       = 0xEBC,  /**< EFI byte code                  */
-  _LIEF_EI(IMAGE_FILE_MACHINE_I386)      = 0x14C,  /**< Intel 386 or later             */
-  _LIEF_EI(IMAGE_FILE_MACHINE_IA64)      = 0x200,  /**< Intel Itanium processor family */
-  _LIEF_EI(IMAGE_FILE_MACHINE_M32R)      = 0x9041, /**< Mitsubishi M32R little endian  */
-  _LIEF_EI(IMAGE_FILE_MACHINE_MIPS16)    = 0x266,  /**< MIPS16                         */
-  _LIEF_EI(IMAGE_FILE_MACHINE_MIPSFPU)   = 0x366,  /**< MIPS with FPU                  */
-  _LIEF_EI(IMAGE_FILE_MACHINE_MIPSFPU16) = 0x466,  /**< MIPS16 with FPU                */
-  _LIEF_EI(IMAGE_FILE_MACHINE_POWERPC)   = 0x1F0,  /**< Power PC little endian         */
-  _LIEF_EI(IMAGE_FILE_MACHINE_POWERPCFP) = 0x1F1,  /**< Power PC with floating point   */
-  _LIEF_EI(IMAGE_FILE_MACHINE_R4000)     = 0x166,  /**< MIPS with little endian        */
-  _LIEF_EI(IMAGE_FILE_MACHINE_RISCV32)   = 0x5032, /**< RISC-V 32-bit address space    */
-  _LIEF_EI(IMAGE_FILE_MACHINE_RISCV64)   = 0x5064, /**< RISC-V 64-bit address space    */
-  _LIEF_EI(IMAGE_FILE_MACHINE_RISCV128)  = 0x5128,  /**< RISC-V 128-bit address space   */
-  _LIEF_EI(IMAGE_FILE_MACHINE_SH3)       = 0x1A2,  /**< Hitachi SH3                    */
-  _LIEF_EI(IMAGE_FILE_MACHINE_SH3DSP)    = 0x1A3,  /**< Hitachi SH3 DSP                */
-  _LIEF_EI(IMAGE_FILE_MACHINE_SH4)       = 0x1A6,  /**< Hitachi SH4                    */
-  _LIEF_EI(IMAGE_FILE_MACHINE_SH5)       = 0x1A8,  /**< Hitachi SH5                    */
-  _LIEF_EI(IMAGE_FILE_MACHINE_THUMB)     = 0x1C2,  /**< ARM or Thumb                   */
-  _LIEF_EI(IMAGE_FILE_MACHINE_WCEMIPSV2) = 0x169   /**< MIPS little-endian WCE v2      */
-};
-
 enum _LIEF_EN_2(SYMBOL_SECTION_NUMBER, int) {
   _LIEF_EI(IMAGE_SYM_DEBUG)     = -2,
   _LIEF_EI(IMAGE_SYM_ABSOLUTE)  = -1,
@@ -40,85 +11,65 @@ enum _LIEF_EN_2(SYMBOL_SECTION_NUMBER, int) {
 };
 
 
-enum _LIEF_EN(HEADER_CHARACTERISTICS) {
-  _LIEF_EI(IMAGE_FILE_INVALID)                 = 0x0000,
-  _LIEF_EI(IMAGE_FILE_RELOCS_STRIPPED)         = 0x0001, /**< The file does not contain base relocations and must be loaded at its preferred base. If this cannot be done, the loader will error.*/
-  _LIEF_EI(IMAGE_FILE_EXECUTABLE_IMAGE)        = 0x0002, /**< The file is valid and can be run.*/
-  _LIEF_EI(IMAGE_FILE_LINE_NUMS_STRIPPED)      = 0x0004, /**< COFF line numbers have been stripped. This is deprecated and should be 0*/
-  _LIEF_EI(IMAGE_FILE_LOCAL_SYMS_STRIPPED)     = 0x0008, /**< COFF symbol table entries for local symbols have been removed. This is deprecated and should be 0.*/
-  _LIEF_EI(IMAGE_FILE_AGGRESSIVE_WS_TRIM)      = 0x0010, /**< Aggressively trim working set. This is deprecated and must be 0.*/
-  _LIEF_EI(IMAGE_FILE_LARGE_ADDRESS_AWARE)     = 0x0020, /**< Image can handle > 2GiB addresses. */
-  _LIEF_EI(IMAGE_FILE_BYTES_REVERSED_LO)       = 0x0080, /**< Little endian: the LSB precedes the MSB in memory. This is deprecated and should be 0.*/
-  _LIEF_EI(IMAGE_FILE_32BIT_MACHINE)           = 0x0100, /**< Machine is based on a 32bit word architecture. */
-  _LIEF_EI(IMAGE_FILE_DEBUG_STRIPPED)          = 0x0200, /**< Debugging info has been removed. */
-  _LIEF_EI(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP) = 0x0400, /**< If the image is on removable media, fully load it and copy it to swap. */
-  _LIEF_EI(IMAGE_FILE_NET_RUN_FROM_SWAP)       = 0x0800, /**< If the image is on network media, fully load it and copy it to swap. */
-  _LIEF_EI(IMAGE_FILE_SYSTEM)                  = 0x1000, /**< The image file is a system file, not a user program.*/
-  _LIEF_EI(IMAGE_FILE_DLL)                     = 0x2000, /**< The image file is a DLL. */
-  _LIEF_EI(IMAGE_FILE_UP_SYSTEM_ONLY)          = 0x4000, /**< This file should only be run on a uniprocessor machine. */
-  _LIEF_EI(IMAGE_FILE_BYTES_REVERSED_HI)       = 0x8000  /**< Big endian: the MSB precedes the LSB in memory. This is deprecated */
-};
-
-
-/// Storage class tells where and what the symbol represents
+/** Storage class tells where and what the symbol represents */
 enum _LIEF_EN_2(SYMBOL_STORAGE_CLASS, int) {
   _LIEF_EI(IMAGE_SYM_CLASS_INVALID) = 0xFF,
 
-  _LIEF_EI(IMAGE_SYM_CLASS_END_OF_FUNCTION)  = -1,  ///< Physical end of function
-  _LIEF_EI(IMAGE_SYM_CLASS_NULL)             = 0,   ///< No symbol
-  _LIEF_EI(IMAGE_SYM_CLASS_AUTOMATIC)        = 1,   ///< Stack variable
-  _LIEF_EI(IMAGE_SYM_CLASS_EXTERNAL)         = 2,   ///< External symbol
-  _LIEF_EI(IMAGE_SYM_CLASS_STATIC)           = 3,   ///< Static
-  _LIEF_EI(IMAGE_SYM_CLASS_REGISTER)         = 4,   ///< Register variable
-  _LIEF_EI(IMAGE_SYM_CLASS_EXTERNAL_DEF)     = 5,   ///< External definition
-  _LIEF_EI(IMAGE_SYM_CLASS_LABEL)            = 6,   ///< Label
-  _LIEF_EI(IMAGE_SYM_CLASS_UNDEFINED_LABEL)  = 7,   ///< Undefined label
-  _LIEF_EI(IMAGE_SYM_CLASS_MEMBER_OF_STRUCT) = 8,   ///< Member of structure
-  _LIEF_EI(IMAGE_SYM_CLASS_ARGUMENT)         = 9,   ///< Function argument
-  _LIEF_EI(IMAGE_SYM_CLASS_STRUCT_TAG)       = 10,  ///< Structure tag
-  _LIEF_EI(IMAGE_SYM_CLASS_MEMBER_OF_UNION)  = 11,  ///< Member of union
-  _LIEF_EI(IMAGE_SYM_CLASS_UNION_TAG)        = 12,  ///< Union tag
-  _LIEF_EI(IMAGE_SYM_CLASS_TYPE_DEFINITION)  = 13,  ///< Type definition
-  _LIEF_EI(IMAGE_SYM_CLASS_UNDEFINED_STATIC) = 14,  ///< Undefined static
-  _LIEF_EI(IMAGE_SYM_CLASS_ENUM_TAG)         = 15,  ///< Enumeration tag
-  _LIEF_EI(IMAGE_SYM_CLASS_MEMBER_OF_ENUM)   = 16,  ///< Member of enumeration
-  _LIEF_EI(IMAGE_SYM_CLASS_REGISTER_PARAM)   = 17,  ///< Register parameter
-  _LIEF_EI(IMAGE_SYM_CLASS_BIT_FIELD)        = 18,  ///< Bit field ".bb" or ".eb" - beginning or end of block
-  _LIEF_EI(IMAGE_SYM_CLASS_BLOCK)            = 100, ///< ".bf" or ".ef" - beginning or end of function
+  _LIEF_EI(IMAGE_SYM_CLASS_END_OF_FUNCTION)  = -1,  /**< Physical end of function */
+  _LIEF_EI(IMAGE_SYM_CLASS_NULL)             = 0,   /**< No symbol */
+  _LIEF_EI(IMAGE_SYM_CLASS_AUTOMATIC)        = 1,   /**< Stack variable */
+  _LIEF_EI(IMAGE_SYM_CLASS_EXTERNAL)         = 2,   /**< External symbol */
+  _LIEF_EI(IMAGE_SYM_CLASS_STATIC)           = 3,   /**< Static */
+  _LIEF_EI(IMAGE_SYM_CLASS_REGISTER)         = 4,   /**< Register variable */
+  _LIEF_EI(IMAGE_SYM_CLASS_EXTERNAL_DEF)     = 5,   /**< External definition */
+  _LIEF_EI(IMAGE_SYM_CLASS_LABEL)            = 6,   /**< Label */
+  _LIEF_EI(IMAGE_SYM_CLASS_UNDEFINED_LABEL)  = 7,   /**< Undefined label */
+  _LIEF_EI(IMAGE_SYM_CLASS_MEMBER_OF_STRUCT) = 8,   /**< Member of structure */
+  _LIEF_EI(IMAGE_SYM_CLASS_ARGUMENT)         = 9,   /**< Function argument */
+  _LIEF_EI(IMAGE_SYM_CLASS_STRUCT_TAG)       = 10,  /**< Structure tag */
+  _LIEF_EI(IMAGE_SYM_CLASS_MEMBER_OF_UNION)  = 11,  /**< Member of union */
+  _LIEF_EI(IMAGE_SYM_CLASS_UNION_TAG)        = 12,  /**< Union tag */
+  _LIEF_EI(IMAGE_SYM_CLASS_TYPE_DEFINITION)  = 13,  /**< Type definition */
+  _LIEF_EI(IMAGE_SYM_CLASS_UNDEFINED_STATIC) = 14,  /**< Undefined static */
+  _LIEF_EI(IMAGE_SYM_CLASS_ENUM_TAG)         = 15,  /**< Enumeration tag */
+  _LIEF_EI(IMAGE_SYM_CLASS_MEMBER_OF_ENUM)   = 16,  /**< Member of enumeration */
+  _LIEF_EI(IMAGE_SYM_CLASS_REGISTER_PARAM)   = 17,  /**< Register parameter */
+  _LIEF_EI(IMAGE_SYM_CLASS_BIT_FIELD)        = 18,  /**< Bit field ".bb" or ".eb" - beginning or end of block */
+  _LIEF_EI(IMAGE_SYM_CLASS_BLOCK)            = 100, /**< ".bf" or ".ef" - beginning or end of function */
   _LIEF_EI(IMAGE_SYM_CLASS_FUNCTION)         = 101,
-  _LIEF_EI(IMAGE_SYM_CLASS_END_OF_STRUCT)    = 102, ///< End of structure
-  _LIEF_EI(IMAGE_SYM_CLASS_FILE)             = 103, ///< File name line number, reformatted as symbol
+  _LIEF_EI(IMAGE_SYM_CLASS_END_OF_STRUCT)    = 102, /**< End of structure */
+  _LIEF_EI(IMAGE_SYM_CLASS_FILE)             = 103, /**< File name line number, reformatted as symbol */
   _LIEF_EI(IMAGE_SYM_CLASS_SECTION)          = 104,
-  _LIEF_EI(IMAGE_SYM_CLASS_WEAK_EXTERNAL)    = 105, ///< Duplicate tag external symbol in dmert public lib
+  _LIEF_EI(IMAGE_SYM_CLASS_WEAK_EXTERNAL)    = 105, /**< Duplicate tag external symbol in dmert public lib */
   _LIEF_EI(IMAGE_SYM_CLASS_CLR_TOKEN)        = 107
 };
 
 
 enum _LIEF_EN(SYMBOL_BASE_TYPES) {
-  _LIEF_EI(IMAGE_SYM_TYPE_NULL)   = 0,  ///< No type information or unknown base type.
-  _LIEF_EI(IMAGE_SYM_TYPE_VOID)   = 1,  ///< Used with void pointers and functions.
-  _LIEF_EI(IMAGE_SYM_TYPE_CHAR)   = 2,  ///< A character (signed byte).
-  _LIEF_EI(IMAGE_SYM_TYPE_SHORT)  = 3,  ///< A 2-byte signed integer.
-  _LIEF_EI(IMAGE_SYM_TYPE_INT)    = 4,  ///< A natural integer type on the target.
-  _LIEF_EI(IMAGE_SYM_TYPE_LONG)   = 5,  ///< A 4-byte signed integer.
-  _LIEF_EI(IMAGE_SYM_TYPE_FLOAT)  = 6,  ///< A 4-byte floating-point number.
-  _LIEF_EI(IMAGE_SYM_TYPE_DOUBLE) = 7,  ///< An 8-byte floating-point number.
-  _LIEF_EI(IMAGE_SYM_TYPE_STRUCT) = 8,  ///< A structure.
-  _LIEF_EI(IMAGE_SYM_TYPE_UNION)  = 9,  ///< An union.
-  _LIEF_EI(IMAGE_SYM_TYPE_ENUM)   = 10, ///< An enumerated type.
-  _LIEF_EI(IMAGE_SYM_TYPE_MOE)    = 11, ///< A member of enumeration (a specific value).
-  _LIEF_EI(IMAGE_SYM_TYPE_BYTE)   = 12, ///< A byte; unsigned 1-byte integer.
-  _LIEF_EI(IMAGE_SYM_TYPE_WORD)   = 13, ///< A word; unsigned 2-byte integer.
-  _LIEF_EI(IMAGE_SYM_TYPE_UINT)   = 14, ///< An unsigned integer of natural size.
-  _LIEF_EI(IMAGE_SYM_TYPE_DWORD)  = 15  ///< An unsigned 4-byte integer.
+  _LIEF_EI(IMAGE_SYM_TYPE_NULL)   = 0,  /**< No type information or unknown base type. */
+  _LIEF_EI(IMAGE_SYM_TYPE_VOID)   = 1,  /**< Used with void pointers and functions. */
+  _LIEF_EI(IMAGE_SYM_TYPE_CHAR)   = 2,  /**< A character (signed byte). */
+  _LIEF_EI(IMAGE_SYM_TYPE_SHORT)  = 3,  /**< A 2-byte signed integer. */
+  _LIEF_EI(IMAGE_SYM_TYPE_INT)    = 4,  /**< A natural integer type on the target. */
+  _LIEF_EI(IMAGE_SYM_TYPE_LONG)   = 5,  /**< A 4-byte signed integer. */
+  _LIEF_EI(IMAGE_SYM_TYPE_FLOAT)  = 6,  /**< A 4-byte floating-point number. */
+  _LIEF_EI(IMAGE_SYM_TYPE_DOUBLE) = 7,  /**< An 8-byte floating-point number. */
+  _LIEF_EI(IMAGE_SYM_TYPE_STRUCT) = 8,  /**< A structure. */
+  _LIEF_EI(IMAGE_SYM_TYPE_UNION)  = 9,  /**< An union. */
+  _LIEF_EI(IMAGE_SYM_TYPE_ENUM)   = 10, /**< An enumerated type. */
+  _LIEF_EI(IMAGE_SYM_TYPE_MOE)    = 11, /**< A member of enumeration (a specific value). */
+  _LIEF_EI(IMAGE_SYM_TYPE_BYTE)   = 12, /**< A byte; unsigned 1-byte integer. */
+  _LIEF_EI(IMAGE_SYM_TYPE_WORD)   = 13, /**< A word; unsigned 2-byte integer. */
+  _LIEF_EI(IMAGE_SYM_TYPE_UINT)   = 14, /**< An unsigned integer of natural size. */
+  _LIEF_EI(IMAGE_SYM_TYPE_DWORD)  = 15  /**< An unsigned 4-byte integer. */
 };
 
 enum _LIEF_EN(SYMBOL_COMPLEX_TYPES) {
-  _LIEF_EI(IMAGE_SYM_DTYPE_NULL)     = 0, ///< No complex type; simple scalar variable.
-  _LIEF_EI(IMAGE_SYM_DTYPE_POINTER)  = 1, ///< A pointer to base type.
-  _LIEF_EI(IMAGE_SYM_DTYPE_FUNCTION) = 2, ///< A function that returns a base type.
-  _LIEF_EI(IMAGE_SYM_DTYPE_ARRAY)    = 3, ///< An array of base type.
-  _LIEF_EI(SCT_COMPLEX_TYPE_SHIFT)   = 4  ///< Type is formed as (base + (derived << SCT_COMPLEX_TYPE_SHIFT))
+  _LIEF_EI(IMAGE_SYM_DTYPE_NULL)     = 0, /**< No complex type; simple scalar variable. */
+  _LIEF_EI(IMAGE_SYM_DTYPE_POINTER)  = 1, /**< A pointer to base type. */
+  _LIEF_EI(IMAGE_SYM_DTYPE_FUNCTION) = 2, /**< A function that returns a base type. */
+  _LIEF_EI(IMAGE_SYM_DTYPE_ARRAY)    = 3, /**< An array of base type. */
+  _LIEF_EI(SCT_COMPLEX_TYPE_SHIFT)   = 4  /**< Type is formed as (base + (derived << SCT_COMPLEX_TYPE_SHIFT)) */
 };
 
 enum _LIEF_EN(AuxSymbolType) {
@@ -201,7 +152,7 @@ enum _LIEF_EN(RELOCATIONS_ARM) {
 };
 
 
-/// These are not documented in the spec, but are located in WinNT.h.
+/** These are not documented in the spec, but are located in WinNT.h. */
 enum _LIEF_EN(WeakExternalCharacteristics) {
   _LIEF_EI(IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY) = 1,
   _LIEF_EI(IMAGE_WEAK_EXTERN_SEARCH_LIBRARY)   = 2,
@@ -209,72 +160,19 @@ enum _LIEF_EN(WeakExternalCharacteristics) {
 };
 
 
-enum _LIEF_EN(DATA_DIRECTORY) {
-  _LIEF_EI(EXPORT_TABLE)            = 0,
-  _LIEF_EI(IMPORT_TABLE)            = 1,
-  _LIEF_EI(RESOURCE_TABLE)          = 2,
-  _LIEF_EI(EXCEPTION_TABLE)         = 3,
-  _LIEF_EI(CERTIFICATE_TABLE)       = 4,
-  _LIEF_EI(BASE_RELOCATION_TABLE)   = 5,
-  _LIEF_EI(DEBUG)                   = 6,
-  _LIEF_EI(ARCHITECTURE)            = 7,
-  _LIEF_EI(GLOBAL_PTR)              = 8,
-  _LIEF_EI(TLS_TABLE)               = 9,
-  _LIEF_EI(LOAD_CONFIG_TABLE)       = 10,
-  _LIEF_EI(BOUND_IMPORT)            = 11,
-  _LIEF_EI(IAT)                     = 12,
-  _LIEF_EI(DELAY_IMPORT_DESCRIPTOR) = 13,
-  _LIEF_EI(CLR_RUNTIME_HEADER)      = 14,
-  _LIEF_EI(RESERVED)                = 15,
-
-  _LIEF_EI(NUM_DATA_DIRECTORIES)    = 16
-};
-
-
-enum _LIEF_EN(SUBSYSTEM) {
-  _LIEF_EI(IMAGE_SUBSYSTEM_UNKNOWN)                  = 0,  ///< An unknown subsystem.
-  _LIEF_EI(IMAGE_SUBSYSTEM_NATIVE)                   = 1,  ///< Device drivers and native Windows processes
-  _LIEF_EI(IMAGE_SUBSYSTEM_WINDOWS_GUI)              = 2,  ///< The Windows GUI subsystem.
-  _LIEF_EI(IMAGE_SUBSYSTEM_WINDOWS_CUI)              = 3,  ///< The Windows character subsystem.
-  _LIEF_EI(IMAGE_SUBSYSTEM_OS2_CUI)                  = 5,  ///< The OS/2 character subsytem.
-  _LIEF_EI(IMAGE_SUBSYSTEM_POSIX_CUI)                = 7,  ///< The POSIX character subsystem.
-  _LIEF_EI(IMAGE_SUBSYSTEM_NATIVE_WINDOWS)           = 8,  ///< Native Windows 9x driver.
-  _LIEF_EI(IMAGE_SUBSYSTEM_WINDOWS_CE_GUI)           = 9,  ///< Windows CE.
-  _LIEF_EI(IMAGE_SUBSYSTEM_EFI_APPLICATION)          = 10, ///< An EFI application.
-  _LIEF_EI(IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)  = 11, ///< An EFI driver with boot services.
-  _LIEF_EI(IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)       = 12, ///< An EFI driver with run-time services.
-  _LIEF_EI(IMAGE_SUBSYSTEM_EFI_ROM)                  = 13, ///< An EFI ROM image.
-  _LIEF_EI(IMAGE_SUBSYSTEM_XBOX)                     = 14, ///< XBOX.
-  _LIEF_EI(IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION) = 16  ///< A BCD application.
-};
-
-enum _LIEF_EN(DLL_CHARACTERISTICS) {
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA)       = 0x0020, ///< ASLR with 64 bit address space.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE)          = 0x0040, ///< DLL can be relocated at load time.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_FORCE_INTEGRITY)       = 0x0080, ///< Code integrity checks are enforced.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_NX_COMPAT)             = 0x0100, ///< Image is NX compatible.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION)          = 0x0200, ///< Isolation aware, but do not isolate the image.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_NO_SEH)                = 0x0400, ///< Does not use structured exception handling (SEH). No SEH handler may be called in this image.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_NO_BIND)               = 0x0800, ///< Do not bind the image.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_APPCONTAINER)          = 0x1000, ///< Image should execute in an AppContainer.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_WDM_DRIVER)            = 0x2000, ///< A WDM driver.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_GUARD_CF)              = 0x4000, ///< Image supports Control Flow Guard.
-  _LIEF_EI(IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE) = 0x8000  ///< Terminal Server aware.
-};
-
 
 enum _LIEF_EN(DEBUG_TYPES) {
   _LIEF_EI(IMAGE_DEBUG_TYPE_UNKNOWN)               = 0,
-  _LIEF_EI(IMAGE_DEBUG_TYPE_COFF)                  = 1, ///< COFF debug information
-  _LIEF_EI(IMAGE_DEBUG_TYPE_CODEVIEW)              = 2, ///< CodeView debug information (pdb & cie)
-  _LIEF_EI(IMAGE_DEBUG_TYPE_FPO)                   = 3, ///< Frame pointer omission information
-  _LIEF_EI(IMAGE_DEBUG_TYPE_MISC)                  = 4, ///< CodeView Debug Information
-  _LIEF_EI(IMAGE_DEBUG_TYPE_EXCEPTION)             = 5, ///< A copy of .pdata section.
-  _LIEF_EI(IMAGE_DEBUG_TYPE_FIXUP)                 = 6, ///< Reserved.
-  _LIEF_EI(IMAGE_DEBUG_TYPE_OMAP_TO_SRC)           = 7, ///< The mapping from an RVA in image to an RVA in source image.
-  _LIEF_EI(IMAGE_DEBUG_TYPE_OMAP_FROM_SRC)         = 8, ///< The mapping from an RVA in source image to an RVA in image.
-  _LIEF_EI(IMAGE_DEBUG_TYPE_BORLAND)               = 9, ///< Reserved for Borland.
-  _LIEF_EI(IMAGE_DEBUG_TYPE_RESERVED10)            = 10, ///< Reserved for future use.
+  _LIEF_EI(IMAGE_DEBUG_TYPE_COFF)                  = 1, /**< COFF debug information */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_CODEVIEW)              = 2, /**< CodeView debug information (pdb & cie) */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_FPO)                   = 3, /**< Frame pointer omission information */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_MISC)                  = 4, /**< CodeView Debug Information */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_EXCEPTION)             = 5, /**< A copy of .pdata section. */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_FIXUP)                 = 6, /**< Reserved. */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_OMAP_TO_SRC)           = 7, /**< The mapping from an RVA in image to an RVA in source image. */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_OMAP_FROM_SRC)         = 8, /**< The mapping from an RVA in source image to an RVA in image. */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_BORLAND)               = 9, /**< Reserved for Borland. */
+  _LIEF_EI(IMAGE_DEBUG_TYPE_RESERVED10)            = 10, /**< Reserved for future use. */
   _LIEF_EI(IMAGE_DEBUG_TYPE_CLSID)                 = 11,
   _LIEF_EI(IMAGE_DEBUG_TYPE_VC_FEATURE)            = 12,
   _LIEF_EI(IMAGE_DEBUG_TYPE_POGO)                  = 13,
@@ -285,20 +183,21 @@ enum _LIEF_EN(DEBUG_TYPES) {
 };
 
 
-//! Code view signatures
-//! @see: http://llvm.org/doxygen/CVDebugRecord_8h_source.html
+/** Code view signatures
+ * @see: http://llvm.org/doxygen/CVDebugRecord_8h_source.html
+ */
 enum _LIEF_EN(CODE_VIEW_SIGNATURES) {
   _LIEF_EI(CVS_UNKNOWN) = 0,
-  _LIEF_EI(CVS_PDB_70) = 0x53445352, // RSDS
-  _LIEF_EI(CVS_PDB_20) = 0x3031424e, // NB10
-  _LIEF_EI(CVS_CV_50)  = 0x3131424e, // NB11
-  _LIEF_EI(CVS_CV_41)  = 0x3930424e, // NB09
+  _LIEF_EI(CVS_PDB_70) = 0x53445352, /* RSDS */
+  _LIEF_EI(CVS_PDB_20) = 0x3031424e, /* NB10 */
+  _LIEF_EI(CVS_CV_50)  = 0x3131424e, /* NB11 */
+  _LIEF_EI(CVS_CV_41)  = 0x3930424e, /* NB09 */
 };
 
 enum _LIEF_EN(POGO_SIGNATURES) {
   _LIEF_EI(POGO_UNKNOWN) = 0,
-  _LIEF_EI(POGO_LCTG)    = 0x4C544347,  // LCTG
-  _LIEF_EI(POGO_PGI)     = 0x50474900 , // PGI\0
+  _LIEF_EI(POGO_LCTG)    = 0x4C544347,  /* LCTG */
+  _LIEF_EI(POGO_PGI)     = 0x50474900 , /* PGI\0 */
 };
 
 enum _LIEF_EN(ImportType) {
@@ -309,18 +208,21 @@ enum _LIEF_EN(ImportType) {
 
 
 enum _LIEF_EN(ImportNameType) {
-  /// Import is by ordinal. This indicates that the value in the Ordinal/Hint
-  /// field of the import header is the import's ordinal. If this constant is
-  /// not specified, then the Ordinal/Hint field should always be interpreted
-  /// as the import's hint.
+  /** Import is by ordinal. This indicates that the value in the Ordinal/Hint
+   * field of the import header is the import's ordinal. If this constant is
+   * not specified, then the Ordinal/Hint field should always be interpreted
+   * as the import's hint.
+   */
   _LIEF_EI(IMPORT_ORDINAL)         = 0,
-  /// The import name is identical to the public symbol name
+  /** The import name is identical to the public symbol name */
   _LIEF_EI(IMPORT_NAME)            = 1,
-  /// The import name is the public symbol name, but skipping the leading ?,
-  /// @, or optionally _.
+  /** The import name is the public symbol name, but skipping the leading ?,
+   * @, or optionally _.
+   */
   _LIEF_EI(IMPORT_NAME_NOPREFIX)   = 2,
-  /// The import name is the public symbol name, but skipping the leading ?,
-  /// @, or optionally _, and truncating at the first @.
+  /** The import name is the public symbol name, but skipping the leading ?,
+   * @, or optionally _, and truncating at the first @.
+   */
   _LIEF_EI(IMPORT_NAME_UNDECORATE) = 3
 };
 
@@ -333,17 +235,18 @@ enum _LIEF_EN(CodeViewIdentifiers) {
   _LIEF_EI(DEBUG_STRING_TABLE_SUBSECTION) = 0xF3,
   _LIEF_EI(DEBUG_INDEX_SUBSECTION) = 0xF4,
 
-  // Symbol subsections are split into records of different types.
+  /* Symbol subsections are split into records of different types. */
   _LIEF_EI(DEBUG_SYMBOL_TYPE_PROC_START) = 0x1147,
   _LIEF_EI(DEBUG_SYMBOL_TYPE_PROC_END) = 0x114F
 };
 
 
-//
-// Resources
-//
+/* =========================
+ * Reources
+ * =========================
+ */
 
-//! From https://docs.microsoft.com/en-us/windows/win32/menurc/resource-types
+/** From https://docs.microsoft.com/en-us/windows/win32/menurc/resource-types */
 enum _LIEF_EN(RESOURCE_TYPES) {
   _LIEF_EI(CURSOR)       = 1,
   _LIEF_EI(BITMAP)       = 2,
@@ -708,47 +611,7 @@ enum _LIEF_EN(RESOURCE_SUBLANGS) {
 };
 
 
-enum _LIEF_EN(SECTION_CHARACTERISTICS) {
-  _LIEF_EI(SC_Invalid) = 0xffffffff,
-
-  _LIEF_EI(IMAGE_SCN_TYPE_NO_PAD)            = 0x00000008,
-  _LIEF_EI(IMAGE_SCN_CNT_CODE)               = 0x00000020,
-  _LIEF_EI(IMAGE_SCN_CNT_INITIALIZED_DATA)   = 0x00000040,
-  _LIEF_EI(IMAGE_SCN_CNT_UNINITIALIZED_DATA) = 0x00000080,
-  _LIEF_EI(IMAGE_SCN_LNK_OTHER)              = 0x00000100,
-  _LIEF_EI(IMAGE_SCN_LNK_INFO)               = 0x00000200,
-  _LIEF_EI(IMAGE_SCN_LNK_REMOVE)             = 0x00000800,
-  _LIEF_EI(IMAGE_SCN_LNK_COMDAT)             = 0x00001000,
-  _LIEF_EI(IMAGE_SCN_GPREL)                  = 0x00008000,
-  _LIEF_EI(IMAGE_SCN_MEM_PURGEABLE)          = 0x00010000,
-  _LIEF_EI(IMAGE_SCN_MEM_16BIT)              = 0x00020000,
-  _LIEF_EI(IMAGE_SCN_MEM_LOCKED)             = 0x00040000,
-  _LIEF_EI(IMAGE_SCN_MEM_PRELOAD)            = 0x00080000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_1BYTES)           = 0x00100000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_2BYTES)           = 0x00200000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_4BYTES)           = 0x00300000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_8BYTES)           = 0x00400000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_16BYTES)          = 0x00500000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_32BYTES)          = 0x00600000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_64BYTES)          = 0x00700000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_128BYTES)         = 0x00800000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_256BYTES)         = 0x00900000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_512BYTES)         = 0x00A00000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_1024BYTES)        = 0x00B00000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_2048BYTES)        = 0x00C00000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_4096BYTES)        = 0x00D00000,
-  _LIEF_EI(IMAGE_SCN_ALIGN_8192BYTES)        = 0x00E00000,
-  _LIEF_EI(IMAGE_SCN_LNK_NRELOC_OVFL)        = 0x01000000,
-  _LIEF_EI(IMAGE_SCN_MEM_DISCARDABLE)        = 0x02000000,
-  _LIEF_EI(IMAGE_SCN_MEM_NOT_CACHED)         = 0x04000000,
-  _LIEF_EI(IMAGE_SCN_MEM_NOT_PAGED)          = 0x08000000,
-  _LIEF_EI(IMAGE_SCN_MEM_SHARED)             = 0x10000000,
-  _LIEF_EI(IMAGE_SCN_MEM_EXECUTE)            = 0x20000000,
-  _LIEF_EI(IMAGE_SCN_MEM_READ)               = 0x40000000,
-  _LIEF_EI(IMAGE_SCN_MEM_WRITE)              = 0x80000000
-};
-
-//! From https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles
+/** From https://docs.microsoft.com/en-us/windows/win32/winmsg/extended-window-styles */
 enum _LIEF_EN(EXTENDED_WINDOW_STYLES) {
   _LIEF_EI(WS_EX_DLGMODALFRAME)    = 0x00000001L,
   _LIEF_EI(WS_EX_NOPARENTNOTIFY)   = 0x00000004L,
@@ -773,7 +636,7 @@ enum _LIEF_EN(EXTENDED_WINDOW_STYLES) {
   _LIEF_EI(WS_EX_APPWINDOW)        = 0x00040000L,
 };
 
-//! From: https://docs.microsoft.com/en-us/windows/win32/winmsg/window-styles
+/** From: https://docs.microsoft.com/en-us/windows/win32/winmsg/window-styles */
 enum _LIEF_EN(WINDOW_STYLES) {
   _LIEF_EI(WS_OVERLAPPED)      = 0x00000000L,
   _LIEF_EI(WS_POPUP)           = 0x80000000L,
@@ -799,7 +662,7 @@ enum _LIEF_EN(WINDOW_STYLES) {
 };
 
 
-//! From https://docs.microsoft.com/en-us/windows/win32/dlgbox/dialog-box-styles
+/** From https://docs.microsoft.com/en-us/windows/win32/dlgbox/dialog-box-styles */
 enum _LIEF_EN(DIALOG_BOX_STYLES) {
   _LIEF_EI(DS_ABSALIGN)      = 0x0001L,
   _LIEF_EI(DS_SYSMODAL)      = 0x0002L,
@@ -815,7 +678,7 @@ enum _LIEF_EN(DIALOG_BOX_STYLES) {
   _LIEF_EI(DS_CENTER)        = 0x0800L,
   _LIEF_EI(DS_CENTERMOUSE)   = 0x1000L,
   _LIEF_EI(DS_CONTEXTHELP)   = 0x2000L,
-  _LIEF_EI(DS_SHELLFONT)     = 0x0040L | 0x0008L, // DS_SETFONT | DS_FIXEDSYS
+  _LIEF_EI(DS_SHELLFONT)     = 0x0040L | 0x0008L, /* DS_SETFONT | DS_FIXEDSYS */
 };
 
 enum _LIEF_EN(FIXED_VERSION_OS) {
@@ -828,11 +691,11 @@ enum _LIEF_EN(FIXED_VERSION_OS) {
   _LIEF_EI(VOS_OS232)         = 0x00030000L,
   _LIEF_EI(VOS__PM16)         = 0x00000002L,
   _LIEF_EI(VOS__PM32)         = 0x00000003L,
-  _LIEF_EI(VOS_DOS_WINDOWS16) = 0x00010000L | 0x00000001L, // VOS_DOS   | VOS__WINDOWS16
-  _LIEF_EI(VOS_DOS_WINDOWS32) = 0x00010000L | 0x00000004L, // VOS_DOS   | VOS__WINDOWS32
-  _LIEF_EI(VOS_NT_WINDOWS32)  = 0x00040000L | 0x00000004L, // VOS_NT    | VOS__WINDOWS32
-  _LIEF_EI(VOS_OS216_PM16)    = 0x00020000L | 0x00000002L, // VOS_OS216 | VOS__PM16
-  _LIEF_EI(VOS_OS232_PM32)    = 0x00030000L | 0x00000003L, // VOS_OS232 | VOS__PM32
+  _LIEF_EI(VOS_DOS_WINDOWS16) = 0x00010000L | 0x00000001L, /* VOS_DOS   | VOS__WINDOWS16 */
+  _LIEF_EI(VOS_DOS_WINDOWS32) = 0x00010000L | 0x00000004L, /* VOS_DOS   | VOS__WINDOWS32 */
+  _LIEF_EI(VOS_NT_WINDOWS32)  = 0x00040000L | 0x00000004L, /* VOS_NT    | VOS__WINDOWS32 */
+  _LIEF_EI(VOS_OS216_PM16)    = 0x00020000L | 0x00000002L, /* VOS_OS216 | VOS__PM16 */
+  _LIEF_EI(VOS_OS232_PM32)    = 0x00030000L | 0x00000003L, /* VOS_OS232 | VOS__PM32 */
 };
 
 
@@ -877,7 +740,7 @@ enum _LIEF_EN(FIXED_VERSION_FILE_SUB_TYPES) {
   _LIEF_EI(VFT2_UNKNOWN)               = 0x00000000L,
 };
 
-//! Code page from https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
+/** Code page from https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers */
 enum _LIEF_EN(CODE_PAGES) {
   _LIEF_EI(CP_IBM037)                  = 37,    /**< IBM EBCDIC US-Canada */
   _LIEF_EI(CP_IBM437)                  = 437,   /**< OEM United States */
@@ -1047,7 +910,7 @@ enum _LIEF_EN(GUARD_CF_FLAGS) {
   _LIEF_EI(GRF_STRICT)                          = 0x00080000, /**< Module requests that the OS enable return flow protection in strict mode */
 };
 
-//! From https://docs.microsoft.com/en-us/windows/win32/menurc/acceltableentry
+/** From https://docs.microsoft.com/en-us/windows/win32/menurc/acceltableentry */
 enum _LIEF_EN(ACCELERATOR_FLAGS) {
   _LIEF_EI(FVIRTKEY)  = 0x01,
   _LIEF_EI(FNOINVERT) = 0x02,
@@ -1057,7 +920,7 @@ enum _LIEF_EN(ACCELERATOR_FLAGS) {
   _LIEF_EI(END)       = 0x80,
 };
 
-//! From https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+/** From https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes */
 enum _LIEF_EN(ACCELERATOR_VK_CODES) {
   _LIEF_EI(VK_LBUTTON)             = 0x01,
   _LIEF_EI(VK_RBUTTON)             = 0x02,

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_BINARY_H_
-#define LIEF_ELF_BINARY_H_
+#ifndef LIEF_ELF_BINARY_H
+#define LIEF_ELF_BINARY_H
 
 #include <vector>
 #include <memory>
 
 #include "LIEF/visibility.h"
-
+#include "LIEF/errors.hpp"
 #include "LIEF/iterators.hpp"
 
 #include "LIEF/Abstract/Binary.hpp"
 
+#include "LIEF/ELF/Note.hpp"
 #include "LIEF/ELF/Header.hpp"
+#include "LIEF/ELF/Builder.hpp"
 
 namespace LIEF {
 //! Namespace related to the LIEF's ELF module
@@ -34,12 +36,10 @@ namespace DataHandler {
 class Handler;
 }
 
-class Builder;
 class DynamicEntry;
 class ExeLayout;
 class GnuHash;
 class Layout;
-class Note;
 class ObjectFileLayout;
 class Parser;
 class Relocation;
@@ -49,7 +49,9 @@ class Symbol;
 class SymbolVersion;
 class SymbolVersionDefinition;
 class SymbolVersionRequirement;
+class DynamicEntryLibrary;
 class SysvHash;
+struct sizing_info_t;
 
 //! Class which represents an ELF binary
 class LIEF_API Binary : public LIEF::Binary {
@@ -61,7 +63,6 @@ class LIEF_API Binary : public LIEF::Binary {
 
   public:
   using string_list_t  = std::vector<std::string>;
-  using overlay_t      = std::vector<uint8_t>;
 
   //! Internal container for storing notes
   using notes_t = std::vector<std::unique_ptr<Note>>;
@@ -187,6 +188,40 @@ class LIEF_API Binary : public LIEF::Binary {
   using it_const_sections = const_ref_iterator<const sections_t&, const Section*>;
 
   public:
+  /**
+   * This enum describes the different ways to relocate the segments table.
+   */
+  enum PHDR_RELOC {
+    /**
+     * Defer the choice of the layout to LIEF.
+     */
+    AUTO = 0,
+
+    /**
+     * The content of the binary right after the segments table is shifted
+     * and the relocations are updated accordingly.
+     * This kind of shift only works with PIE binaries.
+     */
+    PIE_SHIFT,
+
+    /**
+     * The new segments table is relocated right after the first bss-like
+     * segment.
+     */
+    BSS_END,
+    /**
+     * The new segments table is relocated at the end of the binary.
+     */
+    BINARY_END,
+    /**
+     * The new segments table is relocated between two LOAD segments.
+     * This kind of relocation is only doable when there is an alignment
+     * enforcement.
+     */
+    SEGMENT_GAP,
+  };
+
+  public:
   Binary& operator=(const Binary& ) = delete;
   Binary(const Binary& copy) = delete;
 
@@ -246,7 +281,7 @@ class LIEF_API Binary : public LIEF::Binary {
   void remove(const Note& note);
 
   //! Remove **all** notes with the given type
-  void remove(NOTE_TYPES type);
+  void remove(Note::TYPE type);
 
   //! Remove the given segment
   void remove(const Segment& seg);
@@ -458,13 +493,13 @@ class LIEF_API Binary : public LIEF::Binary {
   void remove_dynamic_symbol(Symbol* symbol);
 
   //! Return the address of the given function name
-  uint64_t get_function_address(const std::string& func_name) const override;
+  result<uint64_t> get_function_address(const std::string& func_name) const override;
 
   //! Return the address of the given function name
   //
   //! @param[in] func_name    The function's name target
   //! @param[in] demangled    Use the demangled name
-  uint64_t get_function_address(const std::string& func_name, bool demangled) const;
+  result<uint64_t> get_function_address(const std::string& func_name, bool demangled) const;
 
   //! Add a new section in the binary
   //!
@@ -473,9 +508,11 @@ class LIEF_API Binary : public LIEF::Binary {
   //!                       by a PT_LOAD segment
   //!
   //! @return The section added. The `size` and the `virtual address` might change.
-  Section& add(const Section& section, bool loaded = true);
+  //!
+  //! This function requires a well-formed ELF binary
+  Section* add(const Section& section, bool loaded = true);
 
-  Section& extend(const Section& section, uint64_t size);
+  Section* extend(const Section& section, uint64_t size);
 
   //! Add a static symbol
   Symbol& add_static_symbol(const Symbol& symbol);
@@ -508,14 +545,16 @@ class LIEF_API Binary : public LIEF::Binary {
   //! The segment is inserted at the end
   //!
   //! @return The segment added. `Virtual address` and `File Offset` might change.
-  Segment& add(const Segment& segment, uint64_t base = 0);
+  //!
+  //! This function requires a well-formed ELF binary
+  Segment* add(const Segment& segment, uint64_t base = 0);
 
   //! Replace the segment given in 2nd parameter with the segment given in the first one and return the updated segment.
   //!
   //! @warning The ``original_segment`` is no longer valid after this function
-  Segment& replace(const Segment& new_segment, const Segment& original_segment, uint64_t base = 0);
+  Segment* replace(const Segment& new_segment, const Segment& original_segment, uint64_t base = 0);
 
-  Segment& extend(const Segment& segment, uint64_t size);
+  Segment* extend(const Segment& segment, uint64_t size);
 
 
   //! Patch the content at virtual address @p address with @p patch_value
@@ -561,20 +600,46 @@ class LIEF_API Binary : public LIEF::Binary {
 
   //! Reconstruct the binary object and write it in `filename`
   //!
+  //! This function assumes that the layout of the current ELF binary is correct
+  //! (i.e. the binary can run).
+  //!
   //! @param filename Path for the written ELF binary
   void write(const std::string& filename) override;
+
+  //! Reconstruct the binary object with the given config and write it in `filename`
+  //!
+  //! This function assumes that the layout of the current ELF binary is correct
+  //! (i.e. the binary can run).
+  //!
+  //! @param filename Path for the written ELF binary
+  //! @param config   Builder configuration
+  void write(const std::string& filename, Builder::config_t config);
+
+  //! Reconstruct the binary object and write it in `os` stream
+  //!
+  //! This function assumes that the layout of the current ELF binary is correct
+  //! (i.e. the binary can run).
+  //!
+  //! @param os Output stream for the written ELF binary
+  void write(std::ostream& os) override;
+
+  //! Reconstruct the binary object with the given config and write it in `os` stream
+  //!
+  //! @param os     Output stream for the written ELF binary
+  //! @param config Builder configuration
+  void write(std::ostream& os, Builder::config_t config);
 
   //! Reconstruct the binary object and return its content as a byte vector
   std::vector<uint8_t> raw();
 
   //! Convert a virtual address to a file offset
-  uint64_t virtual_address_to_offset(uint64_t virtual_address) const;
+  result<uint64_t> virtual_address_to_offset(uint64_t virtual_address) const;
 
   //! Convert the given offset into a virtual address.
   //!
   //! @param[in] offset   The offset to convert.
   //! @param[in] slide    If not 0, it will replace the default base address (if any)
-  uint64_t offset_to_virtual_address(uint64_t offset, uint64_t slide = 0) const override;
+  result<uint64_t> offset_to_virtual_address(uint64_t offset, uint64_t slide = 0) const override;
 
   //! Check if the binary has been compiled with `-fpie -pie` flags
   //!
@@ -606,6 +671,10 @@ class LIEF_API Binary : public LIEF::Binary {
   const Segment* segment_from_virtual_address(uint64_t address) const;
   Segment*       segment_from_virtual_address(uint64_t address);
 
+
+  const Segment* segment_from_virtual_address(SEGMENT_TYPES type, uint64_t address) const;
+  Segment*       segment_from_virtual_address(SEGMENT_TYPES type, uint64_t address);
+
   //! Return the ELF::Segment from the @p offset. Return a nullptr
   //! if a segment can't be found.
   const Segment* segment_from_offset(uint64_t offset) const;
@@ -623,8 +692,8 @@ class LIEF_API Binary : public LIEF::Binary {
 
   //! Return the **first** ELF::Note associated with the given type
   //! If a note can't be found, it returns a nullptr.
-  const Note* get(NOTE_TYPES type) const;
-  Note*       get(NOTE_TYPES type);
+  const Note* get(Note::TYPE type) const;
+  Note*       get(Note::TYPE type);
 
   //! Return the **first** ELF::Section associated with the given type
   //! If a section can't be found, it returns a nullptr.
@@ -638,14 +707,14 @@ class LIEF_API Binary : public LIEF::Binary {
   bool has(SEGMENT_TYPES type) const;
 
   //! Check if a ELF::Note associated with the given type exists.
-  bool has(NOTE_TYPES type) const;
+  bool has(Note::TYPE type) const;
 
   //! Check if a ELF::Section associated with the given type exists.
   bool has(ELF_SECTION_TYPES type) const;
 
   //! Return the content located at virtual address
-  std::vector<uint8_t> get_content_from_virtual_address(uint64_t virtual_address, uint64_t size,
-                            LIEF::Binary::VA_TYPES addr_type = LIEF::Binary::VA_TYPES::AUTO) const override;
+  span<const uint8_t> get_content_from_virtual_address(uint64_t virtual_address, uint64_t size,
+                                     Binary::VA_TYPES addr_type = Binary::VA_TYPES::AUTO) const override;
 
   //! Method associated with the visitor pattern.
   void accept(LIEF::Visitor& visitor) const override;
@@ -677,23 +746,36 @@ class LIEF_API Binary : public LIEF::Binary {
   uint64_t eof_offset() const;
 
   //! True if data are present at the end of the binary
-  bool has_overlay() const;
+  bool has_overlay() const {
+    return !overlay_.empty();
+  }
 
   //! Overlay data (if any)
-  const overlay_t& overlay() const;
+  span<const uint8_t> overlay() const;
 
   //! Function to set the overlay
-  void overlay(overlay_t overlay);
+  void overlay(std::vector<uint8_t> overlay);
+
+  //! Force relocating the segments table in a specific way.
+  //!
+  //! This function can be used to enforce a specific relocation of the
+  //! segments table.
+  //!
+  //! @param[in] type The relocation type to apply
+  //! @return The offset of the new segments table or 0 if it fails with
+  //!         the given method.
+  uint64_t relocate_phdr_table(PHDR_RELOC type);
+
+  static bool classof(const LIEF::Binary* bin) {
+    return bin->format() == Binary::FORMATS::ELF ||
+           bin->format() == Binary::FORMATS::OAT;
+  }
 
   size_t hash(const std::string& name);
 
   ~Binary() override;
 
   std::ostream& print(std::ostream& os) const override;
-
-  bool operator==(const Binary& rhs) const;
-  bool operator!=(const Binary& rhs) const;
-
 
   Binary& operator+=(const DynamicEntry& entry);
   Binary& operator+=(const Section& section);
@@ -704,7 +786,7 @@ class LIEF_API Binary : public LIEF::Binary {
   Binary& operator-=(DYNAMIC_TAGS tag);
 
   Binary& operator-=(const Note& note);
-  Binary& operator-=(NOTE_TYPES type);
+  Binary& operator-=(Note::TYPE type);
 
   Segment*       operator[](SEGMENT_TYPES type);
   const Segment* operator[](SEGMENT_TYPES type) const;
@@ -712,8 +794,8 @@ class LIEF_API Binary : public LIEF::Binary {
   DynamicEntry*       operator[](DYNAMIC_TAGS tag);
   const DynamicEntry* operator[](DYNAMIC_TAGS tag) const;
 
-  Note*       operator[](NOTE_TYPES type);
-  const Note* operator[](NOTE_TYPES type) const;
+  Note*       operator[](Note::TYPE type);
+  const Note* operator[](Note::TYPE type) const;
 
   Section*       operator[](ELF_SECTION_TYPES type);
   const Section* operator[](ELF_SECTION_TYPES type) const;
@@ -722,7 +804,7 @@ class LIEF_API Binary : public LIEF::Binary {
   struct phdr_relocation_info_t {
     uint64_t new_offset = 0;
     size_t nb_segments = 0;
-    inline void clear() {
+    void clear() {
       new_offset = 0;
       nb_segments = 0;
     }
@@ -759,21 +841,23 @@ class LIEF_API Binary : public LIEF::Binary {
   LIEF::Binary::functions_t armexid_functions() const;
 
   template<E_TYPE OBJECT_TYPE, bool note = false>
-  Segment& add_segment(const Segment& segment, uint64_t base);
+  Segment* add_segment(const Segment& segment, uint64_t base);
 
-  uint64_t relocate_phdr_table();
+  uint64_t relocate_phdr_table_auto();
   uint64_t relocate_phdr_table_pie();
   uint64_t relocate_phdr_table_v1();
   uint64_t relocate_phdr_table_v2();
+  uint64_t relocate_phdr_table_v3();
 
   template<SEGMENT_TYPES PT>
-  Segment& extend_segment(const Segment& segment, uint64_t size);
+  Segment* extend_segment(const Segment& segment, uint64_t size);
 
   template<bool LOADED>
-  Section& add_section(const Section& section);
+  Section* add_section(const Section& section);
   std::vector<Symbol*> static_dyn_symbols() const;
 
   std::string shstrtab_name() const;
+  Section* add_frame_section(const Section& sec);
 
   LIEF::Binary::functions_t tor_functions(DYNAMIC_TAGS tag) const;
 
@@ -795,7 +879,8 @@ class LIEF_API Binary : public LIEF::Binary {
   phdr_relocation_info_t phdr_reloc_info_;
 
   std::string interpreter_;
-  overlay_t overlay_;
+  std::vector<uint8_t> overlay_;
+  std::unique_ptr<sizing_info_t> sizing_info_;
 };
 
 }

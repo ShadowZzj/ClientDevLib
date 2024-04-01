@@ -1,5 +1,6 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_BINARY_H_
-#define LIEF_MACHO_BINARY_H_
+#ifndef LIEF_MACHO_BINARY_H
+#define LIEF_MACHO_BINARY_H
 
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "LIEF/types.hpp"
 #include "LIEF/visibility.h"
@@ -34,40 +36,53 @@ namespace LIEF {
 namespace MachO {
 
 class BinaryParser;
-class Builder;
-class DyldInfo;
 class BuildVersion;
-class EncryptionInfo;
-class DyldEnvironment;
-class SubFramework;
-class SegmentSplitInfo;
-class DataInCode;
+class Builder;
 class CodeSignature;
-class RPathCommand;
-class ThreadCommand;
-class VersionMin;
-class SourceVersion;
-class FunctionStarts;
-class DynamicSymbolCommand;
-class MainCommand;
-class SymbolCommand;
-class Symbol;
-class UUIDCommand;
-class DylinkerCommand;
+class CodeSignatureDir;
+class DataInCode;
+class DyldChainedFixups;
+class DyldEnvironment;
+class DyldExportsTrie;
+class DyldInfo;
 class DylibCommand;
-class SegmentCommand;
-class LoadCommand;
+class DylinkerCommand;
+class DynamicSymbolCommand;
+class EncryptionInfo;
+class ExportInfo;
+class FunctionStarts;
 class Header;
+class LinkerOptHint;
+class LoadCommand;
+class MainCommand;
+class Parser;
+class RPathCommand;
+class Relocation;
+class Section;
+class SegmentCommand;
+class SegmentSplitInfo;
+class SourceVersion;
+class SubFramework;
+class Symbol;
+class SymbolCommand;
+class ThreadCommand;
+class TwoLevelHints;
+class UUIDCommand;
+class VersionMin;
 
 //! Class which represents a MachO binary
 class LIEF_API Binary : public LIEF::Binary  {
 
+  friend class Parser;
   friend class BinaryParser;
   friend class Builder;
   friend class DyldInfo;
 
   public:
-  using range_t = std::pair<uint64_t, uint64_t>;
+  struct range_t {
+    uint64_t start = 0;
+    uint64_t end   = 0;
+  };
 
   //! Internal container for storing Mach-O LoadCommand
   using commands_t = std::vector<std::unique_ptr<LoadCommand>>;
@@ -150,6 +165,11 @@ class LIEF_API Binary : public LIEF::Binary  {
   //! Iterator which outputs const Relocation&
   using it_const_relocations = const_ref_iterator<const relocations_t&, const Relocation*>;
 
+  //! Iterator which outputs RPathCommand&
+  using it_rpaths = filter_iterator<commands_t&, RPathCommand*>;
+
+  //! Iterator which outputs const RPathCommand&
+  using it_const_rpaths = const_filter_iterator<const commands_t&, const RPathCommand*>;
 
   public:
   Binary(const Binary&) = delete;
@@ -216,6 +236,11 @@ class LIEF_API Binary : public LIEF::Binary  {
   //! @param filename Path to write the reconstructed binary
   void write(const std::string& filename) override;
 
+  //! Reconstruct the binary object and write the result in the given `os` stream
+  //!
+  //! @param os Output stream to write the reconstructed binary
+  void write(std::ostream& os) override;
+
   //! Reconstruct the binary object and return its content as bytes
   std::vector<uint8_t> raw();
 
@@ -228,19 +253,19 @@ class LIEF_API Binary : public LIEF::Binary  {
   LoadCommand* get(LOAD_COMMAND_TYPES type);
 
   //! Insert a new LoadCommand
-  LoadCommand& add(const LoadCommand& command);
+  LoadCommand* add(const LoadCommand& command);
 
   //! Insert a new LoadCommand at the specified ``index``
-  LoadCommand& add(const LoadCommand& command, size_t index);
+  LoadCommand* add(const LoadCommand& command, size_t index);
 
   //! Insert the given DylibCommand
-  LoadCommand& add(const DylibCommand& library);
+  LoadCommand* add(const DylibCommand& library);
 
   //! Add a new LC_SEGMENT command from the given SegmentCommand
-  LoadCommand& add(const SegmentCommand& segment);
+  LoadCommand* add(const SegmentCommand& segment);
 
   //! Insert a new shared library through a ``LC_LOAD_DYLIB`` command
-  LoadCommand& add_library(const std::string& name);
+  LoadCommand* add_library(const std::string& name);
 
   //! Add a new MachO::Section in the __TEXT segment
   Section* add_section(const Section& section);
@@ -256,6 +281,15 @@ class LIEF_API Binary : public LIEF::Binary  {
   //! @param name     Name of the MachO::Section to remove
   //! @param clear    If ``true`` clear the content of the section before removing
   void remove_section(const std::string& name, bool clear = false) override;
+
+  //! Remove the section from the segment with the name
+  //! given in the first parameter and with the section's name provided in the
+  //! second parameter
+  //!
+  //! @param segname     Name of the MachO::Segment
+  //! @param secname     Name of the MachO::Section to remove
+  //! @param clear       If ``true`` clear the content of the section before removing
+  void remove_section(const std::string& segname, const std::string& secname, bool clear = false);
 
   //! Remove the given LoadCommand
   bool remove(const LoadCommand& command);
@@ -299,6 +333,13 @@ class LIEF_API Binary : public LIEF::Binary  {
   //! if the section can't be found
   const Section* get_section(const std::string& name) const;
 
+  //! Return the section from the segment with the name
+  //! given in the first parameter and with the section's name provided in the
+  //! second parameter. If the section cannot be found, it returns a nullptr
+  Section* get_section(const std::string& segname, const std::string& secname);
+
+  const Section* get_section(const std::string& segname, const std::string& secname) const;
+
   //! Check if a segment with the given name exists
   bool has_segment(const std::string& name) const;
 
@@ -337,13 +378,13 @@ class LIEF_API Binary : public LIEF::Binary  {
   const Section* section_from_virtual_address(uint64_t virtual_address) const;
 
   //! Convert a virtual address to an offset in the file
-  uint64_t virtual_address_to_offset(uint64_t virtual_address) const;
+  result<uint64_t> virtual_address_to_offset(uint64_t virtual_address) const;
 
   //! Convert the given offset into a virtual address.
   //!
   //! @param[in] offset    The offset to convert.
   //! @param[in] slide     If not 0, it will replace the default base address (if any)
-  uint64_t offset_to_virtual_address(uint64_t offset, uint64_t slide = 0) const override;
+  result<uint64_t> offset_to_virtual_address(uint64_t offset, uint64_t slide = 0) const override;
 
   //! Return the binary's SegmentCommand that encompasses the provided offset
   //!
@@ -398,8 +439,9 @@ class LIEF_API Binary : public LIEF::Binary  {
                      LIEF::Binary::VA_TYPES addr_type = LIEF::Binary::VA_TYPES::AUTO) override;
 
   //! Return the content located at virtual address
-  std::vector<uint8_t> get_content_from_virtual_address(uint64_t virtual_address, uint64_t size,
-                            LIEF::Binary::VA_TYPES addr_type = LIEF::Binary::VA_TYPES::AUTO) const override;
+  span<const uint8_t> get_content_from_virtual_address(
+      uint64_t virtual_address, uint64_t size,
+      Binary::VA_TYPES addr_type = Binary::VA_TYPES::AUTO) const override;
 
   //! The binary entrypoint
   uint64_t entrypoint() const override;
@@ -409,6 +451,12 @@ class LIEF_API Binary : public LIEF::Binary  {
 
   //! Check if the binary uses ``NX`` protection
   bool has_nx() const override;
+
+  /// Return True if the **heap** is flagged as non-executable. False otherwise
+  bool has_nx_stack() const;
+
+  /// Return True if the **stack** is flagged as non-executable. False otherwise
+  bool has_nx_heap() const;
 
   //! ``true`` if the binary has an entrypoint.
   //!
@@ -478,6 +526,10 @@ class LIEF_API Binary : public LIEF::Binary  {
   RPathCommand* rpath();
   const RPathCommand* rpath() const;
 
+  //! Iterator over **all** the MachO::RPathCommand commands.
+  it_rpaths rpaths();
+  it_const_rpaths rpaths() const;
+
   //! ``true`` if the binary has a MachO::SymbolCommand command.
   bool has_symbol_command() const;
 
@@ -502,9 +554,9 @@ class LIEF_API Binary : public LIEF::Binary  {
   //! ``true`` if the binary is signed with the command `DYLIB_CODE_SIGN_DRS`
   bool has_code_signature_dir() const;
 
-  //! Return the MachO::CodeSignature if present, a nullptr otherwise.
-  CodeSignature* code_signature_dir();
-  const CodeSignature* code_signature_dir() const;
+  //! Return the MachO::CodeSignatureDir if present, a nullptr otherwise.
+  CodeSignatureDir* code_signature_dir();
+  const CodeSignatureDir* code_signature_dir() const;
 
   //! ``true`` if the binary has a MachO::DataInCode command.
   bool has_data_in_code() const;
@@ -541,12 +593,46 @@ class LIEF_API Binary : public LIEF::Binary  {
   DyldEnvironment* dyld_environment();
   const DyldEnvironment* dyld_environment() const;
 
-  //! ``true`` if the binary has Build Version command.
+  //! ``true`` if the binary has the BuildVersion command.
   bool has_build_version() const;
 
   //! Return the MachO::BuildVersion if present, a nullptr otherwise.
   BuildVersion* build_version();
   const BuildVersion* build_version() const;
+
+  //! ``true`` if the binary has the command LC_DYLD_CHAINED_FIXUPS.
+  bool has_dyld_chained_fixups() const;
+
+  //! Return the MachO::DyldChainedFixups if present, a nullptr otherwise.
+  DyldChainedFixups* dyld_chained_fixups();
+  const DyldChainedFixups* dyld_chained_fixups() const;
+
+  //! ``true`` if the binary has the command LC_DYLD_CHAINED_FIXUPS.
+  bool has_dyld_exports_trie() const;
+
+  //! Return the MachO::DyldChainedFixups if present, a nullptr otherwise.
+  DyldExportsTrie* dyld_exports_trie();
+  const DyldExportsTrie* dyld_exports_trie() const;
+
+  //! ``true`` if the binary has the command LC_TWO_LEVEL_HINTS.
+  bool has_two_level_hints() const;
+
+  //! Return the MachO::DyldChainedFixups if present, a nullptr otherwise.
+  TwoLevelHints* two_level_hints();
+  const TwoLevelHints* two_level_hints() const;
+
+  //! ``true`` if the binary has the command LC_LINKER_OPTIMIZATION_HINT.
+  bool has_linker_opt_hint() const;
+
+  //! Return the MachO::LinkerOptHint if present, a nullptr otherwise.
+  LinkerOptHint* linker_opt_hint();
+  const LinkerOptHint* linker_opt_hint() const;
+
+  //! Add a symbol in the export trie of the current binary
+  ExportInfo* add_exported_function(uint64_t address, const std::string& name);
+
+  //! Add a symbol in LC_SYMTAB command of the current binary
+  Symbol* add_local_symbol(uint64_t address, const std::string& name);
 
   template<class T>
   LIEF_LOCAL bool has_command() const;
@@ -558,7 +644,10 @@ class LIEF_API Binary : public LIEF::Binary  {
   LIEF_LOCAL const T* command() const;
 
   template<class T>
-  size_t count_commands() const;
+  LIEF_LOCAL size_t count_commands() const;
+
+  template<class CMD, class Func>
+  LIEF_LOCAL Binary& for_commands(Func f);
 
   LoadCommand*       operator[](LOAD_COMMAND_TYPES type);
   const LoadCommand* operator[](LOAD_COMMAND_TYPES type) const;
@@ -575,20 +664,44 @@ class LIEF_API Binary : public LIEF::Binary  {
   //! ``true`` if the binary has a LOAD_COMMAND_TYPES::LC_FILESET_ENTRY command
   bool has_filesets() const;
 
+  //! Name associated with the LC_FILESET_ENTRY binary
+  const std::string& fileset_name() const {
+    return fileset_name_;
+  }
+
   ~Binary() override;
+
+  //! Shift the content located right after the Load commands table.
+  //! This operation can be used to add a new command
+  ok_error_t shift(size_t value);
+
+  //! Shift the position on the __LINKEDIT data by `width`
+  ok_error_t shift_linkedit(size_t width);
+
+  //! If this Mach-O binary has been parsed from memory,
+  //! it returns the in-memory base address of this binary.
+  //!
+  //! Otherwise, it returns 0
+  uint64_t memory_base_address() const {
+    return in_memory_base_addr_;
+  }
+
+  uint32_t page_size() const;
+
+  static bool classof(const LIEF::Binary* bin) {
+    return bin->format() == Binary::FORMATS::MACHO;
+  }
 
   private:
   //! Default constructor
   Binary();
 
-  // Shift content next to LC table
-  void shift(size_t value);
-
-  void shift_command(size_t width, size_t from_offset);
+  void shift_command(size_t width, uint64_t from_offset);
 
   //! Insert a Segment command in the cache field (segments_)
   //! and keep a consistent state of the indexes.
   size_t add_cached_segment(SegmentCommand& segment);
+  void refresh_seg_offset();
 
   template<class T>
   LIEF_LOCAL ok_error_t patch_relocation(Relocation& relocation, uint64_t from, uint64_t shift);
@@ -601,15 +714,15 @@ class LIEF_API Binary : public LIEF::Binary  {
   LIEF::Binary::functions_t get_abstract_imported_functions() const override;
   std::vector<std::string>  get_abstract_imported_libraries() const override;
 
-  inline relocations_t& relocations_list() {
+  relocations_t& relocations_list() {
     return this->relocations_;
   }
 
-  inline const relocations_t& relocations_list() const {
+  const relocations_t& relocations_list() const {
     return this->relocations_;
   }
 
-  inline size_t pointer_size() const {
+  size_t pointer_size() const {
     return this->is64_ ? sizeof(uint64_t) : sizeof(uint32_t);
   }
 
@@ -638,10 +751,11 @@ class LIEF_API Binary : public LIEF::Binary  {
   // offset_to_virtual_address
   std::map<uint64_t, SegmentCommand*> offset_seg_;
 
-
   protected:
   uint64_t fat_offset_ = 0;
   uint64_t fileset_offset_ = 0;
+  uint64_t in_memory_base_addr_ = 0;
+  std::string fileset_name_;
 };
 
 } // namespace MachO

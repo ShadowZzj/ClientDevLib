@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,10 @@
 #include "LIEF/Abstract/Binary.hpp"
 
 namespace LIEF {
-LIEF_API const char* to_string(EXE_FORMATS e);
 LIEF_API const char* to_string(ARCHITECTURES e);
 LIEF_API const char* to_string(OBJECT_TYPES e);
 LIEF_API const char* to_string(MODES e);
 LIEF_API const char* to_string(ENDIANNESS e);
-LIEF_API const char* to_string(Binary::VA_TYPES e);
 LIEF_API const char* to_string(Function::FLAGS e);
 } // namespace LIEF
 

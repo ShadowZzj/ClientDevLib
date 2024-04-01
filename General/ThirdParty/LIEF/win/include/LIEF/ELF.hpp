@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_H_
-#define LIEF_ELF_H_
+#ifndef LIEF_ELF_H
+#define LIEF_ELF_H
 #include "LIEF/config.h"
 
 #if defined(LIEF_ELF_SUPPORT)
@@ -39,6 +39,7 @@
 #include "LIEF/ELF/DynamicSharedObject.hpp"
 #include "LIEF/ELF/GnuHash.hpp"
 #include "LIEF/ELF/Note.hpp"
+#include "LIEF/ELF/NoteDetails.hpp"
 #include "LIEF/ELF/RelocationSizes.hpp"
 #include "LIEF/ELF/Symbol.hpp"
 #include "LIEF/ELF/SymbolVersion.hpp"
@@ -48,10 +49,6 @@
 #include "LIEF/ELF/SymbolVersionRequirement.hpp"
 #include "LIEF/ELF/SysvHash.hpp"
 
-#include "LIEF/ELF/NoteDetails/AndroidNote.hpp"
-#include "LIEF/ELF/NoteDetails/NoteAbi.hpp"
-#include "LIEF/ELF/NoteDetails/Core.hpp"
-#include "LIEF/ELF/NoteDetails.hpp"
 #endif
 
 #endif

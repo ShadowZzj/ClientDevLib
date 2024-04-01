@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_PARSER_H_
-#define LIEF_ELF_PARSER_H_
+#ifndef LIEF_ELF_PARSER_H
+#define LIEF_ELF_PARSER_H
+#include <unordered_map>
 
 #include "LIEF/visibility.h"
 #include "LIEF/utils.hpp"
@@ -23,7 +24,7 @@
 #include "LIEF/errors.hpp"
 #include "LIEF/ELF/enums.hpp"
 
-struct Profiler;
+#include "LIEF/ELF/ParserConfig.hpp"
 
 namespace LIEF {
 class BinaryStream;
@@ -36,23 +37,21 @@ namespace ELF {
 class Section;
 class Binary;
 class Segment;
+class Symbol;
+class Note;
 
 //! Class which parses and transforms an ELF file into a ELF::Binary object
 class LIEF_API Parser : public LIEF::Parser {
   friend class OAT::Parser;
   public:
-  friend struct ::Profiler;
-
   static constexpr uint32_t NB_MAX_SYMBOLS         = 1000000;
   static constexpr uint32_t DELTA_NB_SYMBOLS       = 3000;
   static constexpr uint32_t NB_MAX_BUCKETS         = NB_MAX_SYMBOLS;
   static constexpr uint32_t NB_MAX_CHAINS          = 1000000;
-  static constexpr uint32_t NB_MAX_SECTION         = 10000;
   static constexpr uint32_t NB_MAX_SEGMENTS        = 10000;
   static constexpr uint32_t NB_MAX_RELOCATIONS     = 3000000;
   static constexpr uint32_t NB_MAX_DYNAMIC_ENTRIES = 1000;
   static constexpr uint32_t NB_MAX_MASKWORD        = 512;
-  static constexpr uint32_t MAX_NOTE_DESCRIPTION   = 1_MB;
   static constexpr uint32_t MAX_SECTION_SIZE       = 2_GB;
   static constexpr uint32_t MAX_SEGMENT_SIZE       = 3_GB;
 
@@ -60,47 +59,55 @@ class LIEF_API Parser : public LIEF::Parser {
   //!
   //! For weird binaries (e.g. sectionless) you can choose which method to use for counting dynamic symbols
   //!
-  //! @param[in] file      Path to the ELF binary
-  //! @param[in] count_mtd Method used to count dynamic symbols.
-  //!                      Default: LIEF::ELF::DYNSYM_COUNT_METHODS::COUNT_AUTO
+  //! @param[in] file Path to the ELF binary
+  //! @param[in] conf Optional configuration for the parser
   //!
-  //! @return LIEF::ELF::Binary
+  //! @return LIEF::ELF::Binary as a `unique_ptr`
   static std::unique_ptr<Binary> parse(const std::string& file,
-                                       DYNSYM_COUNT_METHODS count_mtd = DYNSYM_COUNT_METHODS::COUNT_AUTO);
+                                       const ParserConfig& conf = ParserConfig::all());
 
   //! Parse the given raw data as an ELF binary and return a LIEF::ELF::Binary object
   //!
   //! For weird binaries (e.g. sectionless) you can choose which method use to count dynamic symbols
   //!
-  //! @param[in] data      Raw ELF
-  //! @param[in] name      Binary name (optional)
-  //! @param[in] count_mtd Method used to count dynamic symbols.
-  //                       Default: LIEF::ELF::DYNSYM_COUNT_METHODS::COUNT_AUTO
+  //! @param[in] data Raw ELF as a std::vector of uint8_t
+  //! @param[in] conf Optional configuration for the parser
   //!
   //! @return LIEF::ELF::Binary
-  static std::unique_ptr<Binary> parse(const std::vector<uint8_t>& data, const std::string& name = "",
-                                       DYNSYM_COUNT_METHODS count_mtd = DYNSYM_COUNT_METHODS::COUNT_AUTO);
+  static std::unique_ptr<Binary> parse(const std::vector<uint8_t>& data,
+                                       const ParserConfig& conf = ParserConfig::all());
+
+  //! Parse the ELF binary from the given stream and return a LIEF::ELF::Binary object
+  //!
+  //! For weird binaries (e.g. sectionless) you can choose which method use to count dynamic symbols
+  //!
+  //! @param[in] stream  The stream which wraps the ELF binary
+  //! @param[in] conf    Optional configuration for the parser
+  //!
+  //! @return LIEF::ELF::Binary
+  static std::unique_ptr<Binary> parse(std::unique_ptr<BinaryStream> stream,
+                                       const ParserConfig& conf = ParserConfig::all());
 
   Parser& operator=(const Parser&) = delete;
   Parser(const Parser&)            = delete;
 
   protected:
   Parser();
-  Parser(const std::string& file,
-         DYNSYM_COUNT_METHODS count_mtd = DYNSYM_COUNT_METHODS::COUNT_AUTO);
+  Parser(std::unique_ptr<BinaryStream> stream, ParserConfig config);
+  Parser(const std::string& file, ParserConfig config);
+  Parser(const std::vector<uint8_t>& data, ParserConfig config);
 
-  Parser(const std::vector<uint8_t>& data,
-         DYNSYM_COUNT_METHODS count_mtd = DYNSYM_COUNT_METHODS::COUNT_AUTO);
+  ~Parser() override;
 
-  ~Parser();
-
-  ok_error_t init(const std::string& name = "");
+  ok_error_t init();
 
   bool should_swap() const;
 
   // map, dynamic_symbol.version <----> symbol_version
   // symbol_version comes from symbol_version table
   void link_symbol_version();
+
+  ok_error_t link_symbol_section(Symbol& sym);
 
   template<typename ELF_T>
   ok_error_t parse_binary();
@@ -116,7 +123,7 @@ class LIEF_API Parser : public LIEF::Parser {
 
   uint64_t get_dynamic_string_table() const;
 
-  uint64_t get_dynamic_string_table_from_segments() const;
+  result<uint64_t> get_dynamic_string_table_from_segments() const;
 
   uint64_t get_dynamic_string_table_from_sections() const;
 
@@ -217,6 +224,8 @@ class LIEF_API Parser : public LIEF::Parser {
   //! Parse Note (.gnu.note)
   ok_error_t parse_notes(uint64_t offset, uint64_t size);
 
+  std::unique_ptr<Note> get_note(uint32_t type, std::string name, std::vector<uint8_t> desc_bytes);
+
   //! Parse Symbols's SYSV hash
   ok_error_t parse_symbol_sysv_hash(uint64_t offset);
 
@@ -231,7 +240,15 @@ class LIEF_API Parser : public LIEF::Parser {
   std::unique_ptr<BinaryStream> stream_;
   std::unique_ptr<Binary>       binary_;
   ELF_CLASS                     type_ = ELF_CLASS::ELFCLASSNONE;
-  DYNSYM_COUNT_METHODS          count_mtd_ = DYNSYM_COUNT_METHODS::COUNT_AUTO;
+  ParserConfig                  config_;
+  /*
+   * parse_sections() may skip some sections so that
+   * binary_->sections_ is not contiguous based on the index of the sections.
+   *
+   * On the other hand, we need these indexes to bind symbols that
+   * reference sections. That's why we have this unordered_map.
+   */
+  std::unordered_map<size_t, Section*> sections_idx_;
 };
 
 } // namespace ELF

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef OAT_ENUM_TO_STRING_H_
-#define OAT_ENUM_TO_STRING_H_
+#ifndef OAT_ENUM_TO_STRING_H
+#define OAT_ENUM_TO_STRING_H
 #include "LIEF/visibility.h"
 #include "LIEF/OAT/enums.hpp"
 

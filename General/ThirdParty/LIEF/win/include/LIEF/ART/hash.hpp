@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ART_HASH_H_
-#define LIEF_ART_HASH_H_
+#ifndef LIEF_ART_HASH_H
+#define LIEF_ART_HASH_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/hash.hpp"
-#include "LIEF/ART.hpp"
 
 namespace LIEF {
+class Object;
+
 namespace ART {
+class File;
+class Header;
 
 class LIEF_API Hash : public LIEF::Hash {
   public:
-  static size_t hash(const Object& obj);
+  static LIEF::Hash::value_type hash(const Object& obj);
 
   public:
   using LIEF::Hash::Hash;

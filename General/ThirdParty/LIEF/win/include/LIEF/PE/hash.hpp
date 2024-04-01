@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  * Copyright 2017 - 2021 K. Nakagawa
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_HASH_H_
-#define LIEF_PE_HASH_H_
+#ifndef LIEF_PE_HASH_H
+#define LIEF_PE_HASH_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/hash.hpp"
-#include "LIEF/Abstract/hash.hpp"
 
 namespace LIEF {
 namespace PE {
@@ -84,19 +83,25 @@ class LoadConfigurationV4;
 class LoadConfigurationV5;
 class LoadConfigurationV6;
 class LoadConfigurationV7;
+class LoadConfigurationV8;
+class LoadConfigurationV9;
+class LoadConfigurationV10;
+class LoadConfigurationV11;
 class Pogo;
 class PogoEntry;
+class Repro;
 
 //! Class which implements a visitor to compute
 //! a **deterministic** hash for LIEF PE objects
 class LIEF_API Hash : public LIEF::Hash {
   public:
-  static size_t hash(const Object& obj);
+  static LIEF::Hash::value_type hash(const Object& obj);
 
   public:
   using LIEF::Hash::Hash;
   using LIEF::Hash::hash;
   using LIEF::Hash::visit;
+  using LIEF::Hash::process;
 
   public:
   void visit(const Binary& Binary)                        override;
@@ -138,6 +143,8 @@ class LIEF_API Hash : public LIEF::Hash {
   void visit(const x509& x509)                            override;
   void visit(const SignerInfo& signerinfo)                override;
   void visit(const ContentInfo& contentinfo)              override;
+  void visit(const GenericContent& content)               override;
+  void visit(const SpcIndirectData& content)              override;
   void visit(const Attribute& attr)                       override;
   void visit(const ContentType& attr)                     override;
   void visit(const GenericType& attr)                     override;
@@ -159,9 +166,14 @@ class LIEF_API Hash : public LIEF::Hash {
   void visit(const LoadConfigurationV5& config)           override;
   void visit(const LoadConfigurationV6& config)           override;
   void visit(const LoadConfigurationV7& config)           override;
+  void visit(const LoadConfigurationV8& config)           override;
+  void visit(const LoadConfigurationV9& config)           override;
+  void visit(const LoadConfigurationV10& config)          override;
+  void visit(const LoadConfigurationV11& config)          override;
 
   void visit(const Pogo& pogo)        override;
   void visit(const PogoEntry& entry)  override;
+  void visit(const Repro& entry)      override;
 
   ~Hash() override;
 };

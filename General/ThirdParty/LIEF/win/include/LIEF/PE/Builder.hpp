@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_BUILDER_H_
-#define LIEF_PE_BUILDER_H_
+#ifndef LIEF_PE_BUILDER_H
+#define LIEF_PE_BUILDER_H
 
 #include <cstring>
 #include <string>
 #include <vector>
 #include <iterator>
-#include <iostream>
 #include <ostream>
 #include <sstream>
 #include <algorithm>
@@ -30,18 +29,21 @@
 #include "LIEF/utils.hpp"
 #include "LIEF/iostream.hpp"
 
-#include "LIEF/PE/Binary.hpp"
 #include "LIEF/errors.hpp"
-
-struct Profiler;
 
 namespace LIEF {
 namespace PE {
+class Binary;
+class ResourceNode;
+class DosHeader;
+class Header;
+class OptionalHeader;
+class DataDirectory;
+class Section;
 
 //! Class that is used to rebuild a raw PE binary from a PE::Binary object
 class LIEF_API Builder {
   public:
-  friend struct ::Profiler;
 
   Builder() = delete;
   Builder(Binary& binary);
@@ -92,6 +94,9 @@ class LIEF_API Builder {
 
   //! @brief Write the build result into the ``output`` file
   void write(const std::string& filename) const;
+
+  //! @brief Write the build result into the ``os`` stream
+  void write(std::ostream& os) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Builder& b);
 

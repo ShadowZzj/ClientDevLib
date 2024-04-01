@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_SYMBOL_VERSION_REQUIREMENTS_H_
-#define LIEF_ELF_SYMBOL_VERSION_REQUIREMENTS_H_
+#ifndef LIEF_ELF_SYMBOL_VERSION_REQUIREMENTS_H
+#define LIEF_ELF_SYMBOL_VERSION_REQUIREMENTS_H
 
 #include <string>
-#include <iostream>
+#include <ostream>
 #include <vector>
 #include <memory>
 
@@ -28,6 +28,7 @@
 namespace LIEF {
 namespace ELF {
 class Parser;
+class SymbolVersionAuxRequirement;
 
 namespace details {
 struct Elf64_Verneed;
@@ -46,7 +47,7 @@ class LIEF_API SymbolVersionRequirement : public Object {
   SymbolVersionRequirement();
   SymbolVersionRequirement(const details::Elf64_Verneed& header);
   SymbolVersionRequirement(const details::Elf32_Verneed& header);
-  virtual ~SymbolVersionRequirement();
+  ~SymbolVersionRequirement() override;
 
   SymbolVersionRequirement& operator=(SymbolVersionRequirement other);
   SymbolVersionRequirement(const SymbolVersionRequirement& other);
@@ -76,8 +77,6 @@ class LIEF_API SymbolVersionRequirement : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const SymbolVersionRequirement& rhs) const;
-  bool operator!=(const SymbolVersionRequirement& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const SymbolVersionRequirement& symr);
 

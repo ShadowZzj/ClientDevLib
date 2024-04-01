@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_EXPORT_ENTRY_H_
-#define LIEF_PE_EXPORT_ENTRY_H_
+#ifndef LIEF_PE_EXPORT_ENTRY_H
+#define LIEF_PE_EXPORT_ENTRY_H
 
 #include <string>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
@@ -51,7 +51,7 @@ class LIEF_API ExportEntry : public LIEF::Symbol {
               uint16_t ordinal, uint32_t function_rva);
   ExportEntry(const ExportEntry&);
   ExportEntry& operator=(const ExportEntry&);
-  virtual ~ExportEntry();
+  ~ExportEntry() override;
 
   uint16_t           ordinal() const;
   uint32_t           address() const;
@@ -65,23 +65,21 @@ class LIEF_API ExportEntry : public LIEF::Symbol {
   void address(uint32_t address);
   void is_extern(bool is_extern);
 
-  inline uint64_t value() const override {
+  uint64_t value() const override {
     return address();
   }
 
-  inline void value(uint64_t value) override {
-    address(value);
+  void value(uint64_t value) override {
+    address(static_cast<uint32_t>(value));
   }
 
-  inline void set_forward_info(std::string lib, std::string function)  {
+  void set_forward_info(std::string lib, std::string function)  {
     forward_info_.library =  std::move(lib);
     forward_info_.function = std::move(function);
   }
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ExportEntry& rhs) const;
-  bool operator!=(const ExportEntry& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ExportEntry& exportEntry);
 
@@ -98,4 +96,4 @@ class LIEF_API ExportEntry : public LIEF::Symbol {
 }
 }
 
-#endif /* PE_EXPORTENTRY_H_ */
+#endif /* PE_EXPORTENTRY_H */

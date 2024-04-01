@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_PARSER_CONFIG_H_
-#define LIEF_MACHO_PARSER_CONFIG_H_
+#ifndef LIEF_MACHO_PARSER_CONFIG_H
+#define LIEF_MACHO_PARSER_CONFIG_H
 #include "LIEF/visibility.h"
 
 namespace LIEF {
@@ -39,6 +39,13 @@ struct LIEF_API ParserConfig {
   bool parse_dyld_exports  = true; ///< Parse the Dyld export trie
   bool parse_dyld_bindings = true; ///< Parse the Dyld binding opcodes
   bool parse_dyld_rebases  = true; ///< Parse the Dyld rebase opcodes
+
+  /// When parsing Mach-O from memory, this option
+  /// can be used to *undo* relocations and symbols bindings.
+  ///
+  /// When activated, this option requires parse_dyld_bindings
+  /// and parse_dyld_rebases to be enabled.
+  bool fix_from_memory = false;
 };
 
 }

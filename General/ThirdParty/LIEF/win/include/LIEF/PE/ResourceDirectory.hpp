@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_DIRECTORY_H_
-#define LIEF_PE_RESOURCE_DIRECTORY_H_
+#ifndef LIEF_PE_RESOURCE_DIRECTORY_H
+#define LIEF_PE_RESOURCE_DIRECTORY_H
 
 #include <string>
 #include <list>
@@ -48,9 +48,11 @@ class LIEF_API ResourceDirectory : public ResourceNode {
 
   void swap(ResourceDirectory& other);
 
-  virtual ~ResourceDirectory();
+  ~ResourceDirectory() override;
 
-  ResourceDirectory* clone() const override;
+  std::unique_ptr<ResourceNode> clone() const override {
+    return std::unique_ptr<ResourceNode>(new ResourceDirectory{*this});
+  }
 
   //! Resource characteristics. This field is reserved for future use.
   //! It is currently set to zero.
@@ -84,10 +86,12 @@ class LIEF_API ResourceDirectory : public ResourceNode {
   void numberof_name_entries(uint16_t numberof_name_entries);
   void numberof_id_entries(uint16_t numberof_id_entries);
 
+  static bool classof(const ResourceNode* node) {
+    return node->is_directory();
+  }
+
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceDirectory& rhs) const;
-  bool operator!=(const ResourceDirectory& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceDirectory& directory);
 
@@ -102,4 +106,4 @@ class LIEF_API ResourceDirectory : public ResourceNode {
 };
 }
 }
-#endif /* RESOURCEDIRECTORY_H_ */
+#endif /* RESOURCEDIRECTORY_H */

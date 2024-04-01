@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_DATA_IN_CODE_COMMAND_H_
-#define LIEF_MACHO_DATA_IN_CODE_COMMAND_H_
+#ifndef LIEF_MACHO_DATA_IN_CODE_COMMAND_H
+#define LIEF_MACHO_DATA_IN_CODE_COMMAND_H
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
 #include "LIEF/iterators.hpp"
+#include "LIEF/span.hpp"
 
 #include "LIEF/MachO/LoadCommand.hpp"
 #include "LIEF/MachO/DataCodeEntry.hpp"
@@ -29,6 +30,7 @@
 namespace LIEF {
 namespace MachO {
 class BinaryParser;
+class LinkEdit;
 
 namespace details {
 struct linkedit_data_command;
@@ -41,6 +43,7 @@ struct linkedit_data_command;
 //! @see DataCodeEntry
 class LIEF_API DataInCode : public LoadCommand {
   friend class BinaryParser;
+  friend class LinkEdit;
   public:
   using entries_t        = std::vector<DataCodeEntry>;
   using it_const_entries = const_ref_iterator<const entries_t&>;
@@ -71,10 +74,16 @@ class LIEF_API DataInCode : public LoadCommand {
   it_const_entries entries() const;
   it_entries entries();
 
-  virtual ~DataInCode();
+  span<uint8_t> content() {
+    return content_;
+  }
 
-  bool operator==(const DataInCode& rhs) const;
-  bool operator!=(const DataInCode& rhs) const;
+  span<const uint8_t> content() const {
+    return content_;
+  }
+
+  ~DataInCode() override;
+
 
   void accept(Visitor& visitor) const override;
 
@@ -83,9 +92,10 @@ class LIEF_API DataInCode : public LoadCommand {
   static bool classof(const LoadCommand* cmd);
 
   private:
-  uint32_t  data_offset_;
-  uint32_t  data_size_;
+  uint32_t  data_offset_ = 0;
+  uint32_t  data_size_   = 0;
   entries_t entries_;
+  span<uint8_t> content_;
 
 };
 

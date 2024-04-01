@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_LOGGING_H_
-#define LIEF_LOGGING_H_
+#ifndef LIEF_LOGGING_H
+#define LIEF_LOGGING_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
+
+#include <string>
+
+namespace spdlog {
+class logger;
+}
 
 namespace LIEF {
 namespace logging {
 
 //! **Hierarchical** logging level
 //!
-//! From a given level set, all levels below this
-//! level are enabled
+//! From a given level set, all levels below this ! level are enabled
 //!
 //! For example, if LOG_INFO is enabled then LOG_WARN, LOG_ERR are also enabled
 enum LOGGING_LEVEL {
@@ -47,6 +52,16 @@ LIEF_API void enable();
 
 //! Change the logging level (**hierarchical**)
 LIEF_API void set_level(LOGGING_LEVEL level);
+
+//! Change the logger as a file-base logging and set its path
+LIEF_API void set_path(const std::string& path);
+
+//! Log a message with the LIEF's logger
+LIEF_API void log(LOGGING_LEVEL level, const std::string& msg);
+
+LIEF_API void set_logger(const spdlog::logger& logger);
+
+LIEF_API void reset();
 
 }
 }

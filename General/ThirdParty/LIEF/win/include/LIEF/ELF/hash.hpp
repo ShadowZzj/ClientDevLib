@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_HASH_H_
-#define LIEF_ELF_HASH_H_
+#ifndef LIEF_ELF_HASH_H
+#define LIEF_ELF_HASH_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/hash.hpp"
@@ -44,6 +44,7 @@ class Note;
 class NoteDetails;
 class AndroidNote;
 class NoteAbi;
+class NoteGnuProperty;
 class CorePrPsInfo;
 class CorePrStatus;
 class CoreAuxv;
@@ -56,7 +57,7 @@ class SysvHash;
 //! a **deterministic** hash for LIEF ELF objects
 class LIEF_API Hash : public LIEF::Hash {
   public:
-  static size_t hash(const Object& obj);
+  static LIEF::Hash::value_type hash(const Object& obj);
 
   public:
   using LIEF::Hash::Hash;
@@ -82,9 +83,9 @@ class LIEF_API Hash : public LIEF::Hash {
   void visit(const SymbolVersionRequirement& svr)   override;
   void visit(const SymbolVersionDefinition& svd)    override;
   void visit(const Note& note)                      override;
-  void visit(const NoteDetails& details)            override;
-  void visit(const AndroidNote& note)               override;
+  void visit(const AndroidIdent& note)              override;
   void visit(const NoteAbi& note)                   override;
+  void visit(const NoteGnuProperty& note)           override;
   void visit(const CorePrPsInfo& pinfo)             override;
   void visit(const CorePrStatus& pstatus)           override;
   void visit(const CoreAuxv& auxv)                  override;

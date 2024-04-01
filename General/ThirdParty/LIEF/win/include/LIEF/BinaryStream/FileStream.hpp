@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class FileStream : public BinaryStream {
   FileStream(FileStream&& other);
   FileStream& operator=(FileStream&& other);
 
-  inline uint64_t size() const override {
+  uint64_t size() const override {
     return size_;
   }
 
@@ -49,7 +49,7 @@ class FileStream : public BinaryStream {
   static bool classof(const BinaryStream& stream);
 
   protected:
-  inline ok_error_t peek_in(void* dst, uint64_t offset, uint64_t size) const override {
+  ok_error_t peek_in(void* dst, uint64_t offset, uint64_t size) const override {
     if (offset > size_ || offset + size > size_) {
       return make_error_code(lief_errors::read_error);
     }
@@ -59,7 +59,7 @@ class FileStream : public BinaryStream {
     ifs_.seekg(pos);
     return ok();
   }
-  inline result<const void*> read_at(uint64_t, uint64_t) const override {
+  result<const void*> read_at(uint64_t, uint64_t) const override {
     return make_error_code(lief_errors::not_supported);
   }
   mutable std::ifstream ifs_;

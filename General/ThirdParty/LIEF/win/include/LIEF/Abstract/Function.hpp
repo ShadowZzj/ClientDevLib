@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ABSTRACT_FUNCTION_H_
-#define LIEF_ABSTRACT_FUNCTION_H_
+#ifndef LIEF_ABSTRACT_FUNCTION_H
+#define LIEF_ABSTRACT_FUNCTION_H
 
+#include <vector>
 #include <string>
 #include <set>
 
@@ -65,7 +66,7 @@ class LIEF_API Function : public Symbol {
   Function(const std::string& name, uint64_t address, const flags_list_t& flags);
   Function(const Function&);
   Function& operator=(const Function&);
-  virtual ~Function();
+  ~Function() override;
 
   //! List of FLAGS
   flags_list_t flags() const;

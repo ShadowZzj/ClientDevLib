@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_ICON_H_
-#define LIEF_PE_RESOURCE_ICON_H_
-#include <iostream>
+#ifndef LIEF_PE_RESOURCE_ICON_H
+#define LIEF_PE_RESOURCE_ICON_H
+#include <ostream>
 #include <sstream>
+#include <climits>
+#include <vector>
 
 #include "LIEF/visibility.h"
 
+#include "LIEF/span.hpp"
 #include "LIEF/Object.hpp"
 
 #include "LIEF/PE/enums.hpp"
@@ -45,16 +48,16 @@ class LIEF_API ResourceIcon : public Object {
   ResourceIcon(const ResourceIcon&);
   ResourceIcon& operator=(const ResourceIcon&);
 
-  virtual ~ResourceIcon();
+  ~ResourceIcon() override;
 
   //! Id associated with the icon
   uint32_t id() const;
 
   //! Language associated with the icon
-  RESOURCE_LANGS lang() const;
+  uint32_t lang() const;
 
   //! Sub language associated with the icon
-  RESOURCE_SUBLANGS sublang() const;
+  uint32_t sublang() const;
 
   //! Width in pixels of the image
   uint8_t width() const;
@@ -78,11 +81,11 @@ class LIEF_API ResourceIcon : public Object {
   uint32_t size() const;
 
   //! Pixels of the image (as bytes)
-  const std::vector<uint8_t>& pixels() const;
+  span<const uint8_t> pixels() const;
 
   void id(uint32_t id);
-  void lang(RESOURCE_LANGS lang);
-  void sublang(RESOURCE_SUBLANGS sublang);
+  void lang(uint32_t lang);
+  void sublang(uint32_t sublang);
   void width(uint8_t width);
   void height(uint8_t height);
   void color_count(uint8_t color_count);
@@ -98,8 +101,6 @@ class LIEF_API ResourceIcon : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceIcon& rhs) const;
-  bool operator!=(const ResourceIcon& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceIcon& entry);
 
@@ -110,16 +111,11 @@ class LIEF_API ResourceIcon : public Object {
   uint8_t              reserved_ = 0;
   uint16_t             planes_ = 0;
   uint16_t             bit_count_ = 0;
-  uint32_t             id_ = -1u;
-  RESOURCE_LANGS       lang_ = RESOURCE_LANGS::LANG_NEUTRAL;
-  RESOURCE_SUBLANGS    sublang_ = RESOURCE_SUBLANGS::SUBLANG_DEFAULT;
+  uint32_t             id_ = UINT_MAX;
+  uint32_t             lang_ = /* LANG_NEUTRAL */0;
+  uint32_t             sublang_ = 0 /* SUBLANG_NEUTRAL */;
   std::vector<uint8_t> pixels_;
-
-
 };
-
-
-
 
 }
 }

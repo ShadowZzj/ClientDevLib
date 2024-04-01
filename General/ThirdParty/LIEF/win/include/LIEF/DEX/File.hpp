@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_DEX_FILE_H_
-#define LIEF_DEX_FILE_H_
+#ifndef LIEF_DEX_FILE_H
+#define LIEF_DEX_FILE_H
 #include <memory>
 
 #include "LIEF/visibility.h"
@@ -24,6 +24,7 @@
 #include "LIEF/DEX/MapList.hpp"
 #include "LIEF/DEX/instructions.hpp"
 #include "LIEF/DEX/deopt.hpp"
+#include "LIEF/DEX/types.hpp"
 
 namespace LIEF {
 namespace DEX {
@@ -32,6 +33,7 @@ class Class;
 class Method;
 class Type;
 class Prototype;
+class Field;
 
 //! Class that represents a DEX file
 class LIEF_API File : public Object {
@@ -137,8 +139,6 @@ class LIEF_API File : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const File& rhs) const;
-  bool operator!=(const File& rhs) const;
 
   ~File() override;
 

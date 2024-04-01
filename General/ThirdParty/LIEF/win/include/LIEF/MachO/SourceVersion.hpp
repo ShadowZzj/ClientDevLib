@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_SOURCE_VERSION_COMMAND_H_
-#define LIEF_MACHO_SOURCE_VERSION_COMMAND_H_
-#include <iostream>
+#ifndef LIEF_MACHO_SOURCE_VERSION_COMMAND_H
+#define LIEF_MACHO_SOURCE_VERSION_COMMAND_H
+#include <ostream>
 #include <array>
 
 #include "LIEF/visibility.h"
@@ -46,14 +46,12 @@ class LIEF_API SourceVersion : public LoadCommand {
 
   SourceVersion* clone() const override;
 
-  virtual ~SourceVersion();
+  ~SourceVersion() override;
 
   //! Return the version as an array
   const SourceVersion::version_t& version() const;
   void version(const SourceVersion::version_t& version);
 
-  bool operator==(const SourceVersion& rhs) const;
-  bool operator!=(const SourceVersion& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

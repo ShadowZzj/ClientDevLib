@@ -1,5 +1,5 @@
 /* Copyright 2017 - 2021 A. Guinet
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LIEF_CONFIG_H_
-#define LIEF_CONFIG_H_
+#ifndef LIEF_CONFIG_H
+#define LIEF_CONFIG_H
 
 // Main formats
 #define LIEF_PE_SUPPORT       1
@@ -29,11 +29,11 @@
 #define LIEF_ART_SUPPORT      1
 
 // LIEF options
-#define LIEF_JSON_SUPPORT     1
-#define LIEF_LOGGING_SUPPORT  1
-#define LIEF_LOGGING_DEBUG    1
-#define LIEF_FROZEN_ENABLED   1
-/* #undef LIEF_EXTERNAL_LEAF */
+#define LIEF_JSON_SUPPORT      1
+#define LIEF_LOGGING_SUPPORT   1
+#define LIEF_LOGGING_DEBUG     1
+#define LIEF_FROZEN_ENABLED    1
+/* #undef LIEF_EXTERNAL_EXPECTED */
 /* #undef LIEF_EXTERNAL_UTF8CPP */
 /* #undef LIEF_EXTERNAL_MBEDTLS */
 /* #undef LIEF_EXTERNAL_FROZEN */

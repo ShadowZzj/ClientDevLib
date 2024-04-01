@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_RELOCATION_H_
-#define LIEF_ELF_RELOCATION_H_
+#ifndef LIEF_ELF_RELOCATION_H
+#define LIEF_ELF_RELOCATION_H
 
 #include <string>
 #include <map>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
@@ -89,6 +89,7 @@ class LIEF_API Relocation : public LIEF::Relocation {
   //! * RELOC_HEXAGON
   //! * RELOC_SYSTEMZ
   //! * RELOC_SPARC
+  //! * RELOC_LOONGARCH
   uint32_t type() const;
 
   //! Check if the relocation uses the explicit addend() field (this is usually the case for 64 bits binaries)
@@ -119,10 +120,15 @@ class LIEF_API Relocation : public LIEF::Relocation {
   //! True if the relocation has an associated section
   bool has_section() const;
 
-  //! Section associated with this relocation.
-  //! If no section is tied to this relocation, it returns a nullptr
+  //! The section to which the relocation applies.
+  //! If no section to which the relocation applies is associtated to this relocation, it returns a nullptr
   Section*       section();
   const Section* section() const;
+
+  //! The associated symbol table.
+  //! If no symbol table section is associated with this relocation, it returns a nullptr
+  Section*       symbol_table();
+  const Section* symbol_table() const;
 
   void addend(int64_t addend);
   void type(uint32_t type);
@@ -130,11 +136,10 @@ class LIEF_API Relocation : public LIEF::Relocation {
   void info(uint32_t v);
   void symbol(Symbol* symbol);
   void section(Section* section);
+  void symbol_table(Section* section);
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Relocation& rhs) const;
-  bool operator!=(const Relocation& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Relocation& entry);
 
@@ -146,6 +151,7 @@ class LIEF_API Relocation : public LIEF::Relocation {
   ARCH                architecture_ = ARCH::EM_NONE;
   RELOCATION_PURPOSES purpose_ = RELOCATION_PURPOSES::RELOC_PURPOSE_NONE;
   Section*            section_{nullptr};
+  Section*            symbol_table_{nullptr};
   uint32_t            info_ = 0;
 };
 
@@ -153,4 +159,4 @@ class LIEF_API Relocation : public LIEF::Relocation {
 
 }
 }
-#endif /* _ELF_RELOCATION_H_ */
+#endif /* _ELF_RELOCATION_H */

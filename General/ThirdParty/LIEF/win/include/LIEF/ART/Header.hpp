@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ART_HEADER_H_
-#define LIEF_ART_HEADER_H_
+#ifndef LIEF_ART_HEADER_H
+#define LIEF_ART_HEADER_H
+
+#include <array>
+#include <cstdint>
 
 #include "LIEF/ART/types.hpp"
 #include "LIEF/ART/enums.hpp"
@@ -76,12 +79,10 @@ class LIEF_API Header : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Header& rhs) const;
-  bool operator!=(const Header& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Header& hdr);
 
-  virtual ~Header();
+  ~Header() override;
 
   private:
   magic_t       magic_;

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_DEX_METHOD_H_
-#define LIEF_DEX_METHOD_H_
+#ifndef LIEF_DEX_METHOD_H
+#define LIEF_DEX_METHOD_H
 
+#include <climits>
+#include <vector>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
@@ -84,12 +86,10 @@ class LIEF_API Method : public Object {
   //! ACCESS_FLAGS as an std::set
   access_flags_list_t access_flags() const;
 
-  bool operator==(const Method& rhs) const;
-  bool operator!=(const Method& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Method& mtd);
 
-  virtual ~Method();
+  ~Method() override;
 
   private:
   void set_virtual(bool v);
@@ -99,7 +99,7 @@ class LIEF_API Method : public Object {
   Class* parent_ = nullptr;
   Prototype* prototype_ = nullptr;
   uint32_t access_flags_ = ACCESS_FLAGS::ACC_UNKNOWN;
-  uint32_t original_index_ = -1u;
+  uint32_t original_index_ = UINT_MAX;
   bool is_virtual_ = false;
 
   uint64_t code_offset_ = 0;

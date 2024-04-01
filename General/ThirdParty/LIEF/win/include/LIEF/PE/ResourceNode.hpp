@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_NODE_H_
-#define LIEF_PE_RESOURCE_NODE_H_
+#ifndef LIEF_PE_RESOURCE_NODE_H
+#define LIEF_PE_RESOURCE_NODE_H
 #include <string>
 #include <vector>
 #include <memory>
@@ -45,8 +45,7 @@ class LIEF_API ResourceNode : public Object {
   using it_childs       = ref_iterator<childs_t&, ResourceNode*>;
   using it_const_childs = const_ref_iterator<const childs_t&, ResourceNode*>;
 
-  //! Enum that identifies the type of a node in
-  //! the resource tree
+  /// Enum that identifies the type of a node in the resource tree
   enum class TYPE {
     UNKNOWN = 0,
     DATA,
@@ -61,9 +60,9 @@ class LIEF_API ResourceNode : public Object {
 
   void swap(ResourceNode& other);
 
-  virtual ~ResourceNode();
+  ~ResourceNode() override;
 
-  virtual ResourceNode* clone() const = 0;
+  virtual std::unique_ptr<ResourceNode> clone() const = 0;
 
   //! Integer that identifies the Type, Name, or Language ID of the entry
   //! depending on its depth in the tree
@@ -102,7 +101,10 @@ class LIEF_API ResourceNode : public Object {
 
   void id(uint32_t id);
   void name(const std::string& name);
-  void name(const std::u16string& name);
+
+  void name(std::u16string name) {
+    name_ = std::move(name);
+  }
 
   //! Add a ResourceDirectory to the current node
   ResourceNode& add_child(const ResourceDirectory& child);
@@ -116,18 +118,14 @@ class LIEF_API ResourceNode : public Object {
   //! Delete the given node from the node's children
   void delete_child(const ResourceNode& node);
 
-  //! Sort the resource children by ID
-  void sort_by_id();
-
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceNode& rhs) const;
-  bool operator!=(const ResourceNode& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceNode& node);
 
   protected:
   ResourceNode();
+  childs_t::iterator insert_child(std::unique_ptr<ResourceNode> child);
   TYPE           type_ = TYPE::UNKNOWN;
   uint32_t       id_ = 0;
   std::u16string name_;
@@ -136,4 +134,4 @@ class LIEF_API ResourceNode : public Object {
 };
 }
 }
-#endif /* RESOURCENODE_H_ */
+#endif /* RESOURCENODE_H */

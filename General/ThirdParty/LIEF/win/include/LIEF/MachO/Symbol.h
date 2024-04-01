@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,6 @@
 #include <inttypes.h>
 
 #include "LIEF/MachO/enums.h"
-/**  @defgroup macho_symbol_c_api Header
- *  @ingroup macho_c_api
- *  @addtogroup macho_symbol_c_api
- *  @brief Symbol C API
- *
- *  @{
- */
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,5 +38,4 @@ typedef struct Macho_Symbol_t Macho_Symbol_t;
 }
 #endif
 
-/** @} */
 #endif

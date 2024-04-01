@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_DYLINKER_COMMAND_H_
-#define LIEF_MACHO_DYLINKER_COMMAND_H_
+#ifndef LIEF_MACHO_DYLINKER_COMMAND_H
+#define LIEF_MACHO_DYLINKER_COMMAND_H
 #include <string>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/types.hpp"
 #include "LIEF/visibility.h"
@@ -37,13 +37,14 @@ class LIEF_API DylinkerCommand : public LoadCommand {
   public:
   DylinkerCommand();
   DylinkerCommand(const details::dylinker_command& cmd);
+  DylinkerCommand(std::string name);
 
   DylinkerCommand& operator=(const DylinkerCommand& copy);
   DylinkerCommand(const DylinkerCommand& copy);
 
   DylinkerCommand* clone() const override;
 
-  virtual ~DylinkerCommand();
+  ~DylinkerCommand() override;
 
   std::ostream& print(std::ostream& os) const override;
 
@@ -52,8 +53,6 @@ class LIEF_API DylinkerCommand : public LoadCommand {
 
   void name(const std::string& name);
 
-  bool operator==(const DylinkerCommand& rhs) const;
-  bool operator!=(const DylinkerCommand& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

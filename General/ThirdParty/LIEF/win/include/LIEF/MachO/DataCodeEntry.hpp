@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_DATA_CODE_ENTRY_H_
-#define LIEF_MACHO_DATA_CODE_ENTRY_H_
-#include <iostream>
+#ifndef LIEF_MACHO_DATA_CODE_ENTRY_H
+#define LIEF_MACHO_DATA_CODE_ENTRY_H
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
@@ -62,10 +62,8 @@ class LIEF_API DataCodeEntry : public LIEF::Object {
   void length(uint16_t length);
   void type(TYPES type);
 
-  virtual ~DataCodeEntry();
+  ~DataCodeEntry() override;
 
-  bool operator==(const DataCodeEntry& rhs) const;
-  bool operator!=(const DataCodeEntry& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

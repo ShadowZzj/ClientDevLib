@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_SYSV_HASH_H_
-#define LIEF_ELF_SYSV_HASH_H_
+#ifndef LIEF_ELF_SYSV_HASH_H
+#define LIEF_ELF_SYSV_HASH_H
 
+#include <cstdint>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
@@ -62,12 +63,9 @@ class LIEF_API SysvHash : public Object {
   //! @brief Chains values
   const std::vector<uint32_t>& chains() const;
 
-  inline void nchain(uint32_t nb) {
+  void nchain(uint32_t nb) {
     chains_.resize(nb);
   }
-
-  bool operator==(const SysvHash& rhs) const;
-  bool operator!=(const SysvHash& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_EXPORT_INFO_COMMAND_H_
-#define LIEF_MACHO_EXPORT_INFO_COMMAND_H_
+#ifndef LIEF_MACHO_EXPORT_INFO_COMMAND_H
+#define LIEF_MACHO_EXPORT_INFO_COMMAND_H
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
@@ -30,6 +30,7 @@ namespace MachO {
 class BinaryParser;
 class Symbol;
 class DylibCommand;
+class Binary;
 
 //! Class that provides an interface over the Dyld export info
 //!
@@ -38,6 +39,7 @@ class DylibCommand;
 class LIEF_API ExportInfo : public Object {
 
   friend class BinaryParser;
+  friend class Binary;
 
   public:
   using flag_list_t = std::vector<EXPORT_SYMBOL_FLAGS>;
@@ -89,10 +91,7 @@ class LIEF_API ExportInfo : public Object {
   DylibCommand* alias_library();
   const DylibCommand* alias_library() const;
 
-  virtual ~ExportInfo();
-
-  bool operator==(const ExportInfo& rhs) const;
-  bool operator!=(const ExportInfo& rhs) const;
+  ~ExportInfo() override;
 
   void accept(Visitor& visitor) const override;
 

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_DATA_H_
-#define LIEF_PE_RESOURCE_DATA_H_
+#ifndef LIEF_PE_RESOURCE_DATA_H
+#define LIEF_PE_RESOURCE_DATA_H
 
 #include <vector>
 
 #include "LIEF/visibility.h"
 #include "LIEF/PE/ResourceNode.hpp"
+#include "LIEF/span.hpp"
 
 namespace LIEF {
 namespace PE {
@@ -41,16 +42,19 @@ class LIEF_API ResourceData : public ResourceNode {
   ResourceData& operator=(ResourceData other);
   void swap(ResourceData& other);
 
-  virtual ~ResourceData();
+  ~ResourceData() override;
 
-  ResourceData* clone() const override;
+  std::unique_ptr<ResourceNode> clone() const override {
+    return std::unique_ptr<ResourceNode>{new ResourceData{*this}};
+  }
 
   //! Return the code page that is used to decode code point
   //! values within the resource data. Typically, the code page is the Unicode code page.
   uint32_t code_page() const;
 
   //! Resource content
-  const std::vector<uint8_t>& content() const;
+  span<const uint8_t> content() const;
+  span<uint8_t> content();
 
   //! Reserved value. Should be ``0``
   uint32_t reserved() const;
@@ -64,10 +68,12 @@ class LIEF_API ResourceData : public ResourceNode {
   void content(const std::vector<uint8_t>& content);
   void reserved(uint32_t value);
 
+  static bool classof(const ResourceNode* node) {
+    return node->is_data();
+  }
+
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceData& rhs) const;
-  bool operator!=(const ResourceData& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceData& data);
 
@@ -81,4 +87,4 @@ class LIEF_API ResourceData : public ResourceNode {
 
 } // namespace PE
 } // namepsace LIEF
-#endif /* RESOURCEDATA_H_ */
+#endif /* RESOURCEDATA_H */

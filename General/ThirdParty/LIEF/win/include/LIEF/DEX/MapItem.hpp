@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MAP_ITEM_H_
-#define LIEF_MAP_ITEM_H_
+#ifndef LIEF_MAP_ITEM_H
+#define LIEF_MAP_ITEM_H
+
+#include <cstdint>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
@@ -75,12 +78,10 @@ class LIEF_API MapItem : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const MapItem& rhs) const;
-  bool operator!=(const MapItem& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const MapItem& item);
 
-  virtual ~MapItem();
+  ~MapItem() override;
 
   private:
   TYPES    type_;

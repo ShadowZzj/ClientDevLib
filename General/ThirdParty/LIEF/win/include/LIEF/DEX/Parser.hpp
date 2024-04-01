@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_DEX_PARSER_H_
-#define LIEF_DEX_PARSER_H_
+#ifndef LIEF_DEX_PARSER_H
+#define LIEF_DEX_PARSER_H
 
 #include <memory>
+#include <vector>
+#include <string>
+#include <unordered_map>
 
 #include "LIEF/visibility.h"
-
-#include "LIEF/BinaryStream/VectorStream.hpp"
-
-#include "LIEF/DEX/File.hpp"
-
-struct Profiler;
+#include "LIEF/DEX/types.hpp"
 
 namespace LIEF {
+class VectorStream;
+
 namespace DEX {
 class Class;
 class Method;
 class Field;
+class File;
+class Type;
 
 //! Class which parses a DEX file to produce a DEX::File object
 class LIEF_API Parser {
   public:
-  friend struct ::Profiler;
+
   //! Parse the DEX file from the file path given in parameter
   static std::unique_ptr<File> parse(const std::string& file);
   static std::unique_ptr<File> parse(std::vector<uint8_t> data, const std::string& name = "");
@@ -116,9 +118,6 @@ class LIEF_API Parser {
 
   std::unique_ptr<VectorStream> stream_;
 };
-
-
-
 
 } // namespace DEX
 } // namespace LIEF

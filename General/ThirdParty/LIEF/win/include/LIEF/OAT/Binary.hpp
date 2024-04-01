@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_OAT_BINARY_H_
-#define LIEF_OAT_BINARY_H_
-#include <iostream>
+#ifndef LIEF_OAT_BINARY_H
+#define LIEF_OAT_BINARY_H
+#include <ostream>
 
 #include "LIEF/visibility.h"
 
@@ -105,12 +105,13 @@ class LIEF_API Binary : public ELF::Binary {
 
   std::string dex2dex_json_info();
 
-  inline bool has_vdex() const {
+  bool has_vdex() const {
     return vdex_ != nullptr;
   }
 
-  bool operator==(const Binary& rhs) const;
-  bool operator!=(const Binary& rhs) const;
+  static bool classof(const LIEF::Binary* bin) {
+    return bin->format() == Binary::FORMATS::OAT;
+  }
 
   void accept(Visitor& visitor) const override;
 

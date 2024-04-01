@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_FUNCTION_STARTS_COMMAND_H_
-#define LIEF_MACHO_FUNCTION_STARTS_COMMAND_H_
+#ifndef LIEF_MACHO_FUNCTION_STARTS_COMMAND_H
+#define LIEF_MACHO_FUNCTION_STARTS_COMMAND_H
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 #include <array>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
 
+#include "LIEF/span.hpp"
 #include "LIEF/MachO/LoadCommand.hpp"
 
 namespace LIEF {
 namespace MachO {
+class BinaryParser;
+class LinkEdit;
 
 namespace details {
 struct linkedit_data_command;
@@ -37,6 +40,9 @@ struct linkedit_data_command;
 //!
 //! This command is an array of ULEB128 encoded values
 class LIEF_API FunctionStarts : public LoadCommand {
+  friend class BinaryParser;
+  friend class LinkEdit;
+
   public:
   FunctionStarts();
   FunctionStarts(const details::linkedit_data_command& cmd);
@@ -68,10 +74,16 @@ class LIEF_API FunctionStarts : public LoadCommand {
   void data_size(uint32_t size);
   void functions(const std::vector<uint64_t>& funcs);
 
-  virtual ~FunctionStarts();
+  span<const uint8_t> content() const {
+    return content_;
+  }
 
-  bool operator==(const FunctionStarts& rhs) const;
-  bool operator!=(const FunctionStarts& rhs) const;
+  span<uint8_t> content() {
+    return content_;
+  }
+
+  ~FunctionStarts() override;
+
 
   void accept(Visitor& visitor) const override;
 
@@ -79,9 +91,11 @@ class LIEF_API FunctionStarts : public LoadCommand {
 
   static bool classof(const LoadCommand* cmd);
 
+
   private:
-  uint32_t data_offset_;
-  uint32_t data_size_;
+  uint32_t data_offset_ = 0;
+  uint32_t data_size_ = 0;
+  span<uint8_t> content_;
   std::vector<uint64_t> functions_;
 };
 

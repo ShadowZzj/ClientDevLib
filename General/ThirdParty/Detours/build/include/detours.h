@@ -377,7 +377,7 @@ struct _DETOUR_ALIGN
 };
 
 C_ASSERT(sizeof(_DETOUR_ALIGN) == 1);
-#ifdef __WIN64
+#ifdef _WIN64
 struct _DETOUR_TRAMPOLINE
 {
     // An X64 instuction can be 15 bytes long.

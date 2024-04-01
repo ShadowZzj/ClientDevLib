@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RELOCATION_H_
-#define LIEF_PE_RELOCATION_H_
+#ifndef LIEF_PE_RELOCATION_H
+#define LIEF_PE_RELOCATION_H
 #include <vector>
-#include <iostream>
+#include <ostream>
 #include <memory>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
 #include "LIEF/iterators.hpp"
 
-#include "LIEF/PE/enums.hpp"
-
 namespace LIEF {
 namespace PE {
 
-class Parser;
-class Builder;
+class RelocationEntry;
 
 namespace details {
 struct pe_base_relocation_block;
 }
 
 //! Class which represents the *Base Relocation Block*
-//! Usually, we find this structure in the ``.reloc`` section
+//! We usually find this structure in the ``.reloc`` section
 class LIEF_API Relocation : public Object {
-
   friend class Parser;
   friend class Builder;
 
@@ -47,34 +43,43 @@ class LIEF_API Relocation : public Object {
   using it_entries       = ref_iterator<entries_t&, RelocationEntry*>;
   using it_const_entries = const_ref_iterator<const entries_t&, RelocationEntry*>;
 
-  Relocation();
+  Relocation() = default;
   Relocation(const Relocation& other);
   Relocation& operator=(Relocation other);
   Relocation(const details::pe_base_relocation_block& header);
-  virtual ~Relocation();
+  ~Relocation() override = default;
 
   void swap(Relocation& other);
 
   //! The RVA for which the offset of the relocation entries (RelocationEntry) is added
-  uint32_t virtual_address() const;
+  uint32_t virtual_address() const {
+    return virtual_address_;
+  }
 
   //! The total number of bytes in the base relocation block.
   //! ``block_size = sizeof(BaseRelocationBlock) + nb_of_relocs * sizeof(uint16_t = RelocationEntry)``
-  uint32_t block_size() const;
+  uint32_t block_size() const {
+    return block_size_;
+  }
 
   //! Iterator over the RelocationEntry
-  it_const_entries entries() const;
-  it_entries entries();
+  it_const_entries entries() const {
+    return entries_;
+  }
+  it_entries entries() {
+    return entries_;
+  }
 
-  void virtual_address(uint32_t virtual_address);
-  void block_size(uint32_t block_size);
+  void virtual_address(uint32_t virtual_address) {
+    virtual_address_ = virtual_address;
+  }
+  void block_size(uint32_t block_size) {
+    block_size_ = block_size;
+  }
 
   RelocationEntry& add_entry(const RelocationEntry& entry);
 
   void accept(Visitor& visitor) const override;
-
-  bool operator==(const Relocation& rhs) const;
-  bool operator!=(const Relocation& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Relocation& relocation);
 
@@ -86,4 +91,4 @@ class LIEF_API Relocation : public Object {
 
 }
 }
-#endif /* RELOCATION_H_ */
+#endif /* RELOCATION_H */

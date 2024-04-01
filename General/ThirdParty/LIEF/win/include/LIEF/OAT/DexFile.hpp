@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_OAT_DEXFILE_H_
-#define LIEF_OAT_DEXFILE_H_
+#ifndef LIEF_OAT_DEXFILE_H
+#define LIEF_OAT_DEXFILE_H
 
-#include "LIEF/OAT/type_traits.hpp"
+#include <cstdint>
+#include <string>
+#include <vector>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
 
-#include "LIEF/DEX.hpp"
-
 namespace LIEF {
+class Visitor;
+
+namespace DEX {
+class File;
+}
+
 namespace OAT {
 class Parser;
 
@@ -61,10 +67,8 @@ class LIEF_API DexFile : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const DexFile& rhs) const;
-  bool operator!=(const DexFile& rhs) const;
 
-  virtual ~DexFile();
+  ~DexFile() override;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const DexFile& dex_file);
 
@@ -84,8 +88,6 @@ class LIEF_API DexFile : public Object {
   // OAT 131 (Android 8.1.0)
   uint32_t method_bss_mapping_offset_ = 0;
   uint32_t dex_sections_layout_offset_ = 0;
-
-
 };
 
 } // Namespace OAT

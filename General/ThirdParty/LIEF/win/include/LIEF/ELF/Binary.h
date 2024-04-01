@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,6 @@
  */
 #ifndef C_LIEF_ELF_BINARY_H_
 #define C_LIEF_ELF_BINARY_H_
-
-/** @defgroup elf_binary_c_api Binary
- *  @ingroup elf_c_api
- *  @addtogroup elf_binary_c_api
- *  @brief Binary C API
- *
- *  @{
- */
 
 #include <stddef.h>
 
@@ -40,7 +32,7 @@
 extern "C" {
 #endif
 
-/** @brief LIEF::ELF::Binary C Handler */
+/** LIEF::ELF::Binary C Handler */
 struct Elf_Binary_t {
   void*              handler;
   const char*        name;
@@ -56,24 +48,16 @@ struct Elf_Binary_t {
 
 typedef struct Elf_Binary_t Elf_Binary_t;
 
-/** @brief Wrapper for LIEF::ELF::Parser::parse */
+/** Wrapper for LIEF::ELF::Parser::parse */
 LIEF_API Elf_Binary_t* elf_parse(const char *file);
 
 LIEF_API void elf_binary_destroy(Elf_Binary_t* binary);
 
-/* ELF::Binary methods
- * ==================
- */
-
-/** @brief Update LIEF::ELF::Header object */
+/** Update LIEF::ELF::Header object */
 LIEF_API int elf_binary_save_header(Elf_Binary_t* binary);
-
-
 
 #ifdef __cplusplus
 }
 #endif
 
-
-/** @} */
 #endif

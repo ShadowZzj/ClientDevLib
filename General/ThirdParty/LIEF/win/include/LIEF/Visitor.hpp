@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
-* Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+* Copyright 2017 - 2023 Quarkslab
 * Copyright 2017 - 2021 K. Nakagawa
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +14,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef LIEF_VISITOR_H_
-#define LIEF_VISITOR_H_
+#ifndef LIEF_VISITOR_H
+#define LIEF_VISITOR_H
 #include <set>
-#include <vector>
-#include <array>
-#include <string>
-#include <functional>
-#include <iostream>
 #include <utility>
-
-#include "LIEF/config.h"
+#include <cstddef>
 
 #include "LIEF/visibility.h"
-
-#include "LIEF/PE/signature/types.hpp"
-
 #include "LIEF/visitor_macros.hpp"
 
 
@@ -86,6 +77,8 @@ LIEF_PE_FORWARD(Signature)
 LIEF_PE_FORWARD(x509)
 LIEF_PE_FORWARD(SignerInfo)
 LIEF_PE_FORWARD(ContentInfo)
+LIEF_PE_FORWARD(GenericContent)
+LIEF_PE_FORWARD(SpcIndirectData)
 LIEF_PE_FORWARD(Attribute)
 LIEF_PE_FORWARD(ContentType)
 LIEF_PE_FORWARD(GenericType)
@@ -102,14 +95,19 @@ LIEF_PE_FORWARD(CodeIntegrity)
 LIEF_PE_FORWARD(LoadConfiguration)
 LIEF_PE_FORWARD(LoadConfigurationV0)
 LIEF_PE_FORWARD(LoadConfigurationV1)
+LIEF_PE_FORWARD(LoadConfigurationV10)
+LIEF_PE_FORWARD(LoadConfigurationV11)
 LIEF_PE_FORWARD(LoadConfigurationV2)
 LIEF_PE_FORWARD(LoadConfigurationV3)
 LIEF_PE_FORWARD(LoadConfigurationV4)
 LIEF_PE_FORWARD(LoadConfigurationV5)
 LIEF_PE_FORWARD(LoadConfigurationV6)
 LIEF_PE_FORWARD(LoadConfigurationV7)
+LIEF_PE_FORWARD(LoadConfigurationV8)
+LIEF_PE_FORWARD(LoadConfigurationV9)
 LIEF_PE_FORWARD(Pogo)
 LIEF_PE_FORWARD(PogoEntry)
+LIEF_PE_FORWARD(Repro)
 
 // ELF
 // ==================================
@@ -132,9 +130,9 @@ LIEF_ELF_FORWARD(SymbolVersionDefinition)
 LIEF_ELF_FORWARD(SymbolVersionAux)
 LIEF_ELF_FORWARD(SymbolVersionAuxRequirement)
 LIEF_ELF_FORWARD(Note)
-LIEF_ELF_FORWARD(NoteDetails)
-LIEF_ELF_FORWARD(AndroidNote)
+LIEF_ELF_FORWARD(AndroidIdent)
 LIEF_ELF_FORWARD(NoteAbi)
+LIEF_ELF_FORWARD(NoteGnuProperty)
 LIEF_ELF_FORWARD(CorePrPsInfo)
 LIEF_ELF_FORWARD(CorePrStatus)
 LIEF_ELF_FORWARD(CoreAuxv)
@@ -163,7 +161,11 @@ LIEF_MACHO_FORWARD(Symbol)
 LIEF_MACHO_FORWARD(Relocation)
 LIEF_MACHO_FORWARD(RelocationObject)
 LIEF_MACHO_FORWARD(RelocationDyld)
+LIEF_MACHO_FORWARD(RelocationFixup)
 LIEF_MACHO_FORWARD(BindingInfo)
+LIEF_MACHO_FORWARD(DyldBindingInfo)
+LIEF_MACHO_FORWARD(DyldExportsTrie)
+LIEF_MACHO_FORWARD(ChainedBindingInfo)
 LIEF_MACHO_FORWARD(ExportInfo)
 LIEF_MACHO_FORWARD(FunctionStarts)
 LIEF_MACHO_FORWARD(CodeSignature)
@@ -178,6 +180,9 @@ LIEF_MACHO_FORWARD(EncryptionInfo)
 LIEF_MACHO_FORWARD(BuildVersion)
 LIEF_MACHO_FORWARD(BuildToolVersion)
 LIEF_MACHO_FORWARD(FilesetCommand)
+LIEF_MACHO_FORWARD(TwoLevelHints)
+LIEF_MACHO_FORWARD(CodeSignatureDir)
+LIEF_MACHO_FORWARD(LinkerOptHint)
 
 // OAT
 // ===============================
@@ -263,9 +268,9 @@ class LIEF_API Visitor {
   LIEF_ELF_VISITABLE(SymbolVersionAux)
   LIEF_ELF_VISITABLE(SymbolVersionAuxRequirement)
   LIEF_ELF_VISITABLE(Note)
-  LIEF_ELF_VISITABLE(NoteDetails)
-  LIEF_ELF_VISITABLE(AndroidNote)
+  LIEF_ELF_VISITABLE(AndroidIdent)
   LIEF_ELF_VISITABLE(NoteAbi)
+  LIEF_ELF_VISITABLE(NoteGnuProperty)
   LIEF_ELF_VISITABLE(CorePrPsInfo)
   LIEF_ELF_VISITABLE(CorePrStatus)
   LIEF_ELF_VISITABLE(CoreAuxv)
@@ -399,6 +404,12 @@ class LIEF_API Visitor {
   //! Method to visit a LIEF::PE::ContentType
   LIEF_PE_VISITABLE(ContentType)
 
+  //! Method to visit a LIEF::PE::GenericContent
+  LIEF_PE_VISITABLE(GenericContent)
+
+  //! Method to visit a LIEF::PE::SpcIndirectData
+  LIEF_PE_VISITABLE(SpcIndirectData)
+
   //! Method to visit a LIEF::PE::GenericType
   LIEF_PE_VISITABLE(GenericType)
 
@@ -453,6 +464,18 @@ class LIEF_API Visitor {
   //! Method to visit a LIEF::PE::LoadConfigurationV7
   LIEF_PE_VISITABLE(LoadConfigurationV7)
 
+  //! Method to visit a LIEF::PE::LoadConfigurationV8
+  LIEF_PE_VISITABLE(LoadConfigurationV8)
+
+  //! Method to visit a LIEF::PE::LoadConfigurationV9
+  LIEF_PE_VISITABLE(LoadConfigurationV9)
+
+  //! Method to visit a LIEF::PE::LoadConfigurationV10
+  LIEF_PE_VISITABLE(LoadConfigurationV10)
+
+  //! Method to visit a LIEF::PE::LoadConfigurationV11
+  LIEF_PE_VISITABLE(LoadConfigurationV11)
+
   //! Method to visit a LIEF::PE::CodeIntegrity
   LIEF_PE_VISITABLE(CodeIntegrity)
 
@@ -461,6 +484,9 @@ class LIEF_API Visitor {
 
   //! Method to visit a LIEF::PE::PogoEntry
   LIEF_PE_VISITABLE(PogoEntry)
+
+  //! Method to visit a LIEF::PE::Repro
+  LIEF_PE_VISITABLE(Repro)
 
   // MachO part
   // ==========
@@ -515,8 +541,20 @@ class LIEF_API Visitor {
   //! Method to visit a LIEF::MachO::RelocationDyld
   LIEF_MACHO_VISITABLE(RelocationDyld)
 
+  //! Method to visit a LIEF::MachO::RelocationFixup
+  LIEF_MACHO_VISITABLE(RelocationFixup)
+
   //! Method to visit a LIEF::MachO::BindingInfo
   LIEF_MACHO_VISITABLE(BindingInfo)
+
+  //! Method to visit a LIEF::MachO::DyldBindingInfo
+  LIEF_MACHO_VISITABLE(DyldBindingInfo)
+
+  //! Method to visit a LIEF::MachO::ChainedBindingInfo
+  LIEF_MACHO_VISITABLE(ChainedBindingInfo)
+
+  //! Method to visit a LIEF::MachO::DyldExportsTrie
+  LIEF_MACHO_VISITABLE(DyldExportsTrie)
 
   //! Method to visit a LIEF::MachO::ExportInfo
   LIEF_MACHO_VISITABLE(ExportInfo)
@@ -559,6 +597,15 @@ class LIEF_API Visitor {
 
   //! @brief Method to visit a LIEF::MachO:BuildToolVersion:
   LIEF_MACHO_VISITABLE(FilesetCommand)
+
+  //! Method to visit a LIEF::MachO::CodeSignatureDir
+  LIEF_MACHO_VISITABLE(CodeSignatureDir)
+
+  //! Method to visit a LIEF::MachO::TwoLevelHints
+  LIEF_MACHO_VISITABLE(TwoLevelHints)
+
+  //! Method to visit a LIEF::MachO::LinkerOptHint
+  LIEF_MACHO_VISITABLE(LinkerOptHint)
 
   // OAT part
   // ========
@@ -648,7 +695,7 @@ void Visitor::operator()(Arg1&& arg1, Args&&... args) {
 
 template<class T>
 void Visitor::dispatch(const T& obj) {
-  size_t hash = reinterpret_cast<size_t>(&obj);
+  auto hash = reinterpret_cast<size_t>(&obj);
   if (visited_.find(hash) != std::end(visited_)) {
     // Already visited
     return;

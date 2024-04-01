@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_FAT_BINARY_H_
-#define LIEF_MACHO_FAT_BINARY_H_
+#ifndef LIEF_MACHO_FAT_BINARY_H
+#define LIEF_MACHO_FAT_BINARY_H
 #include <string>
 #include <vector>
 #include <memory>
@@ -68,6 +68,8 @@ class LIEF_API FatBinary {
 
   it_binaries end();
   it_const_binaries end() const;
+
+  void release_all_binaries();
 
   //! Get a pointer to the last MachO::Binary object presents in this Fat Binary.
   //! It returns a nullptr if no binary are present.

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,58 +20,49 @@
 
 #include "LIEF/ELF/enums.h"
 
-/** @defgroup elf_dynamic_entry_c_api Dynamic Entry
- *  @ingroup elf_c_api
- *  @addtogroup elf_dynamic_entry_c_api
- *  @brief Dynamic Entry C API
- *
- *  @{
- */
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct Elf_DynamicEntry_t {
-  enum LIEF_ELF_DYNAMIC_TAGS tag;
-  uint64_t          value;
+  uint64_t tag;
+  uint64_t value;
 };
 
 struct Elf_DynamicEntry_Library_t {
-  enum LIEF_ELF_DYNAMIC_TAGS tag;
-  uint64_t          value;
-  const char*       name;
+  uint64_t    tag;
+  uint64_t    value;
+  const char* name;
 };
 
 struct Elf_DynamicEntry_SharedObject_t {
-  enum LIEF_ELF_DYNAMIC_TAGS tag;
-  uint64_t          value;
-  const char*       name;
+  uint64_t    tag;
+  uint64_t    value;
+  const char* name;
 };
 
 struct Elf_DynamicEntry_Array_t {
-  enum LIEF_ELF_DYNAMIC_TAGS tag;
-  uint64_t          value;
-  uint64_t*         array;
+  uint64_t  tag;
+  uint64_t  value;
+  uint64_t* array;
 };
 
 struct Elf_DynamicEntry_Rpath_t {
-  enum LIEF_ELF_DYNAMIC_TAGS tag;
-  uint64_t          value;
-  const char*       rpath;
+  uint64_t    tag;
+  uint64_t    value;
+  const char* rpath;
 };
 
 struct Elf_DynamicEntry_RunPath_t {
-  enum LIEF_ELF_DYNAMIC_TAGS tag;
-  uint64_t          value;
-  const char*       runpath;
+  uint64_t tag;
+  uint64_t value;
+  const char* runpath;
 };
 
 
 struct Elf_DynamicEntry_Flags_t {
-  enum LIEF_ELF_DYNAMIC_TAGS    tag;
-  uint64_t             value;
+  uint64_t tag;
+  uint64_t value;
   enum LIEF_ELF_DYNAMIC_FLAGS   *flags;
   enum LIEF_ELF_DYNAMIC_FLAGS_1 *flags_1;
 };
@@ -88,5 +79,4 @@ typedef struct Elf_DynamicEntry_Flags_t        Elf_DynamicEntry_Flags_t;
 }
 #endif
 
-/** @} */
 #endif

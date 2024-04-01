@@ -11,10 +11,10 @@ using namespace zzj;
 bool zzj::PEFile::FileProperty::_queryValue(const std::string &valueName, const std::string &moduleName,
                                             std::string &RetStr)
 {
-    bool bSuccess         = false;
+    bool bSuccess = false;
     BYTE *m_lpVersionData = nullptr;
     DWORD m_dwLangCharset = 0;
-    CHAR *tmpstr          = nullptr;
+    CHAR *tmpstr = nullptr;
     do
     {
         if (valueName.empty() || moduleName.empty())
@@ -65,7 +65,7 @@ bool zzj::PEFile::FileProperty::_queryValue(const std::string &valueName, const 
         {
             break;
         }
-        RetStr   = (char *)lpData;
+        RetStr = (char *)lpData;
         bSuccess = true;
     } while (false);
 
@@ -202,7 +202,7 @@ HMODULE PEInfo::GetCurrentModuleHandle()
     return ret;
 }
 
-PEFile::PEFile(std::string _fileName) : File(fileName)
+PEFile::PEFile(std::string _fileName) : File(_fileName)
 {
     fileName = _fileName;
     ErrorCode error;
@@ -257,8 +257,8 @@ PEFile::ErrorCode PEFile::LoadPE()
 
     // dosHeader points in pe image.
 
-    dosHeader     = (IMAGE_DOS_HEADER *)peImage;
-    ntHeader      = (IMAGE_NT_HEADERS *)(peImage + dosHeader->e_lfanew);
+    dosHeader = (IMAGE_DOS_HEADER *)peImage;
+    ntHeader = (IMAGE_NT_HEADERS *)(peImage + dosHeader->e_lfanew);
     sectionHeader = IMAGE_FIRST_SECTION(ntHeader);
 
     // loop read section.
@@ -276,12 +276,15 @@ PEFile::ErrorCode PEFile::LoadPE()
     error = ReadImportLibrary(peImage, dataDirectoryTable, importLibrary, numOfImportLibrary);
     ReturnIfFail(error);
 
+    error = ReadRelocation(peImage, dataDirectoryTable, baseRelocation);
+    ReturnIfFail(error);
+
     fileSize = FileHelper::GetFileInstance(fileName).GetFileInfo().GetFileSize();
     if (fileSize == -1)
         return ErrorCode::ZZJ_LIB_ERROR;
 
     IMAGE_SECTION_HEADER *lastSection = &sectionHeader[ntHeader->FileHeader.NumberOfSections - 1];
-    extraDataSize                     = fileSize - (lastSection->PointerToRawData + lastSection->SizeOfRawData);
+    extraDataSize = fileSize - (lastSection->PointerToRawData + lastSection->SizeOfRawData);
 
     if (extraDataSize == 0)
         return ErrorCode::SUCCESS;
@@ -293,8 +296,8 @@ PEFile::ErrorCode PEFile::LoadPE()
     }
 
     extraData = (char *)Allocator::AllocMemory(extraDataSize);
-    ret       = FileHelper::ReadFileAtOffset(fileName, extraData, extraDataSize,
-                                             lastSection->PointerToRawData + lastSection->SizeOfRawData);
+    ret = FileHelper::ReadFileAtOffset(fileName, extraData, extraDataSize,
+                                       lastSection->PointerToRawData + lastSection->SizeOfRawData);
     if (!ret)
     {
         Allocator::Deallocate(extraData);
@@ -310,7 +313,7 @@ PEFile::ErrorCode PEFile::UnloadPE()
     if (extraData)
     {
         Allocator::Deallocate(extraData);
-        extraData == nullptr;
+        extraData = nullptr;
     }
     if (peImage)
     {
@@ -321,10 +324,27 @@ PEFile::ErrorCode PEFile::UnloadPE()
     return ErrorCode::SUCCESS;
 }
 
-DWORD zzj::PEFile::RVAToVA(char *imageBase, DWORD rva)
+std::uintptr_t zzj::PEFile::RVAToVA(char *imageBase, DWORD rva)
 {
     if (imageBase)
-        return (DWORD)imageBase + rva;
+        return (std::uintptr_t)imageBase + rva;
+    return -1;
+}
+std::uintptr_t zzj::PEFile::RVAToOffset(char *imageBase, DWORD rva)
+{
+    IMAGE_DOS_HEADER *dosHeader = (IMAGE_DOS_HEADER *)imageBase;
+    IMAGE_NT_HEADERS *ntHeader = (IMAGE_NT_HEADERS *)(imageBase + dosHeader->e_lfanew);
+    IMAGE_SECTION_HEADER *sectionHeader = IMAGE_FIRST_SECTION(ntHeader);
+
+    for (int index = 0; index < ntHeader->FileHeader.NumberOfSections; index++)
+    {
+        if (rva >= sectionHeader[index].VirtualAddress &&
+            rva < sectionHeader[index].VirtualAddress + sectionHeader[index].SizeOfRawData)
+        {
+            return sectionHeader[index].PointerToRawData + rva - sectionHeader[index].VirtualAddress;
+        }
+    }
+
     return -1;
 }
 
@@ -385,20 +405,56 @@ PEFile::ErrorCode zzj::PEFile::ReadImportLibrary(char *imageBase, IMAGE_DATA_DIR
 
     return ErrorCode::SUCCESS;
 }
+DWORD zzj::PEFile::GetRelocationTableEntryNum()
+{
+    DWORD ret = 0;
+    DWORD maxSize = ntHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
+    DWORD maxOffset = ntHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress + maxSize;
+    IMAGE_BASE_RELOCATION *baseRelocation = (IMAGE_BASE_RELOCATION *)RVAToVA(peImage, ntHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+    DWORD currentOffset = ntHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
+    while (currentOffset < maxOffset && baseRelocation->SizeOfBlock > 0 && baseRelocation->VirtualAddress > 0)
+    {
+        ret++;
+        currentOffset += baseRelocation->SizeOfBlock;
+        baseRelocation = (IMAGE_BASE_RELOCATION *)((char *)baseRelocation + baseRelocation->SizeOfBlock);
+    }
+    return ret;
+}
+IMAGE_BASE_RELOCATION *zzj::PEFile::GetRelocationTableEntry(int index)
+{
+    return nullptr;
+}
+PEFile::ErrorCode zzj::PEFile::ReadRelocation(char *imageBase, IMAGE_DATA_DIRECTORY *dataDirectoryTable,
+                                      IMAGE_BASE_RELOCATION *&baseRelocation)
+{
+    baseRelocation =
+        (IMAGE_BASE_RELOCATION *)RVAToVA(imageBase, dataDirectoryTable[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+    return ErrorCode::SUCCESS;
+}
 
 DWORD zzj::PEFile::AlignData(DWORD data, DWORD alignment)
 {
     DWORD remainder = data % alignment;
-    DWORD quotient  = data / alignment;
+    DWORD quotient = data / alignment;
     if (remainder > 0)
         return alignment * (quotient + 1);
     return data;
+}
+DWORD zzj::PEFile::GetSectionNum()
+{
+    return ntHeader->FileHeader.NumberOfSections;
+}
+IMAGE_SECTION_HEADER *zzj::PEFile::GetSection(int index)
+{
+    if (index < 0 || index >= ntHeader->FileHeader.NumberOfSections)
+        return nullptr;
+    return &sectionHeader[index];
 }
 
 LPWSTR AllocateAndCopyWideString(LPCWSTR inputString)
 {
     LPWSTR outputString = NULL;
-    outputString        = (LPWSTR)LocalAlloc(LPTR, (wcslen(inputString) + 1) * sizeof(WCHAR));
+    outputString = (LPWSTR)LocalAlloc(LPTR, (wcslen(inputString) + 1) * sizeof(WCHAR));
     if (outputString != NULL)
     {
         lstrcpyW(outputString, inputString);
@@ -417,7 +473,7 @@ zzj::PEFile::FileSign::~FileSign()
 #define ENCODING (X509_ASN_ENCODING | PKCS_7_ASN_ENCODING)
 bool zzj::PEFile::FileSign::_getProgAndPublisherInfo(PCMSG_SIGNER_INFO pSignerInfo, PSPROG_PUBLISHERINFO Info)
 {
-    BOOL fReturn               = FALSE;
+    BOOL fReturn = FALSE;
     PSPC_SP_OPUS_INFO OpusInfo = NULL;
     DWORD dwData;
     BOOL fResult;
@@ -520,7 +576,7 @@ bool zzj::PEFile::FileSign::_getProgAndPublisherInfo(PCMSG_SIGNER_INFO pSignerIn
 bool zzj::PEFile::FileSign::GetProgAndPublisherInfo(PSPROG_PUBLISHERINFO pProgPubInfo)
 {
     HCERTSTORE hStore = NULL;
-    HCRYPTMSG hMsg    = NULL;
+    HCRYPTMSG hMsg = NULL;
     BOOL fResult;
     DWORD dwEncoding, dwContentType, dwFormatType;
     PCMSG_SIGNER_INFO pSignerInfo = NULL;
@@ -615,7 +671,7 @@ bool zzj::PEFile::FileSign::_getTimeStampSignerInfo(PCMSG_SIGNER_INFO pSignerInf
                                                     PCMSG_SIGNER_INFO *pCounterSignerInfo)
 {
     PCCERT_CONTEXT pCertContext = NULL;
-    BOOL fReturn                = FALSE;
+    BOOL fReturn = FALSE;
     BOOL fResult;
     DWORD dwSize;
     __try
@@ -666,10 +722,10 @@ bool zzj::PEFile::FileSign::_getTimeStampSignerInfo(PCMSG_SIGNER_INFO pSignerInf
 bool zzj::PEFile::FileSign::GetTimeStampSignerInfo(SYSTEMTIME *st)
 {
     HCERTSTORE hStore = NULL;
-    HCRYPTMSG hMsg    = NULL;
+    HCRYPTMSG hMsg = NULL;
     BOOL fResult;
     DWORD dwEncoding, dwContentType, dwFormatType;
-    PCMSG_SIGNER_INFO pSignerInfo        = NULL;
+    PCMSG_SIGNER_INFO pSignerInfo = NULL;
     PCMSG_SIGNER_INFO pCounterSignerInfo = NULL;
     DWORD dwSignerInfo;
     CERT_INFO CertInfo;

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_BINARY_H_
-#define LIEF_PE_BINARY_H_
+#ifndef LIEF_PE_BINARY_H
+#define LIEF_PE_BINARY_H
 
 #include <map>
 
 #include "LIEF/PE/Header.hpp"
 #include "LIEF/PE/OptionalHeader.hpp"
 #include "LIEF/PE/DosHeader.hpp"
-#include "LIEF/PE/RichHeader.hpp"
 #include "LIEF/PE/Import.hpp"
 #include "LIEF/PE/DelayImport.hpp"
-#include "LIEF/PE/TLS.hpp"
-#include "LIEF/PE/Export.hpp"
-#include "LIEF/PE/Debug.hpp"
 #include "LIEF/PE/Symbol.hpp"
+#include "LIEF/PE/DataDirectory.hpp"
+#include "LIEF/PE/ResourcesManager.hpp"
 #include "LIEF/PE/signature/Signature.hpp"
 
 #include "LIEF/Abstract/Binary.hpp"
@@ -38,8 +36,17 @@ namespace LIEF {
 
 //! Namespace related to the LIEF's PE module
 namespace PE {
+class Debug;
 class Parser;
 class Builder;
+class ResourceNode;
+class ResourceData;
+class ResourceDirectory;
+class LoadConfiguration;
+class Relocation;
+class TLS;
+class Export;
+class RichHeader;
 
 //! Class which represents a PE binary
 //! This is the main interface to manage and modify a PE executable
@@ -94,13 +101,13 @@ class LIEF_API Binary : public LIEF::Binary {
   using it_const_delay_imports = const_ref_iterator<const delay_imports_t&>;
 
   //! Internal container for storing Debug information
-  using debug_entries_t = std::vector<Debug>;
+  using debug_entries_t = std::vector<std::unique_ptr<Debug>>;
 
   //! Iterator that outputs Debug&
-  using it_debug_entries = ref_iterator<debug_entries_t&>;
+  using it_debug_entries = ref_iterator<debug_entries_t&, Debug*>;
 
   //! Iterator that outputs const Debug&
-  using it_const_debug_entries = const_ref_iterator<const debug_entries_t&>;
+  using it_const_debug_entries = const_ref_iterator<const debug_entries_t&, const Debug*>;
 
   //! Internal container for storing COFF Symbols
   using symbols_t = std::vector<Symbol>;
@@ -129,12 +136,14 @@ class LIEF_API Binary : public LIEF::Binary {
   //! Iterator that outputs const Signature&
   using it_const_signatures = const_ref_iterator<const signatures_t&>;
 
-  Binary(const std::string& name, PE_TYPE type);
+  Binary(PE_TYPE type);
 
   ~Binary() override;
 
   //! Return `PE32` or `PE32+`
-  PE_TYPE type() const;
+  PE_TYPE type() const {
+    return type_;
+  }
 
   //! Convert a Relative Virtual Address into an offset
   //!
@@ -150,12 +159,14 @@ class LIEF_API Binary : public LIEF::Binary {
   //!
   //! @param[in] offset The offset to convert.
   //! @param[in] slide  If not 0, it will replace the default base address (if any)
-  uint64_t offset_to_virtual_address(uint64_t offset, uint64_t slide = 0) const override;
+  result<uint64_t> offset_to_virtual_address(uint64_t offset, uint64_t slide = 0) const override;
 
   //! Return binary's imagebase. ``0`` if not relevant
   //!
   //! The value is the same as those returned by OptionalHeader::imagebase
-  uint64_t imagebase() const override;
+  uint64_t imagebase() const override {
+    return optional_header().imagebase();
+  }
 
   //! Find the section associated that encompasses the given offset.
   //!
@@ -170,20 +181,40 @@ class LIEF_API Binary : public LIEF::Binary {
   const Section* section_from_rva(uint64_t virtual_address) const;
 
   //! Return an iterator over the PE's Section
-  it_sections sections();
-  it_const_sections sections() const;
+  it_sections sections() {
+    return sections_;
+  }
+
+  it_const_sections sections() const {
+    return sections_;
+  }
 
   //! Return a reference to the PE::DosHeader object
-  DosHeader& dos_header();
-  const DosHeader& dos_header() const;
+  DosHeader& dos_header() {
+    return dos_header_;
+  }
+
+  const DosHeader& dos_header() const {
+    return dos_header_;
+  }
 
   //! Return a reference to the PE::Header object
-  Header& header();
-  const Header& header() const;
+  Header& header() {
+    return header_;
+  }
+
+  const Header& header() const {
+    return header_;
+  }
 
   //! Return a reference to the OptionalHeader object
-  OptionalHeader& optional_header();
-  const OptionalHeader& optional_header() const;
+  OptionalHeader& optional_header() {
+    return optional_header_;
+  }
+
+  const OptionalHeader& optional_header() const {
+    return optional_header_;
+  }
 
   //! Compute the binary's virtual size.
   //! It should match OptionalHeader::sizeof_image
@@ -193,32 +224,47 @@ class LIEF_API Binary : public LIEF::Binary {
   uint32_t sizeof_headers() const;
 
   //! Return a reference to the TLS object
-  TLS& tls();
-  const TLS& tls() const;
+  TLS* tls() {
+    return tls_.get();
+  }
+
+  const TLS* tls() const {
+    return tls_.get();
+  }
 
   //! Set a TLS object in the current Binary
   void tls(const TLS& tls);
 
   //! Check if the current binary has a TLS object
-  bool has_tls() const;
+  bool has_tls() const {
+    return tls_ != nullptr;
+  }
 
   //! Check if the current binary contains imports
   //!
   //! @see Import
-  bool has_imports() const;
+  bool has_imports() const {
+    return !imports_.empty();
+  }
 
   //! Check if the current binary contains signatures
   //!
   //! @see signatures
-  bool has_signatures() const;
+  bool has_signatures() const {
+    return !signatures_.empty();
+  }
 
   //! Check if the current binary has exports.
   //!
   //! @see Export
-  bool has_exports() const;
+  bool has_exports() const {
+    return export_ != nullptr;
+  }
 
   //! Check if the current binary has resources
-  bool has_resources() const;
+  bool has_resources() const {
+    return resources_ != nullptr;
+  }
 
   //! Check if the current binary has exceptions
   bool has_exceptions() const;
@@ -226,21 +272,33 @@ class LIEF_API Binary : public LIEF::Binary {
   //! Check if the current binary has relocations
   //!
   //! @see Relocation
-  bool has_relocations() const;
+  bool has_relocations() const {
+    return relocations_.empty();
+  }
 
-  //! Check if the current binary has debugs
-  bool has_debug() const;
+  //! Check if the current binary contains debug information
+  bool has_debug() const {
+    return !debug_.empty();
+  }
 
   //! Check if the current binary has a load configuration
-  bool has_configuration() const;
+  bool has_configuration() const {
+    return load_configuration_ != nullptr;
+  }
 
   //! Check if the current binary is *reproducible build*, replacing timestamps by a compile hash.
   //!
-  //! @see Debug
+  //! @see Repro
   bool is_reproducible_build() const;
 
   //! Return an iterator over the Signature object(s) if the binary is signed
-  it_const_signatures signatures() const;
+  it_const_signatures signatures() const {
+    return signatures_;
+  }
+
+  it_signatures signatures() {
+    return signatures_;
+  }
 
   //! Verify the binary against the embedded signature(s) (if any)
   //! First, it checks that the embedded signatures are correct (c.f. Signature::check)
@@ -283,16 +341,26 @@ class LIEF_API Binary : public LIEF::Binary {
   uint32_t predict_function_rva(const std::string& library, const std::string& function);
 
   //! Return the Export object
-  Export& get_export();
-  const Export& get_export() const;
+  Export* get_export() {
+    return export_.get();
+  }
+
+  const Export* get_export() const {
+    return export_.get();
+  }
 
   //! Return binary Symbols
   std::vector<Symbol>& symbols();
   const std::vector<Symbol>& symbols() const;
 
   //! Return resources as a tree or a nullptr if there is no resources
-  ResourceNode* resources();
-  const ResourceNode* resources() const;
+  ResourceNode* resources() {
+    return resources_.get();
+  }
+
+  const ResourceNode* resources() const {
+    return resources_.get();
+  }
 
   //! Set a new resource tree
   void set_resources(const ResourceDirectory& resource);
@@ -301,8 +369,7 @@ class LIEF_API Binary : public LIEF::Binary {
   void set_resources(const ResourceData& resource);
 
   //! Return the ResourcesManager (class to manage resources more easily than the tree one)
-  ResourcesManager resources_manager();
-  const ResourcesManager resources_manager() const;
+  result<ResourcesManager> resources_manager() const;
 
   //! Return binary's section from its name.
   //! If the secion can't be found, return a nullptr
@@ -329,12 +396,17 @@ class LIEF_API Binary : public LIEF::Binary {
   void remove(const Section& section, bool clear = false);
 
   //! Add a section to the binary and return the section added.
-  Section& add_section(const Section& section,
+  Section* add_section(const Section& section,
                        PE_SECTION_TYPES type = PE_SECTION_TYPES::UNKNOWN);
 
   //! Return an iterator over the PE's Relocation
-  it_relocations relocations();
-  it_const_relocations relocations() const;
+  it_relocations relocations() {
+    return relocations_;
+  }
+
+  it_const_relocations relocations() const {
+    return relocations_;
+  }
 
   //! Add a PE::Relocation
   Relocation& add_relocation(const Relocation& relocation);
@@ -343,32 +415,64 @@ class LIEF_API Binary : public LIEF::Binary {
   void remove_all_relocations();
 
   //! Return an iterator over the DataDirectory present in the Binary
-  it_data_directories data_directories();
-  it_const_data_directories data_directories() const;
+  it_data_directories data_directories() {
+    return data_directories_;
+  }
+
+  it_const_data_directories data_directories() const {
+    return data_directories_;
+  }
 
   //! Return the DataDirectory with the given type (or index)
-  DataDirectory& data_directory(DATA_DIRECTORY index);
-  const DataDirectory& data_directory(DATA_DIRECTORY index) const;
+  DataDirectory* data_directory(DataDirectory::TYPES type);
+  const DataDirectory* data_directory(DataDirectory::TYPES type) const;
 
-  //! Check if the current binary has the given DATA_DIRECTORY
-  bool has(DATA_DIRECTORY index) const;
+  //! Check if the current binary has the given DataDirectory::TYPES
+  bool has(DataDirectory::TYPES type) const {
+    return data_directory(type) != nullptr;
+  }
 
-  //! Return the debug_entries_t object
-  debug_entries_t& debug();
-  const debug_entries_t& debug() const;
+  //! Return an iterator over the Debug entries
+  it_debug_entries debug() {
+    return debug_;
+  }
+
+  it_const_debug_entries debug() const {
+    return debug_;
+  }
 
   //! Retrun the LoadConfiguration object or a nullptr
   //! if the binary does not use the LoadConfiguration
-  const LoadConfiguration* load_configuration() const;
-  LoadConfiguration* load_configuration();
+  const LoadConfiguration* load_configuration() const {
+    return load_configuration_.get();
+  }
+
+  LoadConfiguration* load_configuration() {
+    return load_configuration_.get();
+  }
 
   //! Return the overlay content
-  const std::vector<uint8_t>& overlay() const;
-  std::vector<uint8_t>&       overlay();
+  span<const uint8_t> overlay() const {
+    return overlay_;
+  }
+
+  span<uint8_t> overlay() {
+    return overlay_;
+  }
+
+  //! Return the original overlay offset
+  uint64_t overlay_offset() const {
+    return overlay_offset_;
+  }
 
   //! Return the DOS stub content
-  const std::vector<uint8_t>& dos_stub() const;
-  std::vector<uint8_t>&       dos_stub();
+  span<const uint8_t> dos_stub() const {
+    return dos_stub_;
+  }
+
+  span<uint8_t> dos_stub() {
+    return dos_stub_;
+  }
 
   //! Update the DOS stub content
   void dos_stub(const std::vector<uint8_t>& content);
@@ -377,18 +481,30 @@ class LIEF_API Binary : public LIEF::Binary {
   // -----------
 
   //! Return a reference to the RichHeader object
-  RichHeader& rich_header();
-  const RichHeader& rich_header() const;
+  RichHeader* rich_header() {
+    return rich_header_.get();
+  }
+
+  const RichHeader* rich_header() const {
+    return rich_header_.get();
+  }
 
   //! Set a RichHeader object in the current Binary
   void rich_header(const RichHeader& rich_header);
 
   //! Check if the current binary has a RichHeader object
-  bool has_rich_header() const;
+  bool has_rich_header() const {
+    return rich_header_ != nullptr;
+  }
 
   //! Return an iterator over the binary imports
-  it_imports       imports();
-  it_const_imports imports() const;
+  it_imports imports() {
+    return imports_;
+  }
+
+  it_const_imports imports() const {
+    return imports_;
+  }
 
   //! Returns the PE::Import from the given name. If it can't be
   //! found, return a nullptr
@@ -400,17 +516,26 @@ class LIEF_API Binary : public LIEF::Binary {
   //! ``True`` if the binary imports the given library name
   //!
   //! @param[in] import_name Name of the import
-  bool has_import(const std::string& import_name) const;
+  bool has_import(const std::string& import_name) const {
+    return get_import(import_name) != nullptr;
+  }
 
   //! Check if the current binary contains delay imports
   //!
   //! @see DelayImport
   //! @see has_import
-  bool has_delay_imports() const;
+  bool has_delay_imports() const {
+    return !delay_imports_.empty();
+  }
 
   //! Return an iterator over the binary's delay imports
-  it_delay_imports       delay_imports();
-  it_const_delay_imports delay_imports() const;
+  it_delay_imports delay_imports() {
+    return delay_imports_;
+  }
+
+  it_const_delay_imports delay_imports() const {
+    return delay_imports_;
+  }
 
   //! Returns the PE::DelayImport from the given name. If it can't be
   //! found, return a nullptr
@@ -423,7 +548,9 @@ class LIEF_API Binary : public LIEF::Binary {
   //! ``True`` if the binary delay-imports the given library name
   //!
   //! @param[in] import_name Name of the delay import
-  bool has_delay_import(const std::string& import_name) const;
+  bool has_delay_import(const std::string& import_name) const {
+    return get_delay_import(import_name) != nullptr;
+  }
 
 
   //! Add the function @p function of the library @p library.
@@ -442,18 +569,17 @@ class LIEF_API Binary : public LIEF::Binary {
   //! Remove all libraries in the binary
   void remove_all_libraries();
 
-  // @deprecated This function will be removed in a future version of LIEF
-  void hook_function(const std::string& function, uint64_t address);
-
-
-  // @deprecated This function will be removed in a future version of LIEF
-  void hook_function(const std::string& library, const std::string& function, uint64_t address);
-
-  //! Reconstruct the binary object and write the raw PE in  `filename`
+  //! Reconstruct the binary object and write the raw PE in `filename`
   //!
   //! Rebuild a PE binary from the current Binary object.
   //! When rebuilding, import table and relocations are not rebuilt.
   void write(const std::string& filename) override;
+
+  //! Reconstruct the binary object and write the raw PE in `os` stream
+  //!
+  //! Rebuild a PE binary from the current Binary object.
+  //! When rebuilding, import table and relocations are not rebuilt.
+  void write(std::ostream& os) override;
 
   void accept(Visitor& visitor) const override;
 
@@ -480,8 +606,9 @@ class LIEF_API Binary : public LIEF::Binary {
   //! @param[in] virtual_address    Virtual address of the data to retrieve
   //! @param[in] size               Size in bytes of the data to retrieve
   //! @param[in] addr_type          Type of the Virtual address: VA or RVA. Default: Auto
-  std::vector<uint8_t> get_content_from_virtual_address(uint64_t virtual_address, uint64_t size,
-      LIEF::Binary::VA_TYPES addr_type = LIEF::Binary::VA_TYPES::AUTO) const override;
+  span<const uint8_t> get_content_from_virtual_address(
+      uint64_t virtual_address, uint64_t size,
+      Binary::VA_TYPES addr_type = Binary::VA_TYPES::AUTO) const override;
 
   //! Return the binary's entrypoint (It is the same value as OptionalHeader::addressof_entrypoint
   uint64_t entrypoint() const override;
@@ -503,8 +630,9 @@ class LIEF_API Binary : public LIEF::Binary {
   //! Functions found in the Exception table directory
   LIEF::Binary::functions_t exception_functions() const;
 
-  bool operator==(const Binary& rhs) const;
-  bool operator!=(const Binary& rhs) const;
+  static bool classof(const LIEF::Binary* bin) {
+    return bin->format() == Binary::FORMATS::PE;
+  }
 
   std::ostream& print(std::ostream& os) const override;
 
@@ -534,42 +662,30 @@ class LIEF_API Binary : public LIEF::Binary {
 
   PE_TYPE        type_ = PE_TYPE::PE32_PLUS;
   DosHeader      dos_header_;
-  RichHeader     rich_header_;
   Header         header_;
   OptionalHeader optional_header_;
 
   int32_t available_sections_space_ = 0;
 
-  bool has_rich_header_ = false;
-  bool has_tls_ = false;
-  bool has_imports_ = false;
-  bool has_exports_ = false;
-  bool has_resources_ = false;
-  bool has_exceptions_ = false;
-  bool has_relocations_ = false;
-  bool has_debug_ = false;
-  bool has_configuration_ = false;
-  bool is_reproducible_build_ = false;
-
-  signatures_t         signatures_;
-  TLS                  tls_;
+  signatures_t signatures_;
   sections_t           sections_;
   data_directories_t   data_directories_;
   symbols_t            symbols_;
   strings_table_t      strings_table_;
   relocations_t        relocations_;
-  std::unique_ptr<ResourceNode> resources_;
   imports_t            imports_;
   delay_imports_t      delay_imports_;
-  Export               export_;
   debug_entries_t      debug_;
   uint64_t overlay_offset_ = 0;
   std::vector<uint8_t> overlay_;
   std::vector<uint8_t> dos_stub_;
   std::vector<uint8_t> section_offset_padding_;
 
+  std::unique_ptr<RichHeader> rich_header_;
+  std::unique_ptr<Export> export_;
+  std::unique_ptr<ResourceNode> resources_;
+  std::unique_ptr<TLS> tls_;
   std::unique_ptr<LoadConfiguration> load_configuration_;
-  std::map<std::string, std::map<std::string, uint64_t>> hooks_; // Deprecated
 };
 
 }

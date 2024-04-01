@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_UTILS_H_
-#define LIEF_ELF_UTILS_H_
+#ifndef LIEF_ELF_UTILS_H
+#define LIEF_ELF_UTILS_H
 
 #include <string>
 #include <vector>
@@ -23,7 +23,12 @@
 #include "LIEF/visibility.h"
 
 namespace LIEF {
+class BinaryStream;
+
 namespace ELF {
+
+//! @brief Check if given stream wraps an ELF file
+LIEF_API bool is_elf(BinaryStream& stream);
 
 //! @brief Check if the given file is an ELF one.
 LIEF_API bool is_elf(const std::string& file);

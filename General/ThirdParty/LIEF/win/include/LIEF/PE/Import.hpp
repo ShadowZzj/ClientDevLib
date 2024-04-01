@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_IMPORT_H_
-#define LIEF_PE_IMPORT_H_
+#ifndef LIEF_PE_IMPORT_H
+#define LIEF_PE_IMPORT_H
 
 #include <string>
-#include <iostream>
+#include <ostream>
 
+#include "LIEF/errors.hpp"
 #include "LIEF/Object.hpp"
 #include "LIEF/types.hpp"
 #include "LIEF/visibility.h"
 #include "LIEF/iterators.hpp"
+#include "LIEF/PE/ImportEntry.hpp"
 
 namespace LIEF {
 namespace PE {
 class Parser;
 class Builder;
+class DataDirectory;
 
 namespace details {
 struct pe_import;
@@ -47,11 +50,12 @@ class LIEF_API Import : public Object {
   Import(const details::pe_import& import);
   Import(std::string name);
   Import();
-  virtual ~Import();
+  ~Import() override;
 
   Import(const Import& other);
-  Import& operator=(Import other);
-  void swap(Import& other);
+  Import(Import&& other);
+  Import& operator=(Import&& other);
+  Import& operator=(const Import& other);
 
   //! The index of the first forwarder reference
   uint32_t forwarder_chain() const;
@@ -81,7 +85,7 @@ class LIEF_API Import : public Object {
   //!
   //! @warning
   //! This address could change when re-building the binary
-  uint32_t get_function_rva_from_iat(const std::string& function) const;
+  result<uint32_t> get_function_rva_from_iat(const std::string& function) const;
 
   //! Return the imported function with the given name
   ImportEntry*       get_entry(const std::string& name);
@@ -94,14 +98,14 @@ class LIEF_API Import : public Object {
   void name(const std::string& name);
 
   //! Return the PE::DataDirectory associated with this import.
-  //! It should be the one at index PE::DATA_DIRECTORY::IMPORT_TABLE
+  //! It should be the one at index PE::DataDirectory::TYPES::IMPORT_TABLE
   //!
   //! If the data directory can't be found, return a nullptr
   DataDirectory*       directory();
   const DataDirectory* directory() const;
 
   //! Return the PE::DataDirectory associated associated with the IAT.
-  //! It should be the one at index PE::DATA_DIRECTORY::IAT
+  //! It should be the one at index PE::DataDirectory::TYPES::IAT
   //!
   //! If the data directory can't be found, return a nullptr
   DataDirectory*       iat_directory();
@@ -118,8 +122,6 @@ class LIEF_API Import : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Import& rhs) const;
-  bool operator!=(const Import& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Import& entry);
 

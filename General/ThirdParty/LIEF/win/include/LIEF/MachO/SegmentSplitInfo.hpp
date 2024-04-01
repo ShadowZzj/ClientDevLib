@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_SEGMENT_SPLIT_INFO_H_
-#define LIEF_MACHO_SEGMENT_SPLIT_INFO_H_
+#ifndef LIEF_MACHO_SEGMENT_SPLIT_INFO_H
+#define LIEF_MACHO_SEGMENT_SPLIT_INFO_H
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
+#include "LIEF/span.hpp"
 
 #include "LIEF/MachO/LoadCommand.hpp"
 
 namespace LIEF {
 namespace MachO {
 class BinaryParser;
+class LinkEdit;
 
 namespace details {
 struct linkedit_data_command;
@@ -34,6 +36,7 @@ struct linkedit_data_command;
 //! Class that represents the LOAD_COMMAND_TYPES::LC_SEGMENT_SPLIT_INFO command
 class LIEF_API SegmentSplitInfo : public LoadCommand {
   friend class BinaryParser;
+  friend class LinkEdit;
   public:
   SegmentSplitInfo();
   SegmentSplitInfo(const details::linkedit_data_command& cmd);
@@ -49,10 +52,16 @@ class LIEF_API SegmentSplitInfo : public LoadCommand {
   void data_offset(uint32_t offset);
   void data_size(uint32_t size);
 
-  virtual ~SegmentSplitInfo();
+  span<uint8_t> content() {
+    return content_;
+  }
 
-  bool operator==(const SegmentSplitInfo& rhs) const;
-  bool operator!=(const SegmentSplitInfo& rhs) const;
+  span<const uint8_t> content() const {
+    return content_;
+  }
+
+  ~SegmentSplitInfo() override;
+
 
   void accept(Visitor& visitor) const override;
 
@@ -61,9 +70,9 @@ class LIEF_API SegmentSplitInfo : public LoadCommand {
   static bool classof(const LoadCommand* cmd);
 
   private:
-  uint32_t              data_offset_;
-  uint32_t              data_size_;
-  std::vector<uint8_t>  raw_;
+  uint32_t data_offset_ = 0;
+  uint32_t data_size_   = 0;
+  span<uint8_t> content_;
 
 };
 

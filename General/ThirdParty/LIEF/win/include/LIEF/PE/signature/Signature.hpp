@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_SIGNATURE_H_
-#define LIEF_PE_SIGNATURE_H_
+#ifndef LIEF_PE_SIGNATURE_H
+#define LIEF_PE_SIGNATURE_H
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
+#include "LIEF/span.hpp"
 
 #include "LIEF/PE/signature/x509.hpp"
 #include "LIEF/PE/signature/SignerInfo.hpp"
@@ -44,15 +45,24 @@ class LIEF_API Signature : public Object {
 
   public:
   //! Hash the input given the algorithm
-  static std::vector<uint8_t> hash(const std::vector<uint8_t>& input, ALGORITHMS algo);
+  static std::vector<uint8_t> hash(const std::vector<uint8_t>& input, ALGORITHMS algo) {
+    return hash(input.data(), input.size(), algo);
+  }
+  static std::vector<uint8_t> hash(const uint8_t* buffer, size_t size, ALGORITHMS algo);
 
   public:
 
   //! Iterator which outputs const x509& certificates
   using it_const_crt = const_ref_iterator<const std::vector<x509>&>;
 
+  //! Iterator which outputs x509& certificates
+  using it_crt = ref_iterator<std::vector<x509>&>;
+
   //! Iterator which outputs const SignerInfo&
   using it_const_signers_t = const_ref_iterator<const std::vector<SignerInfo>&>;
+
+  //! Iterator which outputs SignerInfo&
+  using it_signers_t = ref_iterator<std::vector<SignerInfo>&>;
 
   //! Flags returned by the verification functions
   enum class VERIFICATION_FLAGS {
@@ -98,7 +108,7 @@ class LIEF_API Signature : public Object {
   //! Algorithm used to *digest* the file.
   //!
   //! It should match SignerInfo::digest_algorithm
-  inline ALGORITHMS digest_algorithm() const {
+  ALGORITHMS digest_algorithm() const {
     return digest_algorithm_;
   }
 
@@ -106,13 +116,27 @@ class LIEF_API Signature : public Object {
   const ContentInfo& content_info() const;
 
   //! Return an iterator over x509 certificates
-  it_const_crt certificates() const;
+  it_const_crt certificates() const {
+    return certificates_;
+  }
+
+  it_crt certificates()  {
+    return certificates_;
+  }
 
   //! Return an iterator over the signers (SignerInfo) defined in the PKCS #7 signature
-  it_const_signers_t signers() const;
+  it_const_signers_t signers() const {
+    return signers_;
+  }
+
+  it_signers_t signers() {
+    return signers_;
+  }
 
   //! Return the raw original PKCS7 signature
-  const std::vector<uint8_t>& raw_der() const;
+  span<const uint8_t> raw_der() const {
+    return original_raw_signature_;
+  }
 
   //! Find x509 certificate according to its serial number
   const x509* find_crt(const std::vector<uint8_t>& serialno) const;
@@ -153,7 +177,7 @@ class LIEF_API Signature : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  virtual ~Signature();
+  ~Signature() override;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Signature& signature);
 

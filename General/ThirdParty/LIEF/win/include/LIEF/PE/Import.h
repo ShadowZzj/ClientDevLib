@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,6 @@
 #include "LIEF/PE/enums.h"
 #include "LIEF/PE/ImportEntry.h"
 
-/**  @defgroup pe_import_c_api Import
- *  @ingroup pe_c_api
- *  @addtogroup pe_import_c_api
- *  @brief Import C API
- *
- *  @{
- */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,5 +41,4 @@ typedef struct Pe_Import_t Pe_Import_t;
 }
 #endif
 
-/** @} */
 #endif

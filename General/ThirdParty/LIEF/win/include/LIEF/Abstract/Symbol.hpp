@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ABSTRACT_SYMBOLS_H_
-#define LIEF_ABSTRACT_SYMBOLS_H_
+#ifndef LIEF_ABSTRACT_SYMBOLS_H
+#define LIEF_ABSTRACT_SYMBOLS_H
 
+#include <cstdint>
 #include <string>
 
 #include "LIEF/Object.hpp"
@@ -32,7 +33,7 @@ class LIEF_API Symbol : public Object {
   Symbol(std::string name, uint64_t value, uint64_t size);
   Symbol(const Symbol&);
   Symbol& operator=(const Symbol&);
-  virtual ~Symbol();
+  ~Symbol() override;
 
   void swap(Symbol& other);
 

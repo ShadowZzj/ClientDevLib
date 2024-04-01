@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_VAR_FILE_INFO_H_
-#define LIEF_PE_RESOURCE_VAR_FILE_INFO_H_
-#include <iostream>
+#ifndef LIEF_PE_RESOURCE_VAR_FILE_INFO_H
+#define LIEF_PE_RESOURCE_VAR_FILE_INFO_H
+#include <ostream>
 #include <sstream>
+#include <cstdint>
+#include <vector>
 
 #include "LIEF/visibility.h"
 
@@ -42,7 +44,7 @@ class LIEF_API ResourceVarFileInfo : public Object {
   ResourceVarFileInfo(uint16_t type, std::u16string key);
   ResourceVarFileInfo(const ResourceVarFileInfo&);
   ResourceVarFileInfo& operator=(const ResourceVarFileInfo&);
-  virtual ~ResourceVarFileInfo();
+  ~ResourceVarFileInfo() override;
 
   //! The type of data in the version resource
   //! * ``1`` if it contains text data
@@ -70,8 +72,6 @@ class LIEF_API ResourceVarFileInfo : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceVarFileInfo& rhs) const;
-  bool operator!=(const ResourceVarFileInfo& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceVarFileInfo& entry);
 
@@ -81,12 +81,7 @@ class LIEF_API ResourceVarFileInfo : public Object {
   std::vector<uint32_t> translations_;
 
 };
-
-
-
-
 }
 }
-
 
 #endif

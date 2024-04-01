@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,8 @@ LIEF_API const char* to_string(SYMBOL_ORIGINS e);
 LIEF_API const char* to_string(EXPORT_SYMBOL_FLAGS e);
 LIEF_API const char* to_string(DataCodeEntry::TYPES e);
 LIEF_API const char* to_string(BuildVersion::PLATFORMS e);
-LIEF_API const char* to_string(BuildToolVersion::TOOLS e);
+LIEF_API const char* to_string(DYLD_CHAINED_PTR_FORMAT e);
+LIEF_API const char* to_string(DYLD_CHAINED_FORMAT e);
 
 
 } // namespace MachO

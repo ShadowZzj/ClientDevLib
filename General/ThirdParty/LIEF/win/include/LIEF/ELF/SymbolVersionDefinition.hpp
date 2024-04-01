@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_SYMBOL_VERSION_DEFINITION_H_
-#define LIEF_ELF_SYMBOL_VERSION_DEFINITION_H_
-#include <iostream>
+#ifndef LIEF_ELF_SYMBOL_VERSION_DEFINITION_H
+#define LIEF_ELF_SYMBOL_VERSION_DEFINITION_H
+#include <ostream>
 #include <memory>
 
 #include "LIEF/Object.hpp"
@@ -27,6 +27,7 @@
 namespace LIEF {
 namespace ELF {
 
+class SymbolVersionAux;
 class Parser;
 
 namespace details {
@@ -45,7 +46,7 @@ class LIEF_API SymbolVersionDefinition : public Object {
   SymbolVersionDefinition();
   SymbolVersionDefinition(const details::Elf64_Verdef& header);
   SymbolVersionDefinition(const details::Elf32_Verdef& header);
-  virtual ~SymbolVersionDefinition();
+  ~SymbolVersionDefinition() override;
 
   SymbolVersionDefinition& operator=(SymbolVersionDefinition other);
   SymbolVersionDefinition(const SymbolVersionDefinition& other);
@@ -78,8 +79,6 @@ class LIEF_API SymbolVersionDefinition : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const SymbolVersionDefinition& rhs) const;
-  bool operator!=(const SymbolVersionDefinition& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const SymbolVersionDefinition& sym);
 

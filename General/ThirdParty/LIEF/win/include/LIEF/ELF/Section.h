@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,6 @@
 #include <stdint.h>
 
 #include "LIEF/ELF/enums.h"
-
-/** @defgroup elf_section_c_api Section
- *  @ingroup elf_c_api
- *  @addtogroup elf_section_c_api
- *  @brief Section C API
- *
- *  @{
- */
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,5 +46,4 @@ typedef struct Elf_Section_t Elf_Section_t;
 }
 #endif
 
-/** @} */
 #endif

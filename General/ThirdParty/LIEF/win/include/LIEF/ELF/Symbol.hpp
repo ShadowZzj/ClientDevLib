@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_SYMBOL_H_
-#define LIEF_ELF_SYMBOL_H_
+#ifndef LIEF_ELF_SYMBOL_H
+#define LIEF_ELF_SYMBOL_H
 
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Abstract/Symbol.hpp"
@@ -43,8 +43,8 @@ class LIEF_API Symbol : public LIEF::Symbol {
   friend class Binary;
 
   public:
-  Symbol(const details::Elf32_Sym& header);
-  Symbol(const details::Elf64_Sym& header);
+  Symbol(const details::Elf32_Sym& header, ARCH arch);
+  Symbol(const details::Elf64_Sym& header, ARCH arch);
   Symbol(std::string name,
       ELF_SYMBOL_TYPES type = ELF_SYMBOL_TYPES::STT_NOTYPE,
       SYMBOL_BINDINGS binding = SYMBOL_BINDINGS::STB_WEAK,
@@ -80,7 +80,7 @@ class LIEF_API Symbol : public LIEF::Symbol {
   //! it does not exist.
   Section* section();
 
-  //! This member have slightly different interpretations:
+  //! This member has slightly different interpretations:
   //!   * In relocatable files, `value` holds alignment constraints for a symbol for which section index
   //!     is SHN_COMMON
   //!   * In relocatable files, `value` holds a section offset for a defined symbol. That is, `value` is an
@@ -88,14 +88,18 @@ class LIEF_API Symbol : public LIEF::Symbol {
   //!   * In executable and shared object files, `value` holds a virtual address. To make these files's
   //!     symbols more useful for the dynamic linker, the section offset (file interpretation) gives way to
   //!     a virtual address (memory interpretation) for which the section number is irrelevant.
-  //uint64_t value() const;
+  uint64_t value() const override {
+    return value_;
+  }
 
   //! Symbol size
   //!
   //! Many symbols have associated sizes. For example, a data object's size is the number of
   //! bytes contained in the object. This member holds `0` if the symbol has no size or
   //! an unknown size.
-  //uint64_t size() const;
+  uint64_t size() const override {
+    return size_;
+  }
 
   //! @see Symbol::section_idx
   uint16_t shndx() const;
@@ -118,7 +122,15 @@ class LIEF_API Symbol : public LIEF::Symbol {
   void information(uint8_t info);
   void shndx(uint16_t idx);
 
-  inline void shndx(SYMBOL_SECTION_INDEX idx) {
+  void value(uint64_t value) override {
+    value_ = value;
+  }
+
+  void size(uint64_t size) override {
+    size_ = size;
+  }
+
+  void shndx(SYMBOL_SECTION_INDEX idx) {
     this->shndx_ = static_cast<uint16_t>(idx);
   }
 
@@ -135,24 +147,22 @@ class LIEF_API Symbol : public LIEF::Symbol {
   void set_imported(bool flag = true);
 
   //! True if the symbol is a static one
-  inline bool is_static() const {
+  bool is_static() const {
     return this->binding() == SYMBOL_BINDINGS::STB_GLOBAL;
   }
 
   //! True if the symbol represent a function
-  inline bool is_function() const {
+  bool is_function() const {
     return this->type() == ELF_SYMBOL_TYPES::STT_FUNC;
   }
 
   //! True if the symbol represent a variable
-  inline bool is_variable() const {
+  bool is_variable() const {
     return this->type() == ELF_SYMBOL_TYPES::STT_OBJECT;
   }
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Symbol& rhs) const;
-  bool operator!=(const Symbol& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Symbol& entry);
 
@@ -163,7 +173,8 @@ class LIEF_API Symbol : public LIEF::Symbol {
   uint16_t         shndx_   = 0;
   Section*         section_ = nullptr;
   SymbolVersion*   symbol_version_ = nullptr;
+  ARCH             arch_ = ARCH::EM_NONE;
 };
 }
 }
-#endif /* _ELF_SYMBOL_H_ */
+#endif /* _ELF_SYMBOL_H */

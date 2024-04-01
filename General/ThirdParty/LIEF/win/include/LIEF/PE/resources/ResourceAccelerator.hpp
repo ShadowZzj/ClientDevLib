@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  * Copyright 2017 - 2021 K. Nakagawa
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_ACCELERATOR_H_
-#define LIEF_PE_RESOURCE_ACCELERATOR_H_
+#ifndef LIEF_PE_RESOURCE_ACCELERATOR_H
+#define LIEF_PE_RESOURCE_ACCELERATOR_H
+
+#include <string>
+#include <set>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 
@@ -42,7 +46,7 @@ class LIEF_API ResourceAccelerator : public Object {
   ResourceAccelerator(const ResourceAccelerator&);
   ResourceAccelerator& operator=(const ResourceAccelerator&);
 
-  virtual ~ResourceAccelerator();
+  ~ResourceAccelerator() override;
 
   std::set<ACCELERATOR_FLAGS> flags_list() const;
   std::string ansi_str() const;
@@ -61,8 +65,6 @@ class LIEF_API ResourceAccelerator : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceAccelerator& rhs) const;
-  bool operator!=(const ResourceAccelerator& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceAccelerator& acc);
 

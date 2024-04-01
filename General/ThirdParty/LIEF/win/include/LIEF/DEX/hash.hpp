@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_DEX_HASH_H_
-#define LIEF_DEX_HASH_H_
+#ifndef LIEF_DEX_HASH_H
+#define LIEF_DEX_HASH_H
 
 #include "LIEF/visibility.h"
 #include "LIEF/hash.hpp"
-#include "LIEF/DEX.hpp"
 
 namespace LIEF {
+class Object;
+
 namespace DEX {
+
+class Class;
+class Field;
+class File;
+class Header;
+class MapItem;
+class MapList;
+class Method;
+class Prototype;
+class CodeInfo;
+class Type;
 
 //! Class which implements a visitor to compute
 //! a **deterministic** hash for LIEF DEX objects
 class LIEF_API Hash : public LIEF::Hash {
   public:
-  static size_t hash(const Object& obj);
+  static LIEF::Hash::value_type hash(const Object& obj);
 
   public:
   using LIEF::Hash::Hash;

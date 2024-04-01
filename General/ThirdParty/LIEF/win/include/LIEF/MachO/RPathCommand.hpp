@@ -1,5 +1,5 @@
 /* Copyright 2017 - 2021 J. Rieck (based on R. Thomas's work)
- * Copyright 2017 - 2022 Quarkslab
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_RPATH_COMMAND_H_
-#define LIEF_MACHO_RPATH_COMMAND_H_
+#ifndef LIEF_MACHO_RPATH_COMMAND_H
+#define LIEF_MACHO_RPATH_COMMAND_H
 #include <string>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
@@ -44,14 +44,12 @@ class LIEF_API RPathCommand : public LoadCommand {
 
   RPathCommand* clone() const override;
 
-  virtual ~RPathCommand();
+  ~RPathCommand() override;
 
   //! The rpath value as a string
   const std::string& path() const;
   void path(const std::string& path);
 
-  bool operator==(const RPathCommand& rhs) const;
-  bool operator!=(const RPathCommand& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

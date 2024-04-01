@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_LOAD_CONFIGURATION_V0_H_
-#define LIEF_PE_LOAD_CONFIGURATION_V0_H_
-#include <iostream>
+#ifndef LIEF_PE_LOAD_CONFIGURATION_V0_H
+#define LIEF_PE_LOAD_CONFIGURATION_V0_H
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/PE/LoadConfigurations/LoadConfiguration.hpp"
@@ -31,40 +31,51 @@ struct load_configuration_v0;
 //! LoadConfiguration enhanced with SEH
 class LIEF_API LoadConfigurationV0 : public LoadConfiguration {
   public:
-  static constexpr WIN_VERSION VERSION = WIN_VERSION::WIN_SEH;
+  static constexpr VERSION WIN_VERSION = VERSION::SEH;
 
-  LoadConfigurationV0();
+  LoadConfigurationV0() = default;
 
-  LoadConfigurationV0& operator=(const LoadConfigurationV0&);
-  LoadConfigurationV0(const LoadConfigurationV0&);
+  LoadConfigurationV0& operator=(const LoadConfigurationV0&) = default;
+  LoadConfigurationV0(const LoadConfigurationV0&) = default;
 
   template<class T>
   LIEF_LOCAL LoadConfigurationV0(const details::load_configuration_v0<T>& header);
 
-  WIN_VERSION version() const override;
+  VERSION version() const override {
+    return WIN_VERSION;
+  }
 
   //! The VA of the sorted table of RVAs of each valid, unique
   //! SE handler in the image.
-  uint64_t se_handler_table() const;
+  uint64_t se_handler_table() const {
+    return se_handler_table_;
+  }
 
   //! The count of unique handlers in the table.
-  uint64_t se_handler_count() const;
+  uint64_t se_handler_count() const {
+    return se_handler_count_;
+  }
 
-  void se_handler_table(uint64_t se_handler_table);
-  void se_handler_count(uint64_t se_handler_count);
+  void se_handler_table(uint64_t se_handler_table) {
+    se_handler_table_ = se_handler_table;
+  }
+  void se_handler_count(uint64_t se_handler_count) {
+    se_handler_count_ = se_handler_count;
+  }
 
-  virtual ~LoadConfigurationV0();
+  ~LoadConfigurationV0() override = default;
+
+  static bool classof(const LoadConfiguration* config) {
+    return config->version() == WIN_VERSION;
+  }
 
   void accept(Visitor& visitor) const override;
-
-  bool operator==(const LoadConfigurationV0& rhs) const;
-  bool operator!=(const LoadConfigurationV0& rhs) const;
 
   std::ostream& print(std::ostream& os) const override;
 
   protected:
-  uint64_t se_handler_table_;
-  uint64_t se_handler_count_;
+  uint64_t se_handler_table_ = 0;
+  uint64_t se_handler_count_ = 0;
 };
 }
 }

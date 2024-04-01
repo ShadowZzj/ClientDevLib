@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_OAT_PARSER_H_
-#define LIEF_OAT_PARSER_H_
+#ifndef LIEF_OAT_PARSER_H
+#define LIEF_OAT_PARSER_H
 #include <memory>
 
 #include "LIEF/visibility.h"
 #include "LIEF/ELF/Parser.hpp"
-
-struct Profiler;
 
 namespace LIEF {
 
@@ -37,14 +35,14 @@ class Binary;
 class Class;
 
 //! Class to parse an OAT file to produce an OAT::Binary
-class LIEF_API Parser : public LIEF::ELF::Parser {
+class LIEF_API Parser : public ELF::Parser {
   public:
-  friend struct ::Profiler;
   //! Parse an OAT file
   static std::unique_ptr<Binary> parse(const std::string& oat_file);
-  static std::unique_ptr<Binary> parse(const std::string& oat_file, const std::string& vdex_file);
+  static std::unique_ptr<Binary> parse(const std::string& oat_file,
+                                       const std::string& vdex_file);
 
-  static std::unique_ptr<Binary> parse(std::vector<uint8_t> data, const std::string& name = "");
+  static std::unique_ptr<Binary> parse(std::vector<uint8_t> data);
 
   Parser& operator=(const Parser& copy) = delete;
   Parser(const Parser& copy)            = delete;
@@ -53,9 +51,9 @@ class LIEF_API Parser : public LIEF::ELF::Parser {
   Parser();
   Parser(const std::string& oat_file);
   Parser(std::vector<uint8_t> data);
-  ~Parser();
+  ~Parser() override;
 
-  inline Binary& oat_binary() {
+  Binary& oat_binary() {
     // The type of the parent binary_ is guaranteed by the constructor
     return *reinterpret_cast<Binary*>(binary_.get());
   }
@@ -84,7 +82,7 @@ class LIEF_API Parser : public LIEF::ELF::Parser {
   template<typename OAT_T>
   void parse_oat_methods(uint64_t methods_offsets, Class& clazz, const DEX::Class& dex_class);
 
-  void init(const std::string& name = "");
+  void init();
 
   std::unique_ptr<LIEF::VDEX::File> vdex_file_;
 
@@ -94,9 +92,6 @@ class LIEF_API Parser : public LIEF::ELF::Parser {
   uint64_t exec_start_ = 0;
   uint64_t exec_size_ = 0;
 };
-
-
-
 
 } // namespace OAT
 } // namespace LIEF

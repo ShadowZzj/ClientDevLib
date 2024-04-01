@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_RELOCATION_DYLD_COMMAND_H_
-#define LIEF_MACHO_RELOCATION_DYLD_COMMAND_H_
-#include <iostream>
+#ifndef LIEF_MACHO_RELOCATION_DYLD_COMMAND_H
+#define LIEF_MACHO_RELOCATION_DYLD_COMMAND_H
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
@@ -42,7 +42,7 @@ class LIEF_API RelocationDyld : public Relocation {
   RelocationDyld& operator=(const RelocationDyld&);
   RelocationDyld(const RelocationDyld&);
 
-  virtual ~RelocationDyld();
+  ~RelocationDyld() override;
 
   Relocation* clone() const override;
 
@@ -59,8 +59,6 @@ class LIEF_API RelocationDyld : public Relocation {
 
   void pc_relative(bool val) override;
 
-  bool operator==(const RelocationDyld& rhs) const;
-  bool operator!=(const RelocationDyld& rhs) const;
 
   bool operator<(const RelocationDyld& rhs) const;
   bool operator>=(const RelocationDyld& rhs) const;

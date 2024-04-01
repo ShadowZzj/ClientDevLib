@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_DEX_TYPE_H_
-#define LIEF_DEX_TYPE_H_
+#ifndef LIEF_DEX_TYPE_H
+#define LIEF_DEX_TYPE_H
+
+#include <vector>
+#include <string>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
@@ -22,6 +26,7 @@
 namespace LIEF {
 namespace DEX {
 class Parser;
+class Class;
 
 //! Class which represents a DEX type as described in the
 //! format specifications: https://source.android.com/devices/tech/dalvik/dex-format#typedescriptor
@@ -87,12 +92,10 @@ class LIEF_API Type : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Type& rhs) const;
-  bool operator!=(const Type& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Type& type);
 
-  virtual ~Type();
+  ~Type() override;
 
   private:
   void parse(const std::string& type);

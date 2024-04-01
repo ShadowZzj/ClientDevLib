@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,6 @@
  */
 #ifndef C_LIEF_PE_BINARY_H_
 #define C_LIEF_PE_BINARY_H_
-
-/** @defgroup pe_binary_c_api Binary
- *  @ingroup pe_c_api
- *  @addtogroup pe_binary_c_api
- *  @brief Binary C API
- *
- *  @{
- */
 
 #include <stddef.h>
 
@@ -64,6 +56,4 @@ LIEF_API void pe_binary_destroy(Pe_Binary_t* binary);
 }
 #endif
 
-
-/** @} */
 #endif

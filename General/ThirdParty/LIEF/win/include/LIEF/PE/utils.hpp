@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_UTILS_H_
-#define LIEF_PE_UTILS_H_
+#ifndef LIEF_PE_UTILS_H
+#define LIEF_PE_UTILS_H
 #include <vector>
 #include <string>
 
 #include "LIEF/PE/enums.hpp"
 #include "LIEF/visibility.h"
 #include "LIEF/errors.hpp"
-
 
 namespace LIEF {
 class BinaryStream;
@@ -37,6 +36,9 @@ enum class IMPHASH_MODE {
   PEFILE,         /**< Use pefile algorithm */
   VT = PEFILE,    /**< Same as IMPHASH_MODE::PEFILE since Virus Total is using pefile */
 };
+
+//Check if the given stream wraps a PE binary
+LIEF_API bool is_pe(BinaryStream& stream);
 
 //! check if the `file` is a PE file
 LIEF_API bool is_pe(const std::string& file);
@@ -79,7 +81,7 @@ LIEF_API std::string get_imphash(const Binary& binary, IMPHASH_MODE mode = IMPHA
 //! @param[in] use_std If ``true``, it will use the [pefile](https://github.com/erocarrera/pefile/tree/09264be6f731bf8578aee8638cc4046154e03abf/ordlookup) look-up table for resolving imports
 //!
 //! @return The PE::import resolved with PE::ImportEntry::name set
-LIEF_API Import resolve_ordinals(const Import& import, bool strict=false, bool use_std=false);
+LIEF_API result<Import> resolve_ordinals(const Import& import, bool strict=false, bool use_std=false);
 
 LIEF_API ALGORITHMS algo_from_oid(const std::string& oid);
 }

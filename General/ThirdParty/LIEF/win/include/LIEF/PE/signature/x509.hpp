@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_X509_H_
-#define LIEF_PE_X509_H_
+#ifndef LIEF_PE_X509_H
+#define LIEF_PE_X509_H
 #include <array>
 #include <memory>
+#include <vector>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
@@ -180,7 +181,7 @@ class LIEF_API x509 : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  virtual ~x509();
+  ~x509() override;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const x509& x509_cert);
 

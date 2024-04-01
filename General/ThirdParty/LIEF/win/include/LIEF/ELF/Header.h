@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,6 @@
 #include <inttypes.h>
 
 #include "LIEF/ELF/enums.h"
-/**  @defgroup elf_header_c_api Header
- *  @ingroup elf_c_api
- *  @addtogroup elf_header_c_api
- *  @brief Header C API
- *
- *  @{
- */
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,5 +47,4 @@ typedef struct Elf_Header_t Elf_Header_t;
 }
 #endif
 
-/** @} */
 #endif

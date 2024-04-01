@@ -12,6 +12,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <General/util/Process/Process.h>
 #define DISALLOW_COPY_AND_ASSIGN(TypeName)                                                                             \
     TypeName(const TypeName &);                                                                                        \
     TypeName &operator=(const TypeName &);
@@ -209,9 +210,13 @@ struct MemoryInfo {
 class Memory
 {
   public:
-    Memory(const Process _process) : process(_process)
+    Memory(const Process& _process) : process(_process)
     {
     }
+    Memory(const ProcessV2& _process)
+    {
+        process.InitWithId(_process.pid, PROCESS_ALL_ACCESS);
+	}
     ~Memory() = default;
     bool Read(uintptr_t address, void *buffer, size_t size);
     std::vector<uint8_t> ReadUntilZero(uintptr_t address);

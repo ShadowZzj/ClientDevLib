@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_H_
-#define LIEF_PE_H_
+#ifndef LIEF_PE_H
+#define LIEF_PE_H
 
 #include "LIEF/config.h"
 
@@ -29,8 +29,6 @@
 #include "LIEF/PE/ImportEntry.hpp"
 #include "LIEF/PE/DelayImport.hpp"
 #include "LIEF/PE/DelayImportEntry.hpp"
-#include "LIEF/PE/Pogo.hpp"
-#include "LIEF/PE/PogoEntry.hpp"
 #include "LIEF/PE/DataDirectory.hpp"
 #include "LIEF/PE/ResourcesManager.hpp"
 #include "LIEF/PE/ResourceData.hpp"
@@ -51,25 +49,24 @@
 #include "LIEF/PE/Symbol.hpp"
 #include "LIEF/PE/Relocation.hpp"
 #include "LIEF/PE/RelocationEntry.hpp"
-#include "LIEF/PE/Symbol.hpp"
 #include "LIEF/PE/Builder.hpp"
 #include "LIEF/PE/Binary.hpp"
 #include "LIEF/PE/Debug.hpp"
 #include "LIEF/PE/DosHeader.hpp"
 #include "LIEF/PE/Header.hpp"
 #include "LIEF/PE/OptionalHeader.hpp"
-#include "LIEF/PE/CodeView.hpp"
-#include "LIEF/PE/CodeViewPDB.hpp"
 #include "LIEF/PE/LoadConfigurations.hpp"
 #include "LIEF/PE/AuxiliarySymbol.hpp"
 #include "LIEF/PE/CodeIntegrity.hpp"
 
-#include "LIEF/PE/signature/attributes.hpp"
 #include "LIEF/PE/signature/Attribute.hpp"
 #include "LIEF/PE/signature/ContentInfo.hpp"
+#include "LIEF/PE/signature/GenericContent.hpp"
 #include "LIEF/PE/signature/OIDToString.hpp"
 #include "LIEF/PE/signature/Signature.hpp"
 #include "LIEF/PE/signature/SignerInfo.hpp"
+#include "LIEF/PE/signature/SpcIndirectData.hpp"
+#include "LIEF/PE/signature/attributes.hpp"
 #include "LIEF/PE/signature/types.hpp"
 #include "LIEF/PE/signature/x509.hpp"
 

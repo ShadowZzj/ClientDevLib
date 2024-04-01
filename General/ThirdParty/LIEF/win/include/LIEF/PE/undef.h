@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  * Copyright 2017 - 2021 K. Nakagawa
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#if !defined(LIEF_PE_UNDEF_H_) || defined(LIEF_PE_FORCE_UNDEF)
-#define LIEF_PE_UNDEF_H_
+#if !defined(LIEF_PE_UNDEF_H) || defined(LIEF_PE_FORCE_UNDEF)
+#define LIEF_PE_UNDEF_H
 
 #ifdef IMAGE_FILE_MACHINE_UNKNOWN
 #pragma message("LIEF will disable #define enums. Please use LIEF_PE_XXXX or LIEF::PE::XXXX instead!")
@@ -295,7 +295,6 @@
 #undef IMAGE_SCN_MEM_READ
 #undef IMAGE_SCN_MEM_WRITE
 
-#undef RESOURCE_TYPES
 #undef RESOURCE_LANGS
 
 

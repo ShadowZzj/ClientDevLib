@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_SUB_FRAMEWORK_H_
-#define LIEF_MACHO_SUB_FRAMEWORK_H_
+#ifndef LIEF_MACHO_SUB_FRAMEWORK_H
+#define LIEF_MACHO_SUB_FRAMEWORK_H
 #include <string>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/types.hpp"
@@ -59,10 +59,8 @@ class LIEF_API SubFramework : public LoadCommand {
   const std::string& umbrella() const;
   void umbrella(const std::string& u);
 
-  virtual ~SubFramework();
+  ~SubFramework() override;
 
-  bool operator==(const SubFramework& rhs) const;
-  bool operator!=(const SubFramework& rhs) const;
 
   void accept(Visitor& visitor) const override;
 

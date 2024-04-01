@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_LANG_CODE_ITEM_H_
-#define LIEF_PE_RESOURCE_LANG_CODE_ITEM_H_
-#include <iostream>
+#ifndef LIEF_PE_RESOURCE_LANG_CODE_ITEM_H
+#define LIEF_PE_RESOURCE_LANG_CODE_ITEM_H
+#include <ostream>
 #include <sstream>
 #include <vector>
 #include <unordered_map>
@@ -48,7 +48,7 @@ class LIEF_API LangCodeItem : public Object {
 
   LangCodeItem(const LangCodeItem&);
   LangCodeItem& operator=(const LangCodeItem&);
-  virtual ~LangCodeItem();
+  ~LangCodeItem() override;
 
   //! The type of data in the version resource
   //! * ``1`` if it contains text data
@@ -67,10 +67,10 @@ class LIEF_API LangCodeItem : public Object {
   CODE_PAGES code_page() const;
 
   //! Lang for which LangCodeItem::items are defined
-  RESOURCE_LANGS lang() const;
+  uint32_t lang() const;
 
   //! Sublang for which LangCodeItem::items are defined
-  RESOURCE_SUBLANGS sublang() const;
+  uint32_t sublang() const;
 
   const items_t& items() const;
   items_t&       items();
@@ -80,15 +80,13 @@ class LIEF_API LangCodeItem : public Object {
   void key(const std::string& key);
 
   void code_page(CODE_PAGES code_page);
-  void lang(RESOURCE_LANGS lang);
-  void sublang(RESOURCE_SUBLANGS lang);
+  void lang(uint32_t lang);
+  void sublang(uint32_t lang);
 
   void items(const items_t& items);
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const LangCodeItem& rhs) const;
-  bool operator!=(const LangCodeItem& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const LangCodeItem& item);
 

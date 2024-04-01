@@ -1,5 +1,5 @@
-/* Copyright 2021 - 2022 R. Thomas
- * Copyright 2021 - 2022 Quarkslab
+/* Copyright 2021 - 2023 R. Thomas
+ * Copyright 2021 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ERROR_H_
-#define LIEF_ERROR_H_
-#include <system_error>
-#include <LIEF/third-party/leaf.hpp>
+#ifndef LIEF_ERROR_H
+#define LIEF_ERROR_H
+#include <LIEF/third-party/expected.hpp>
 
 //! LIEF error codes definition
 enum class lief_errors {
@@ -44,27 +43,18 @@ enum class lief_errors {
    */
 };
 
-const std::error_category& error_category();
-std::error_code make_error_code(lief_errors e);
-
-namespace std {
-  template<>
-  struct is_error_code_enum<lief_errors>: std::true_type
-  {};
-}
-
-const std::error_category& lief_error_category();
+const char* to_string(lief_errors err);
 
 //! Create an standard error code from lief_errors
-inline std::error_code make_error_code(lief_errors e) {
-  return std::error_code(int(e), lief_error_category());
+inline tl::unexpected<lief_errors> make_error_code(lief_errors e) {
+  return tl::make_unexpected(e);
 }
 
 
 namespace LIEF {
 //! Wrapper that contains an Object (``T``) or an error
 //!
-//! The LEAF implementation exposes the method ``value()`` to access the underlying object (if no error)
+//! The tl/expected implementation exposes the method ``value()`` to access the underlying object (if no error)
 //!
 //! Typical usage is:
 //!
@@ -77,30 +67,20 @@ namespace LIEF {
 //! }
 //! \endcode
 //!
-//! See https://boostorg.github.io/leaf/ for more details
+//! See https://tl.tartanllama.xyz/en/latest/api/expected.html for more details
 template<typename T>
-using result = boost::leaf::result<T>;
-
-//! Abstraction over the implementation
-template<typename T>
-using error_result_t = typename result<T>::error_resul;
-
-//! Abstraction over the implementation
-using error_t = boost::leaf::error_id;
-
-//! Create an error_t from a lief_errors
-error_t return_error(lief_errors);
+using result = tl::expected<T, lief_errors>;
 
 //! Get the error code associated with the result
 template<class T>
-std::error_code get_error(result<T>& err) {
-  return make_error_code(lief_errors(boost::leaf::error_id(err.error()).value()));
+lief_errors get_error(result<T>& err) {
+  return err.error();
 }
 
 //! Return the lief_errors when the provided ``result<T>`` is an error
 template<class T>
 lief_errors as_lief_err(result<T>& err) {
-  return lief_errors(boost::leaf::error_id(err.error()).value());
+  return err.error();
 }
 
 //! Opaque structure used by ok_error_t

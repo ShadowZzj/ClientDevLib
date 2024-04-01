@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_OAT_HEADER_H_
-#define LIEF_OAT_HEADER_H_
+#ifndef LIEF_OAT_HEADER_H
+#define LIEF_OAT_HEADER_H
 #include <functional>
 #include <map>
 #include <string>
 #include <vector>
 #include <utility>
-#include <utility>
+#include <array>
+
 #include "LIEF/iterators.hpp"
 #include "LIEF/OAT/type_traits.hpp"
 #include "LIEF/OAT/enums.hpp"
@@ -36,10 +37,17 @@ class LIEF_API Header : public Object {
   friend class Parser;
 
   public:
+  struct element_t {
+    element_t(HEADER_KEYS key, const std::string& value) :
+      key(key), value(const_cast<std::string*>(&value)) {}
+
+    HEADER_KEYS key;
+    std::string* value = nullptr;
+  };
   using magic_t               = std::array<uint8_t, 4>; // oat\n
   using key_values_t          = std::map<HEADER_KEYS, std::string>;
-  using it_key_values_t       = ref_iterator< std::vector< std::pair<HEADER_KEYS, std::reference_wrapper<std::string>> > >;
-  using it_const_key_values_t = const_ref_iterator<std::vector<std::pair<HEADER_KEYS, std::string>>>;
+  using it_key_values_t       = ref_iterator<std::vector<element_t>>;
+  using it_const_key_values_t = const_ref_iterator<std::vector<element_t>>;
 
   //! @brief Iterator type over
   using keys_t   = std::vector<HEADER_KEYS>;
@@ -109,8 +117,6 @@ class LIEF_API Header : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Header& rhs) const;
-  bool operator!=(const Header& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Header& hdr);
 

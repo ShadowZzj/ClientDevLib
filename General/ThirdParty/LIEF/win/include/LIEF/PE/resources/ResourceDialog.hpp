@@ -1,6 +1,6 @@
 
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RESOURCE_DIALOG_H_
-#define LIEF_PE_RESOURCE_DIALOG_H_
-#include <iostream>
+#ifndef LIEF_PE_RESOURCE_DIALOG_H
+#define LIEF_PE_RESOURCE_DIALOG_H
+#include <ostream>
 #include <sstream>
 #include <set>
 
@@ -61,7 +61,7 @@ class LIEF_API ResourceDialog : public Object {
   ResourceDialog(const ResourceDialog&);
   ResourceDialog& operator=(const ResourceDialog&);
 
-  virtual ~ResourceDialog();
+  ~ResourceDialog() override;
 
   //! ``true`` if the dialog is an extended one
   bool is_extended() const;
@@ -105,13 +105,13 @@ class LIEF_API ResourceDialog : public Object {
   it_const_items items() const;
 
   //! RESOURCE_LANGS associated with the Dialog
-  RESOURCE_LANGS lang() const;
+  uint32_t lang() const;
 
   //! RESOURCE_SUBLANGS associated with the Dialog
-  RESOURCE_SUBLANGS sub_lang() const;
+  uint32_t sub_lang() const;
 
-  void lang(RESOURCE_LANGS lang);
-  void sub_lang(RESOURCE_SUBLANGS sub_lang);
+  void lang(uint32_t lang);
+  void sub_lang(uint32_t sub_lang);
 
 
   // Extended API
@@ -151,8 +151,6 @@ class LIEF_API ResourceDialog : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const ResourceDialog& rhs) const;
-  bool operator!=(const ResourceDialog& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const ResourceDialog& dialog);
 
@@ -180,10 +178,8 @@ class LIEF_API ResourceDialog : public Object {
 
   items_t items_;
 
-  RESOURCE_LANGS lang_;
-  RESOURCE_SUBLANGS sublang_;
-
-
+  uint32_t lang_;
+  uint32_t sublang_;
 };
 
 

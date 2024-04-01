@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_SECTION_H_
-#define LIEF_ELF_SECTION_H_
+#ifndef LIEF_ELF_SECTION_H
+#define LIEF_ELF_SECTION_H
 
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 #include <set>
 
 #include "LIEF/visibility.h"
@@ -153,30 +153,38 @@ class LIEF_API Section : public LIEF::Section {
   it_segments       segments();
   it_const_segments segments() const;
 
+  Section& as_frame() {
+    is_frame_ = true;
+    return *this;
+  }
+
+  bool is_frame() const {
+    return is_frame_;
+  }
+
   void accept(Visitor& visitor) const override;
 
   Section& operator+=(ELF_SECTION_FLAGS c);
   Section& operator-=(ELF_SECTION_FLAGS c);
 
-  bool operator==(const Section& rhs) const;
-  bool operator!=(const Section& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const Section& section);
 
   private:
   span<uint8_t> writable_content();
-  ELF_SECTION_TYPES     type_;
-  uint64_t              flags_;
-  uint64_t              original_size_;
-  uint32_t              link_;
-  uint32_t              info_;
-  uint64_t              address_align_;
-  uint64_t              entry_size_;
+  ELF_SECTION_TYPES     type_ = ELF_SECTION_TYPES::SHT_PROGBITS;
+  uint64_t              flags_ = 0;
+  uint64_t              original_size_ = 0;
+  uint32_t              link_ = 0;
+  uint32_t              info_ = 0;
+  uint64_t              address_align_ = 0x1000;
+  uint64_t              entry_size_ = 0;
   segments_t            segments_;
-  DataHandler::Handler* datahandler_{nullptr};
+  bool                  is_frame_ = false;
+  DataHandler::Handler* datahandler_ = nullptr;
   std::vector<uint8_t>  content_c_;
 };
 
 }
 }
-#endif /* _ELF_SECTION_H_ */
+#endif /* _ELF_SECTION_H */

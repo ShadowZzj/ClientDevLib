@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,7 @@
 #include <inttypes.h>
 
 #include "LIEF/MachO/enums.h"
-/**  @defgroup macho_segment_c_api Header
- *  @ingroup macho_c_api
- *  @addtogroup macho_segment_c_api
- *  @brief Segment C API
- *
- *  @{
- */
-
+#include "LIEF/MachO/Section.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,5 +45,4 @@ typedef struct Macho_Segment_t Macho_Segment_t;
 }
 #endif
 
-/** @} */
 #endif

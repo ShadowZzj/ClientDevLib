@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_FILESET_COMMAND_H_
-#define LIEF_MACHO_FILESET_COMMAND_H_
-#include <iostream>
+#ifndef LIEF_MACHO_FILESET_COMMAND_H
+#define LIEF_MACHO_FILESET_COMMAND_H
+#include <ostream>
 
 #include "LIEF/visibility.h"
 
@@ -49,7 +49,7 @@ class LIEF_API FilesetCommand : public LoadCommand {
 
   FilesetCommand* clone() const override;
 
-  virtual ~FilesetCommand();
+  ~FilesetCommand() override;
 
   //! Name of the underlying MachO binary (e.g. ``com.apple.security.quarantine``)
   const std::string& name() const;
@@ -62,11 +62,11 @@ class LIEF_API FilesetCommand : public LoadCommand {
 
   //! Return a pointer on the LIEF::MachO::Binary associated
   //! with this entry
-  inline const Binary* binary() const {
+  const Binary* binary() const {
     return binary_;
   }
 
-  inline Binary* binary() {
+  Binary* binary() {
     return binary_;
   }
 
@@ -76,8 +76,6 @@ class LIEF_API FilesetCommand : public LoadCommand {
 
   std::ostream& print(std::ostream& os) const override;
 
-  bool operator==(const FilesetCommand& rhs) const;
-  bool operator!=(const FilesetCommand& rhs) const;
 
   static bool classof(const LoadCommand* cmd);
 

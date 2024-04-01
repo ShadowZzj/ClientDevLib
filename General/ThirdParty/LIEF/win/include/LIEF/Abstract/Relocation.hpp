@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ABSTRACT_RELOCATION_H_
-#define LIEF_ABSTRACT_RELOCATION_H_
+#ifndef LIEF_ABSTRACT_RELOCATION_H
+#define LIEF_ABSTRACT_RELOCATION_H
+
+#include <ostream>
 
 #include "LIEF/types.hpp"
 #include "LIEF/Object.hpp"
@@ -30,7 +32,7 @@ class LIEF_API Relocation : public Object {
   //! Constructor from a relocation's address and size
   Relocation(uint64_t address, uint8_t size);
 
-  virtual ~Relocation();
+  ~Relocation() override;
 
   Relocation& operator=(const Relocation&);
   Relocation(const Relocation&);
@@ -48,8 +50,6 @@ class LIEF_API Relocation : public Object {
   //! Method so that the ``visitor`` can visit us
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const Relocation& rhs) const;
-  bool operator!=(const Relocation& rhs) const;
 
   //! Comparaison based on the Relocation's **address**
   virtual bool operator<(const Relocation& rhs) const;

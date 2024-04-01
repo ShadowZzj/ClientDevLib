@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@
 #include <vector>
 #include <string>
 
+#include "LIEF/span.hpp"
 #include "LIEF/types.hpp"
 #include "LIEF/visibility.h"
+
+#include "LIEF/errors.hpp"
 
 
 namespace LIEF {
@@ -58,29 +61,33 @@ inline uint64_t round<uint64_t>(uint64_t x) {
 
 constexpr size_t operator ""_KB(unsigned long long kbs)
 {
-    return 1024 * kbs;
+    return 1024LLU * kbs;
 }
 
 constexpr size_t operator ""_MB(unsigned long long mbs)
 {
-    return 1024 * 1024 * mbs;
+    return 1024LLU * 1024LLU * mbs;
 }
 
 constexpr size_t operator ""_GB(unsigned long long gbs)
 {
-    return 1024 * 1024 * 1024 * gbs;
+    return 1024LLU * 1024LLU * 1024LLU * gbs;
 }
 
 
-//! @brief Convert a UTF-16 string to a UTF-8 one
+//! Convert a UTF-16 string to a UTF-8 one
 LIEF_API std::string u16tou8(const std::u16string& string, bool remove_null_char = false);
 
-//! @brief Convert a UTF-8 string to a UTF-16 one
-LIEF_API std::u16string u8tou16(const std::string& string);
+//! Convert a UTF-8 string to a UTF-16 one
+LIEF_API result<std::u16string> u8tou16(const std::string& string);
 
 LIEF_API std::string hex_str(uint8_t c);
 
-LIEF_API std::string hex_dump(const std::vector<uint8_t>& data, const std::string& sep = ":");
+LIEF_API std::string hex_dump(const std::vector<uint8_t>& data,
+                              const std::string& sep = ":");
+
+LIEF_API std::string hex_dump(span<const uint8_t> data,
+                              const std::string& sep = ":");
 
 //! Check if the given string in printable
 LIEF_API bool is_printable(const std::string& str);

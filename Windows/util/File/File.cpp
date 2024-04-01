@@ -1,6 +1,7 @@
 #include "File.h"
 #include <Windows/util/HandleHelper.h>
-
+#include <iostream>
+#include <fstream>
 namespace zzj
 {
 
@@ -27,6 +28,22 @@ File::FileInfo::~FileInfo()
 
 File::File(const std::string &imageName) : m_imageName(imageName)
 {
+}
+
+std::vector<BYTE> File::Read(std::uintptr_t offset, std::size_t size)
+{
+    if (m_imageName.empty())
+		throw std::runtime_error("image name is empty");
+    
+    std::ifstream file(m_imageName, std::ios::binary);
+    if (!file.is_open())
+        throw std::runtime_error("open file failed");
+
+    file.seekg(offset, std::ios::beg);
+    std::vector<BYTE> buffer(size);
+    file.read(reinterpret_cast<char *>(buffer.data()), size);
+    file.close();
+    return buffer;
 }
 
 File::~File()

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_VDEX_UTILS_H_
-#define LIEF_VDEX_UTILS_H_
+#ifndef LIEF_VDEX_UTILS_H
+#define LIEF_VDEX_UTILS_H
 
 #include <string>
 #include <vector>
@@ -42,7 +42,7 @@ LIEF_API vdex_version_t version(const std::string& file);
 LIEF_API vdex_version_t version(const std::vector<uint8_t>& raw);
 
 //! @brief Return the ANDROID_VERSIONS associated with the given VDEX version
-LIEF_API LIEF::Android::ANDROID_VERSIONS android_version(vdex_version_t version);
+LIEF_API Android::ANDROID_VERSIONS android_version(vdex_version_t version);
 
 }
 }

@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ namespace LIEF {
 class Binary;
 class MemoryStream : public BinaryStream {
   public:
+  using BinaryStream::p;
+  using BinaryStream::end;
+  using BinaryStream::start;
+
   MemoryStream() = delete;
   MemoryStream(uintptr_t base_address);
   MemoryStream(uintptr_t base_address, uint64_t size);
@@ -35,19 +39,27 @@ class MemoryStream : public BinaryStream {
   MemoryStream(MemoryStream&&);
   MemoryStream& operator=(MemoryStream&&);
 
-  inline uintptr_t base_address() const {
+  uintptr_t base_address() const {
     return this->baseaddr_;
   }
 
-  inline uint64_t end() const {
-    return this->baseaddr_ + this->size_;
+  const uint8_t* p() const override {
+    return start() + pos();
   }
 
-  inline void binary(Binary& bin) {
+  const uint8_t* start() const override {
+    return reinterpret_cast<const uint8_t*>(baseaddr_);
+  }
+
+  const uint8_t* end() const override {
+    return start() + size_;
+  }
+
+  void binary(Binary& bin) {
     this->binary_ = &bin;
   }
 
-  inline Binary* binary() {
+  Binary* binary() {
     return this->binary_;
   }
 

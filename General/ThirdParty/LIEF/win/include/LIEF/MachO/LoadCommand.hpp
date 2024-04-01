@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_MACHO_LOAD_COMMAND_H_
-#define LIEF_MACHO_LOAD_COMMAND_H_
+#ifndef LIEF_MACHO_LOAD_COMMAND_H
+#define LIEF_MACHO_LOAD_COMMAND_H
 
 #include <string>
 #include <vector>
@@ -22,6 +22,7 @@
 #include "LIEF/types.hpp"
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
+#include "LIEF/span.hpp"
 
 #include "LIEF/MachO/enums.hpp"
 
@@ -52,7 +53,7 @@ class LIEF_API LoadCommand : public Object {
   void swap(LoadCommand& other);
   virtual LoadCommand* clone() const;
 
-  virtual ~LoadCommand();
+  ~LoadCommand() override;
 
   //! Command type
   LOAD_COMMAND_TYPES command() const;
@@ -61,7 +62,9 @@ class LIEF_API LoadCommand : public Object {
   uint32_t size() const;
 
   //! Raw command
-  const raw_t& data() const;
+  span<const uint8_t> data() const {
+    return original_data_;
+  }
 
   //! Offset of the command within the *Load Command Table*
   uint64_t command_offset() const;
@@ -73,10 +76,10 @@ class LIEF_API LoadCommand : public Object {
 
   virtual std::ostream& print(std::ostream& os) const;
 
-  bool operator==(const LoadCommand& rhs) const;
-  bool operator!=(const LoadCommand& rhs) const;
 
   void accept(Visitor& visitor) const override;
+
+  static bool is_linkedit_data(const LoadCommand& cmd);
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const LoadCommand& cmd);
 

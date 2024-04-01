@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_PE_RICH_HEADER_H_
-#define LIEF_PE_RICH_HEADER_H_
+#ifndef LIEF_PE_RICH_HEADER_H
+#define LIEF_PE_RICH_HEADER_H
 #include <array>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/Object.hpp"
 #include "LIEF/visibility.h"
@@ -45,16 +45,25 @@ class LIEF_API RichHeader : public Object {
   RichHeader();
   RichHeader(const RichHeader&);
   RichHeader& operator=(const RichHeader&);
-  virtual ~RichHeader();
+  ~RichHeader() override;
 
   //! Key used to encode the header (xor operation)
-  uint32_t key() const;
+  uint32_t key() const {
+    return key_;
+  }
 
   //! Return an iterator over the PE::RichEntry within the header
-  it_entries entries();
-  it_const_entries entries() const;
+  it_entries entries() {
+    return entries_;
+  }
 
-  void key(uint32_t key);
+  it_const_entries entries() const {
+    return entries_;
+  }
+
+  void key(uint32_t key) {
+    key_ = key;
+  }
 
   //! Add a new PE::RichEntry
   void add_entry(const RichEntry& entry);
@@ -65,7 +74,9 @@ class LIEF_API RichHeader : public Object {
   //! The raw structure of the Rich header without xor-encoding.
   //!
   //! This function is equivalent as calling RichHeader::raw(uint32_t) with a `xor_key` set to 0
-  std::vector<uint8_t> raw() const;
+  std::vector<uint8_t> raw() const {
+    return raw(/*xor_key=*/0);
+  }
 
   //! Given this rich header, this function re-computes
   //! the raw bytes of the structure with the provided xor-key.
@@ -77,20 +88,19 @@ class LIEF_API RichHeader : public Object {
 
   //! Compute the hash of the decoded rich header structure with
   //! the given hash algorithm
-  std::vector<uint8_t> hash(ALGORITHMS algo) const;
+  std::vector<uint8_t> hash(ALGORITHMS algo) const {
+    return hash(algo, /*xor_key=*/0);
+  }
 
   //! Compute the hash of the rich header structure encoded with the provided key.
   std::vector<uint8_t> hash(ALGORITHMS algo, uint32_t xor_key) const;
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const RichHeader& rhs) const;
-  bool operator!=(const RichHeader& rhs) const;
-
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const RichHeader& rich_header);
 
   private:
-  uint32_t  key_ = 0;
+  uint32_t key_ = 0;
   entries_t entries_;
 
 };

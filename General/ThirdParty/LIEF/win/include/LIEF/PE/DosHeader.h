@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,6 @@
 #include <inttypes.h>
 
 #include "LIEF/ELF/enums.h"
-/**  @defgroup pe_dos_header_c_api DosHeader
- *  @ingroup pe_c_api
- *  @addtogroup pe_dos_header_c_api
- *  @brief Dos Header C API
- *
- *  @{
- */
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +25,7 @@ extern "C" {
 
 struct Pe_DosHeader_t {
   uint16_t magic ;
-  uint16_t used_bytes_in_the_last_page;
+  uint16_t used_bytes_in_last_page;
   uint16_t file_size_in_pages;
   uint16_t numberof_relocation;
   uint16_t header_size_in_paragraphs;
@@ -59,5 +52,4 @@ typedef struct Pe_DosHeader_t Pe_DosHeader_t;
 }
 #endif
 
-/** @} */
 #endif

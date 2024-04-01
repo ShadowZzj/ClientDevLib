@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ART_FILE_H_
-#define LIEF_ART_FILE_H_
-#include <iostream>
+#ifndef LIEF_ART_FILE_H
+#define LIEF_ART_FILE_H
+#include <ostream>
 
 #include "LIEF/ART/Header.hpp"
 
@@ -38,8 +38,6 @@ class LIEF_API File : public Object {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const File& rhs) const;
-  bool operator!=(const File& rhs) const;
 
   ~File() override;
 

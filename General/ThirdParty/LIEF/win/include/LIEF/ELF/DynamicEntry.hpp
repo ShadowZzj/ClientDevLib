@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_DYNAMIC_ENTRY_H_
-#define LIEF_ELF_DYNAMIC_ENTRY_H_
+#ifndef LIEF_ELF_DYNAMIC_ENTRY_H
+#define LIEF_ELF_DYNAMIC_ENTRY_H
 
 #include <string>
 #include <vector>
-#include <iostream>
+#include <ostream>
 
 #include "LIEF/visibility.h"
 #include "LIEF/Object.hpp"
@@ -44,7 +44,7 @@ class LIEF_API DynamicEntry : public Object {
 
   DynamicEntry& operator=(const DynamicEntry&);
   DynamicEntry(const DynamicEntry&);
-  virtual ~DynamicEntry();
+  ~DynamicEntry() override;
 
   //! Tag of the current entry. The most common tags are:
   //! DT_NEEDED, DT_INIT, ...
@@ -63,8 +63,6 @@ class LIEF_API DynamicEntry : public Object {
 
   virtual std::ostream& print(std::ostream& os) const;
 
-  bool operator==(const DynamicEntry& rhs) const;
-  bool operator!=(const DynamicEntry& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const DynamicEntry& entry);
 

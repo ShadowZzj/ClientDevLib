@@ -49,9 +49,9 @@ function(GenerateWindowsUtil)
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.cpp"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/AntiDebug/*.asm"
 		)
-
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	else()
+		set (FEATURE_DETOURS ON)
 		message(STATUS "AntiDebug opened, you need to disable safeseh in linker options")
 	endif()
 
@@ -101,6 +101,14 @@ function(GenerateWindowsUtil)
 		)
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
+
+	if(${FEATURE_LIEF})
+		message(STATUS "LIEF feature: ${FEATURE_LIEF}")
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/LIEF/win/include)
+		list(APPEND WINDOWS_UTIL_LIB_FILES ${LIEFLib})
+		list(APPEND WINDOWS_UTIL_DLL_FILES ${LIEFDll})
+	endif()
+
 	if ((NOT DEFINED FEATURE_ETW) OR (NOT ${FEATURE_ETW}))
 		message(STATUS "ETW feature: ${FEATURE_ETW}")
 	    file(GLOB FEATURE_FILES 

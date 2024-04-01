@@ -1,5 +1,5 @@
-/* Copyright 2017 - 2022 R. Thomas
- * Copyright 2017 - 2022 Quarkslab
+/* Copyright 2017 - 2023 R. Thomas
+ * Copyright 2017 - 2023 Quarkslab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIEF_ELF_SYMBOL_VERSION_AUX_REQUIREMENT_H_
-#define LIEF_ELF_SYMBOL_VERSION_AUX_REQUIREMENT_H_
+#ifndef LIEF_ELF_SYMBOL_VERSION_AUX_REQUIREMENT_H
+#define LIEF_ELF_SYMBOL_VERSION_AUX_REQUIREMENT_H
 
 #include <string>
-#include <iostream>
+#include <ostream>
+#include <cstdint>
 
 #include "LIEF/visibility.h"
 #include "LIEF/iterators.hpp"
@@ -42,7 +43,7 @@ class LIEF_API SymbolVersionAuxRequirement : public SymbolVersionAux {
   SymbolVersionAuxRequirement& operator=(const SymbolVersionAuxRequirement&);
   SymbolVersionAuxRequirement(const SymbolVersionAuxRequirement&);
 
-  virtual ~SymbolVersionAuxRequirement();
+  ~SymbolVersionAuxRequirement() override;
 
   //! Hash value of the dependency name (use ELF hashing function)
   uint32_t hash() const;
@@ -62,8 +63,6 @@ class LIEF_API SymbolVersionAuxRequirement : public SymbolVersionAux {
 
   void accept(Visitor& visitor) const override;
 
-  bool operator==(const SymbolVersionAuxRequirement& rhs) const;
-  bool operator!=(const SymbolVersionAuxRequirement& rhs) const;
 
   LIEF_API friend std::ostream& operator<<(std::ostream& os, const SymbolVersionAuxRequirement& symAux);
 
