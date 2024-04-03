@@ -98,6 +98,7 @@ function(GenerateWindowsUtil)
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.h"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.cpp"
 		
+		
 		)
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()

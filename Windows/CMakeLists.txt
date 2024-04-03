@@ -47,7 +47,7 @@ else()
   # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 endif()
 
-GenerateUtil(FEATURE_ANTIDEBUG FEATURE_D3D9 FEATURE_GHINJECTOR)
+GenerateUtil(FEATURE_ANTIDEBUG FEATURE_D3D9 FEATURE_GHINJECTOR FEATURE_IMGUI_WIN32_DIRECTX11)
 
 file(GLOB ProjectUtil test/util/*.cpp test/util/*.h)
 
@@ -57,7 +57,7 @@ ${PRO_SUP}/General/ThirdParty/boost_1_75_0/lib/win/x86/static/libboost_locale-vc
 )
 add_executable(${PROJECT_NAME}_test test/test.cpp)
 add_executable(${PROJECT_NAME}_testWindow test/testWindow.cpp ${ProjectUtil})
-add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp test/GameSetting.h test/GameSetting.cpp test/GameManager.h test/GameManager.cpp test/SpeedHack.h test/SpeedHack.cpp)
+add_library(${PROJECT_NAME}_testdll SHARED test/testdll.cpp)
 
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})

@@ -101,6 +101,8 @@ class EnvHelper
   private:
     std::map<std::string, std::string> env;
 };
+#include <Aclapi.h>
+#include <Sddl.h>
 class Process
 {
     friend class Memory;
@@ -111,6 +113,45 @@ class Process
         User,
         Admin,
         Service
+    };
+    class Token
+    {
+      public:
+        Token(HANDLE _token) : token(_token)
+        {
+        }
+        ~Token()
+        {
+            if (token != INVALID_HANDLE_VALUE)
+                CloseHandle(token);
+        }
+
+        Token(const Token &) = delete;
+        Token &operator=(const Token &) = delete;
+
+        Token(Token &&other) noexcept
+        {
+            token = other.token;
+            other.token = INVALID_HANDLE_VALUE;
+        }
+
+        Token &operator=(Token &&other) noexcept
+        {
+            if (this != &other)
+            {
+                token = other.token;
+                other.token = INVALID_HANDLE_VALUE;
+            }
+            return *this;
+        }
+        operator HANDLE()
+        {
+            return token;
+        }
+
+
+      private:
+        HANDLE token = INVALID_HANDLE_VALUE;
     };
     static const int INVALID_VAL = -1;
     DWORD GetSessionId();
@@ -125,6 +166,7 @@ class Process
     bool BindProcess(HANDLE handle);
     bool BindProcess(DWORD processId, DWORD deriredAccess);
     bool IsAlive();
+    Token GetToken(DWORD desiredAccess = TOKEN_QUERY);
     std::tuple<int, ProcessType> GetProcessType();
     std::tuple<int, bool> IsServiceProcess();
     std::tuple<int, bool> IsAdminProcess();
@@ -207,6 +249,7 @@ struct MemoryInfo {
     uintptr_t address;     // 匹配的地址
     MEMORY_BASIC_INFORMATION memInfo; // 内存页面信息
 };
+
 class Memory
 {
   public:

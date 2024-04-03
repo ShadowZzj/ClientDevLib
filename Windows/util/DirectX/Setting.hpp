@@ -19,7 +19,9 @@ class Setting
     }
     virtual void Render(bool &open)
     {
-        ImGui::Begin("d3d9test", &open);
+        ImGui::Begin("Demo imgui", &open);
+        ImGui::Text("Hello, world!");
+        ImGui::Button("Demo");
         ImGui::End();
     }
     virtual DWORD GetToggleMenuKey()

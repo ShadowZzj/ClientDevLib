@@ -857,7 +857,13 @@ BOOL zzj::Process::RegularCreateProcess(std::string path, bool show, std::string
         return true;
     }
 }
-
+zzj::Process::Token zzj::Process::GetToken(DWORD desiredAccess)
+{
+    HANDLE hToken = INVALID_HANDLE_VALUE;
+    if (!OpenProcessToken(*process, desiredAccess, &hToken))
+        throw std::runtime_error("OpenProcessToken failed");
+    return Token(hToken);
+}
 BOOL zzj::Process::AdminCreateProcess(const char *pszFileName, bool show, const char *param, bool wait)
 {
     SHELLEXECUTEINFOA ShExecInfo = {0};
@@ -1009,7 +1015,7 @@ bool zzj::Memory::Read(uintptr_t address, void *buffer, size_t size)
     }
     else
     {
-        if (!VirtualProtectEx(process, (LPVOID)address, size, PAGE_READONLY, &oldProtect))
+        if (!VirtualProtectEx(process, (LPVOID)address, size, PAGE_EXECUTE_READWRITE, &oldProtect))
         {
             spdlog::error("VirtualProtectEx1 failed:{}", GetLastError());
             spdlog::error("Failed Address:{:#x}", address);
@@ -1120,67 +1126,80 @@ std::optional<MODULEENTRY32> zzj::Memory::GetModuleInfo(const std::string &modul
 }
 std::vector<MemoryInfo> zzj::Memory::PatternScan(uintptr_t startAddress, size_t searchSize, const std::string &pattern)
 {
+
+    spdlog::info("PatternScan startAddress:{:#x} searchSize:{:#x} pattern:{}", startAddress, searchSize, pattern);
     std::vector<MemoryInfo> matches;
     if (pattern.empty() || startAddress == 0 || searchSize == 0)
         return matches;
 
-    // 解析模式
-    std::istringstream iss(pattern);
-    std::string byteString;
-    std::vector<std::pair<uint8_t, bool>> bytePattern;
-    while (iss >> byteString)
-    {
-        if (byteString == "??")
+    try {
+        // 解析模式
+        std::istringstream iss(pattern);
+        std::string byteString;
+        std::vector<std::pair<uint8_t, bool>> bytePattern;
+        while (iss >> byteString)
         {
-            bytePattern.emplace_back(0, true); // Wildcard
-        }
-        else
-        {
-            bytePattern.emplace_back(static_cast<uint8_t>(std::stoul(byteString, nullptr, 16)), false); // Regular byte
-        }
-    }
-    size_t patternSize = bytePattern.size();
-
-    // 定义每次读取的块大小，例如 4096 字节
-    const size_t blockSize = 4096;
-    std::vector<uint8_t> buffer(blockSize + patternSize); // 额外读取 patternSize 以覆盖边界情况
-
-    size_t processedSize = 0;
-    while (processedSize < searchSize)
-    {
-        size_t currentBlockSize = blockSize < (searchSize - processedSize) ? blockSize : (searchSize - processedSize);
-        // 读取当前块
-        if (!Read(startAddress + processedSize, buffer.data(), currentBlockSize + patternSize))
-        {
-            break;
-        }
-
-        // 执行模式匹配
-        for (size_t i = 0; i < currentBlockSize; i++)
-        {
-            bool found = true;
-            for (size_t j = 0; j < patternSize; j++)
+            if (byteString == "??")
             {
-                if (!bytePattern[j].second && buffer[i + j] != bytePattern[j].first)
-                {
-                    found = false;
-                    break;
-                }
+                bytePattern.emplace_back(0, true); // Wildcard
             }
-            if (found)
+            else
             {
-                uintptr_t foundAddress = startAddress + processedSize + i;
-                MEMORY_BASIC_INFORMATION memInfo;
-                if (VirtualQueryEx(process.GetProcessHandle(), reinterpret_cast<LPCVOID>(foundAddress), &memInfo,
-                                   sizeof(memInfo)) != 0)
-                {
-                    matches.push_back({foundAddress, memInfo});
-                }
+                bytePattern.emplace_back(static_cast<uint8_t>(std::stoul(byteString, nullptr, 16)), false); // Regular byte
             }
         }
+        size_t patternSize = bytePattern.size();
 
-        processedSize += currentBlockSize;
+        // 定义每次读取的块大小，例如 4096 字节
+        const size_t blockSize = 4096;
+        std::vector<uint8_t> buffer(blockSize + patternSize); // 额外读取 patternSize 以覆盖边界情况
+
+        size_t processedSize = 0;
+        while (processedSize < searchSize)
+        {
+            size_t currentBlockSize = blockSize < (searchSize - processedSize) ? blockSize : (searchSize - processedSize);
+            // 读取当前块
+            if (!Read(startAddress + processedSize, buffer.data(), currentBlockSize + patternSize))
+            {
+                processedSize += currentBlockSize;
+                continue;
+            }
+
+            // 执行模式匹配
+            for (size_t i = 0; i < currentBlockSize; i++)
+            {
+                bool found = true;
+                for (size_t j = 0; j < patternSize; j++)
+                {
+                    if (!bytePattern[j].second && buffer[i + j] != bytePattern[j].first)
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found)
+                {
+                    uintptr_t foundAddress = startAddress + processedSize + i;
+                    MEMORY_BASIC_INFORMATION memInfo;
+                    if (VirtualQueryEx(process.GetProcessHandle(), reinterpret_cast<LPCVOID>(foundAddress), &memInfo,
+                        sizeof(memInfo)) != 0)
+                    {
+                        matches.push_back({ foundAddress, memInfo });
+                    }
+                }
+            }
+
+            processedSize += currentBlockSize;
+        }
     }
+    catch (const std::exception& e)
+    {
+		spdlog::error("PatternScan failed:{}", e.what());
+	}
+    catch (...)
+    {
+		spdlog::error("PatternScan failed");
+	}
 
     return matches;
 }
