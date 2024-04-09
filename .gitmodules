@@ -13,3 +13,6 @@
 [submodule "General/ThirdParty/Detours/src"]
 	path = General/ThirdParty/Detours/src
 	url = git@github.com:microsoft/Detours.git
+[submodule "General/ThirdParty/pybind11"]
+	path = General/ThirdParty/pybind11
+	url = https://github.com/pybind/pybind11.git

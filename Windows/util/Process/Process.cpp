@@ -300,7 +300,7 @@ namespace zzj
         return 0;
     }
 
-    std::vector<ProcessV2::Module::Section> ProcessV2::Module::GetSections(DWORD pid)
+    std::vector<ProcessV2::Module::Section> ProcessV2::Module::GetSections(uint32_t pid)
     {
         std::vector<Section> ret;
         auto handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);

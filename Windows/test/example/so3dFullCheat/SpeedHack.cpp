@@ -1,5 +1,5 @@
 #include "Speedhack.h"
-
+#include <Detours/build/include/detours.h>
 namespace Speedhack
 {
 	double speed = 1.0;

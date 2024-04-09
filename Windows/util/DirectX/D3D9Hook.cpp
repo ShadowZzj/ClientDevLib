@@ -126,7 +126,7 @@ void D3D9Hook::SetupMenu(LPDIRECT3DDEVICE9 device) noexcept
 
     originalWindowProcess = reinterpret_cast<WNDPROC>(SetWindowLongPtr(window, GWLP_WNDPROC, LONG_PTR(WindowProcess)));
     ImGui::CreateContext();
-    D3D9Hook::setting->InitImguiConfig();
+    D3D9Hook::setting->Init();
     ImGui_ImplWin32_Init(window);
     ImGui_ImplDX9_Init(device);
 

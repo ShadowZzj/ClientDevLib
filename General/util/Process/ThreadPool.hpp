@@ -17,7 +17,7 @@ template <typename T> class ThreadPoolTask
 {
   public:
     T id;
-    static std::mutex mutex;
+    inline static std::mutex mutex;
     std::function<void()> task;
     static T GetDefaultId();
 };

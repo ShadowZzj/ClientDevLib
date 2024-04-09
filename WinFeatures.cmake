@@ -97,12 +97,25 @@ function(GenerateWindowsUtil)
 		file(GLOB FEATURE_FILES 
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.h"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.cpp"
-		
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/DWMHook.h"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/DWMHook.cpp"
 		
 		)
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})
 	endif()
 
+	if (${FEATURE_PYBIND11})
+		message(STATUS "pybind11 FEATURE: ${FEATURE_PYBIND11}")
+		set (FEATURE_PYTHON ON)
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${PRO_SUP}/General/ThirdParty/pybind11/include)
+	endif()
+
+	if(${FEATURE_PYTHON})
+		message(STATUS "PYTHON FEATURE: ${FEATURE_PYTHON}")
+		list(APPEND WINDOWS_UTIL_LIB_FILES ${PythonLib})
+		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${PRO_SUP}/General/ThirdParty/python/python311/include)
+		list(APPEND WINDOWS_UTIL_DLL_FILES ${PythonDll} ${PythonAll})
+	endif()
 	if(${FEATURE_LIEF})
 		message(STATUS "LIEF feature: ${FEATURE_LIEF}")
 		list(APPEND WINDOWS_UTIL_INCLUDE_DIRS ${WINDOWS_FEATURES_CMAKE_DIR}/General/ThirdParty/LIEF/win/include)

@@ -72,7 +72,7 @@ __int64 __fastcall zzj::D3D::DWMHook::DetourFN(void *thisptr, IDXGISwapChain *a2
     return Original_Present(thisptr, a2, a3, a4, a5, a6, a7, a8);
 }
 
-ULONG64 zzj::D3D::DWMHook::GetPresentAddress()
+uintptr_t zzj::D3D::DWMHook::GetPresentAddress()
 {
     zzj::Process process;
     zzj::Memory memory(process);
