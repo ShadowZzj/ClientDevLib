@@ -96,6 +96,23 @@ function(GenerateGeneralUtil)
 		)
 		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
 	endif()
+
+	if (${FEATURE_PYBIND11})
+		message(STATUS "pybind11 FEATURE: ${FEATURE_PYBIND11}")
+		file(GLOB FEATURE_FILES
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/pybind11/include/pybind11/**.h"
+		)
+		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
+		
+		set (FEATURE_PYTHON ON)
+	endif()
+	if(${FEATURE_PYTHON})
+		message(STATUS "PYTHON FEATURE: ${FEATURE_PYTHON}")
+		file(GLOB_RECURSE FEATURE_FILES
+			"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/python/python311/include/**/*.h"
+		)
+		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
+	endif()
 	if(${FEATURE_DETOURS})
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/Detours/build/include/*.h"

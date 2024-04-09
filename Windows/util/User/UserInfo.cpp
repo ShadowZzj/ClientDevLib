@@ -6,10 +6,9 @@
 #include <Windows/util/Process/ThreadHelper.h>
 #include <Windows/util/Registry/WinReg.hpp>
 #include <Windows/util/System/Domain.h>
-#include <sddl.h>
 #include <spdlog/spdlog.h>
 #include <wtsapi32.h>
-
+#include <sddl.h>
 #define SECURITY_WIN32
 #include <Windows/util/System/SystemHelper.h>
 #include <lm.h>
@@ -50,7 +49,7 @@ std::optional<std::string> GetSidByName(const std::wstring &acctName)
         return {};
     }
     PSID pSid = reinterpret_cast<PSID>(buf.data());
-    if (!ConvertSidToStringSidW(pSid, &sidString))
+    if (!::ConvertSidToStringSidW(pSid, &sidString))
     {
         spdlog::error("ConvertSidToStringSidW failed, error code: {}", GetLastError());
         return {};

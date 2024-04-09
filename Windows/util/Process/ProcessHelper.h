@@ -101,8 +101,6 @@ class EnvHelper
   private:
     std::map<std::string, std::string> env;
 };
-#include <Aclapi.h>
-#include <Sddl.h>
 class Process
 {
     friend class Memory;
