@@ -97,7 +97,8 @@ function(GenerateWindowsUtil)
 		file(GLOB FEATURE_FILES 
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.h"
 		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/D3D9Hook.cpp"
-		
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/DWMHook.h"
+		"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/DirectX/DWMHook.cpp"
 		
 		)
 		list(REMOVE_ITEM WINDOWS_UTIL_FILES ${FEATURE_FILES})

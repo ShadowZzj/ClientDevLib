@@ -1,53 +1,48 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <Windows.h>
-#include <Windows/util/DirectX/DWMHook.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows/util/DirectX/D3D9Hook.h>
+#include <General/util/Process/Process.h>
 #include <Windows.h>
 #include <iostream>
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-DWORD WINAPI DoMagic(LPVOID lpParam)
+#include <string>
+#include "GameSetting.h"
+#include <spdlog/sinks/basic_file_sink.h>
+#include <General/util/File/File.h>
+#include <boost/filesystem.hpp>
+DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
-     
-    AllocConsole();
-    spdlog::flush_on(spdlog::level::level_enum::info);
-    spdlog::info("start1");
-    auto console = spdlog::stdout_color_mt("console2");
-    spdlog::set_level(spdlog::level::level_enum::info);
-    spdlog::set_default_logger(console);
-    spdlog::info("Start");
-    
-    std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<zzj::D3D::Setting>();
-    zzj::D3D::DWMHook::Setup(setting);
-    while (true)
+    std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<GameSetting>();
+    try
     {
-        if (GetAsyncKeyState(VK_END) & 1)
+        zzj::D3D::D3D9Hook::Setup(setting); 
+        while (true)
         {
-            break;
+            if (GetAsyncKeyState(VK_END) & 1)
+            {
+                break;
+            }
+            Sleep(100);
         }
-        Sleep(100);
+    }
+    catch (const std::exception &e)
+    {
+        MessageBeep(MB_ICONERROR);
+        MessageBoxA(NULL, e.what(), "hack Error", MB_OK | MB_ICONERROR);
     }
 
     setting->End();
-    zzj::D3D::DWMHook::Destroy();
-
-    
-    FreeConsole();
+    zzj::D3D::D3D9Hook::Destroy();
     setting.reset();
-    FreeLibraryAndExitThread((HMODULE)lpParam, 0);
-	return 0;
+    FreeLibraryAndExitThread((HMODULE)lpThreadParameter, 0);
+    return 0;
 }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-    HANDLE threadHandle;
-
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        // Create a thread and close the handle as we do not want to use it to wait for it
-        threadHandle = CreateThread(NULL, 0, DoMagic, hModule, 0, NULL);
-        CloseHandle(threadHandle);
-
+        CloseHandle(CreateThread(NULL, 0, HackThread, hModule, 0, NULL));
+        break;
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:

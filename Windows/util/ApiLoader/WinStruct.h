@@ -111,8 +111,8 @@ typedef struct _PS_ATTRIBUTE_LIST
 #define PS_ATTRIBUTE_ADDITIVE 0x00040000
 
 #define PsAttributeValue(Number, Thread, Input, Additive)                                                              \
-    (((Number)&PS_ATTRIBUTE_NUMBER_MASK) | ((Thread) ? PS_ATTRIBUTE_THREAD : 0) | ((Input) ? PS_ATTRIBUTE_INPUT : 0) | \
-     ((Additive) ? PS_ATTRIBUTE_ADDITIVE : 0))
+    (((Number) & PS_ATTRIBUTE_NUMBER_MASK) | ((Thread) ? PS_ATTRIBUTE_THREAD : 0) |                                    \
+     ((Input) ? PS_ATTRIBUTE_INPUT : 0) | ((Additive) ? PS_ATTRIBUTE_ADDITIVE : 0))
 
 typedef enum _PS_ATTRIBUTE_NUM
 {
@@ -138,3 +138,45 @@ typedef struct _OBJECT_DIRECTORY_INFORMATION
 typedef VOID(NTAPI LDR_ENUM_CALLBACK)(_In_ PLDR_DATA_TABLE_ENTRY ModuleInformation, _In_ PVOID Parameter,
                                       _Out_ BOOLEAN *Stop);
 typedef LDR_ENUM_CALLBACK *PLDR_ENUM_CALLBACK;
+
+typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO
+{
+    ULONG ProcessId;
+    BYTE ObjectTypeNumber;
+    BYTE Flags;
+    USHORT Handle;
+    PVOID Object;
+    ACCESS_MASK GrantedAccess;
+} SYSTEM_HANDLE_TABLE_ENTRY_INFO, *PSYSTEM_HANDLE_TABLE_ENTRY_INFO;
+
+typedef struct _SYSTEM_HANDLE_INFORMATION
+{
+    ULONG HandleCount;
+    SYSTEM_HANDLE_TABLE_ENTRY_INFO Handles[1];
+} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
+typedef struct _OBJECT_TYPE_INFORMATION
+{
+    UNICODE_STRING TypeName;
+    ULONG TotalNumberOfObjects;
+    ULONG TotalNumberOfHandles;
+    ULONG TotalPagedPoolUsage;
+    ULONG TotalNonPagedPoolUsage;
+    ULONG TotalNamePoolUsage;
+    ULONG TotalHandleTableUsage;
+    ULONG HighWaterNumberOfObjects;
+    ULONG HighWaterNumberOfHandles;
+    ULONG HighWaterPagedPoolUsage;
+    ULONG HighWaterNonPagedPoolUsage;
+    ULONG HighWaterNamePoolUsage;
+    ULONG HighWaterHandleTableUsage;
+    ULONG InvalidAttributes;
+    GENERIC_MAPPING GenericMapping;
+    ULONG ValidAccessMask;
+    BOOLEAN SecurityRequired;
+    BOOLEAN MaintainHandleCount;
+    USHORT MaintainTypeList;
+} OBJECT_TYPE_INFORMATION;
+
+#define SystemHandleInformation 16
+#define ProcessHandleType 0x7
+#define STATUS_INFO_LENGTH_MISMATCH 0xC0000004

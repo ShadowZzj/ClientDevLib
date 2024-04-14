@@ -1,42 +1,108 @@
+
+#include <Windows.h>
 #include <General/util/StrUtil.h>
-#include "util/App.h"
 #include <json.hpp>
 #include <spdlog/fmt/fmt.h>
-
-
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
+#include <thread>
+HANDLE hMutex;
+//WindowProc
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    try
+    switch (uMsg)
     {
-        return zzj::App(1280, 720, "hello").Go();
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hwnd, &ps);
+
+        FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+
+        EndPaint(hwnd, &ps);
     }
-    catch (const zzj::Exception &e)
+    return 0;
+
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+void ThreadFunc1()
+{
+    while (true)
     {
-        nlohmann::json j = nlohmann::json::parse(e.what());
-        std::string exceptionString;
-        for (auto &i : j.items())
+        if (WaitForSingleObjectEx(hMutex, INFINITE,TRUE) == WAIT_OBJECT_0)
         {
-            std::string valueStr;
-            if (i.value().is_string())
-            {
-                valueStr = i.value().get<std::string>(); // get the string directly
-            }
-            else
-            {
-                valueStr = i.value().dump(); // for non-string types, dump as before
-            }
-            exceptionString += fmt::format("[{}]: {}\n", i.key(), valueStr);
+            Sleep(5000);
+			ReleaseMutex(hMutex);
+		}
+    }
+}
+void ThreadFunc2()
+{
+    while (true)
+    {
+        if (WaitForSingleObjectEx(hMutex, INFINITE, TRUE) == WAIT_OBJECT_0)
+        {
+            Sleep(5000);
+            ReleaseMutex(hMutex);
         }
-        auto wstr = zzj::str::utf82w(exceptionString);
-        MessageBoxW(nullptr, wstr.c_str(), NULL, MB_OK | MB_ICONEXCLAMATION);
     }
-    catch (const std::exception &e)
+}
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine,
+                       _In_ int nShowCmd)
     {
-        MessageBoxA(nullptr, e.what(), "Standard Exception", MB_OK | MB_ICONEXCLAMATION);
-    }
-    catch (...)
+    //Create a mutex
+    
+    hMutex = CreateMutex(NULL, FALSE, L"test");
+    std::thread t1(ThreadFunc1);
+    std::thread t2(ThreadFunc2);
+    //Register the window class
+    const wchar_t CLASS_NAME[] = L"test";
+
+    WNDCLASS wc = { };
+
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+
+    RegisterClass(&wc);
+
+    //Create the window
+
+    HWND hwnd = CreateWindowEx(
+        0,                              // Optional window styles.
+        CLASS_NAME,                     // Window class
+        L"Learn to Program Windows",    // Window text
+        WS_OVERLAPPEDWINDOW,            // Window style
+
+        // Size and position
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+
+        NULL,       // Parent window    
+        NULL,       // Menu
+        hInstance,  // Instance handle
+        NULL        // Additional application data
+    );
+
+    if (hwnd == NULL)
     {
-        MessageBoxA(nullptr, "No details available", "Unknown Exception", MB_OK | MB_ICONEXCLAMATION);
+        return 0;
     }
-    return -1;
+
+    ShowWindow(hwnd, nShowCmd);
+
+    // Run the message loop.
+
+    MSG msg = { };
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+
+    return 0;
 }

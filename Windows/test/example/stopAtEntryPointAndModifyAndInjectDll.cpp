@@ -142,7 +142,7 @@ int main()
     ZeroMemory(&pi, sizeof(pi));
 
     boost::filesystem::path executablePath = zzj::GetExecutablePath();
-    executablePath = "D:\\777seal\\SO3DPlus1.exe";
+    executablePath = "D:\\777\\SO3DPlus.exe";
     std::wstring cmdLine = zzj::str::ansi2w(executablePath.string()) + L" \"^xhlrmxgkrhtlvdjdyTTdirmsgkrltlfjdy^\"";
 
     // std::wstring cmdLine =L"notepad.exe";
@@ -201,10 +201,10 @@ int main()
                         entryPointReached = true;
                         WriteProcessMemory(pi.hProcess, entryPoint, &originalByte, 1, NULL);
 
-                        ReadProcessMemory(hProcess, (LPVOID)0x10025CD0, buffer, 0x1, NULL);
+                        ReadProcessMemory(hProcess, (LPVOID)0x10026b20, buffer, 0x1, NULL);
                         BYTE writeContent = 0xC3;
                         if (buffer[0] == 0x55)
-                            WriteProcessMemory(hProcess, (LPVOID)0x10025CD0, &writeContent, 1, &retSize);
+                            WriteProcessMemory(hProcess, (LPVOID)0x10026b20, &writeContent, 1, &retSize);
 
                         writeContent = 0x11;
                         WriteProcessMemory(hProcess, (LPVOID)0x10060ed5, &writeContent, 1, &retSize);

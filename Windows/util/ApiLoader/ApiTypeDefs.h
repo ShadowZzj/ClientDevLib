@@ -80,13 +80,17 @@ typedef NTSTATUS(WINAPI *pNtQueryDirectoryObject)(_In_ HANDLE, _Out_opt_ PVOID, 
                                                   _Inout_ PULONG, _Out_opt_ PULONG);
 typedef NTSTATUS(WINAPI *pNtOpenDirectoryObject)(OUT PHANDLE, IN ACCESS_MASK, IN POBJECT_ATTRIBUTES);
 
-typedef NTSTATUS(WINAPI *pNtQueryObject)(IN HANDLE, IN UINT, OUT PVOID, IN ULONG, OUT PULONG);
+typedef NTSTATUS(WINAPI *pNtQueryObject)(HANDLE Handle, OBJECT_INFORMATION_CLASS ObjectInformationClass, PVOID ObjectInformation, ULONG ObjectInformationLength,
+ PULONG ReturnLength);
 typedef NTSTATUS(WINAPI *pNtQuerySystemInformation)(IN UINT, OUT PVOID, IN ULONG, OUT PULONG);
 typedef NTSTATUS(WINAPI *pNtSetInformationThread)(HANDLE, UINT, PVOID, ULONG);
 typedef NTSTATUS(WINAPI *pNtUnmapViewOfSection)(HANDLE ProcessHandle, PVOID BaseAddress);
 typedef NTSTATUS(WINAPI *pNtYieldExecution)();
 typedef NTSTATUS(WINAPI *pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 typedef ULONG(NTAPI *pRtlNtStatusToDosError)(IN NTSTATUS Status);
+typedef NTSTATUS(NTAPI *pNtDuplicateObject)(HANDLE SourceProcessHandle, HANDLE SourceHandle, HANDLE TargetProcessHandle,
+                                            PHANDLE TargetHandle, ACCESS_MASK DesiredAccess, ULONG Attributes,
+                                            ULONG Options);
 typedef NTSTATUS(NTAPI *pNtWow64QueryInformationProcess64)(IN HANDLE ProcessHandle, ULONG ProcessInformationClass,
                                                            OUT PVOID ProcessInformation,
                                                            IN ULONG ProcessInformationLength,
@@ -102,5 +106,13 @@ typedef NTSTATUS(NTAPI *pLdrEnumerateLoadedModules)(IN BOOLEAN ReservedFlag, IN 
 typedef INT(NTAPI *pWudfIsAnyDebuggerPresent)();
 typedef INT(NTAPI *pWudfIsKernelDebuggerPresent)();
 typedef INT(NTAPI *pWudfIsUserDebuggerPresent)();
+typedef NTSTATUS(NTAPI *pRtlAdjustPrivilege)(ULONG Privilege, BOOLEAN Enable, BOOLEAN CurrentThread, PBOOLEAN Enabled);
+
+typedef NTSYSAPI NTSTATUS(NTAPI *pNtOpenProcess)(PHANDLE ProcessHandle, ACCESS_MASK DesiredAccess,
+                                                 POBJECT_ATTRIBUTES ObjectAttributes, CLIENT_ID* ClientId);
+typedef NTSYSAPI NTSTATUS(NTAPI *pNtOpenProcess)(PHANDLE ProcessHandle, ACCESS_MASK DesiredAccess,
+                                                 POBJECT_ATTRIBUTES ObjectAttributes, CLIENT_ID* ClientId);
+typedef NTSTATUS(NTAPI *pRtlAdjustPrivilege)(ULONG Privilege, BOOLEAN Enable, BOOLEAN CurrentThread, PBOOLEAN Enabled);
+
 
 } // namespace zzj::ApiLoader

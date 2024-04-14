@@ -9,7 +9,7 @@ namespace D3D
 class Setting
 {
   public:
-    virtual void InitImguiConfig()
+    virtual void Init()
     {
         ImGui::StyleColorsDark();
     }

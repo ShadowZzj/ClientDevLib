@@ -1,35 +1,47 @@
 #include "GameManager.h"
+#include "SpeedHack.h"
 #include <Detours/build/include/detours.h>
 #include <Windows/util/Process/ProcessHelper.h>
+#include <boost/locale.hpp>
 #include <spdlog/spdlog.h>
 #include <vector>
-#include <boost/locale.hpp>
-#include "SpeedHack.h"
-static const uintptr_t localPlayerOffset               = 0x65997c;
-static const uintptr_t aroundPlayerOffset = 0x659978;
-static const std::vector<unsigned int> aroundPlayerMultiLevelOffset = {0xc};
-static const uintptr_t aroundPlayerNameOffset = 0x1410;
-static const uintptr_t attackRangeOffset               = 0x28d4;
-static const uintptr_t attackSpeedOffset               = 0x21c4;
-static const uintptr_t skillRangeOffset                = 0x14c;
-static const uintptr_t attackOffset                    = 0x27c8;
-static const uintptr_t monsterIdOffset                 = 0x2628;
-static const uintptr_t professionOffset                = 0x1448;
-static const uintptr_t moneyOffset                     = 0x27c0;
-static const uintptr_t positionXOffset                 = 0x3c;
-static const uintptr_t positionYOffset                 = 0x40;
-static const uintptr_t positionZOffset                 = 0x44;
-static const uintptr_t nameOffset                      = 0x1410;
-static const uintptr_t skillSpeedOffset                = 0x21c8;
 
-static const std::string attackRangePattern      = "C7 83 D4 28 00 00 01 00 00 00";
-static const std::string attackSpeedPattern      = "F3 0F 11 83 C4 21 00 00 3D";
-static const std::string skillRangePattern       = "8B 80 4C 01 00 00 C3";
-static const std::string itemNoCoolDownPattern   = "66 0F 6E 80 F8 02 00 00";
-static const std::string skillNoPretimePattern   = "F3 0F 10 88 50 01 00 00";
-static const std::string skillSpeedPattern       = "F3 0F 11 83 C8 21 00 00 83";
-static const std::string moveSpeedPattern        = "F3 0F 11 83 A4 01 00 00 76 0A";
-static const std::string moveSpeedUnlimitPattern = "C7 86 A4 01 00 00 00 00 E0 40";
+// 搜索攻击力变换，然后找[???+0xoffset]，然后ce搜???，一级指针就是
+static const uintptr_t localPlayerOffset = 0x95a784;
+//// localPlayer offset
+static const uintptr_t positionXOffset   = 0x3c;
+static const uintptr_t positionYOffset   = 0x40;
+static const uintptr_t positionZOffset   = 0x44;
+static const uintptr_t moneyOffset       = 0x29b8;
+static const uintptr_t attackOffset      = 0x29c0;
+static const uintptr_t attackRangeOffset = 0x2acc;
+static const uintptr_t attackSpeedOffset = 0x235c;
+static const uintptr_t skillSpeedOffset  = 0x2360;
+static const uintptr_t moveSpeedOffset   = 0x1a4;
+//// end
+// player是一个链表，每次看见新玩家，链表头都会变成新玩家，所以用另一个号，来回卡视野，搜索变动和不变，找到链表头，然后查看谁访问了这个地址，找到基地址
+static const uintptr_t aroundPlayerOffset                           = 0x95a780;
+static const uintptr_t aroundPlayerNameOffset                       = 0x1410;
+static const std::vector<unsigned int> aroundPlayerMultiLevelOffset = {0x10};
+static const uintptr_t nextPlayerPointerOffset                      = 0x236c;
+
+// ItemTable offset
+static const uintptr_t itemCoolDownOffset = 0x2f8;
+// end
+// SkillTable offset
+static const uintptr_t skillRangeOffset   = 0x14c;
+static const uintptr_t skillPretimeOffset = 0x150;
+// end
+static const std::string attackRangePattern = "89 81 cc 2a 00 00";
+static const std::string attackSpeedPattern = "F3 0F 11 88 5c 23 00 00";
+static const std::string moveSpeedPattern = "F3 0F 11 81 A4 01 00 00 8B 95 68 FB FF FF F3 0F 10 82 A4 01 00 00 0F 2F 05 60";
+static const std::string moveSpeedUnlimitPattern = "F3 0F 11 80 A4 01 00 00";
+static const std::string itemNoCoolDownPattern   = "F3 0F 2A 81 F8 02 00 00";
+static const std::string skillRangePattern       = "8B 81 4C 01 00 00";
+static const std::string skillNoPretimePattern = "F3 0F 10 81 50 01 00 00";
+static const std::string skillSpeedPattern     = "F3 0F 11 88 60 23 00 00 F3 0F 2A 85 EC";
+
+
 GameManager::GameManager()
 {
 }
@@ -49,13 +61,13 @@ std::vector<std::string> GameManager::GetAroundPlayersName()
         return {};
     }
 
-    auto aroundPlayerListBeginAddress =
-        memory.FindMultiPleLevelAddress((uintptr_t)moduleInfo.value().modBaseAddr + aroundPlayerOffset, aroundPlayerMultiLevelOffset);
-    
+    auto aroundPlayerListBeginAddress = memory.FindMultiPleLevelAddress(
+        (uintptr_t)moduleInfo.value().modBaseAddr + aroundPlayerOffset, aroundPlayerMultiLevelOffset);
+
     if (aroundPlayerListBeginAddress == NULL)
     {
-		return {};
-	}
+        return {};
+    }
 
     auto nextPlayerAddress = aroundPlayerListBeginAddress;
     while (true)
@@ -65,13 +77,11 @@ std::vector<std::string> GameManager::GetAroundPlayersName()
         nameString = boost::locale::conv::to_utf<char>(nameString, "Big5");
         aroundPlayersName.push_back(nameString);
 
-        if (!memory.Read(nextPlayerAddress + 0x21d8,&nextPlayerAddress,sizeof(nextPlayerAddress)))
+        if (!memory.Read(nextPlayerAddress + nextPlayerPointerOffset, &nextPlayerAddress, sizeof(nextPlayerAddress)))
             break;
 
         if (nextPlayerAddress == NULL)
             break;
-
-
     }
     return aroundPlayersName;
 }
@@ -119,9 +129,7 @@ int __declspec(naked) AttackRangeHooked()
 
     __asm
     {
-        mov eax, GameManager::attackRange 
-        mov ecx, attackRangeOffset 
-        mov[ebx + ecx], eax
+        mov eax, GameManager::attackRange mov ebx, attackRangeOffset mov[ecx + ebx], eax
     }
 
     __asm
@@ -165,9 +173,7 @@ int __declspec(naked) AttackSpeedHooked()
     __asm
     {
 
-        movss xmm0, GameManager::attackSpeed
-        mov ecx, attackSpeedOffset 
-        movss[ebx + ecx], xmm0
+        movss xmm0, GameManager::attackSpeed mov ecx, attackSpeedOffset movss[ebx + ecx], xmm0
     }
 
     __asm
@@ -205,25 +211,19 @@ int __declspec(naked) SkillRangeHooked()
 {
     __asm
     {
-        push ecx
+        push ebx
     }
 
     __asm
     {
-        mov ecx, skillRangeOffset
-        mov eax, [eax + ecx]
-        cmp eax, 4 
-        jl set_eax_to_4 
-        mov eax,11 
-        jmp ret1 
-    set_eax_to_4 : 
-        mov eax, 4
+        mov ebx, skillRangeOffset mov eax, [ecx + ebx] cmp eax, 4 jl set_eax_to_4 mov eax,
+            11 jmp ret1 set_eax_to_4 : mov eax, 4
     }
 
     __asm
     {
     ret1:
-        pop ecx
+        pop ebx
         jmp skillRangeRetAddress
     }
 }
@@ -256,7 +256,8 @@ int __declspec(naked) ItemNoCoolDownHooked()
 {
     __asm
     {
-        movd xmm0,GameManager::itemCoolDown
+        mov [ecx+itemCoolDownOffset],GameManager::itemCoolDown
+        cvtsi2ss xmm0,[ecx+itemCoolDownOffset]
         jmp itemNoCoolDownRetAddress
     }
 }
@@ -291,9 +292,11 @@ static void *skillSpeedRetAddress2;
 
 int __declspec(naked) SkillSpeedHooked1()
 {
+    static float pretime = 0.0001f;
     __asm
     {
-        xorps xmm1,xmm1
+        movss xmm0, pretime
+        movss [edx + skillPretimeOffset],xmm0
         jmp skillSpeedRetAddress1
     }
 }
@@ -303,11 +306,8 @@ int __declspec(naked) SkillSpeedHooked2()
     static float skillSpeed = 0.001f;
     __asm
     {
-        push ecx
-        movss xmm0, skillSpeed
-        mov ecx,skillSpeedOffset
-        movss [ebx + ecx],xmm0
-        pop ecx
+        movss xmm1, skillSpeed
+        movss [eax + skillSpeedOffset],xmm1
         jmp skillSpeedRetAddress2
     }
 }
@@ -355,7 +355,7 @@ int __declspec(naked) MoveSpeedHooked()
     __asm
     {
         movss xmm0,GameManager::moveSpeed
-        movss [ebx + 0x1a4],xmm0
+        movss [ecx + moveSpeedOffset],xmm0
         jmp moveSpeedRetAddress
     }
 }
@@ -407,16 +407,16 @@ bool GameManager::EnableSpeedHack()
     static bool isEnabled = false;
     if (!isEnabled)
     {
-		Speedhack::Setup();
-		isEnabled = true;
-	}
+        Speedhack::Setup();
+        isEnabled = true;
+    }
     Speedhack::SetSpeed(GameManager::speedHack);
     return TRUE;
 }
 bool GameManager::DisableSpeedHack()
 {
     Speedhack::SetSpeed(1.0f);
-    //Speedhack::Detach();
+    // Speedhack::Detach();
     return FALSE;
 }
 
