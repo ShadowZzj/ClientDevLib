@@ -481,7 +481,8 @@ class GameManager
     inline static bool skillAutoCastEnable = false;
     inline static bool autoPickItemEnable  = false;
     inline static bool fireFullPowerEnabled       = false;
-
+    inline static int fireFullPowerIntervalValue = 300;
+    inline static bool hookSendEnable             = false;
     nlohmann::json config;
 
   private:

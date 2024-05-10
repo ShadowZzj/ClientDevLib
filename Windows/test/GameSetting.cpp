@@ -213,17 +213,16 @@ void SpeedHack()
 }
 void FullFirePower()
 {
-    static int interVal       = 300;
     bool isXPressed = GetAsyncKeyState('X');
     ImGui::Checkbox("FireFullPower", &GameManager::fireFullPowerEnabled);
-    ImGui::InputInt("Interval", &interVal);
+    ImGui::InputInt("Interval", &GameManager::fireFullPowerIntervalValue);
     if (!isTempPause && ((IsCurrentGameWindowHasFocus() && isXPressed) || GameManager::fireFullPowerEnabled))
     {
         // the focus window must be the game window
         static auto lastTime = std::chrono::system_clock::now();
         auto currentTime     = std::chrono::system_clock::now();
         auto duration        = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime);
-        if (duration.count() < interVal)
+        if (duration.count() < GameManager::fireFullPowerIntervalValue)
             return;
         lastTime                           = currentTime;
         GameManager::CLocalUser *localUser = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
@@ -694,7 +693,7 @@ void DeliverLetter()
         GameManager::NPCManager::DeliverLetter(packet);
     }
 }
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 void InitLog(const std::string& name)
 {
     if(name.empty())
@@ -705,7 +704,7 @@ void InitLog(const std::string& name)
     logPath /= name + ".log";
     std::string logPathStr = logPath.string();
     logPathStr = zzj::str::w2ansi(zzj::str::utf82w(logPathStr));
-    auto file_logger = spdlog::basic_logger_mt(name, logPathStr);
+    auto file_logger       = spdlog::rotating_logger_mt(name, logPathStr, 10 * 1024 * 1024, 3);
     spdlog::set_default_logger(file_logger);
     spdlog::set_level(spdlog::level::info);
     spdlog::flush_on(spdlog::level::info);
@@ -719,6 +718,7 @@ void GameSetting::Render(bool &open)
     if (!isInit)
     {
         isInit = true;
+        InitLog("default");
         gameManager.EnablePopupWindowHook();
 		gameManager.HookSendAndRecv();
     }
@@ -738,7 +738,10 @@ void GameSetting::Render(bool &open)
         InitLog(playerName);
         LoadRoleConfig(playerName);
     }
-
+    if (ImGui::Button("SaveConfig"))
+    {
+		SaveRoleConfig(playerName);
+	}
     try
     {
         //reload config every 10 seconds
@@ -749,7 +752,6 @@ void GameSetting::Render(bool &open)
         {
             lastTime = currentTime;
             gameManager.RefreshConfig();
-            LoadRoleConfig(playerName);
         }
     }
     catch (const std::exception &ex)
@@ -818,7 +820,6 @@ void GameSetting::Render(bool &open)
             GameManager::attackRangeEnable    = true;
             GameManager::attackSpeedEnable    = true;
             GameManager::skillRangeEnable     = true;
-            GameManager::itemNoCoolDownEnable = true;
             GameManager::skillSpeedEnable     = true;
             GameManager::moveSpeedEnable      = true;
             GameManager::speedHackEnable      = true;
@@ -829,7 +830,6 @@ void GameSetting::Render(bool &open)
             gameManager.EnableAttackSpeed();
             gameManager.EnableAttackRange();
             gameManager.EnableSkillRange();
-            gameManager.EnableItemNoCoolDown();
             gameManager.EnableSkillSpeed();
             gameManager.EnableSpeedHack();
         }
@@ -874,6 +874,24 @@ void GameSetting::LoadRoleConfig(const std::string &name)
         {
             GameManager::fireFullPowerEnabled = roleConfig["FullFirePower"];
         }
+        if (roleConfig.find("FullFirePowerVal") != roleConfig.end())
+        {
+            GameManager::fireFullPowerIntervalValue = roleConfig["FullFirePowerVal"];
+        }
+        if (roleConfig.find("ItemNoCoolDown") != roleConfig.end())
+        {
+			GameManager::itemNoCoolDownEnable = roleConfig["ItemNoCoolDown"];
+            if (GameManager::itemNoCoolDownEnable)
+                gameManager.EnableItemNoCoolDown();
+		}
+        if (roleConfig.find("CoolDownValue") != roleConfig.end())
+        {
+			GameManager::itemCoolDown = roleConfig["CoolDownValue"];
+		}
+        if (roleConfig.find("SpeedHackValue") != roleConfig.end())
+        {
+			GameManager::speedHack = roleConfig["SpeedHackValue"];
+		}
     }
     catch (const std::exception &ex)
     {
@@ -890,6 +908,12 @@ void GameSetting::SaveRoleConfig(const std::string &name)
 {
     boost::filesystem::path currentPath = zzj::GetDynamicLibPath(InitLog);
     currentPath /= name + ".json";
+    roleConfig["FullFirePower"] = GameManager::fireFullPowerEnabled;
+    roleConfig["FullFirePowerVal"] = GameManager::fireFullPowerIntervalValue;
+    roleConfig["ItemNoCoolDown"] = GameManager::itemNoCoolDownEnable;
+    roleConfig["CoolDownValue"] = GameManager::itemCoolDown;
+    roleConfig["SpeedHackValue"] = GameManager::speedHack;
+
     std::ofstream o(currentPath.string());
     o << std::setw(4) << roleConfig << std::endl;
 }
@@ -916,12 +940,6 @@ void GameSetting::End()
         gameManager.DisableSkillRange();
     }
 
-    if (GameManager::itemNoCoolDownEnable)
-    {
-        GameManager::itemNoCoolDownEnable = false;
-        GameManager gameManager;
-        gameManager.DisableItemNoCoolDown();
-    }
 
     if (GameManager::skillSpeedEnable)
     {

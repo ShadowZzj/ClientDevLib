@@ -1658,6 +1658,7 @@ int __stdcall RecvHooked(
  int    flags
 )
 {
+    spdlog::info ("recv called");
     auto currentTime = std::chrono::system_clock::now();
     {
         std::lock_guard<std::mutex> lock(mtx);
@@ -1665,6 +1666,50 @@ int __stdcall RecvHooked(
     }
     return recvOriginAddress(s, buf, len, flags);
 }
+
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
+#include <pybind11/stl.h> 
+namespace py = pybind11;
+//
+void CallPackageFilter(void* buffer, size_t len)
+{
+    py::scoped_interpreter guard{};
+    try
+    {
+        std::string module_name = "PacketFilter";
+        std::string module_path = zzj::GetDynamicLibPath((void*)CallPackageFilter) + "\\packetfilter.py";
+
+        py::module_ importlib = py::module_::import("importlib.util");
+        py::object spec       = importlib.attr("spec_from_file_location")(module_name, module_path);
+        py::object module     = importlib.attr("module_from_spec")(spec);
+        spec.attr("loader").attr("exec_module")(module);
+        std::vector<BYTE> packet((char*)buffer, (char*)buffer + len);
+        module.attr("PacketSniffer")(packet).cast<int>();
+        
+    }
+    catch (py::error_already_set &e)
+    {
+        spdlog::error("Python error0: {0}", e.what());
+    }
+    catch (const std::exception& e)
+    {
+		spdlog::error("Python error1: {0}", e.what());
+	}
+    catch (...)
+    {
+		spdlog::error("Python error");
+	}
+}
+
+int(__fastcall *plainSendPackage)(void *pGameClient, void *edx, void *buffer, size_t len) = nullptr;
+int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_t len)
+{
+    if (GameManager::hookSendEnable)
+        CallPackageFilter(buffer, len);
+	return plainSendPackage(pGameClient, edx, buffer, len);
+}
+
 void GameManager::HookSendAndRecv()
 {
     auto ws2_32 = LoadLibrary(L"ws2_32.dll");
@@ -1689,12 +1734,21 @@ void GameManager::HookSendAndRecv()
     }
     spdlog::info("recvOriginAddress: {0:x}", (uintptr_t)recvOriginAddress);
 
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+
+    plainSendPackage = decltype(plainSendPackage)(baseAddr + rawSendPackageOffset);
+    spdlog::info("plainSendPackage: {0:x}", (uintptr_t)plainSendPackage);
    // auto mswsock = LoadLibrary(L"mswsock.dll");
     //wspSendOriginAddress = decltype(wspSendOriginAddress)(GetProcAddress(mswsock, "_WSPSend@36"));
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     DetourAttach(&(PVOID &)sendOriginAddress, SendHooked);
     DetourAttach(&(PVOID &)recvOriginAddress, RecvHooked);
+    DetourAttach(&(PVOID &)plainSendPackage, PlainSendHooked);
     //DetourAttach(&(PVOID &)wspSendOriginAddress, WSPSendHooked);
     DetourTransactionCommit();
 
