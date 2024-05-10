@@ -1,4 +1,5 @@
-﻿#include "GameManager.h"
+﻿#include <Ws2spi.h>
+#include "GameManager.h"
 #include "SpeedHack.h"
 #include <Detours/build/include/detours.h>
 #include <General/util/StrUtil.h>
@@ -11,6 +12,7 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <General/util/File/File.h>
+#pragma comment(lib, "Ws2_32.lib")
 GameManager gameManager;
 static void PlaceHolder()
 {
@@ -1600,6 +1602,27 @@ int (__stdcall *recvOriginAddress)(
  int    flags
 ) = nullptr;
 
+int (__stdcall *wspSendOriginAddress)(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDWORD lpNumberOfBytesSent,
+                                     DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
+                                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine, LPWSATHREADID lpThreadId,
+                                     LPINT lpErrno) = nullptr;
+int __stdcall WSPSendHooked(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDWORD lpNumberOfBytesSent,
+                                     DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
+                                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine, LPWSATHREADID lpThreadId,
+                                     LPINT lpErrno)
+{
+    //get remote ip and port from socket
+    sockaddr_in addr;
+    int len = sizeof(addr);
+    if (getpeername(s, (sockaddr *)&addr, &len) == 0)
+    {
+        spdlog::info("please holder");
+        spdlog::info("send to {0}:{1}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    }
+    else
+        spdlog::error("Get peer name failed: {0}", WSAGetLastError());
+    return wspSendOriginAddress(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
+}
 int __stdcall SendHooked(
  SOCKET     s,
  const char *buf,
@@ -1657,18 +1680,22 @@ void GameManager::HookSendAndRecv()
         spdlog::error("GetProcAddress failed: {0}", GetLastError());
         return;
     }
-
+    spdlog::info("sendOriginAddress: {0:x}", (uintptr_t)sendOriginAddress);
     recvOriginAddress = decltype(recvOriginAddress)(GetProcAddress(ws2_32, "recv"));
     if (recvOriginAddress == NULL)
     {
         spdlog::error("GetProcAddress failed: {0}", GetLastError());
         return;
     }
+    spdlog::info("recvOriginAddress: {0:x}", (uintptr_t)recvOriginAddress);
 
+   // auto mswsock = LoadLibrary(L"mswsock.dll");
+    //wspSendOriginAddress = decltype(wspSendOriginAddress)(GetProcAddress(mswsock, "_WSPSend@36"));
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     DetourAttach(&(PVOID &)sendOriginAddress, SendHooked);
     DetourAttach(&(PVOID &)recvOriginAddress, RecvHooked);
+    //DetourAttach(&(PVOID &)wspSendOriginAddress, WSPSendHooked);
     DetourTransactionCommit();
 
     std::thread t1(RecvListerner);

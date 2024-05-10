@@ -5,7 +5,7 @@
 #include <boost/filesystem.hpp>
 #include <sstream>
 #include <future>
-
+#include <General/util/StrUtil.h>
 static void PlaceHolder()
 {
 }
@@ -697,23 +697,18 @@ void DeliverLetter()
 #include <spdlog/sinks/basic_file_sink.h>
 void InitLog(const std::string& name)
 {
-    static bool isInit = false;
-    if(isInit)
-        return;
     if(name.empty())
     {
         return;
     }
     boost::filesystem::path logPath = zzj::GetDynamicLibPath(InitLog);
     logPath /= name + ".log";
-    auto file_logger = spdlog::basic_logger_mt("file_logger", logPath.string());
+    std::string logPathStr = logPath.string();
+    logPathStr = zzj::str::w2ansi(zzj::str::utf82w(logPathStr));
+    auto file_logger = spdlog::basic_logger_mt(name, logPathStr);
     spdlog::set_default_logger(file_logger);
     spdlog::set_level(spdlog::level::info);
     spdlog::flush_on(spdlog::level::info);
-    spdlog::info("InitLog: {}", logPath.string());
-    isInit = true;
-
-
 }
 void GameSetting::Render(bool &open)
 {
@@ -723,18 +718,11 @@ void GameSetting::Render(bool &open)
     static bool isInit = false;
     if (!isInit)
     {
-        InitLog("default.log");
         isInit = true;
         gameManager.EnablePopupWindowHook();
-        boost::filesystem::path dllName = zzj::GetExecutablePath();
-        dllName /= "123.dll";
-        std::thread loadTheDll([dllName]() { 
-            spdlog::info("Load library {}", dllName.string());
-            LoadLibraryA(dllName.string().c_str()); });
-        loadTheDll.detach();
-
-        gameManager.HookSendAndRecv();
+		gameManager.HookSendAndRecv();
     }
+
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
     if (localPlayer == nullptr || localPlayer->GetName() == "")
     {
@@ -742,7 +730,14 @@ void GameSetting::Render(bool &open)
         ImGui::End();
         return;
     }
-    InitLog(localPlayer->GetName());
+    std::string playerName = localPlayer->GetName();
+    static bool roleLogInit = false;
+    if (!roleLogInit)
+    {
+        roleLogInit = true;
+        InitLog(playerName);
+        LoadRoleConfig(playerName);
+    }
 
     try
     {
@@ -754,6 +749,7 @@ void GameSetting::Render(bool &open)
         {
             lastTime = currentTime;
             gameManager.RefreshConfig();
+            LoadRoleConfig(playerName);
         }
     }
     catch (const std::exception &ex)
@@ -860,6 +856,42 @@ void GameSetting::Render(bool &open)
     DeliverLetter();
     MakeBomb();
     ImGui::End();
+}
+
+void GameSetting::LoadRoleConfig(const std::string &name)
+{
+    try
+    {
+        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(InitLog);
+        currentPath /= name + ".json";
+
+        std::string fileName = currentPath.string();
+        fileName             = zzj::str::w2ansi(zzj::str::utf82w(fileName));
+        std::ifstream i(fileName);
+        i >> roleConfig;
+
+        if (roleConfig.find("FullFirePower") != roleConfig.end())
+        {
+            GameManager::fireFullPowerEnabled = roleConfig["FullFirePower"];
+        }
+    }
+    catch (const std::exception &ex)
+    {
+        spdlog::error("LoadRoleConfig error {}",ex.what());
+    }
+    catch (...)
+    {
+        spdlog::error("LoadRoleConfig error");
+    }
+
+}
+
+void GameSetting::SaveRoleConfig(const std::string &name)
+{
+    boost::filesystem::path currentPath = zzj::GetDynamicLibPath(InitLog);
+    currentPath /= name + ".json";
+    std::ofstream o(currentPath.string());
+    o << std::setw(4) << roleConfig << std::endl;
 }
 
 void GameSetting::End()
