@@ -102,6 +102,5 @@ TARGET ${PROJECT_NAME}_testWindow ${PROJECT_NAME}
 PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 #iterate the file in ${WINDOWS_UTIL_DLL_FILES} glob, and copy them to the CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO
-foreach(dll ${WINDOWS_UTIL_DLL_FILES})
-  file(COPY ${dll} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
-endforeach()
+
+ClientDevLibFinalize()

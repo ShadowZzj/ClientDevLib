@@ -1670,41 +1670,49 @@ int __stdcall RecvHooked(
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 #include <pybind11/stl.h> 
+#include <regex>
 namespace py = pybind11;
 //
 void CallPackageFilter(void* buffer, size_t len)
 {
-    py::scoped_interpreter guard{};
+    static py::scoped_interpreter guard{};
     try
     {
-        std::string module_name = "PacketFilter";
-        std::string module_path = zzj::GetDynamicLibPath((void*)CallPackageFilter) + "\\packetfilter.py";
-
-        py::module_ importlib = py::module_::import("importlib.util");
-        py::object spec       = importlib.attr("spec_from_file_location")(module_name, module_path);
-        py::object module     = importlib.attr("module_from_spec")(spec);
+        std::string module_name             = "testing";
+        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
+        auto module_path                    = currentPath / "packetfilter.py";
+        py::module importlib                = py::module_::import("importlib.util");
+        py::object spec   = importlib.attr("spec_from_file_location")(module_name, module_path.string());
+        py::object module = importlib.attr("module_from_spec")(spec);
         spec.attr("loader").attr("exec_module")(module);
-        std::vector<BYTE> packet((char*)buffer, (char*)buffer + len);
-        module.attr("PacketSniffer")(packet).cast<int>();
-        
+
+        std::vector<BYTE> packet((BYTE *)buffer, (BYTE *)buffer + len);
+        module.attr("PacketSniffer")(packet);
     }
     catch (py::error_already_set &e)
     {
-        spdlog::error("Python error0: {0}", e.what());
+        spdlog::error("Python error: {0}", e.what());
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
-		spdlog::error("Python error1: {0}", e.what());
-	}
+        spdlog::error("C++ error: {0}", e.what());
+    }
     catch (...)
     {
-		spdlog::error("Python error");
-	}
+        spdlog::error("Unknown error");
+    }
 }
 
 int(__fastcall *plainSendPackage)(void *pGameClient, void *edx, void *buffer, size_t len) = nullptr;
 int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_t len)
 {
+    static auto init = []() { 
+        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
+        currentPath /= "pythonlib";
+        Py_SetPythonHome(currentPath.wstring().c_str());
+        return 0; 
+        }();
+
     if (GameManager::hookSendEnable)
         CallPackageFilter(buffer, len);
 	return plainSendPackage(pGameClient, edx, buffer, len);

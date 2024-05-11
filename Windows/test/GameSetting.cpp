@@ -722,7 +722,7 @@ void GameSetting::Render(bool &open)
         gameManager.EnablePopupWindowHook();
 		gameManager.HookSendAndRecv();
     }
-
+    ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
     if (localPlayer == nullptr || localPlayer->GetName() == "")
     {
