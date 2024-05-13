@@ -1,28 +1,20 @@
 #define WIN32_LEAN_AND_MEAN
-#include <Windows/util/DirectX/D3D9Hook.h>
+#include "GameSetting.h"
+#include <General/util/File/File.h>
 #include <General/util/Process/Process.h>
 #include <Windows.h>
+#include <Windows/util/DirectX/D3D9Hook.h>
+#include <boost/filesystem.hpp>
 #include <iostream>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 #include <string>
-#include "GameSetting.h"
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
-    FILE *f;
     std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<GameSetting>();
     try
     {
-        AllocConsole();
-        freopen_s(&f, "CONOUT$", "w+t", stdout);
-        system("chcp 65001");
-        spdlog::flush_on(spdlog::level::level_enum::info);
-        auto console = spdlog::stdout_color_mt("console2");
-        spdlog::set_level(spdlog::level::level_enum::info);
-        spdlog::set_default_logger(console);
-        spdlog::info("Start");
         zzj::D3D::D3D9Hook::Setup(setting);
-        spdlog::info("SetupDone");
         while (true)
         {
             if (GetAsyncKeyState(VK_END) & 1)
@@ -40,8 +32,6 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 
     setting->End();
     zzj::D3D::D3D9Hook::Destroy();
-    fclose(f);
-    FreeConsole();
     setting.reset();
     FreeLibraryAndExitThread((HMODULE)lpThreadParameter, 0);
     return 0;

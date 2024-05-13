@@ -64,12 +64,16 @@ std::vector<HWND> GetAllWindowHandle()
 }
 int main(int argc, char *argv[])
 {
+    
     boost::filesystem::path executablePath = zzj::GetExecutablePath();
     executablePath /= "ClientDevLib_test.exe";
     // absolute path
     executablePath = boost::filesystem::absolute(executablePath);
     spdlog::info("Executable path: {}", executablePath.string());
 
+    boost::filesystem::path testPath = zzj::GetExecutablePath();
+    testPath /= "ClientDevLib_testdll.dll";
+    LoadLibraryA(testPath.string().c_str());
     while (true)
     {
         try

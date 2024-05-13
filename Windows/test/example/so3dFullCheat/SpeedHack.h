@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Windows.h>
-#include <Detours/build/include/detours.h>
 namespace Speedhack
 {
 	extern double speed;
