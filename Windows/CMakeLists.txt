@@ -84,19 +84,19 @@ test/example/so3dFullCheat/multiclient/ccxx.cpp
 target_link_libraries(ccxx ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
 target_include_directories(ccxx PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 
-add_library(testdll SHARED
-test/example/so3dFullCheat/testdll.cpp
-test/example/so3dFullCheat/GameManager.h
-test/example/so3dFullCheat/GameManager.cpp
-test/example/so3dFullCheat/SpeedHack.h
-test/example/so3dFullCheat/SpeedHack.cpp
-)
-target_link_libraries(testdll ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
-target_include_directories(testdll PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
+#add_library(testdll SHARED
+#test/example/so3dFullCheat/testdll.cpp
+#test/example/so3dFullCheat/GameManager.h
+#test/example/so3dFullCheat/GameManager.cpp
+#test/example/so3dFullCheat/SpeedHack.h
+#test/example/so3dFullCheat/SpeedHack.cpp
+#)
+#target_link_libraries(testdll ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
+#target_include_directories(testdll PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 
 
 set_property(
-  TARGET autologin ${PROJECT_NAME} ${PROJECT_NAME}_testdll ccxx testdll
+  TARGET autologin ${PROJECT_NAME} ${PROJECT_NAME}_testdll ccxx 
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 #iterate the file in ${WINDOWS_UTIL_DLL_FILES} glob, and copy them to the CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO

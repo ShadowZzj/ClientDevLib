@@ -326,8 +326,11 @@ class GameManager
 
     // GuiMenu
     static const uintptr_t CMerchantVirtualTableOffset                    = 0x81c548;
-    static const uintptr_t currentOpenGuiMenuOffset = 0x13e5c98;
+    static const uintptr_t CRewardAccessDialogVirtualTableOffset          = 0x826a50;
+    static const uintptr_t guiIndexerOffset = 0x13e5c98;
+    static const uintptr_t FindGuiWithIndexFuncOffset                          = 0x56a0c0;
     inline static const std::vector<unsigned int> guiMenuMultilevelOffset = {0x8,0x0,0x8};
+    inline static const std::vector<unsigned int> firstGuiMenuMultilevelOffset = {0x0, 0x4};
     class CMenuContainerEx
     {
       public:
@@ -337,9 +340,57 @@ class GameManager
         uint32_t mouseY;     // 0x0018
         char pad_001C[9];    // 0x001C
         bool isClosed;       // 0x0025
-        char pad_0026[1054]; // 0x0026
-    };                       // Size: 0x0444
-    static_assert(sizeof(CMenuContainerEx) == 0x444);
+        char pad_0026[26]; // 0x0026
+    };
+
+    enum GUIIndex : uint32_t
+    {
+		RewardAccess = 0x3f,
+        RewardAttence = 0x3e
+	};
+    class SingleRewardInfo
+    {
+      public:
+        enum class Status : uint32_t
+        {
+            CanNotGet = 0,
+            CanGet = 1,
+            Got = 2
+        };
+        char pad0[4];
+        char pad1[4];
+        Status status;
+
+    };
+    template<size_t N>
+    class RewardInfoTable
+    {
+      public:
+        SingleRewardInfo *rewardInfo[N];
+    };
+    class CRewardAccessDialog :CMenuContainerEx
+    {
+      public:
+        RewardInfoTable<6> *rewardInfoTable;
+    };
+    class CRewardAttenceDialog :CMenuContainerEx
+    {
+	  public:
+		RewardInfoTable<28> *rewardInfoTable;
+	};
+    class GUIStruct
+    {
+      public:
+          GUIStruct *left;
+          char pad1[4];
+          GUIStruct* right;
+          char pad2[1];
+          bool stopCondition;
+          char pad3[2];
+          UINT32 guiIndex;
+          CMenuContainerEx* menu;
+    };
+    static_assert(sizeof(GUIStruct) == 0x18);
     //end
 
     //npc
@@ -420,6 +471,16 @@ class GameManager
     void ThrowBomb();
     void PickItem(unsigned int dropId);
     void BuyItem(BuyItemPacket packet);
+
+    void OpenRewardAccessGui();
+    void CloseRewardAccessGui();
+    void GetRewardAccessReward(int index);
+    void OpenRewardAttenceGui();
+    void CloseRewardAttenceGui();
+    void GetRewardAttenceReward(int index);
+
+    CMenuContainerEx *GetMenuContainer(GUIIndex index);
+    std::vector<SingleRewardInfo> GetRewardInfo(GUIIndex rewardGuiType);
     AutoHuntManager* GetAutoHuntManager();
     void CloseSellerGui();
     CMenuContainerEx* GetCurrentOpenGuiMenu();

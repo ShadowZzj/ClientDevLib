@@ -162,6 +162,224 @@ void GameManager::BuyItem(GameManager::BuyItemPacket packet)
         popad
     }
 }
+void GameManager::OpenRewardAccessGui()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    auto funcAddr = baseAddr + 0x32bdf0;
+    __asm
+    {
+        push 1
+        call funcAddr
+    }
+}
+
+GameManager::CMenuContainerEx *GameManager::GetMenuContainer(GUIIndex index)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return {};
+    }
+    auto callAddr  = baseAddr + FindGuiWithIndexFuncOffset;
+    auto ecxVal    = baseAddr + guiIndexerOffset;
+    int guiIndex   = index;
+    GUIStruct *gui = nullptr;
+    __asm
+    {
+        pushad
+        mov edx,ecxVal
+        mov ecx, [edx]
+        lea ebx, guiIndex
+        push ebx
+        call callAddr
+        mov gui, eax
+        popad
+    }
+
+    if (gui == nullptr)
+    {
+        spdlog::error("gui is null");
+        return {};
+    }
+    spdlog::info("gui: {0:x}", (uintptr_t)gui);
+    GUIStruct *iter        = gui;
+    CMenuContainerEx *menu = iter->menu;
+    return menu;
+}
+
+std::vector<GameManager::SingleRewardInfo> GameManager::GetRewardInfo(GUIIndex rewardGuiType)
+{
+    std::vector<SingleRewardInfo> ret;
+    CMenuContainerEx *menu = GetMenuContainer(rewardGuiType);
+
+    //find reward menu
+    if (rewardGuiType == GUIIndex::RewardAccess)
+    {
+        CRewardAccessDialog *rewardMenu = (CRewardAccessDialog *)menu;
+        if (rewardMenu->rewardInfoTable)
+        {
+            auto rewardInfoTable = rewardMenu->rewardInfoTable;
+            auto itemCount       = sizeof(rewardInfoTable->rewardInfo) / sizeof(rewardInfoTable->rewardInfo[0]);
+            for (int i = 0; i < itemCount; i++)
+            {
+                auto rewardInfo = rewardInfoTable->rewardInfo[i];
+                if (rewardInfo != nullptr)
+                    ret.push_back(*rewardInfo);
+            }
+        }
+    }
+    else if (rewardGuiType == GUIIndex::RewardAttence)
+    {
+
+        CRewardAttenceDialog *rewardMenu = (CRewardAttenceDialog *)menu;
+        if (rewardMenu->rewardInfoTable)
+        {
+            auto rewardInfoTable = rewardMenu->rewardInfoTable;
+            auto itemCount       = sizeof(rewardInfoTable->rewardInfo) / sizeof(rewardInfoTable->rewardInfo[0]);
+            for (int i = 0; i < itemCount; i++)
+            {
+                auto rewardInfo = rewardInfoTable->rewardInfo[i];
+                if (rewardInfo != nullptr)
+                    ret.push_back(*rewardInfo);
+            }
+        }
+    }
+    return ret;
+}
+void GameManager::GetRewardAccessReward(int index)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    auto funcAddr = baseAddr + 0x4b6800;
+    std::string indexString = "time_";
+    indexString += std::to_string(index);
+    const char* indexChar = indexString.c_str();
+    auto rewardMenu       = (CRewardAccessDialog *)GetMenuContainer(GUIIndex::RewardAccess);
+    __asm
+    {
+		pushad
+		push 0
+        push 0
+        push 0
+        push indexChar
+        mov ecx, rewardMenu
+		call funcAddr
+		popad
+	}
+}
+void GameManager::CloseRewardAccessGui()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    auto funcAddr           = baseAddr + 0x4b6800;
+    std::string exitString = "exit";
+    const char *indexChar   = exitString.c_str();
+    auto rewardMenu         = (CRewardAccessDialog *)GetMenuContainer(GUIIndex::RewardAccess);
+    __asm
+    {
+		pushad
+		push 0
+        push 0
+        push 0
+        push indexChar
+        mov ecx, rewardMenu
+		call funcAddr
+		popad
+    }
+}
+void GameManager::OpenRewardAttenceGui()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    auto funcAddr = baseAddr + 0x32bfc0;
+    __asm
+    {
+        push 1
+        call funcAddr
+    }
+}
+
+void GameManager::CloseRewardAttenceGui()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    auto funcAddr          = baseAddr + 0x4b83c0;
+    std::string exitString = "exit";
+    const char *indexChar  = exitString.c_str();
+    auto rewardMenu        = (CRewardAccessDialog *)GetMenuContainer(GUIIndex::RewardAttence);
+    __asm
+    {
+		pushad
+		push 0
+        push 0
+        push 0
+        push indexChar
+        mov ecx, rewardMenu
+		call funcAddr
+		popad
+    }
+}
+void GameManager::GetRewardAttenceReward(int index)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    auto funcAddr           = baseAddr + 0x4b83c0;
+    std::string indexString = "day_";
+    indexString += std::to_string(index);
+    const char *indexChar = indexString.c_str();
+    auto rewardMenu       = (CRewardAccessDialog *)GetMenuContainer(GUIIndex::RewardAttence);
+    __asm
+    {
+		pushad
+		push 0
+        push 0
+        push 0
+        push indexChar
+        mov ecx, rewardMenu
+		call funcAddr
+		popad
+    }
+}
+
 bool GameManager::UseCashItem(unsigned int bagId)
 {
     zzj::Process process;
@@ -1304,7 +1522,7 @@ GameManager::CMenuContainerEx *GameManager::GetCurrentOpenGuiMenu()
     {
         return nullptr;
     }
-    CMenuContainerEx *menuContainer = (CMenuContainerEx *)memory.FindMultiPleLevelAddress(baseAddr + currentOpenGuiMenuOffset, guiMenuMultilevelOffset);
+    CMenuContainerEx *menuContainer = (CMenuContainerEx *)memory.FindMultiPleLevelAddress(baseAddr + guiIndexerOffset, guiMenuMultilevelOffset);
     if (menuContainer == nullptr)
 	{
 		spdlog::error("menuContainer is null");
@@ -1667,56 +1885,77 @@ int __stdcall RecvHooked(
     return recvOriginAddress(s, buf, len, flags);
 }
 
-//#include <pybind11/pybind11.h>
-//#include <pybind11/embed.h>
-//#include <pybind11/stl.h> 
-//#include <regex>
-//namespace py = pybind11;
-//
-//void CallPackageFilter(void* buffer, size_t len)
-//{
-//    static py::scoped_interpreter guard{};
-//    try
-//    {
-//        std::string module_name             = "testing";
-//        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
-//        auto module_path                    = currentPath / "packetfilter.py";
-//        py::module importlib                = py::module_::import("importlib.util");
-//        py::object spec   = importlib.attr("spec_from_file_location")(module_name, module_path.string());
-//        py::object module = importlib.attr("module_from_spec")(spec);
-//        spec.attr("loader").attr("exec_module")(module);
-//
-//        std::vector<BYTE> packet((BYTE *)buffer, (BYTE *)buffer + len);
-//        module.attr("PacketSniffer")(packet);
-//    }
-//    catch (py::error_already_set &e)
-//    {
-//        spdlog::error("Python error: {0}", e.what());
-//    }
-//    catch (const std::exception &e)
-//    {
-//        spdlog::error("C++ error: {0}", e.what());
-//    }
-//    catch (...)
-//    {
-//        spdlog::error("Unknown error");
-//    }
-//}
-//
-//int(__fastcall *plainSendPackage)(void *pGameClient, void *edx, void *buffer, size_t len) = nullptr;
-//int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_t len)
-//{
-//    static auto init = []() { 
-//        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
-//        currentPath /= "pythonlib";
-//        Py_SetPythonHome(currentPath.wstring().c_str());
-//        return 0; 
-//        }();
-//    
-//    if (GameManager::hookSendEnable)
-//        CallPackageFilter(buffer, len);
-//	return plainSendPackage(pGameClient, edx, buffer, len);
-//}
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
+#include <pybind11/stl.h> 
+#include <regex>
+namespace py = pybind11;
+
+std::vector<byte> CallPackageFilter(void* buffer, size_t len)
+{
+    static py::scoped_interpreter guard{};
+    try
+    {
+        std::string module_name             = "testing";
+        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
+        auto module_path                    = currentPath / "packetfilter.py";
+        py::module importlib                = py::module_::import("importlib.util");
+        py::object spec   = importlib.attr("spec_from_file_location")(module_name, module_path.string());
+        py::object module = importlib.attr("module_from_spec")(spec);
+        spec.attr("loader").attr("exec_module")(module);
+
+        std::vector<BYTE> packet((BYTE *)buffer, (BYTE *)buffer + len);
+        auto pythonRet = module.attr("PacketSniffer")(packet);
+        // 检查返回值是否为bytes或bytearray，并转换为std::vector<byte>
+        if (py::isinstance<py::bytes>(pythonRet) || py::isinstance<py::bytearray>(pythonRet))
+        {
+            std::vector<byte> result = pythonRet.cast<std::vector<uint8_t>>();
+            std::string packetRet;
+            for (auto &byte : result)
+            {
+                packetRet += fmt::format("{:02x} ", byte);
+            }
+            spdlog::info("ModifiedPacket: {0}", packetRet);
+            return result;
+        }
+    }
+    catch (py::error_already_set &e)
+    {
+        spdlog::error("Python error: {0}", e.what());
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("C++ error: {0}", e.what());
+    }
+    catch (...)
+    {
+        spdlog::error("Unknown error");
+    }
+    return {};
+}
+
+int(__fastcall *plainSendPackage)(void *pGameClient, void *edx, void *buffer, size_t len) = nullptr;
+int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_t len)
+{
+    static auto init = []() { 
+        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
+        currentPath /= "pythonlib";
+        Py_SetPythonHome(currentPath.wstring().c_str());
+        return 0; 
+        }();
+    
+    if (GameManager::hookSendEnable)
+    {
+        auto modifiedPackage = CallPackageFilter(buffer, len);
+        if (modifiedPackage.size() > 0)
+        {
+            spdlog::info("send package modified");
+			return plainSendPackage(pGameClient, edx, modifiedPackage.data(), modifiedPackage.size());
+		}
+
+    }
+	return plainSendPackage(pGameClient, edx, buffer, len);
+}
 
 void GameManager::HookSendAndRecv()
 {
@@ -1733,6 +1972,7 @@ void GameManager::HookSendAndRecv()
         spdlog::error("GetProcAddress failed: {0}", GetLastError());
         return;
     }
+    auto str = L"你好";
     spdlog::info("sendOriginAddress: {0:x}", (uintptr_t)sendOriginAddress);
     recvOriginAddress = decltype(recvOriginAddress)(GetProcAddress(ws2_32, "recv"));
     if (recvOriginAddress == NULL)
@@ -1748,18 +1988,18 @@ void GameManager::HookSendAndRecv()
         return;
     }
      
-   // plainSendPackage = decltype(plainSendPackage)(baseAddr + rawSendPackageOffset);
-    //spdlog::info("plainSendPackage: {0:x}", (uintptr_t)plainSendPackage);
+   plainSendPackage = decltype(plainSendPackage)(baseAddr + rawSendPackageOffset);
+   spdlog::info("plainSendPackage: {0:x}", (uintptr_t)plainSendPackage);
    // auto mswsock = LoadLibrary(L"mswsock.dll");
     //wspSendOriginAddress = decltype(wspSendOriginAddress)(GetProcAddress(mswsock, "_WSPSend@36"));
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     //DetourAttach(&(PVOID &)sendOriginAddress, SendHooked);
     DetourAttach(&(PVOID &)recvOriginAddress, RecvHooked);
-    //DetourAttach(&(PVOID &)plainSendPackage, PlainSendHooked);
+    DetourAttach(&(PVOID &)plainSendPackage, PlainSendHooked);
     //DetourAttach(&(PVOID &)wspSendOriginAddress, WSPSendHooked);
     DetourTransactionCommit();
 
-    std::thread t1(RecvListerner);
-    t1.detach();
+    //std::thread t1(RecvListerner);
+    //t1.detach();
 }

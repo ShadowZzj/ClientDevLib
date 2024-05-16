@@ -708,7 +708,57 @@ void InitLog(const std::string &name)
     spdlog::set_level(spdlog::level::info);
     spdlog::flush_on(spdlog::level::info);
 }
+void GetReward()
+{
+    static auto lastTime = std::chrono::system_clock::now();
+    static bool firstTime = true;
+    auto currentTime     = std::chrono::system_clock::now();
+    auto duration        = std::chrono::duration_cast<std::chrono::hours>(currentTime - lastTime);
 
+
+    if (ImGui::Button("GetReward") || firstTime || duration.count() > 6)
+    {
+        std::thread td([](){
+            gameManager.OpenRewardAccessGui();
+            Sleep(1000);
+            auto rewardInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAccess);
+            spdlog::info("RewardInfoSize {}", rewardInfo.size());
+            for (int i = 0; i < rewardInfo.size(); i++)
+            {
+                auto info = rewardInfo[i];
+                spdlog::info("RewardInfo: {}", (int)info.status);
+                if (info.status == GameManager::SingleRewardInfo::Status::CanGet)
+                {
+                     gameManager.GetRewardAccessReward(i+1);
+                }
+            }
+            Sleep(1000);
+            gameManager.CloseRewardAccessGui();
+
+            Sleep(1000);
+
+            gameManager.OpenRewardAttenceGui();
+            Sleep(1000);
+            auto rewardAttdenceInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAttence);
+            spdlog::info("RewardAttdenceInfo Size  {}", rewardAttdenceInfo.size());
+            for (int i = 0; i < rewardAttdenceInfo.size(); i++)
+            {
+                auto info = rewardAttdenceInfo[i];
+                spdlog::info("RewardAttdenceInfo: {}", (int)info.status);
+                if (info.status == GameManager::SingleRewardInfo::Status::CanGet)
+                {
+                    gameManager.GetRewardAttenceReward(i + 1);
+                }
+            }
+            Sleep(1000);
+            gameManager.CloseRewardAttenceGui();
+        });
+        td.detach();
+    }
+    firstTime = false;
+    lastTime  = currentTime;
+
+}
 void GameSetting::Render(bool &open)
 {
     ImGui::SetNextWindowBgAlpha(0.2f);
@@ -763,7 +813,7 @@ void GameSetting::Render(bool &open)
         Sleep(3000);
         return 0;
     });
-
+     
     if (result.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
     {
         ImGui::Text("Cheat Loading ......");
@@ -837,7 +887,7 @@ void GameSetting::Render(bool &open)
         }
     }
     ImGui::Text("Around Players: %d", aroundPlayers.size());
-
+    GetReward();
     AttackRange();
     AttackSpeed();
     SkillRange();
