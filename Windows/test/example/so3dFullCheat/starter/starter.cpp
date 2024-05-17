@@ -11,6 +11,7 @@
 #include <General/util/Process/Process.h>
 #include <chrono>
 #include <Windows/util/Process/ProcessHelper.h>
+#include <General/util/Sync/ProcessSync.hpp>
 #pragma comment(lib, "Userenv.lib")
 typedef struct EnumHWndsArg
 {
@@ -69,6 +70,12 @@ int main(int argc, char *argv[])
     {
         spdlog::error("Usage: {} <username>", argv[0]);
         return 1;
+    }
+    zzj::ProcessSync processSync("mutex_sealstarter");
+    if (!processSync.try_lock())
+    {
+        spdlog::info("Process is already running, exit");
+        return 0;
     }
     auto allWindow = GetAllWindowHandle();
     std::string username = argv[1];

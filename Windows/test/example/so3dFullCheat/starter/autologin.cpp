@@ -71,9 +71,9 @@ int main(int argc, char *argv[])
     executablePath = boost::filesystem::absolute(executablePath);
     spdlog::info("Executable path: {}", executablePath.string());
 
-    boost::filesystem::path testPath = zzj::GetExecutablePath();
-    testPath /= "ClientDevLib_testdll.dll";
-    LoadLibraryA(testPath.string().c_str());
+    //boost::filesystem::path testPath = zzj::GetExecutablePath();
+    //testPath /= "ClientDevLib_testdll.dll";
+    //LoadLibraryA(testPath.string().c_str());
     while (true)
     {
         try
@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
                     std::cerr << "CreateProcess failed (" << GetLastError() << ")\n";
                     return 1;
                 }
+                CloseHandle(pi.hProcess);
                 Sleep(2000);
             }
             

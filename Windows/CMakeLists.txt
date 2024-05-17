@@ -64,6 +64,18 @@ ${WINDOWS_UTIL_LIB_FILES}
 target_include_directories(autologin PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 target_link_options(autologin PRIVATE "/SAFESEH:NO")
 
+add_executable(${PROJECT_NAME}_test 
+test/example/so3dFullCheat/starter/starter.cpp
+test/example/so3dFullCheat/GameManager.h
+test/example/so3dFullCheat/GameManager.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test
+${PROJECT_NAME} 
+${WINDOWS_UTIL_LIB_FILES} 
+)
+target_include_directories(${PROJECT_NAME}_test PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
+target_link_options(${PROJECT_NAME}_test PRIVATE "/SAFESEH:NO")
+
 
 add_library(${PROJECT_NAME}_testdll SHARED 
 test/example/so3dFullCheat/testdll.cpp 
@@ -96,7 +108,7 @@ target_include_directories(ccxx PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})
 
 
 set_property(
-  TARGET autologin ${PROJECT_NAME} ${PROJECT_NAME}_testdll ccxx 
+  TARGET autologin ${PROJECT_NAME} ${PROJECT_NAME}_testdll ccxx ${PROJECT_NAME}_test
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 #iterate the file in ${WINDOWS_UTIL_DLL_FILES} glob, and copy them to the CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO

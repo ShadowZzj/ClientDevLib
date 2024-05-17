@@ -1876,13 +1876,15 @@ int __stdcall RecvHooked(
  int    flags
 )
 {
-    spdlog::info ("recv called");
-    auto currentTime = std::chrono::system_clock::now();
+    int ret = recvOriginAddress(s, buf, len, flags);
+    if (ret > 0)
     {
+        spdlog::info("recv len {}",ret);
+        auto currentTime = std::chrono::system_clock::now();
         std::lock_guard<std::mutex> lock(mtx);
         lastTimeRecv = currentTime;
     }
-    return recvOriginAddress(s, buf, len, flags);
+    return ret; 
 }
 
 #include <pybind11/pybind11.h>
