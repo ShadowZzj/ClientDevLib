@@ -70,7 +70,7 @@ void GameManager::SellItem(unsigned int beginBagId)
         SellItem(i, item.count);
     }
 }
-uintptr_t GetModuleBaseAddress(const std::string &moduleName)
+uintptr_t GameManager::GetModuleBaseAddress(const std::string &moduleName)
 {
     static std::mutex mutex;
     static std::map<std::string, uintptr_t> moduleBaseAddressMap;
@@ -1117,7 +1117,7 @@ uintptr_t GetPatternMatchResult(const std::string &pattern)
     else
         gameManager.config["baseAddress"] = nlohmann::json::object();
 
-    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    auto baseAddr = GameManager::GetModuleBaseAddress("SO3DPlus.exe");
     if (baseAddr == NULL)
     {
         return {};

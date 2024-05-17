@@ -286,7 +286,19 @@ void SellItemWrapper(uint32_t bagId)
     gameManager.autoPickItemEnable   = false;
     auto preFullFirePower            = gameManager.fireFullPowerEnabled;
     gameManager.fireFullPowerEnabled = false;
+    auto dll123BaseAddr = GameManager::GetModuleBaseAddress("123.dll");
+    zzj::Process thisProcess;
+    zzj::Memory memory(thisProcess);
+    bool preDll123AutoHuntEnabled = false;
+    if (dll123BaseAddr != NULL)
+    {
+        memory.Read(dll123BaseAddr + 0x185284, &preDll123AutoHuntEnabled, 1);
+        memory.Write(dll123BaseAddr + 0x185284, {0});
+    }
+    
     std::thread([=]() {
+        zzj::Process thisProcess;
+        zzj::Memory memory(thisProcess);
         Sleep(1000);
         if (gameManager.UseCashItem(GameManager::cashSellerItemName))
         {
@@ -298,10 +310,12 @@ void SellItemWrapper(uint32_t bagId)
         gameManager.autoPickItemEnable   = preAutoPickItem;
         gameManager.fireFullPowerEnabled = preFullFirePower;
         autoHuntManager->status          = preStatus;
+        memory.Write(dll123BaseAddr + 0x185284, {preDll123AutoHuntEnabled});
     }).detach();
 }
 void SellItem()
 {
+    
     static uint32_t bagId = 24;
     ImGui::InputInt("BagId", (int *)&bagId);
     if (ImGui::Button("SellItem"))
@@ -309,11 +323,10 @@ void SellItem()
         std::lock_guard<std::mutex> guarder(GameSetting::sellerGuarderMutex);
         SellItemWrapper(bagId);
     }
-    static bool isAutoSell = false;
     // get current time point, execute SellItem every 1 hour
     static auto lastTime = std::chrono::system_clock::now();
-    ImGui::Checkbox("AutoSellItem", &isAutoSell);
-    if (!isAutoSell)
+    ImGui::Checkbox("AutoSellItem", &GameManager::isAutoSell);
+    if (!GameManager::isAutoSell)
     {
         return;
     }
@@ -718,6 +731,7 @@ void GetReward()
 
     if (ImGui::Button("GetReward") || firstTime || duration.count() > 6)
     {
+        lastTime = currentTime;
         std::thread td([](){
             gameManager.OpenRewardAccessGui();
             Sleep(1000);
@@ -756,7 +770,6 @@ void GetReward()
         td.detach();
     }
     firstTime = false;
-    lastTime  = currentTime;
 
 }
 void GameSetting::Render(bool &open)
@@ -944,6 +957,10 @@ void GameSetting::LoadRoleConfig(const std::string &name)
         {
             GameManager::speedHack = roleConfig["SpeedHackValue"];
         }
+        if (roleConfig.find("AutoSell") != roleConfig.end())
+        {
+            GameManager::isAutoSell = roleConfig["AutoSell"];
+        }
     }
     catch (const std::exception &ex)
     {
@@ -964,7 +981,7 @@ void GameSetting::SaveRoleConfig(const std::string &name)
     roleConfig["ItemNoCoolDown"]   = GameManager::itemNoCoolDownEnable;
     roleConfig["CoolDownValue"]    = GameManager::itemCoolDown;
     roleConfig["SpeedHackValue"]   = GameManager::speedHack;
-
+    roleConfig["AutoSell"]         = GameManager::isAutoSell;
     std::ofstream o(currentPath.string());
     o << std::setw(4) << roleConfig << std::endl;
 }

@@ -519,6 +519,7 @@ class GameManager
     std::vector<CreatureWithAddress> GetCreatures();
     std::vector<CreatureWithAddress> GetMonsters(uint32_t range);
     std::vector<CreatureWithAddress> GetMonsters(CCreature creature, uint32_t range);
+    static uintptr_t GetModuleBaseAddress(const std::string &moduleName);
     inline static int attackRange        = 1;
     inline static bool attackRangeEnable = false;
 
@@ -544,6 +545,7 @@ class GameManager
     inline static bool fireFullPowerEnabled       = false;
     inline static int fireFullPowerIntervalValue = 300;
     inline static bool hookSendEnable             = false;
+    inline static bool isAutoSell                        = false;
     nlohmann::json config;
 
   private:
