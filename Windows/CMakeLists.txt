@@ -66,8 +66,6 @@ target_link_options(autologin PRIVATE "/SAFESEH:NO")
 
 add_executable(${PROJECT_NAME}_test 
 test/example/so3dFullCheat/starter/starter.cpp
-test/example/so3dFullCheat/GameManager.h
-test/example/so3dFullCheat/GameManager.cpp
 )
 target_link_libraries(${PROJECT_NAME}_test
 ${PROJECT_NAME} 

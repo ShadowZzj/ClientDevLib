@@ -1,4 +1,4 @@
-#include <Windows.h>﻿
+#include <Windows.h>
 #include <GHInjector/Injection.h>
 #include <General/util/File/File.h>
 #include <General/util/StrUtil.h>
@@ -12,6 +12,7 @@
 #include <chrono>
 #include <Windows/util/Process/ProcessHelper.h>
 #include <General/util/Sync/ProcessSync.hpp>
+#include <json.hpp>
 #pragma comment(lib, "Userenv.lib")
 typedef struct EnumHWndsArg
 {
@@ -153,7 +154,28 @@ int main(int argc, char *argv[])
             if (title == "SO3D Plus")
             {
                 SetWindowTextA(h, targetWindowTitle.c_str());
-                return 0;
+                boost::filesystem::path currentPath = zzj::GetExecutablePath();
+                auto loginConfigPath = currentPath / "loginUserName.json";
+                while (true)
+                {
+                    if (boost::filesystem::exists(loginConfigPath))
+                    {
+                        std::ifstream ifs(loginConfigPath.string());
+                        nlohmann::json j;
+                        ifs >> j;
+                        if(j.find(username) != j.end())
+                        {
+                            DWORD pid = j[username];
+                            if(pid == pi.dwProcessId)
+                            {
+                                spdlog::info("Username  {} login success", username);
+                                return 0;
+                            }
+                        }
+                    }
+                    Sleep(1000);
+                }
+                
             }
         }
     }

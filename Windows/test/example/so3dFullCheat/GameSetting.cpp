@@ -713,6 +713,11 @@ void InitLog(const std::string &name)
         return;
     }
     boost::filesystem::path logPath = zzj::GetDynamicLibPath(InitLog);
+    logPath /= "log";
+    if (!boost::filesystem::exists(logPath))
+    {
+        boost::filesystem::create_directory(logPath);
+    }
     logPath /= name + ".log";
     std::string logPathStr = logPath.string();
     logPathStr             = zzj::str::w2ansi(zzj::str::utf82w(logPathStr));
@@ -732,7 +737,10 @@ void GetReward()
     if (ImGui::Button("GetReward") || firstTime || duration.count() > 6)
     {
         lastTime = currentTime;
-        std::thread td([](){
+        bool firstTimeTemp = firstTime;
+        std::thread td([firstTimeTemp]() {
+            if (firstTimeTemp)
+				Sleep(10000);
             gameManager.OpenRewardAccessGui();
             Sleep(1000);
             auto rewardInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAccess);
@@ -772,6 +780,27 @@ void GetReward()
     firstTime = false;
 
 }
+void SaveLoginUserName(const std::string& userName)
+{
+    boost::filesystem::path currentPath = zzj::GetDynamicLibPath(SaveLoginUserName);
+    auto loginConfigPath = currentPath / "loginUserName.json";
+    auto currentProcessId = GetCurrentProcessId();
+    if(!boost::filesystem::exists(loginConfigPath))
+    {
+        nlohmann::json j;
+        std::ofstream o(loginConfigPath.string());
+        o << j.dump(4);
+        o.close();
+    }
+    nlohmann::json j;
+    std::ifstream i(loginConfigPath.string());
+    i >> j;
+    i.close();
+    j[userName] = currentProcessId;
+    std::ofstream o(loginConfigPath.string());
+    o << j.dump(4);
+    o.close();
+}
 void GameSetting::Render(bool &open)
 {
     ImGui::SetNextWindowBgAlpha(0.2f);
@@ -800,6 +829,8 @@ void GameSetting::Render(bool &open)
         roleLogInit = true;
         InitLog(playerName);
         LoadRoleConfig(playerName);
+        std::string loginUserName = localPlayer->loginUserName;
+        SaveLoginUserName(loginUserName);
     }
     if (ImGui::Button("SaveConfig"))
     {
