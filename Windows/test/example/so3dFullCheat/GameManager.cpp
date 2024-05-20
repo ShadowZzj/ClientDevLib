@@ -1614,13 +1614,13 @@ void GameManager::CloseSellerGui()
             return;
         }
 
-        CMenuContainerEx *menuContainer = GetCurrentOpenGuiMenu();
+        CMenuContainerEx *menuContainer = GetMenuContainer(GUIIndex::Seller);
         if (menuContainer == nullptr)
         {
             spdlog::error("menuContainer is null");
             return;
         }
-
+        spdlog::info("currentMenuContainerAddr {:x}", (uintptr_t)menuContainer);
         uintptr_t vTableVA = baseAddr + CMerchantVirtualTableOffset;
         if (menuContainer->vtable == vTableVA && !menuContainer->isClosed)
         {
@@ -1883,8 +1883,9 @@ int __stdcall RecvHooked(
  int    flags
 )
 {
+
     int ret = recvOriginAddress(s, buf, len, flags);
-    if (ret > 0)
+    if (ret > 0 && len != 6)
     {
         spdlog::info("recv len {}",ret);
         auto currentTime = std::chrono::system_clock::now();

@@ -310,7 +310,8 @@ void SellItemWrapper(uint32_t bagId)
         gameManager.autoPickItemEnable   = preAutoPickItem;
         gameManager.fireFullPowerEnabled = preFullFirePower;
         autoHuntManager->status          = preStatus;
-        memory.Write(dll123BaseAddr + 0x185284, {preDll123AutoHuntEnabled});
+        if (dll123BaseAddr)
+            memory.Write(dll123BaseAddr + 0x185284, {preDll123AutoHuntEnabled});
     }).detach();
 }
 void SellItem()

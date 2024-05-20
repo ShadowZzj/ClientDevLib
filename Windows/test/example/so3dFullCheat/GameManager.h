@@ -347,7 +347,8 @@ class GameManager
     enum GUIIndex : uint32_t
     {
 		RewardAccess = 0x3f,
-        RewardAttence = 0x3e
+        RewardAttence = 0x3e,
+        Seller = 0x17
 	};
     class SingleRewardInfo
     {
