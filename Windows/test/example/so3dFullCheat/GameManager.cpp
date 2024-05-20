@@ -877,7 +877,14 @@ void GameManager::ThrowBomb()
         spdlog::info("no bomb to throw");
         return;
     }
-    CastSkill(skills[0x145], {});
+    static auto lastCastBomb = std::chrono::system_clock::now();
+    auto now                 = std::chrono::system_clock::now();
+    auto duration            = std::chrono::duration_cast<std::chrono::seconds>(now - lastCastBomb);
+    if (duration.count() > 1)
+    {
+        CastSkill(skills[0x145], {});
+        lastCastBomb = now;
+    }
     bombId += 0xD;
     auto creatures = GetMonsters(12);
     if (creatures.empty())
@@ -1945,14 +1952,27 @@ int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_
         Py_SetPythonHome(currentPath.wstring().c_str());
         return 0; 
         }();
-    
+    spdlog::info("Plain send called!");
     if (GameManager::hookSendEnable)
     {
-        auto modifiedPackage = CallPackageFilter(buffer, len);
+        auto modifiedPackage = CallPackageFilter(buffer, len); 
+        spdlog::info("original len :{}",len);
         if (modifiedPackage.size() > 0)
         {
             spdlog::info("send package modified");
-			return plainSendPackage(pGameClient, edx, modifiedPackage.data(), modifiedPackage.size());
+            static byte *buf         = nullptr;
+            if (buf == nullptr)
+                buf = (byte*)malloc(0x100);
+
+            ZeroMemory(buf, 0x100);
+            memcpy(buf, modifiedPackage.data(), modifiedPackage.size());
+            std::string packetRet;
+            for (int i = 0; i < len;i++)
+            {
+                packetRet += fmt::format("{:02x} ", buf[i]);
+            }
+            spdlog::info("Buf string {}", packetRet);
+            return plainSendPackage(pGameClient, edx, buf, len);
 		}
 
     }
@@ -2002,6 +2022,6 @@ void GameManager::HookSendAndRecv()
     //DetourAttach(&(PVOID &)wspSendOriginAddress, WSPSendHooked);
     DetourTransactionCommit();
 
-    //std::thread t1(RecvListerner);
-    //t1.detach();
+    std::thread t1(RecvListerner);
+    t1.detach();
 }

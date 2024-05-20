@@ -547,6 +547,7 @@ class GameManager
     inline static int fireFullPowerIntervalValue = 300;
     inline static bool hookSendEnable             = false;
     inline static bool isAutoSell                        = false;
+    inline static bool autohuntEnable             = true;
     nlohmann::json config;
 
   private:

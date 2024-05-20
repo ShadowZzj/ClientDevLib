@@ -158,6 +158,12 @@ int main(int argc, char *argv[])
                 auto loginConfigPath = currentPath / "loginUserName.json";
                 while (true)
                 {
+                    zzj::Process process(pi.dwProcessId,PROCESS_ALL_ACCESS);
+                    if (!process.IsAlive())
+                    {
+                        spdlog::info("Process exit! exit the loader");
+                        return 0;
+                    }
                     if (boost::filesystem::exists(loginConfigPath))
                     {
                         std::ifstream ifs(loginConfigPath.string());

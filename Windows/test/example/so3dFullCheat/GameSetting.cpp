@@ -446,6 +446,7 @@ void ShowDropItem()
         }
     }
 }
+#include <regex>
 void AutoPickup()
 {
     ImGui::Checkbox("AutoPickItem", &GameManager::autoPickItemEnable);
@@ -460,6 +461,9 @@ void AutoPickup()
             auto duration    = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime);
             if (duration.count() >= 500)
             {
+                std::vector<std::string> filter;
+                if (gameManager.config.find("PickItemFilter") != gameManager.config.end())
+                    filter = gameManager.config["PickItemFilter"];
                 lastTime           = currentTime;
                 auto itemContainer = gameManager.GetItemContainer();
                 if (itemContainer != nullptr && itemContainer->dropItemPtr)
@@ -473,13 +477,28 @@ void AutoPickup()
                         }
                         if (!item->canPick)
                             continue;
-                        auto distance = sqrt(pow(item->x - localPlayer->x, 2) + pow(item->y - localPlayer->y, 2) +
+                        std::string itemName = item->itemTablePtr->GetItemName();
+                        bool shouldContinue  = false;
+                        for(auto& f: filter)
+                        {
+                            std::regex reg(f);
+                            if(std::regex_search(itemName, reg))
+                            {
+                                shouldContinue = true;
+                                break;
+                            }
+                        }
+                        if(shouldContinue)
+                            continue;
+
+                        auto distance =
+                            sqrt(pow(item->x - localPlayer->x, 2) + pow(item->y - localPlayer->y, 2) +
                                              pow(item->z - localPlayer->z, 2));
                         if (distance < 4)
                         {
                             spdlog::info("PickItemName: {} dropId:{:x} itemId:{:x} distance:{} playerPos {},{},{} "
                                          "itemPos {},{},{}",
-                                         item->itemTablePtr->GetItemName(), item->dropId, item->itemId, distance,
+                                         itemName, item->dropId, item->itemId, distance,
                                          localPlayer->x, localPlayer->y, localPlayer->z, item->x, item->y, item->z);
                             if (maxPickUpCount == 0)
                                 return;
@@ -801,6 +820,21 @@ void SaveLoginUserName(const std::string& userName)
     o << j.dump(4);
     o.close();
 }
+void AutoHuntHandler()
+{
+    if (ImGui::Button("AutoHunt"))
+    {
+        zzj::Process thisProcess;
+        zzj::Memory memory(thisProcess);
+        auto dll123BaseAddr           = GameManager::GetModuleBaseAddress("123.dll");
+        bool preDll123AutoHuntEnabled = false;
+        if (dll123BaseAddr != NULL)
+        {
+            memory.Read(dll123BaseAddr + 0x185284, &preDll123AutoHuntEnabled, 1);
+            memory.Write(dll123BaseAddr + 0x185284, {!preDll123AutoHuntEnabled});
+        }
+    }
+}
 void GameSetting::Render(bool &open)
 {
     ImGui::SetNextWindowBgAlpha(0.2f);
@@ -931,6 +965,7 @@ void GameSetting::Render(bool &open)
         }
     }
     ImGui::Text("Around Players: %d", aroundPlayers.size());
+    AutoHuntHandler();
     GetReward();
     AttackRange();
     AttackSpeed();
