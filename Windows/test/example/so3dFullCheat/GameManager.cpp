@@ -1622,7 +1622,7 @@ void GameManager::CloseSellerGui()
         }
         spdlog::info("currentMenuContainerAddr {:x}", (uintptr_t)menuContainer);
         uintptr_t vTableVA = baseAddr + CMerchantVirtualTableOffset;
-        if (menuContainer->vtable == vTableVA && !menuContainer->isClosed)
+        if (!menuContainer->isClosed)
         {
             spdlog::info("close seller gui");
             menuContainer->isClosed = true;
