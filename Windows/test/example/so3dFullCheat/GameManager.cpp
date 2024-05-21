@@ -1885,7 +1885,7 @@ int __stdcall RecvHooked(
 {
 
     int ret = recvOriginAddress(s, buf, len, flags);
-    if (ret > 0 && len != 6)
+    if (ret > 0 && ret != 6)
     {
         spdlog::info("recv len {}",ret);
         auto currentTime = std::chrono::system_clock::now();
