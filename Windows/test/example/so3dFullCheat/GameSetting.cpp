@@ -170,20 +170,20 @@ void MoveSpeed()
             gameManager.DisableMoveSpeed();
         }
     }
-
+    float maxMoveSpeed = 14.0f;
     if (GameManager::moveSpeedEnable)
     {
         float currentMoveSpeed = GameManager::moveSpeed;
         if (GameManager::speedHackEnable)
         {
             currentMoveSpeed = currentMoveSpeed * GameManager::speedHack;
-            if (currentMoveSpeed > 10.0f)
+            if (currentMoveSpeed > maxMoveSpeed)
             {
-                GameManager::moveSpeed = 10.0f / GameManager::speedHack;
+                GameManager::moveSpeed = maxMoveSpeed / GameManager::speedHack;
             }
         }
         // slider from 1 to 10
-        ImGui::SliderFloat("MoveSpeed", &GameManager::moveSpeed, 1.0f, 10.0f);
+        ImGui::SliderFloat("MoveSpeed", &GameManager::moveSpeed, 1.0f, maxMoveSpeed);
     }
 }
 void SpeedHack()
@@ -213,9 +213,20 @@ void SpeedHack()
 void FullFirePower()
 {
     bool isXPressed = GetAsyncKeyState('X');
+    static auto lastTimeSwitch = std::chrono::system_clock::now();
+    if (IsCurrentGameWindowHasFocus() && GetAsyncKeyState('X'))
+    {
+        auto now                          = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeSwitch);
+        if (duration.count() > 500)
+        {
+            GameManager::fireFullPowerEnabled = !GameManager::fireFullPowerEnabled;
+            lastTimeSwitch                    = now;
+        }
+    }
     ImGui::Checkbox("FireFullPower", &GameManager::fireFullPowerEnabled);
     ImGui::InputInt("Interval", &GameManager::fireFullPowerIntervalValue);
-    if (!isTempPause && ((IsCurrentGameWindowHasFocus() && isXPressed) || GameManager::fireFullPowerEnabled))
+    if (!isTempPause && GameManager::fireFullPowerEnabled)
     {
         // the focus window must be the game window
         static auto lastTime = std::chrono::system_clock::now();
