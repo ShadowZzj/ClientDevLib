@@ -454,8 +454,10 @@ class GameManager
     inline static const std::string skillRangePattern             = "8B 81 4C 01 00 00";
     inline static const std::string skillNoPretimePattern         = "F3 0F 10 81 50 01 00 00";
     inline static const std::string skillSpeedPattern             = "F3 0F 11 88 60 23 00 00 F3 0F 2A 85 EC";
+    inline static const std::string skillModeChangePattern          = "89 88 2C 2C 00 00";
     inline static const std::string skillCoolDownCalculatePattern = "F3 0F 10 8A 58 01 00 00";
     inline static const std::string sendPackageCallPattern        = "55 8B EC 83 EC 18 89 4D F8 8B 45 F8 0F B6 48";
+    inline static const uintptr_t cameraDistanceHookFunctionOffset  = 0x51d8a1;
     inline static const uintptr_t sellItemFuncAddressOffset       = 0x3be400;
     inline static const uintptr_t popupWindowHandlerFuncOffset    = 0x506af0;
 
@@ -508,6 +510,9 @@ class GameManager
     bool EnableMoveSpeed();
     bool DisableMoveSpeed();
 
+    bool EnableCameraDistance();
+    bool DisableCameraDistance();
+
     bool EnableSpeedHack();
     bool DisableSpeedHack();
     void HookSendAndRecv();
@@ -522,6 +527,9 @@ class GameManager
     std::vector<CreatureWithAddress> GetMonsters(uint32_t range);
     std::vector<CreatureWithAddress> GetMonsters(CCreature creature, uint32_t range);
     static uintptr_t GetModuleBaseAddress(const std::string &moduleName);
+
+    void OpenSandBox();
+    void OpenSandBoxImp(const std::vector<GameManager::Item> &items, int bagPos);
     inline static int attackRange        = 1;
     inline static bool attackRangeEnable = false;
 

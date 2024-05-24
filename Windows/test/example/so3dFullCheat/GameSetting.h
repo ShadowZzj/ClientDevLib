@@ -10,6 +10,7 @@ class GameSetting : public zzj::D3D::Setting
     virtual void Render(bool &open);
     void LoadRoleConfig(const std::string& name);
     void SaveRoleConfig(const std::string &name);
+    void MoveSpeedHandler();
     virtual DWORD GetToggleMenuKey()
     {
         return VK_INSERT;

@@ -12,7 +12,9 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <General/util/File/File.h>
-//#pragma comment(lib, "Ws2_32.lib")
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
 GameManager gameManager;
 static void PlaceHolder()
 {
@@ -89,6 +91,123 @@ uintptr_t GameManager::GetModuleBaseAddress(const std::string &moduleName)
     }
     moduleBaseAddressMap[moduleName] = (uintptr_t)moduleInfo.value().modBaseAddr;
     return (uintptr_t)moduleInfo.value().modBaseAddr;
+}
+int GetFirstNullPos(const std::vector<GameManager::Item> items)
+{
+    int ret = -1;
+    for (int bagPos = 0; bagPos < items.size(); bagPos++)
+    {
+        auto item = items[bagPos];
+        if (item.itemTable == nullptr)
+        {
+            ret = bagPos;
+            return ret;
+        }
+    }
+    return ret;
+}
+void GameManager::OpenSandBoxImp(const std::vector<GameManager::Item>& items,int bagPos)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    uintptr_t gameClient = NULL;
+    auto res             = memory.Read(baseAddr + gameClientOffset, &gameClient, sizeof(gameClient));
+    if (!res)
+    {
+        spdlog::error("gameClient is null");
+        return;
+    }
+    auto callAddr = baseAddr + rawSendPackageOffset;
+
+    char openBoxPacket[0xc]     = {0};
+    openBoxPacket[0]            = 0xc;
+    *(DWORD *)&openBoxPacket[4] = 0x646af;
+    *(DWORD *)&openBoxPacket[8] = bagPos + 0xd;
+    __asm
+        {
+	    pushad
+
+	    mov ecx,gameClient
+        push 0xc
+        lea eax, openBoxPacket
+        push eax
+	    call callAddr
+
+        popad
+        }
+    spdlog::info("OpenBox first step done");
+    Sleep(200);
+
+    //int firstEmptyBagPos = GetFirstNullPos(items);
+    //if (firstEmptyBagPos == -1)
+    //{
+	//	spdlog::info("OpenBox GetFirstNullPos return -1");
+	//	return;
+	//}
+   //char getItemPacket[0x14]{0};
+   //getItemPacket[0]              = 0x14;
+   //*(DWORD *)&getItemPacket[4]   = 0x646b1;
+   //*(DWORD *)&getItemPacket[8]   = bagPos + 0xd;
+   //*(DWORD *)&getItemPacket[0xc] = 0xD + firstEmptyBagPos;
+   //
+   //__asm
+   //{
+	//    pushad
+   //
+	//    mov ecx,gameClient
+   //    push 0x14
+   //    lea eax, getItemPacket
+   //    push eax
+	//    call callAddr
+   //
+   //    popad
+   //}
+   //spdlog::info("OpenBox second step done");
+}
+void GameManager::OpenSandBox()
+{
+    std::thread t([this]() { 
+
+        do
+        {
+
+            auto items                          = GetBagItems();
+            std::vector<std::string> filterList = {u8"必中一般寶箱",       u8"必中銀寶箱",
+                                                   u8"必中金寶箱",         u8"必中一般寶箱（開啟）",
+                                                   u8"必中銀寶箱（開啟）", u8"必中金寶箱（開啟）"};
+            int targetPos                       = -1;
+            for (int bagPos = 0; bagPos < items.size(); bagPos++)
+            {
+                auto item = items[bagPos];
+                if (item.itemTable == nullptr)
+                    continue;
+                std::string itemName = item.itemTable->GetItemName();
+                if (std::find(filterList.begin(), filterList.end(), itemName) == filterList.end())
+                {
+                    spdlog::info("Item is not in filterlist: {0}", itemName);
+                    continue;
+                }
+                targetPos = bagPos;
+                break;
+            }
+
+            if (targetPos == -1)
+            {
+                spdlog::info("OpenSandBox done!");
+                break;
+            }
+            spdlog::info("OpenSandBox targetPos: {:x}", targetPos);
+            OpenSandBoxImp(items, targetPos);
+            Sleep(20000);
+
+        } while (true);
+	});
+    t.detach();
 }
 
 size_t GetModuleSize(const std::string &moduleName)
@@ -1420,6 +1539,23 @@ int __declspec(naked) SkillCooDownCalculateHooked()
     }
 }
 
+static uintptr_t skillModeHookAddress = NULL;
+static void *skillModeRetAddress;
+
+int __declspec(naked) SkillModeHooked()
+{
+    __asm
+    {
+		cmp ecx,5
+        jne original
+        mov ecx,0
+
+    original:
+        mov [eax + 0x2c2c],ecx
+		jmp skillModeRetAddress
+	}
+}
+
 bool GameManager::EnableSkillSpeed()
 {
     if (skillSpeedHookAddress1 == NULL)
@@ -1455,6 +1591,19 @@ bool GameManager::EnableSkillSpeed()
 
     spdlog::info("skillCooldownHookAddress: {0:x}", skillCooldownHookAddress);
     skillCooldownRetAddress = (void *)DetourAndGetRetAddress(skillCooldownHookAddress, &SkillCooDownCalculateHooked);
+
+    if (skillModeHookAddress == NULL)
+       skillModeHookAddress = GetPatternMatchResult(skillModeChangePattern);
+
+    if (skillModeHookAddress == NULL)
+    {
+        spdlog::error("skillModeHookAddress is null");
+        return false;
+    }
+
+    spdlog::info("skillModeHookAddress: {0:x}", skillModeHookAddress);
+    skillModeRetAddress = (void *)DetourAndGetRetAddress(skillModeHookAddress, &SkillModeHooked);
+
     return true;
 }
 
@@ -1464,6 +1613,8 @@ bool GameManager::DisableSkillSpeed()
     DetourUpdateThread(GetCurrentThread());
     DetourDetach(&(PVOID &)skillSpeedHookAddress1, &SkillSpeedHooked1);
     DetourDetach(&(PVOID &)skillSpeedHookAddress2, &SkillSpeedHooked2);
+    DetourDetach(&(PVOID &)skillCooldownHookAddress, &SkillCooDownCalculateHooked);
+    DetourDetach(&(PVOID &)skillModeHookAddress, &SkillModeHooked);
     DetourTransactionCommit();
     return true;
 }
@@ -1597,6 +1748,40 @@ bool GameManager::DisableMoveSpeed()
     DetourUpdateThread(GetCurrentThread());
     DetourDetach(&(PVOID &)moveSpeedHookAddress, &MoveSpeedHooked);
     DetourDetach(&(PVOID &)moveSpeedUnlimitHookAddress, &MoveSpeedUnlimitHooked);
+    DetourTransactionCommit();
+    return true;
+}
+
+static uintptr_t cameraDistanceHookAddress = NULL;
+static void *cameraDistanceRetAddress;
+
+int __declspec(naked) CameraDistanceHooked()
+{
+    __asm
+    {
+        jmp cameraDistanceRetAddress
+    }
+}
+bool GameManager::EnableCameraDistance()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return false;
+    }
+    cameraDistanceHookAddress = baseAddr + cameraDistanceHookFunctionOffset;
+
+    cameraDistanceRetAddress = (void *)DetourAndGetRetAddress(cameraDistanceHookAddress, &CameraDistanceHooked);
+    return true;
+}
+
+bool GameManager::DisableCameraDistance()
+{
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    DetourDetach(&(PVOID &)cameraDistanceHookAddress, &CameraDistanceHooked);
     DetourTransactionCommit();
     return true;
 }
@@ -1861,6 +2046,7 @@ std::mutex mtx;
 static auto lastTimeRecv = std::chrono::system_clock::now();
 void RecvListerner()
 {
+    return;
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
@@ -1883,7 +2069,30 @@ int __stdcall RecvHooked(
  int    flags
 )
 {
+    sockaddr_in addr;
+    int addrLen = sizeof(addr);
 
+    // 使用getpeername获取对方的地址信息
+    if (getpeername(s, (sockaddr *)&addr, &addrLen) == 0)
+    {
+        char ipStr[INET_ADDRSTRLEN];
+
+        // 将二进制的IP地址转换为字符串形式
+        auto ret = inet_ntop(AF_INET, &addr.sin_addr, ipStr, sizeof(ipStr));
+        if (ret == NULL)
+        {
+			spdlog::error("inet_ntop failed: {0}", WSAGetLastError());
+		}
+        else
+        {
+            int port = ntohs(addr.sin_port);
+            spdlog::info("Recv on socket {}:{} called ", std::string(ipStr), port);
+        }
+    }
+    else
+    {
+        spdlog::info("Recv on socket {} called", (uintptr_t)s);
+    }
     int ret = recvOriginAddress(s, buf, len, flags);
     if (ret > 0 && ret != 6)
     {

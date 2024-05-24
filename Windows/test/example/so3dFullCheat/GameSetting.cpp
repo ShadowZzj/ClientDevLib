@@ -156,36 +156,6 @@ void SkillSpeed()
         }
     }
 }
-void MoveSpeed()
-{
-    if (ImGui::Checkbox("MoveSpeedEnable", &GameManager::moveSpeedEnable))
-    {
-        spdlog::info("MoveSpeedEnable changed to {}", GameManager::moveSpeedEnable);
-        if (GameManager::moveSpeedEnable)
-        {
-            gameManager.EnableMoveSpeed();
-        }
-        else
-        {
-            gameManager.DisableMoveSpeed();
-        }
-    }
-    float maxMoveSpeed = 14.0f;
-    if (GameManager::moveSpeedEnable)
-    {
-        float currentMoveSpeed = GameManager::moveSpeed;
-        if (GameManager::speedHackEnable)
-        {
-            currentMoveSpeed = currentMoveSpeed * GameManager::speedHack;
-            if (currentMoveSpeed > maxMoveSpeed)
-            {
-                GameManager::moveSpeed = maxMoveSpeed / GameManager::speedHack;
-            }
-        }
-        // slider from 1 to 10
-        ImGui::SliderFloat("MoveSpeed", &GameManager::moveSpeed, 1.0f, maxMoveSpeed);
-    }
-}
 void SpeedHack()
 {
     if (ImGui::Checkbox("SpeedHackEnable", &GameManager::speedHackEnable))
@@ -847,6 +817,55 @@ void AutoHuntHandler()
         }
     }
 }
+void GameSetting::MoveSpeedHandler()
+{
+    if (ImGui::Checkbox("MoveSpeedEnable", &GameManager::moveSpeedEnable))
+    {
+        spdlog::info("MoveSpeedEnable changed to {}", GameManager::moveSpeedEnable);
+        if (GameManager::moveSpeedEnable)
+        {
+            gameManager.EnableMoveSpeed();
+        }
+        else
+        {
+            gameManager.DisableMoveSpeed();
+        }
+    }
+    if (roleConfig.find("MoveSpeedEnable") != roleConfig.end())
+    {
+        auto preMoveSpeedEnable      = GameManager::moveSpeedEnable;
+        GameManager::moveSpeedEnable = roleConfig["MoveSpeedEnable"];
+        if (!preMoveSpeedEnable)
+        {
+            gameManager.EnableMoveSpeed();
+        }
+
+        if (roleConfig.find("MoveSpeedValue") != roleConfig.end())
+        {
+            GameManager::moveSpeed = roleConfig["MoveSpeedValue"];
+        }
+    }
+    float maxMoveSpeed = 14.0f;
+    if (GameManager::moveSpeedEnable)
+    {
+        float currentMoveSpeed = GameManager::moveSpeed;
+        if (GameManager::speedHackEnable)
+        {
+            currentMoveSpeed = currentMoveSpeed * GameManager::speedHack;
+            if (currentMoveSpeed > maxMoveSpeed)
+            {
+                GameManager::moveSpeed = maxMoveSpeed / GameManager::speedHack;
+            }
+        }
+        // slider from 1 to 10
+        ImGui::SliderFloat("MoveSpeed", &GameManager::moveSpeed, 1.0f, maxMoveSpeed);
+    }
+}
+void OpenBoxHandler()
+{
+    if (ImGui::Button("OpenBox"))
+        gameManager.OpenSandBox();
+}
 void GameSetting::Render(bool &open)
 {
     ImGui::SetNextWindowBgAlpha(0.2f);
@@ -859,6 +878,7 @@ void GameSetting::Render(bool &open)
         InitLog("default");
         gameManager.EnablePopupWindowHook();
         gameManager.HookSendAndRecv();
+        gameManager.EnableCameraDistance();
     }
     ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
@@ -963,12 +983,10 @@ void GameSetting::Render(bool &open)
             GameManager::attackSpeedEnable   = true;
             GameManager::skillRangeEnable    = true;
             GameManager::skillSpeedEnable    = true;
-            GameManager::moveSpeedEnable     = true;
             GameManager::speedHackEnable     = true;
             GameManager::skillAutoCastEnable = true;
             // GameManager::autoPickItemEnable   = true;
             isTempPause = false;
-            gameManager.EnableMoveSpeed();
             gameManager.EnableAttackSpeed();
             gameManager.EnableAttackRange();
             gameManager.EnableSkillRange();
@@ -977,6 +995,7 @@ void GameSetting::Render(bool &open)
         }
     }
     ImGui::Text("Around Players: %d", aroundPlayers.size());
+    OpenBoxHandler();
     AutoHuntHandler();
     GetReward();
     AttackRange();
@@ -984,7 +1003,7 @@ void GameSetting::Render(bool &open)
     SkillRange();
     ItemCoolDown();
     SkillSpeed();
-    MoveSpeed();
+    MoveSpeedHandler();
     SpeedHack();
     FullFirePower();
     SellItem();
@@ -1093,12 +1112,6 @@ void GameSetting::End()
         gameManager.DisableSkillSpeed();
     }
 
-    if (GameManager::moveSpeedEnable)
-    {
-        GameManager::moveSpeedEnable = false;
-        GameManager gameManager;
-        gameManager.DisableMoveSpeed();
-    }
 
     if (GameManager::speedHackEnable)
     {
