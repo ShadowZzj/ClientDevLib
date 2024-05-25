@@ -1556,6 +1556,17 @@ int __declspec(naked) SkillModeHooked()
 	}
 }
 
+static uintptr_t animationModeHookAddress = NULL;
+static void *animationModeRetAddress;
+
+int __declspec(naked) animationModeHooked()
+{
+    __asm
+    {
+		jmp animationModeRetAddress
+    }
+}
+
 bool GameManager::EnableSkillSpeed()
 {
     if (skillSpeedHookAddress1 == NULL)
@@ -1604,6 +1615,17 @@ bool GameManager::EnableSkillSpeed()
     spdlog::info("skillModeHookAddress: {0:x}", skillModeHookAddress);
     skillModeRetAddress = (void *)DetourAndGetRetAddress(skillModeHookAddress, &SkillModeHooked);
 
+    if (animationModeHookAddress == NULL)
+        animationModeHookAddress = GetPatternMatchResult(animationModeChangePattern);
+
+    if (animationModeHookAddress == NULL)
+    {
+        spdlog::error("animationModeHookAddress is null");
+        return false;
+    }
+
+    spdlog::info("animationModeHookAddress: {0:x}", animationModeHookAddress);
+    animationModeRetAddress = (void *)DetourAndGetRetAddress(animationModeHookAddress, &animationModeHooked);
     return true;
 }
 

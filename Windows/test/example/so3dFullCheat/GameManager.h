@@ -455,6 +455,7 @@ class GameManager
     inline static const std::string skillNoPretimePattern         = "F3 0F 10 81 50 01 00 00";
     inline static const std::string skillSpeedPattern             = "F3 0F 11 88 60 23 00 00 F3 0F 2A 85 EC";
     inline static const std::string skillModeChangePattern          = "89 88 2C 2C 00 00";
+    inline static const std::string animationModeChangePattern      = "89 88 94 01 00 00 8B 55 F8";
     inline static const std::string skillCoolDownCalculatePattern = "F3 0F 10 8A 58 01 00 00";
     inline static const std::string sendPackageCallPattern        = "55 8B EC 83 EC 18 89 4D F8 8B 45 F8 0F B6 48";
     inline static const uintptr_t cameraDistanceHookFunctionOffset  = 0x51d8a1;
