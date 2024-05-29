@@ -8,7 +8,7 @@ class GameManager
 {
   public:
     // CCreature
-    static const uintptr_t creatureBaseOffset                              = 0xa18618;
+    static const uintptr_t creatureBaseOffset                              = 0xa3c4c0;
     inline static const std::vector<unsigned int> creatureMultiLevelOffset = {0xC};
     enum CreatureType : int
     {
@@ -78,12 +78,12 @@ class GameManager
         CCreature creature;
     };
     // monsterID  -1代表未选中
-    static const uintptr_t monsterIdOffset = 0x13FB734;
+    static const uintptr_t monsterIdOffset = 0x141f448;
 
     // GameClient
-    static const uintptr_t gameClientOffset = 0x13fbd58;
+    static const uintptr_t gameClientOffset = 0x141fb78;
     // 搜索攻击力变换，然后找[???+0xoffset]，然后ce搜???，一级指针就是
-    static const uintptr_t localPlayerOffset = 0x95a784;
+    static const uintptr_t localPlayerOffset = 0x97a0a4;
     //// localPlayer offset
     enum class Profession : uint32_t
     {
@@ -96,44 +96,49 @@ class GameManager
         Hunter     = 9
     };
 #pragma pack(push, 4) // 将对齐设置为4字节
-    // Created with ReClass.NET 1.2 by KN4CK3R
-
     class CLocalUser
     {
       public:
-     	  char pad_0000[60]; //0x0000
-	      float x; //0x003C
-	      float y; //0x0040
-	      float z; //0x0044
-	      char pad_0048[320]; //0x0048
-	      int32_t attackStatus; //0x0188
-	      char pad_018C[16]; //0x018C
-	      int32_t intX; //0x019C
-	      int32_t intZ; //0x01A0
-	      float moveSpeed; //0x01A4
-	      char pad_01A8[4712]; //0x01A8
-	      char name[40]; //0x1410
-	      char pad_1438[16]; //0x1438
-	      uint32_t profession; //0x1448
-	      char pad_144C[4]; //0x144C
-	      uint32_t currentHP; //0x1450
-	      uint32_t maxHP; //0x1454
-	      uint32_t currentMP; //0x1458
-	      uint32_t maxMP; //0x145C
-	      char pad_1460[3836]; //0x1460
-	      float attackSpeed; //0x235C
-	      float skillSpeed; //0x2360
-	      char pad_2364[1220]; //0x2364
-	      char loginUserName[16]; //0x2828
-	      char pad_2838[384]; //0x2838
-	      uint64_t money; //0x29B8
-	      uint32_t attack; //0x29C0
-	      char pad_29C4[264]; //0x29C4
-	      uint32_t attackRange; //0x2ACC
-	      char pad_2AD0[412]; //0x2AD0
+        char pad_0000[60];      // 0x0000
+        float x;                // 0x003C
+        float y;                // 0x0040
+        float z;                // 0x0044
+        char pad_0048[40];      // 0x0048
+        uint32_t unknown;       // 0x0070
+        char pad_0074[276];     // 0x0074
+        int32_t attackStatus;   // 0x0188
+        char pad_018C[8];       // 0x018C
+        uint32_t animation;     // 0x0194
+        char pad_0198[4];       // 0x0198
+        int32_t intX;           // 0x019C
+        int32_t intZ;           // 0x01A0
+        float moveSpeed;        // 0x01A4
+        char pad_01A8[6056];    // 0x01A8
+        char name[40];          // 0x1950
+        char pad_1978[16];      // 0x1978
+        uint32_t profession;    // 0x1988
+        char pad_198C[4];       // 0x198C
+        uint32_t currentHP;     // 0x1990
+        uint32_t maxHP;         // 0x1994
+        uint32_t currentMP;     // 0x1998
+        uint32_t maxMP;         // 0x199C
+        char pad_19A0[4668];    // 0x19A0
+        float attackSpeed;      // 0x2BDC
+        float skillSpeed;       // 0x2BE0
+        char pad_2BE4[1252];    // 0x2BE4
+        char loginUserName[16]; // 0x30C8
+        char pad_30D8[384];     // 0x30D8
+        uint64_t money;         // 0x3258
+        uint32_t attack;        // 0x3260
+        char pad_3264[264];     // 0x3264
+        uint32_t attackRange;   // 0x336C
+        char pad_3370[348];     // 0x3370
+        uint32_t skillMode;     // 0x34CC
+        char pad_34D0[4048];    // 0x34D0
+
 
       public:
-        static const uintptr_t xorValOffset = 0x8b8cdc;
+        static const uintptr_t xorValOffset = 0x8d8cdc;
         uint32_t GetXorEncryptVal();
         std::string GetName();
         uint32_t GetCurrentHP();
@@ -141,32 +146,37 @@ class GameManager
         uint32_t GetCurrentMP();
         uint32_t GetMaxMP();
 
-    };                        // Size: 0x2C6C
-    static_assert(sizeof(CLocalUser) == 0x2C6C);
+    };
 #pragma pack(pop) // 恢复对齐设置
+    inline static const std::string attackRangePattern = "C7 80 6C 33 00 00 01 00 00 00 8B 8D"; // changed
+    inline static const std::string attackSpeedPattern = "F3 0F 11 88 DC 2B 00 00"; //changed
+    inline static const std::string moveSpeedPattern =
+        "F3 0F 11 81 A4 01 00 00 8B 95 2C FB FF FF F3 0F 10 82 A4 01 00 00 0F 2F 05 34"; //changed
+    inline static const std::uintptr_t moveSpeedUnlimitOffset    = 0x2f5781; //changed
+    inline static const std::string skillModeChangePattern     = "89 88 CC 34 00 00";//changed
+    inline static const std::string animationModeChangePattern = "89 88 94 01 00 00 8b 55 f8 0f 57 c0 f3 0f 11 82 90 01 00 00 8b e5 5d c2 04 00";//changed
 
     static const uintptr_t positionXOffset   = 0x3c;
     static const uintptr_t positionYOffset   = 0x40;
     static const uintptr_t positionZOffset   = 0x44;
-    static const uintptr_t moneyOffset       = 0x29b8;
-    static const uintptr_t attackOffset      = 0x29c0;
-    static const uintptr_t attackRangeOffset = 0x2acc;
-    static const uintptr_t attackSpeedOffset = 0x235c;
-    static const uintptr_t skillSpeedOffset  = 0x2360;
+    static const uintptr_t moneyOffset       = 0x3258;
+    static const uintptr_t attackOffset      = 0x3260;
+    static const uintptr_t attackRangeOffset = 0x336C;
+    static const uintptr_t attackSpeedOffset = 0x2BDC;
+    static const uintptr_t skillSpeedOffset  = 0x2BE0;
     static const uintptr_t moveSpeedOffset   = 0x1a4;
     //// end
     // player是一个链表，每次看见新玩家，链表头都会变成新玩家，所以用另一个号，来回卡视野，搜索变动和不变，找到链表头，然后查看谁访问了这个地址，找到基地址
-    static const uintptr_t aroundPlayerOffset                                  = 0x95a780;
-    static const uintptr_t aroundPlayerNameOffset                              = 0x1410;
+    static const uintptr_t aroundPlayerOffset                                  = 0x97a0a0;
+    static const uintptr_t aroundPlayerNameOffset                              = 0x1950;
     inline static const std::vector<unsigned int> aroundPlayerMultiLevelOffset = {0x10};
-    static const uintptr_t nextPlayerPointerOffset                             = 0x236c;
+    static const uintptr_t nextPlayerPointerOffset                             = 0x2bec;
 
     // CItemContainter offset
-    static const uintptr_t itemContainterOffset = 0x95c4b0;
-    static const uintptr_t firstItemOffset      = 0xaa0;
-    static const DWORD itemStructSize           = 0xc8;
+    static const uintptr_t itemContainterOffset = 0x97bdc8;
+    static const uintptr_t firstItemOffset      = 0xde0;
+    static const DWORD itemStructSize           = 0x108;
     inline static unsigned int itemFullCount    = 192;
-    static const unsigned int itemTableSize     = 0x3a8;
 
 #pragma pack(push, 4) // 将对齐设置为4字节
     class CItemTable
@@ -182,30 +192,30 @@ class GameManager
         uint32_t mpHeal;       // 0x011C
         char pad_0120[92];     // 0x0120
         char description[256]; // 0x017C
-        char pad_027C[112];    // 0x027C
-        uint64_t sellMoney;    // 0x02EC
-        char pad_02F4[4];      // 0x02F4
-        uint32_t cooldown;     // 0x02F8
-        char pad_02FC[172];    // 0x02FC
+        char pad_027C[880];    // 0x027C
+        uint64_t sellMoney;    // 0x05EC
+        char pad_05F4[8];      // 0x05F4
+        uint32_t cooldown;     // 0x05FC
+        char pad_0600[744];    // 0x0600
       public:
         std::string GetItemName();
         std::string GetItemDescription();
-    }; // Size: 0x03A8
-    static_assert(sizeof(CItemTable) == itemTableSize);
+    }; 
 #pragma pack(pop) // 恢复对齐设置
     class Item
     {
       public:
-        uint32_t bagId;              // 0x0000
-        uint32_t itemId;             // 0x0004
-        char pad_0008[8];            // 0x0008
-        uint32_t count;              // 0x0010
-        char pad_0014[12];           // 0x0014
+        uint32_t bagId;                 // 0x0000
+        uint32_t itemId;                // 0x0004
+        char pad_0008[8];               // 0x0008
+        uint32_t count;                 // 0x0010
+        char pad_0014[12];              // 0x0014
         class CItemTable *itemTable; // 0x0020
-        char pad_0024[4];            // 0x0024
-        float cooldownLeft;          // 0x0028
-        char pad_002C[156];          // 0x002C
-    };                               // Size: 0x00C8
+        char pad_0024[4];               // 0x0024
+        float cooldownLeft;             // 0x0028
+        char pad_002C[220];             // 0x002C
+
+    };                               //Size: 0x0108
     static_assert(sizeof(Item) == itemStructSize);
 
     class DropItem
@@ -239,8 +249,7 @@ class GameManager
         char pad_0070[2608];         // 0x0070
         class Item items[192];       // 0x0AA0
         char pad_A0A0[3488];         // 0xA0A0
-    };                               // Size: 0xAE40
-    static_assert(sizeof(CItemContainer) == 0xAE40);
+    }; 
 
     inline static const std::vector<std::string> remoteSellerItemList = {
         u8"魔法戒指", u8"雞蛋", u8"香草", u8"紅藥水", u8"藍藥水", u8"紅藥水(中)", u8"藍藥水(中)", u8"紅藥水(大)", u8"藍藥水(大)"};
@@ -255,18 +264,17 @@ class GameManager
         uint32_t sellerId = 0xfecd2408;//remote seller
     };
     // CCashInven offset
-    static const uintptr_t cashItemTableOffset          = 0x13fbd58;
-    static const uintptr_t cashInvenOffset              = 0x957700;
+    static const uintptr_t cashInvenOffset              = 0x9766c8;
     static const uintptr_t cashInvenSize                = 80;
     static const uintptr_t firstCashItemOffset          = 0x40;
-    inline static const uintptr_t useCashItemFuncOffset = 0x6a0dc0;
+    inline static const uintptr_t useCashItemFuncOffset = 0x6bd5b0;
     inline static std::string cashSellerItemName        = "\xE6\x94\xA4\xE8\xB2\xA9\xE5\x91\xBC\xE5\x8F\xAB";
     // ItemTable offset
-    static const uintptr_t itemCoolDownOffset = 0x2f8;
+    static const uintptr_t itemCoolDownOffset = 0x5FC;
     // end
     //
     // SkillRelated offset
-    static const uintptr_t skillIndexBase          = 0xA1be38;
+    static const uintptr_t skillIndexBase          = 0xA3fc54;
     static const uintptr_t skillArrayPointerOffset = 0x440;
     static const uintptr_t skillArraySizeOffset    = 0x444;
     class SkillTable
@@ -314,24 +322,22 @@ class GameManager
         SkillTable *skillTable;
     };
     static_assert(sizeof(CSkill) == 0x28);
-    static const uintptr_t skillSendPackageOffset    = 0x6a2d60;
-    static const uintptr_t generalSendPackageOffset  = 0x6a0cb0;
-    static const uintptr_t pickItemSendPackageOffset = 0x6a0f50;
-    static const uintptr_t buyItemSendPackageOffset = 0x6a2d60;
-    static const uintptr_t rawSendPackageOffset      = 0x6919e0;
+    static const uintptr_t skillSendPackageOffset    = 0x6bf550;//changed
+    static const uintptr_t generalSendPackageOffset  = 0x6bd4a0;//changed
+    static const uintptr_t pickItemSendPackageOffset = 0x6bf670;//changed
+    static const uintptr_t buyItemSendPackageOffset  = 0x6bf550;//changed
+    static const uintptr_t rawSendPackageOffset      = 0x6ae1e0;   //changed
     // SkillTable offset
-    static const uintptr_t skillRangeOffset   = 0x14c;
-    static const uintptr_t skillPretimeOffset = 0x150;
+    static const uintptr_t skillRangeOffset   = offsetof(GameManager::SkillTable, skillRange);
+    static const uintptr_t skillPretimeOffset = offsetof(GameManager::SkillTable, preTime);
 
     // end
 
     // GuiMenu
-    static const uintptr_t CMerchantVirtualTableOffset                    = 0x81c548;
-    static const uintptr_t CRewardAccessDialogVirtualTableOffset          = 0x826a50;
-    static const uintptr_t guiIndexerOffset = 0x13e5c98;
-    static const uintptr_t FindGuiWithIndexFuncOffset                          = 0x56a0c0;
-    inline static const std::vector<unsigned int> guiMenuMultilevelOffset = {0x8,0x0,0x8};
-    inline static const std::vector<unsigned int> firstGuiMenuMultilevelOffset = {0x0, 0x4};
+    static const uintptr_t CMerchantVirtualTableOffset                    = 0x83a988; //changed
+    static const uintptr_t CRewardAccessDialogVirtualTableOffset          = 0x844ed8; //changed
+    static const uintptr_t guiIndexerOffset = 0x1409ab0; //changed
+    static const uintptr_t FindGuiWithIndexFuncOffset                          = 0x5839b0; //changed
     class CMenuContainerEx
     {
       public:
@@ -424,8 +430,7 @@ class GameManager
     };
 
     //autohunt
-    inline static const uintptr_t autoHuntBaseAddr = 0x957438;//not offset
-    // Created with ReClass.NET 1.2 by KN4CK3R
+    inline static const uintptr_t autoHuntBaseAddr = 0x957438;//没用
 
     enum AutoHuntStatus : uint32_t
     {
@@ -445,17 +450,12 @@ class GameManager
     };                      // Size: 0x0404
     static_assert(sizeof(AutoHuntManager) == 0x404);
     //end
-    inline static const std::string attackRangePattern = "C7 80 CC 2A 00 00 01 00 00 00 8B 8D";
-    inline static const std::string attackSpeedPattern = "F3 0F 11 88 5c 23 00 00";
-    inline static const std::string moveSpeedPattern =
-        "F3 0F 11 81 A4 01 00 00 8B 95 68 FB FF FF F3 0F 10 82 A4 01 00 00 0F 2F 05 60";
-    inline static const std::string moveSpeedUnlimitPattern       = "F3 0F 11 80 A4 01 00 00";
+
+
     inline static const std::string itemNoCoolDownPattern         = "F3 0F 2A 81 F8 02 00 00";
     inline static const std::string skillRangePattern             = "8B 81 4C 01 00 00";
     inline static const std::string skillNoPretimePattern         = "F3 0F 10 81 50 01 00 00";
     inline static const std::string skillSpeedPattern             = "F3 0F 11 88 60 23 00 00 F3 0F 2A 85 EC";
-    inline static const std::string skillModeChangePattern          = "89 88 2C 2C 00 00";
-    inline static const std::string animationModeChangePattern      = "89 88 94 01 00 00 8B 55 F8";
     inline static const std::string skillCoolDownCalculatePattern = "F3 0F 10 8A 58 01 00 00";
     inline static const std::string sendPackageCallPattern        = "55 8B EC 83 EC 18 89 4D F8 8B 45 F8 0F B6 48";
     inline static const uintptr_t cameraDistanceHookFunctionOffset  = 0x51d8a1;
@@ -488,7 +488,6 @@ class GameManager
     std::vector<SingleRewardInfo> GetRewardInfo(GUIIndex rewardGuiType);
     AutoHuntManager* GetAutoHuntManager();
     void CloseSellerGui();
-    CMenuContainerEx* GetCurrentOpenGuiMenu();
     bool HasMonsterSelected();
     uintptr_t GetLocalPlayerBase();
 

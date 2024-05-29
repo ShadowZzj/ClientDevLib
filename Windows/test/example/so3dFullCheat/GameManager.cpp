@@ -511,8 +511,8 @@ bool GameManager::UseCashItem(unsigned int bagId)
     }
 
     auto useCashItemFuncAddr       = baseAddr + useCashItemFuncOffset;
-    uintptr_t cashItemTableAddress = NULL;
-    memory.Read(baseAddr + cashItemTableOffset, &cashItemTableAddress, sizeof(cashItemTableAddress));
+    uintptr_t gameClient = NULL;
+    memory.Read(baseAddr + gameClientOffset, &gameClient, sizeof(gameClient));
 
     size_t _bagId = bagId + 13;
     __asm
@@ -521,7 +521,7 @@ bool GameManager::UseCashItem(unsigned int bagId)
         push 0
         push _bagId
         push 0x64614
-        mov ecx, cashItemTableAddress
+        mov ecx, gameClient
 		call useCashItemFuncAddr
         popad
     }
@@ -1289,9 +1289,9 @@ int __declspec(naked) AttackRangeHooked()
 
     __asm
     {
-        mov eax, GameManager::attackRange
-        mov ebx, GameManager::attackRangeOffset
-        mov[ecx + ebx], eax
+        mov ebx, GameManager::attackRange
+        mov ecx, GameManager::attackRangeOffset
+        mov[eax + ecx], ebx
     }
 
     __asm
@@ -1676,12 +1676,23 @@ bool GameManager::EnableMoveSpeed()
         spdlog::error("moveSpeedHookAddress is null");
         return false;
     }
+
     spdlog::info("moveSpeedHookAddress: {0:x}", moveSpeedHookAddress);
 
     moveSpeedRetAddress = (void *)DetourAndGetRetAddress(moveSpeedHookAddress, &MoveSpeedHooked);
 
     if (moveSpeedUnlimitHookAddress == NULL)
-        moveSpeedUnlimitHookAddress = GetPatternMatchResult(moveSpeedUnlimitPattern);
+    {
+        zzj::Process process;
+        zzj::Memory memory(process);
+        auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+        if (baseAddr == NULL)
+        {
+            return nullptr;
+        }
+
+        moveSpeedUnlimitHookAddress = baseAddr + moveSpeedUnlimitOffset;
+    }
     if (moveSpeedUnlimitHookAddress == NULL)
     {
         spdlog::error("moveSpeedUnlimitHookAddress is null");
@@ -1693,35 +1704,19 @@ bool GameManager::EnableMoveSpeed()
     return true;
 }
 
-GameManager::CMenuContainerEx *GameManager::GetCurrentOpenGuiMenu()
-{
-    zzj::Process process;
-    zzj::Memory memory(process);
-    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
-    if (baseAddr == NULL)
-    {
-        return nullptr;
-    }
-    CMenuContainerEx *menuContainer = (CMenuContainerEx *)memory.FindMultiPleLevelAddress(baseAddr + guiIndexerOffset, guiMenuMultilevelOffset);
-    if (menuContainer == nullptr)
-	{
-		spdlog::error("menuContainer is null");
-		return nullptr;
-	}
-    return menuContainer;
-}
 
 
 GameManager::AutoHuntManager *GameManager::GetAutoHuntManager()
 {
-    zzj::Process process;
-    zzj::Memory memory(process);
-    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
-    if (baseAddr == NULL)
-    {
-        return nullptr;
-    }
-    return (AutoHuntManager *)(baseAddr + autoHuntBaseAddr);
+    static AutoHuntManager manager;
+    //zzj::Process process;
+    //zzj::Memory memory(process);
+    //auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    //if (baseAddr == NULL)
+    //{
+    //    return nullptr;
+    //}
+    return (AutoHuntManager *)&manager;
 }
 bool(__fastcall *popUpWindowHookAddress)(void *thisPointer, void *edx, const char *popMessage, int popType, int a4,
                                          float a5) = NULL;
@@ -2126,62 +2121,63 @@ int __stdcall RecvHooked(
     return ret; 
 }
 
-#include <pybind11/pybind11.h>
-#include <pybind11/embed.h>
-#include <pybind11/stl.h> 
-#include <regex>
-namespace py = pybind11;
+//#include <pybind11/pybind11.h>
+//#include <pybind11/embed.h>
+//#include <pybind11/stl.h> 
+//#include <regex>
+//namespace py = pybind11;
 
 std::vector<byte> CallPackageFilter(void* buffer, size_t len)
 {
-    static py::scoped_interpreter guard{};
-    try
-    {
-        std::string module_name             = "testing";
-        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
-        auto module_path                    = currentPath / "packetfilter.py";
-        py::module importlib                = py::module_::import("importlib.util");
-        py::object spec   = importlib.attr("spec_from_file_location")(module_name, module_path.string());
-        py::object module = importlib.attr("module_from_spec")(spec);
-        spec.attr("loader").attr("exec_module")(module);
-
-        std::vector<BYTE> packet((BYTE *)buffer, (BYTE *)buffer + len);
-        auto pythonRet = module.attr("PacketSniffer")(packet);
-        // 检查返回值是否为bytes或bytearray，并转换为std::vector<byte>
-        if (py::isinstance<py::bytes>(pythonRet) || py::isinstance<py::bytearray>(pythonRet))
-        {
-            std::vector<byte> result = pythonRet.cast<std::vector<uint8_t>>();
-            std::string packetRet;
-            for (auto &byte : result)
-            {
-                packetRet += fmt::format("{:02x} ", byte);
-            }
-            spdlog::info("ModifiedPacket: {0}", packetRet);
-            return result;
-        }
-    }
-    catch (py::error_already_set &e)
-    {
-        spdlog::error("Python error: {0}", e.what());
-    }
-    catch (const std::exception &e)
-    {
-        spdlog::error("C++ error: {0}", e.what());
-    }
-    catch (...)
-    {
-        spdlog::error("Unknown error");
-    }
     return {};
+    //static py::scoped_interpreter guard{};
+    //try
+    //{
+    //    std::string module_name             = "testing";
+    //    boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
+    //    auto module_path                    = currentPath / "packetfilter.py";
+    //    py::module importlib                = py::module_::import("importlib.util");
+    //    py::object spec   = importlib.attr("spec_from_file_location")(module_name, module_path.string());
+    //    py::object module = importlib.attr("module_from_spec")(spec);
+    //    spec.attr("loader").attr("exec_module")(module);
+    //
+    //    std::vector<BYTE> packet((BYTE *)buffer, (BYTE *)buffer + len);
+    //    auto pythonRet = module.attr("PacketSniffer")(packet);
+    //    // 检查返回值是否为bytes或bytearray，并转换为std::vector<byte>
+    //    if (py::isinstance<py::bytes>(pythonRet) || py::isinstance<py::bytearray>(pythonRet))
+    //    {
+    //        std::vector<byte> result = pythonRet.cast<std::vector<uint8_t>>();
+    //        std::string packetRet;
+    //        for (auto &byte : result)
+    //        {
+    //            packetRet += fmt::format("{:02x} ", byte);
+    //        }
+    //        spdlog::info("ModifiedPacket: {0}", packetRet);
+    //        return result;
+    //    }
+    //}
+    //catch (py::error_already_set &e)
+    //{
+    //    spdlog::error("Python error: {0}", e.what());
+    //}
+    //catch (const std::exception &e)
+    //{
+    //    spdlog::error("C++ error: {0}", e.what());
+    //}
+    //catch (...)
+    //{
+    //    spdlog::error("Unknown error");
+    //}
+    //return {};
 }
 
 int(__fastcall *plainSendPackage)(void *pGameClient, void *edx, void *buffer, size_t len) = nullptr;
 int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_t len)
 {
     static auto init = []() { 
-        boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
-        currentPath /= "pythonlib";
-        Py_SetPythonHome(currentPath.wstring().c_str());
+       // boost::filesystem::path currentPath = zzj::GetDynamicLibPath(CallPackageFilter);
+       // currentPath /= "pythonlib";
+       // Py_SetPythonHome(currentPath.wstring().c_str());
         return 0; 
         }();
     spdlog::info("Plain send called!");
