@@ -281,6 +281,191 @@ void GameManager::BuyItem(GameManager::BuyItemPacket packet)
         popad
     }
 }
+void GameManager::AutoLoginHandler()
+{
+
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    static bool isRoleChoose = false;
+    int currentGameUIStatus;
+    memory.Read(baseAddr + 0x8b8cc4, &currentGameUIStatus, sizeof(currentGameUIStatus));
+    switch (currentGameUIStatus)
+    {
+    case 2:
+        ChooseRole(1);
+        isRoleChoose = true;
+        Sleep(5000);
+        break;
+    case 9:
+        ChooseServer(1);
+        Sleep(5000);
+        break;
+    case 1:
+        Login("zhangyitong1", "960430");
+        Sleep(5000);
+        break;
+    default:
+        break;
+    }
+}
+void GameManager::Login(const std::string &userName, const std::string &password)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    CLocalUser *localUser = (CLocalUser *)GetLocalPlayerBase();
+    if (localUser == nullptr)
+    {
+		spdlog::error("localUser is null");
+		return;
+	}
+    uintptr_t arg0             = NULL;
+    memory.Read(baseAddr + mapFindValueFirstArgOffset, &arg0, sizeof(arg0));
+
+    auto mapFindValueFuncAddr = baseAddr + mapFindValueFunctionOffset;
+    uintptr_t userNameAddress = NULL;
+    uintptr_t passwordAddress  = NULL;
+
+    const char* id_input = "id_input";
+    const char* pass_input = "pass_input";
+    __asm
+    {
+        mov ecx,arg0
+        push id_input
+        call mapFindValueFuncAddr
+        add eax,0x68
+        mov userNameAddress, eax
+
+        mov ecx,arg0
+        push pass_input
+        call mapFindValueFuncAddr
+        add eax,0x68
+        mov passwordAddress, eax
+    }
+
+    memcpy((void*)userNameAddress, userName.c_str(), userName.size());
+    //trailing zero
+    ((char*)userNameAddress)[userName.size()] = 0;
+    memcpy((void*)passwordAddress, password.c_str(), password.size());
+    //trailing zero
+	((char*)passwordAddress)[password.size()] = 0;
+
+    auto funcAddr = baseAddr + loginFunctionOffset;
+    __asm
+    {
+        push 1
+        push 0
+        call funcAddr
+    }
+}
+void GameManager::ChooseServer(int channel)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+
+    uintptr_t loginClient = NULL;
+    auto res             = memory.Read(baseAddr + loginClientOffset, &loginClient, sizeof(loginClient));
+    if (!res)
+    {
+		spdlog::error("loginClient is null");
+		return;
+	}
+    auto funcAddr = baseAddr + generalSendPackageOffset;
+    __asm
+    {
+        pushad
+		push channel
+		push 2
+		push 0x1b19b
+		mov ecx,loginClient
+		call funcAddr
+		popad
+	
+    }
+    int server = 2;
+    memory.Write(baseAddr + gChannelOffset, &channel, sizeof(channel));
+    memory.Write(baseAddr + gServerOffset, &server, sizeof(server));
+    server = 1;
+    memory.Write(baseAddr + gServerMinus1Offset, &server, sizeof(server));
+
+}
+void GameManager::ChooseRole(int index)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    uintptr_t loginClient = NULL;
+    auto res              = memory.Read(baseAddr + loginClientOffset, &loginClient, sizeof(loginClient));
+    if (!res)
+    {
+        spdlog::error("loginClient is null");
+        return;
+    }
+
+    static char buffer[0x18] = {0};
+    RtlZeroMemory(buffer, sizeof(buffer));
+
+    int server;
+    int channel;
+    int serverMinus1;
+    memory.Read(baseAddr + gServerOffset, &server, sizeof(server));
+    memory.Read(baseAddr + gChannelOffset, &channel, sizeof(channel));
+    memory.Read(baseAddr + gServerMinus1Offset, &serverMinus1, sizeof(serverMinus1));
+    *(DWORD *)&buffer[0] = server;
+    *(DWORD *)&buffer[4] = channel;
+
+    char tmp[0x10] = {0};
+    memory.Read(baseAddr + gRolesBeginOffset + 0x2810*(index-1), tmp, sizeof(tmp));
+    memcpy(buffer + 8, tmp, sizeof(tmp));
+
+    spdlog::info("ChooseRole: server {} channel {} name {}", server, channel, tmp);
+
+    int tmpVal                             = 1;
+    memory.Write((uintptr_t)0xd5cfa4,&tmpVal,sizeof(tmpVal));
+    auto funcAddr = baseAddr + skillSendPackageOffset;
+    __asm
+    {
+        pushad
+		mov ecx, loginClient
+		push 0x18
+		lea eax, buffer
+		push eax
+		push 0x1b19e
+		call funcAddr
+		popad
+    }
+
+    tmpVal = serverMinus1 - 1;
+    memory.Write(0xd4c75c, &tmpVal, sizeof(tmpVal));
+
+    tmpVal = channel - 1;
+    memory.Write(0xd4c760, &tmpVal, sizeof(tmpVal));
+
+    tmpVal = 1;
+    memory.Write(0xd5cdf0, &tmpVal, sizeof(tmpVal));
+}
 void GameManager::OpenRewardAccessGui()
 {
     zzj::Process process;
@@ -1015,7 +1200,11 @@ void GameManager::ThrowBomb()
     uint32_t distanceThreshold = 5;
     for (size_t i = 0; i < creatures.size(); i++)
     {
+        if (i >= fireFullPowerMaxCreature)
+            continue;
         auto currentCreature = creatures[i];
+        if (currentCreature.creature.health <= 0)
+            continue;
         spdlog::info("Ready to throw bomb to {}   {}", currentCreature.creature.monsterStatTablePtr->GetName(),
                      currentCreature.creature.monsterId);
         std::vector<CreatureWithAddress> neighbors;
@@ -1025,6 +1214,8 @@ void GameManager::ThrowBomb()
             if (i == j)
                 continue;
             auto otherCreature = creatures[j];
+            if (otherCreature.creature.health <= 0)
+				continue;
             if (currentCreature.creature.GetDistance(otherCreature.creature) < distanceThreshold)
             {
                 neighbors.push_back(otherCreature);

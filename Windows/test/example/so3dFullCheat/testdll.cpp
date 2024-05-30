@@ -9,6 +9,13 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 #include <string>
+
+extern "C" __declspec(dllexport) void test()
+{
+    spdlog::info("test called");
+    return;
+}
+
 DWORD WINAPI HackThread(LPVOID lpThreadParameter)
 {
     std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<GameSetting>();

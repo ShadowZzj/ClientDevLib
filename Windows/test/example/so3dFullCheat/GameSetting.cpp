@@ -195,6 +195,7 @@ void FullFirePower()
         }
     }
     ImGui::Checkbox("FireFullPower", &GameManager::fireFullPowerEnabled);
+    ImGui::InputInt("MaxCreature", &GameManager::fireFullPowerMaxCreature);
     ImGui::InputInt("Interval", &GameManager::fireFullPowerIntervalValue);
     if (!isTempPause && GameManager::fireFullPowerEnabled)
     {
@@ -866,6 +867,16 @@ void OpenBoxHandler()
     if (ImGui::Button("OpenBox"))
         gameManager.OpenSandBox();
 }
+void AutoLoginHandler()
+{
+    static std::thread autoLoginThread([]() {
+        while (true)
+        {
+            gameManager.AutoLoginHandler();
+            Sleep(1000);
+        }
+	});
+}
 void GameSetting::Render(bool &open)
 {
     ImGui::SetNextWindowBgAlpha(0.2f);
@@ -881,6 +892,7 @@ void GameSetting::Render(bool &open)
         gameManager.EnableCameraDistance();
     }
     ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
+    AutoLoginHandler();
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
     if (localPlayer == nullptr || localPlayer->GetName() == "")
     {
@@ -930,18 +942,21 @@ void GameSetting::Render(bool &open)
         ImGui::End();
         return;
     }
+    spdlog::info("Before GetAroundPlayers");
     static bool isAutoSwitch = true;
     ImGui::Checkbox("isAutoSwitch", &isAutoSwitch);
     auto aroundPlayers = gameManager.GetAroundPlayers();
-
+    spdlog::info("AroundPlayers size: {}", aroundPlayers.size());
     std::vector<std::string> namesAlert;
     if (gameManager.config.find("nameAlert") != gameManager.config.end())
         namesAlert = gameManager.config["nameAlert"];
+
 
     std::string localPlayerPosPrint =
         fmt::format("localPlayer pos {:.2f},{:.2f},{:.2f} hp:{} mp:{}", localPlayer->x, localPlayer->y, localPlayer->z,
                     localPlayer->GetCurrentHP(), localPlayer->GetCurrentMP());
     ImGui::Text(localPlayerPosPrint.c_str());
+    spdlog::info(localPlayerPosPrint);
     for (auto &player : aroundPlayers)
     {
         std::string name = player.GetName();
@@ -954,6 +969,8 @@ void GameSetting::Render(bool &open)
             ImGui::Text(textStr.c_str());
         }
     }
+
+    spdlog::info("Alert done");
     // iterate thourgh all the key in config["roleConfig"], if the aroundPlayers not has the name, then add it
     std::vector<GameManager::CLocalUser> aroundPlayersExceptMine = aroundPlayers;
     aroundPlayersExceptMine.erase(std::remove_if(aroundPlayersExceptMine.begin(), aroundPlayersExceptMine.end(),
@@ -968,6 +985,8 @@ void GameSetting::Render(bool &open)
                                                      return false;
                                                  }),
                                   aroundPlayersExceptMine.end());
+
+    spdlog::info("Ready autoswitch");
     if (isAutoSwitch)
     {
         if (aroundPlayersExceptMine.size() > 0 && !isTempPause)
@@ -994,8 +1013,10 @@ void GameSetting::Render(bool &open)
             gameManager.EnableSpeedHack();
         }
     }
+    spdlog::info("Done autoswitch");
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     OpenBoxHandler();
+    
     AutoHuntHandler();
     GetReward();
     AttackRange();
@@ -1008,12 +1029,12 @@ void GameSetting::Render(bool &open)
     FullFirePower();
     SellItem();
     UseCashItem();
-    // ShowItems();
-    // ShowSkill();
-    // ShowMonsters();
-    // ShowDropItem();
+   // ShowItems();
+   // ShowSkill();
+   // ShowMonsters();
+   // ShowDropItem();
     AutoPickup();
-    // DropItem();
+   // DropItem();
     BuyItem();
     DeliverLetter();
     MakeBomb();

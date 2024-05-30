@@ -45,3 +45,22 @@ public:
 	uint32_t skillMode; //0x2C2C
 	char pad_2C30[6204]; //0x2C30
 }; //Size: 0x446C
+
+
+class CDirectInput
+{
+public:
+	char pad_0000[692]; //0x0000
+	bool leftMouseClick; //0x02B4
+	char pad_02B5[3]; //0x02B5
+	bool middleMouseClick; //0x02B8
+	char pad_02B9[3]; //0x02B9
+	bool rightMouseClick; //0x02BC
+	char pad_02BD[3]; //0x02BD
+	uint32_t x; //0x02C0
+	uint32_t y; //0x02C4
+	char pad_02C8[552]; //0x02C8
+	uint32_t frameMove; //0x04F0
+	uint32_t frameLeftStatus; //0x04F4
+	char pad_04F8[268]; //0x04F8
+}; //Size: 0x0604
