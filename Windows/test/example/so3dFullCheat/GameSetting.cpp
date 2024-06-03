@@ -161,11 +161,11 @@ void SpeedHack()
 }
 void FullFirePower()
 {
-    bool isXPressed = GetAsyncKeyState('X');
+    bool isXPressed            = GetAsyncKeyState('X');
     static auto lastTimeSwitch = std::chrono::system_clock::now();
     if (IsCurrentGameWindowHasFocus() && GetAsyncKeyState('X'))
     {
-        auto now                          = std::chrono::system_clock::now();
+        auto now      = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastTimeSwitch);
         if (duration.count() > 500)
         {
@@ -239,17 +239,17 @@ void FullFirePower()
 std::atomic<bool> isSelling = false;
 void SellItemWrapper(uint32_t bagId)
 {
-  
+
     std::thread([=]() {
         if (isSelling.load())
             return;
         isSelling.store(true);
-        //auto autoHuntManager = gameManager.GetAutoHuntManager();
-        //if (autoHuntManager == nullptr)
-        //    return;
+        // auto autoHuntManager = gameManager.GetAutoHuntManager();
+        // if (autoHuntManager == nullptr)
+        //     return;
         //
-        //auto preStatus                   = autoHuntManager->status;
-        //autoHuntManager->status          = GameManager::AutoHuntStatus::Stop;
+        // auto preStatus                   = autoHuntManager->status;
+        // autoHuntManager->status          = GameManager::AutoHuntStatus::Stop;
         auto preAutoPickItem             = gameManager.autoPickItemEnable;
         gameManager.autoPickItemEnable   = false;
         auto preFullFirePower            = gameManager.fireFullPowerEnabled;
@@ -263,7 +263,7 @@ void SellItemWrapper(uint32_t bagId)
             memory.Read(dll123BaseAddr + 0x1842A8, &preDll123AutoHuntEnabled, 1);
             memory.Write(dll123BaseAddr + 0x1842A8, {0});
         }
-        
+
         Sleep(1000);
         if (gameManager.UseCashItem(GameManager::cashSellerItemName))
         {
@@ -282,7 +282,7 @@ void SellItemWrapper(uint32_t bagId)
 }
 void SellItem()
 {
-    
+
     static uint32_t bagId = 24;
     ImGui::InputInt("BagId", (int *)&bagId);
     if (ImGui::Button("SellItem"))
@@ -453,27 +453,26 @@ void AutoPickup()
                             continue;
                         std::string itemName = item->itemTablePtr->GetItemName();
                         bool shouldContinue  = false;
-                        for(auto& f: filter)
+                        for (auto &f : filter)
                         {
                             std::regex reg(f);
-                            if(std::regex_search(itemName, reg))
+                            if (std::regex_search(itemName, reg))
                             {
                                 shouldContinue = true;
                                 break;
                             }
                         }
-                        if(shouldContinue)
+                        if (shouldContinue)
                             continue;
 
-                        auto distance =
-                            sqrt(pow(item->x - localPlayer->x, 2) + pow(item->y - localPlayer->y, 2) +
+                        auto distance = sqrt(pow(item->x - localPlayer->x, 2) + pow(item->y - localPlayer->y, 2) +
                                              pow(item->z - localPlayer->z, 2));
                         if (distance < 4)
                         {
                             spdlog::info("PickItemName: {} dropId:{:x} itemId:{:x} distance:{} playerPos {},{},{} "
                                          "itemPos {},{},{}",
-                                         itemName, item->dropId, item->itemId, distance,
-                                         localPlayer->x, localPlayer->y, localPlayer->z, item->x, item->y, item->z);
+                                         itemName, item->dropId, item->itemId, distance, localPlayer->x, localPlayer->y,
+                                         localPlayer->z, item->x, item->y, item->z);
                             if (maxPickUpCount == 0)
                                 return;
                             gameManager.PickItem(item->dropId);
@@ -719,66 +718,13 @@ void InitLog(const std::string &name)
     spdlog::set_level(spdlog::level::info);
     spdlog::flush_on(spdlog::level::info);
 }
-void GetReward()
-{
-    static auto lastTime = std::chrono::system_clock::now();
-    static bool firstTime = true;
-    auto currentTime     = std::chrono::system_clock::now();
-    auto duration        = std::chrono::duration_cast<std::chrono::hours>(currentTime - lastTime);
 
-
-    if (ImGui::Button("GetReward") || firstTime || duration.count() > 6)
-    {
-        lastTime = currentTime;
-        bool firstTimeTemp = firstTime;
-        std::thread td([firstTimeTemp]() {
-            if (firstTimeTemp)
-				Sleep(10000);
-            gameManager.OpenRewardAccessGui();
-            Sleep(1000);
-            auto rewardInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAccess);
-            spdlog::info("RewardInfoSize {}", rewardInfo.size());
-            for (int i = 0; i < rewardInfo.size(); i++)
-            {
-                auto info = rewardInfo[i];
-                spdlog::info("RewardInfo: {}", (int)info.status);
-                if (info.status == GameManager::SingleRewardInfo::Status::CanGet)
-                {
-                     gameManager.GetRewardAccessReward(i+1);
-                }
-            }
-            Sleep(1000);
-            gameManager.CloseRewardAccessGui();
-
-            Sleep(1000);
-
-            gameManager.OpenRewardAttenceGui();
-            Sleep(1000);
-            auto rewardAttdenceInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAttence);
-            spdlog::info("RewardAttdenceInfo Size  {}", rewardAttdenceInfo.size());
-            for (int i = 0; i < rewardAttdenceInfo.size(); i++)
-            {
-                auto info = rewardAttdenceInfo[i];
-                spdlog::info("RewardAttdenceInfo: {}", (int)info.status);
-                if (info.status == GameManager::SingleRewardInfo::Status::CanGet)
-                {
-                    gameManager.GetRewardAttenceReward(i + 1);
-                }
-            }
-            Sleep(1000);
-            gameManager.CloseRewardAttenceGui();
-        });
-        td.detach();
-    }
-    firstTime = false;
-
-}
-void SaveLoginUserName(const std::string& userName)
+void SaveLoginUserName(const std::string &userName)
 {
     boost::filesystem::path currentPath = zzj::GetDynamicLibPath(SaveLoginUserName);
-    auto loginConfigPath = currentPath / "loginUserName.json";
-    auto currentProcessId = GetCurrentProcessId();
-    if(!boost::filesystem::exists(loginConfigPath))
+    auto loginConfigPath                = currentPath / "loginUserName.json";
+    auto currentProcessId               = GetCurrentProcessId();
+    if (!boost::filesystem::exists(loginConfigPath))
     {
         nlohmann::json j;
         std::ofstream o(loginConfigPath.string());
@@ -904,11 +850,195 @@ void AutoLoginHandler()
             gameManager.AutoLoginHandler();
             Sleep(1000);
         }
-	});
+    });
 }
-
-void GameSetting::Render(bool &open)
+boost::filesystem::path GameSetting::GetRoleRunningEnviromentPath(const std::string &name)
+{
+    boost::filesystem::path currentDllPath          = zzj::GetDynamicLibPath(AutoLoginHandler);
+    boost::filesystem::path runningEnviromentFolder = currentDllPath / "RunningEnviroment";
+    if (!boost::filesystem::exists(runningEnviromentFolder))
     {
+        boost::filesystem::create_directory(runningEnviromentFolder);
+    }
+
+    boost::filesystem::path rolePath = runningEnviromentFolder / (name + ".json");
+    if (!boost::filesystem::exists(rolePath))
+    {
+        nlohmann::json j;
+        std::ofstream o(rolePath.string());
+        o << j.dump(4);
+        o.close();
+    }
+
+    return rolePath;
+}
+void GameSetting::GetReward()
+{
+    static auto lastTime = std::chrono::system_clock::now();
+    auto currentTime     = std::chrono::system_clock::now();
+    auto duration        = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTime);
+    if (duration.count() < 30)
+    {
+        return;
+    }
+    lastTime = currentTime;
+    std::string currentTimeString;
+    // convert currentTime to string
+    std::time_t currentTimeT  = std::chrono::system_clock::to_time_t(currentTime);
+    std::tm currentTimeStruct = *std::localtime(&currentTimeT);
+    std::stringstream ss;
+    ss << std::put_time(&currentTimeStruct, "%Y-%m-%d %H:%M:%S");
+    currentTimeString                = ss.str();
+
+
+    boost::filesystem::path rolePath = GetRoleRunningEnviromentPath(roleName);
+    nlohmann::json j;
+    std::ifstream i(rolePath.string());
+    i >> j;
+    i.close();
+
+    if (!j.contains("RewardInfo"))
+        j["RewardInfo"] = "";
+    
+    bool shouldGetReward = false;
+    std::string lastTimeStr = j["RewardInfo"];
+    if(lastTimeStr.empty())
+        shouldGetReward = true;
+    else
+    {
+        std::tm lastTimeStruct = {};
+        std::istringstream ss2(lastTimeStr);
+        ss2 >> std::get_time(&lastTimeStruct, "%Y-%m-%d %H:%M:%S");
+        auto lastTimePoint = std::chrono::system_clock::from_time_t(std::mktime(&lastTimeStruct));
+        auto duration2     = std::chrono::duration_cast<std::chrono::hours>(currentTime - lastTimePoint);
+        if (duration2.count() > 6)
+        {
+            shouldGetReward = true;
+        }
+    }
+
+    if(shouldGetReward)
+    {
+        std::thread td([j,rolePath,currentTimeString]() {
+            nlohmann::json js = j;
+            Sleep(10000);
+            gameManager.OpenRewardAccessGui();
+            Sleep(1000);
+            auto rewardInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAccess);
+            spdlog::info("RewardInfoSize {}", rewardInfo.size());
+            for (int i = 0; i < rewardInfo.size(); i++)
+            {
+                auto info = rewardInfo[i];
+                spdlog::info("RewardInfo: {}", (int)info.status);
+                if (info.status == GameManager::SingleRewardInfo::Status::CanGet)
+                {
+                    gameManager.GetRewardAccessReward(i + 1);
+                }
+            }
+            Sleep(1000);
+            gameManager.CloseRewardAccessGui();
+
+            Sleep(1000);
+
+            gameManager.OpenRewardAttenceGui();
+            Sleep(1000);
+            auto rewardAttdenceInfo = gameManager.GetRewardInfo(GameManager::GUIIndex::RewardAttence);
+            spdlog::info("RewardAttdenceInfo Size  {}", rewardAttdenceInfo.size());
+            for (int i = 0; i < rewardAttdenceInfo.size(); i++)
+            {
+                auto info = rewardAttdenceInfo[i];
+                spdlog::info("RewardAttdenceInfo: {}", (int)info.status);
+                if (info.status == GameManager::SingleRewardInfo::Status::CanGet)
+                {
+                    gameManager.GetRewardAttenceReward(i + 1);
+                }
+            }
+            Sleep(1000);
+            gameManager.CloseRewardAttenceGui();
+            js["RewardInfo"]  = currentTimeString;
+            std::ofstream o(rolePath.string());
+            o << js.dump(4);
+            o.close();
+        });
+        td.detach();
+    }
+}
+void GameSetting::CashItemHandler()
+{
+    try
+    {
+        static auto lastTime = std::chrono::system_clock::now();
+        auto currentTime     = std::chrono::system_clock::now();
+        auto duration        = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTime);
+        if (duration.count() < 10)
+        {
+            return;
+        }
+        lastTime = currentTime;
+        if (roleConfig.find("CashItem") != roleConfig.end())
+        {
+            boost::filesystem::path rolePath = GetRoleRunningEnviromentPath(roleName);
+            nlohmann::json j;
+            std::ifstream i(rolePath.string());
+            i >> j;
+            i.close();
+
+            auto cashItem = roleConfig["CashItem"];
+            for (auto &cashItemInfo : cashItem)
+            {
+                std::string itemName = cashItemInfo["name"];
+                int intervalSecond   = cashItemInfo["interval"];
+
+                if (!j.contains("CashItemInfo"))
+                    j["CashItemInfo"] = nlohmann::json::object();
+                if (!j["CashItemInfo"].contains(itemName))
+                {
+                    gameManager.UseCashItem(itemName);
+                    Sleep(100);
+                    std::string currentTimeString;
+                    // convert currentTime to string
+                    std::time_t currentTimeT  = std::chrono::system_clock::to_time_t(currentTime);
+                    std::tm currentTimeStruct = *std::localtime(&currentTimeT);
+                    std::stringstream ss;
+                    ss << std::put_time(&currentTimeStruct, "%Y-%m-%d %H:%M:%S");
+                    currentTimeString = ss.str();
+
+                    j["CashItemInfo"][itemName] = currentTimeString;
+                }
+                else
+                {
+                    std::string lastTimeString = j["CashItemInfo"][itemName];
+                    std::tm lastTime           = {};
+                    std::istringstream ss(lastTimeString);
+                    ss >> std::get_time(&lastTime, "%Y-%m-%d %H:%M:%S");
+                    auto lastTimePoint = std::chrono::system_clock::from_time_t(std::mktime(&lastTime));
+                    auto duration      = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTimePoint);
+                    if (duration.count() > intervalSecond)
+                    {
+                        gameManager.UseCashItem(itemName);
+                        Sleep(100);
+                        std::string currentTimeString;
+                        j["CashItemInfo"][itemName] = currentTimeString;
+                    }
+                }
+            }
+
+            std::ofstream o(rolePath.string());
+            o << j.dump(4);
+            o.close();
+        }
+    }
+    catch (const std::exception &ex)
+    {
+        spdlog::error("CashItemHandler error with {}", ex.what());
+    }
+    catch (...)
+    {
+        spdlog::error("CashItemHandler error with unknown error");
+    }
+}
+void GameSetting::Render(bool &open)
+{
     ImGui::SetNextWindowBgAlpha(0.2f);
     ImGui::Begin("SealCheat", &open);
     // run once
@@ -920,7 +1050,7 @@ void GameSetting::Render(bool &open)
         gameManager.EnableCameraDistance();
     }
     ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
-    //AutoLoginHandler();
+    // AutoLoginHandler();
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
     if (localPlayer == nullptr || localPlayer->GetName() == "")
     {
@@ -938,6 +1068,7 @@ void GameSetting::Render(bool &open)
         std::string loginUserName = localPlayer->loginUserName;
         SaveLoginUserName(loginUserName);
         gameManager.HookSendAndRecv();
+        roleName = playerName;
     }
     if (ImGui::Button("SaveConfig"))
     {
@@ -964,7 +1095,7 @@ void GameSetting::Render(bool &open)
         Sleep(3000);
         return 0;
     });
-     
+
     if (result.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
     {
         ImGui::Text("Cheat Loading ......");
@@ -979,7 +1110,6 @@ void GameSetting::Render(bool &open)
     std::vector<std::string> namesAlert;
     if (gameManager.config.find("nameAlert") != gameManager.config.end())
         namesAlert = gameManager.config["nameAlert"];
-
 
     std::string localPlayerPosPrint =
         fmt::format("localPlayer pos {:.2f},{:.2f},{:.2f} hp:{} mp:{}", localPlayer->x, localPlayer->y, localPlayer->z,
@@ -999,7 +1129,6 @@ void GameSetting::Render(bool &open)
         }
     }
 
-
     // iterate thourgh all the key in config["roleConfig"], if the aroundPlayers not has the name, then add it
     std::vector<GameManager::CUser> aroundPlayersExceptMine = aroundPlayers;
     aroundPlayersExceptMine.erase(std::remove_if(aroundPlayersExceptMine.begin(), aroundPlayersExceptMine.end(),
@@ -1014,7 +1143,6 @@ void GameSetting::Render(bool &open)
                                                      return false;
                                                  }),
                                   aroundPlayersExceptMine.end());
-
 
     if (isAutoSwitch)
     {
@@ -1043,7 +1171,7 @@ void GameSetting::Render(bool &open)
 
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     OpenBoxHandler();
-    
+    CashItemHandler();
     AutoHuntHandler();
     GetReward();
     AttackRange();
@@ -1056,12 +1184,12 @@ void GameSetting::Render(bool &open)
     FullFirePower();
     SellItem();
     UseCashItem();
-   // ShowItems();
-   // ShowSkill();
-   // ShowMonsters();
-   // ShowDropItem();
+    // ShowItems();
+    // ShowSkill();
+    // ShowMonsters();
+    // ShowDropItem();
     AutoPickup();
-   // DropItem();
+    // DropItem();
     BuyItem();
     DeliverLetter();
     MakeBomb();
@@ -1159,7 +1287,6 @@ void GameSetting::End()
         GameManager gameManager;
         gameManager.DisableSkillSpeed();
     }
-
 
     if (GameManager::speedHackEnable)
     {

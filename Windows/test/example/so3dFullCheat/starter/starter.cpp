@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     while (true)
     {
         std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start;
-        if (elapsed_seconds.count() > 10)
+        if (elapsed_seconds.count() > 30)
         {
             spdlog::error("Timeout");
             zzj::Process::KillProcess(pi.dwProcessId);
