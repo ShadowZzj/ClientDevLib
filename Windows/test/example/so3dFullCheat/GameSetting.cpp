@@ -85,27 +85,6 @@ void AttackRange()
         ImGui::SliderInt("AttackRange", &GameManager::attackRange, 1, 10);
     }
 }
-void AttackSpeed()
-{
-    if (ImGui::Checkbox("AttackSpeedEnable", &GameManager::attackSpeedEnable))
-    {
-        spdlog::info("AttackSpeedEnable changed to {}", GameManager::attackSpeedEnable);
-        if (GameManager::attackSpeedEnable)
-        {
-            gameManager.EnableAttackSpeed();
-        }
-        else
-        {
-            gameManager.DisableAttackSpeed();
-        }
-    }
-
-    if (GameManager::attackSpeedEnable)
-    {
-        // slider from 0.0f to 1.0f
-        ImGui::SliderFloat("AttackSpeed", &GameManager::attackSpeed, 0.0f, 1.0f);
-    }
-}
 void SkillRange()
 {
     if (ImGui::Checkbox("SkillRangeEnable", &GameManager::skillRangeEnable))
@@ -256,44 +235,49 @@ void FullFirePower()
         }
     }
 }
+
+std::atomic<bool> isSelling = false;
 void SellItemWrapper(uint32_t bagId)
 {
-    auto autoHuntManager = gameManager.GetAutoHuntManager();
-    if (autoHuntManager == nullptr)
-        return;
-
-    auto preStatus                   = autoHuntManager->status;
-    autoHuntManager->status          = GameManager::AutoHuntStatus::Stop;
-    auto preAutoPickItem             = gameManager.autoPickItemEnable;
-    gameManager.autoPickItemEnable   = false;
-    auto preFullFirePower            = gameManager.fireFullPowerEnabled;
-    gameManager.fireFullPowerEnabled = false;
-    auto dll123BaseAddr = GameManager::GetModuleBaseAddress("123.dll");
-    zzj::Process thisProcess;
-    zzj::Memory memory(thisProcess);
-    bool preDll123AutoHuntEnabled = false;
-    if (dll123BaseAddr != NULL)
-    {
-        memory.Read(dll123BaseAddr + 0x185284, &preDll123AutoHuntEnabled, 1);
-        memory.Write(dll123BaseAddr + 0x185284, {0});
-    }
-    
+  
     std::thread([=]() {
+        if (isSelling.load())
+            return;
+        isSelling.store(true);
+        //auto autoHuntManager = gameManager.GetAutoHuntManager();
+        //if (autoHuntManager == nullptr)
+        //    return;
+        //
+        //auto preStatus                   = autoHuntManager->status;
+        //autoHuntManager->status          = GameManager::AutoHuntStatus::Stop;
+        auto preAutoPickItem             = gameManager.autoPickItemEnable;
+        gameManager.autoPickItemEnable   = false;
+        auto preFullFirePower            = gameManager.fireFullPowerEnabled;
+        gameManager.fireFullPowerEnabled = false;
+        auto dll123BaseAddr              = GameManager::GetModuleBaseAddress("123.dll");
         zzj::Process thisProcess;
         zzj::Memory memory(thisProcess);
+        bool preDll123AutoHuntEnabled = false;
+        if (dll123BaseAddr != NULL)
+        {
+            memory.Read(dll123BaseAddr + 0x1842A8, &preDll123AutoHuntEnabled, 1);
+            memory.Write(dll123BaseAddr + 0x1842A8, {0});
+        }
+        
         Sleep(1000);
         if (gameManager.UseCashItem(GameManager::cashSellerItemName))
         {
             Sleep(1000);
             gameManager.SellItem(bagId);
-            Sleep(1000);
+            Sleep(5000);
             gameManager.CloseSellerGui();
         }
         gameManager.autoPickItemEnable   = preAutoPickItem;
         gameManager.fireFullPowerEnabled = preFullFirePower;
-        autoHuntManager->status          = preStatus;
+        // autoHuntManager->status          = preStatus;
         if (dll123BaseAddr)
-            memory.Write(dll123BaseAddr + 0x185284, {preDll123AutoHuntEnabled});
+            memory.Write(dll123BaseAddr + 0x1842A8, {preDll123AutoHuntEnabled});
+        isSelling.store(false);
     }).detach();
 }
 void SellItem()
@@ -314,8 +298,15 @@ void SellItem()
         return;
     }
     auto currentTime = std::chrono::system_clock::now();
-    auto duration    = std::chrono::duration_cast<std::chrono::hours>(currentTime - lastTime);
-    if (duration.count() >= 1)
+    auto duration    = std::chrono::duration_cast<std::chrono::minutes>(currentTime - lastTime);
+    int count        = 0;
+    auto items       = gameManager.GetBagItems();
+    for (auto &item : items)
+    {
+        if (item.itemTable)
+            count++;
+    }
+    if (duration.count() >= 1 && count > 150)
     {
         std::lock_guard<std::mutex> guarder(GameSetting::sellerGuarderMutex);
         SellItemWrapper(bagId);
@@ -818,6 +809,44 @@ void AutoHuntHandler()
         }
     }
 }
+void GameSetting::AttackSpeed()
+{
+    if (ImGui::Checkbox("AttackSpeedEnable", &GameManager::attackSpeedEnable))
+    {
+        spdlog::info("AttackSpeedEnable changed to {}", GameManager::attackSpeedEnable);
+        if (GameManager::attackSpeedEnable)
+        {
+            gameManager.EnableAttackSpeed();
+        }
+        else
+        {
+            gameManager.DisableAttackSpeed();
+        }
+    }
+    if (roleConfig.find("AttackSpeedEnable") != roleConfig.end())
+    {
+        auto preAttackSpeedEnable      = GameManager::attackSpeedEnable;
+        GameManager::attackSpeedEnable = roleConfig["AttackSpeedEnable"];
+        if (!preAttackSpeedEnable)
+        {
+            gameManager.EnableAttackSpeed();
+        }
+
+        if (roleConfig.find("AttackSpeedValue") != roleConfig.end())
+        {
+            GameManager::attackSpeed = roleConfig["AttackSpeedValue"];
+        }
+
+        if (GameManager::speedHackEnable)
+            GameManager::attackSpeed = 1.0f;
+    }
+
+    if (GameManager::attackSpeedEnable)
+    {
+        // slider from 0.0f to 1.0f
+        ImGui::SliderFloat("AttackSpeed", &GameManager::attackSpeed, 0.0f, 1.0f);
+    }
+}
 void GameSetting::MoveSpeedHandler()
 {
     if (ImGui::Checkbox("MoveSpeedEnable", &GameManager::moveSpeedEnable))
@@ -877,8 +906,9 @@ void AutoLoginHandler()
         }
 	});
 }
+
 void GameSetting::Render(bool &open)
-{
+    {
     ImGui::SetNextWindowBgAlpha(0.2f);
     ImGui::Begin("SealCheat", &open);
     // run once
@@ -886,13 +916,11 @@ void GameSetting::Render(bool &open)
     if (!isInit)
     {
         isInit = true;
-        InitLog("default");
         gameManager.EnablePopupWindowHook();
-        gameManager.HookSendAndRecv();
         gameManager.EnableCameraDistance();
     }
     ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
-    AutoLoginHandler();
+    //AutoLoginHandler();
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
     if (localPlayer == nullptr || localPlayer->GetName() == "")
     {
@@ -909,6 +937,7 @@ void GameSetting::Render(bool &open)
         LoadRoleConfig(playerName);
         std::string loginUserName = localPlayer->loginUserName;
         SaveLoginUserName(loginUserName);
+        gameManager.HookSendAndRecv();
     }
     if (ImGui::Button("SaveConfig"))
     {
@@ -942,11 +971,11 @@ void GameSetting::Render(bool &open)
         ImGui::End();
         return;
     }
-    spdlog::info("Before GetAroundPlayers");
+
     static bool isAutoSwitch = true;
     ImGui::Checkbox("isAutoSwitch", &isAutoSwitch);
     auto aroundPlayers = gameManager.GetAroundPlayers();
-    spdlog::info("AroundPlayers size: {}", aroundPlayers.size());
+
     std::vector<std::string> namesAlert;
     if (gameManager.config.find("nameAlert") != gameManager.config.end())
         namesAlert = gameManager.config["nameAlert"];
@@ -956,7 +985,7 @@ void GameSetting::Render(bool &open)
         fmt::format("localPlayer pos {:.2f},{:.2f},{:.2f} hp:{} mp:{}", localPlayer->x, localPlayer->y, localPlayer->z,
                     localPlayer->GetCurrentHP(), localPlayer->GetCurrentMP());
     ImGui::Text(localPlayerPosPrint.c_str());
-    spdlog::info(localPlayerPosPrint);
+
     for (auto &player : aroundPlayers)
     {
         std::string name = player.GetName();
@@ -970,11 +999,11 @@ void GameSetting::Render(bool &open)
         }
     }
 
-    spdlog::info("Alert done");
+
     // iterate thourgh all the key in config["roleConfig"], if the aroundPlayers not has the name, then add it
-    std::vector<GameManager::CLocalUser> aroundPlayersExceptMine = aroundPlayers;
+    std::vector<GameManager::CUser> aroundPlayersExceptMine = aroundPlayers;
     aroundPlayersExceptMine.erase(std::remove_if(aroundPlayersExceptMine.begin(), aroundPlayersExceptMine.end(),
-                                                 [&](GameManager::CLocalUser &player) {
+                                                 [&](GameManager::CUser &player) {
                                                      std::string playerName = player.GetName();
                                                      for (auto &[name, roleConfig] :
                                                           gameManager.config["roleConfig"].items())
@@ -986,7 +1015,7 @@ void GameSetting::Render(bool &open)
                                                  }),
                                   aroundPlayersExceptMine.end());
 
-    spdlog::info("Ready autoswitch");
+
     if (isAutoSwitch)
     {
         if (aroundPlayersExceptMine.size() > 0 && !isTempPause)
@@ -999,21 +1028,19 @@ void GameSetting::Render(bool &open)
         else if (aroundPlayersExceptMine.size() == 0 && isTempPause)
         {
             GameManager::attackRangeEnable   = true;
-            GameManager::attackSpeedEnable   = true;
             GameManager::skillRangeEnable    = true;
             GameManager::skillSpeedEnable    = true;
             GameManager::speedHackEnable     = true;
             GameManager::skillAutoCastEnable = true;
             // GameManager::autoPickItemEnable   = true;
             isTempPause = false;
-            gameManager.EnableAttackSpeed();
             gameManager.EnableAttackRange();
             gameManager.EnableSkillRange();
             gameManager.EnableSkillSpeed();
             gameManager.EnableSpeedHack();
         }
     }
-    spdlog::info("Done autoswitch");
+
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     OpenBoxHandler();
     

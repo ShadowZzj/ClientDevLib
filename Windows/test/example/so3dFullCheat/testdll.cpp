@@ -9,7 +9,8 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 #include <string>
-
+#include "GameManager.h"
+#include "GameSetting.h"
 extern "C" __declspec(dllexport) void test()
 {
     spdlog::info("test called");
@@ -48,6 +49,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
+        InitLog("default");
+        gameManager.HookMachineCode();
         CloseHandle(CreateThread(NULL, 0, HackThread, hModule, 0, NULL));
         break;
     case DLL_THREAD_ATTACH:

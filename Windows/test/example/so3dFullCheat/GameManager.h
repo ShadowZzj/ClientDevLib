@@ -149,7 +149,30 @@ class GameManager
         uint32_t GetCurrentMP();
         uint32_t GetMaxMP();
 
-    };                        
+    };       
+
+    class CUser
+    {
+      public:
+        char pad_0000[60];      // 0x0000
+        float x;                // 0x003C
+        float y;                // 0x0040
+        float z;                // 0x0044
+        char pad_0048[40];      // 0x0048
+        uint32_t unknown;       // 0x0070
+        char pad_0074[276];     // 0x0074
+        int32_t attackStatus;   // 0x0188
+        char pad_018C[8];       // 0x018C
+        uint32_t animation;     // 0x0194
+        char pad_0198[4];       // 0x0198
+        int32_t intX;           // 0x019C
+        int32_t intZ;           // 0x01A0
+        float moveSpeed;        // 0x01A4
+        char pad_01A8[4712];    // 0x01A8
+        char name[40];          // 0x1410
+      public:
+        std::string GetName();
+    };
 #pragma pack(pop) // 恢复对齐设置
 
     static const uintptr_t positionXOffset   = 0x3c;
@@ -456,7 +479,9 @@ class GameManager
     inline static const std::string attackSpeedPattern = "F3 0F 11 88 5c 23 00 00";
     inline static const std::string moveSpeedPattern =
         "F3 0F 11 81 A4 01 00 00 8B 95 68 FB FF FF F3 0F 10 82 A4 01 00 00 0F 2F 05 60";
-    inline static const std::string moveSpeedUnlimitPattern       = "F3 0F 11 80 A4 01 00 00";
+    inline static const std::uintptr_t  moveSpeedUnlimitOffset       = 0x2e224b;
+    inline static const std::uintptr_t moveSpeedLimitValueOffset = 0x80c360;
+
     inline static const std::string itemNoCoolDownPattern         = "F3 0F 2A 81 F8 02 00 00";
     inline static const std::string skillRangePattern             = "8B 81 4C 01 00 00";
     inline static const std::string skillNoPretimePattern         = "F3 0F 10 81 50 01 00 00";
@@ -466,6 +491,7 @@ class GameManager
     inline static const std::string skillCoolDownCalculatePattern = "F3 0F 10 8A 58 01 00 00";
     inline static const std::string sendPackageCallPattern        = "55 8B EC 83 EC 18 89 4D F8 8B 45 F8 0F B6 48";
     inline static const uintptr_t cameraDistanceHookFunctionOffset  = 0x51d8a1;
+    inline static const uintptr_t camearDistanceMaxValueOffset      = 0x85dc18;
     inline static const uintptr_t sellItemFuncAddressOffset       = 0x3be400;
     inline static const uintptr_t popupWindowHandlerFuncOffset    = 0x506af0;
 
@@ -501,6 +527,7 @@ class GameManager
     void OpenRewardAttenceGui();
     void CloseRewardAttenceGui();
     void GetRewardAttenceReward(int index);
+    void HookMachineCode();
 
     CMenuContainerEx *GetMenuContainer(GUIIndex index);
     std::vector<SingleRewardInfo> GetRewardInfo(GUIIndex rewardGuiType);
@@ -538,7 +565,7 @@ class GameManager
     void SetSpeed(float speed);
     CItemContainer *GetItemContainer();
     std::vector<std::string> GetAroundPlayersName();
-    std::vector<CLocalUser> GetAroundPlayers();
+    std::vector<CUser> GetAroundPlayers();
     std::vector<Item> GetBagItems();
     std::vector<Item> GetCashItems();
     std::vector<CSkill> GetSkills();

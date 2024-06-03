@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     ZeroMemory(&pi, sizeof(pi));
 
     boost::filesystem::path executablePath = zzj::GetExecutablePath();
-    executablePath /= "..\\yoyoseal\\SO3DPlus.exe";
+    executablePath /= "..\\Game\\SO3DPlus.exe";
     // absolute path
     executablePath = boost::filesystem::absolute(executablePath);
     spdlog::info("Executable path: {}", executablePath.string());

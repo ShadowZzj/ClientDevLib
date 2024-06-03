@@ -70,6 +70,7 @@ void GameManager::SellItem(unsigned int beginBagId)
             continue;
         }
         SellItem(i, item.count);
+        Sleep(200);
     }
 }
 uintptr_t GameManager::GetModuleBaseAddress(const std::string &moduleName)
@@ -920,9 +921,9 @@ std::string GameManager::CItemTable::GetItemDescription()
     return boost::locale::conv::to_utf<char>(big5Str, "Big5");
 }
 
-std::vector<GameManager::CLocalUser> GameManager::GetAroundPlayers()
+std::vector<GameManager::CUser> GameManager::GetAroundPlayers()
 {
-    std::vector<CLocalUser> ret;
+    std::vector<CUser> ret;
     std::vector<std::string> aroundPlayersName;
     zzj::Process process;
     zzj::Memory memory(process);
@@ -942,7 +943,7 @@ std::vector<GameManager::CLocalUser> GameManager::GetAroundPlayers()
     auto nextPlayerAddress = aroundPlayerListBeginAddress;
     while (true)
     {
-        ret.push_back(*(CLocalUser *)nextPlayerAddress);
+        ret.push_back(*(CUser *)nextPlayerAddress);
         if (!memory.Read(nextPlayerAddress + nextPlayerPointerOffset, &nextPlayerAddress, sizeof(nextPlayerAddress)))
             break;
 
@@ -1828,6 +1829,7 @@ bool GameManager::DisableSkillSpeed()
     DetourDetach(&(PVOID &)skillSpeedHookAddress2, &SkillSpeedHooked2);
     DetourDetach(&(PVOID &)skillCooldownHookAddress, &SkillCooDownCalculateHooked);
     DetourDetach(&(PVOID &)skillModeHookAddress, &SkillModeHooked);
+    DetourDetach(&(PVOID &)animationModeHookAddress, &animationModeHooked);
     DetourTransactionCommit();
     return true;
 }
@@ -1870,17 +1872,20 @@ bool GameManager::EnableMoveSpeed()
     spdlog::info("moveSpeedHookAddress: {0:x}", moveSpeedHookAddress);
 
     moveSpeedRetAddress = (void *)DetourAndGetRetAddress(moveSpeedHookAddress, &MoveSpeedHooked);
-
-    if (moveSpeedUnlimitHookAddress == NULL)
-        moveSpeedUnlimitHookAddress = GetPatternMatchResult(moveSpeedUnlimitPattern);
-    if (moveSpeedUnlimitHookAddress == NULL)
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
     {
-        spdlog::error("moveSpeedUnlimitHookAddress is null");
-        return false;
+        return nullptr;
     }
-    spdlog::info("moveSpeedUnlimitHookAddress: {0:x}", moveSpeedUnlimitHookAddress);
 
-    moveSpeedUnlimitRetAddress = (void *)DetourAndGetRetAddress(moveSpeedUnlimitHookAddress, &MoveSpeedUnlimitHooked);
+    //moveSpeedUnlimitHookAddress = baseAddr + moveSpeedUnlimitOffset;
+    //spdlog::info("moveSpeedUnlimitHookAddress: {0:x}", moveSpeedUnlimitHookAddress);
+    //
+    //moveSpeedUnlimitRetAddress = (void *)DetourAndGetRetAddress(moveSpeedUnlimitHookAddress, &MoveSpeedUnlimitHooked);
+    float maxVal               = 22.0f;
+    memory.Write(baseAddr + moveSpeedLimitValueOffset, &maxVal, sizeof(maxVal));
     return true;
 }
 
@@ -1984,9 +1989,12 @@ bool GameManager::EnableCameraDistance()
     {
         return false;
     }
-    cameraDistanceHookAddress = baseAddr + cameraDistanceHookFunctionOffset;
+    //cameraDistanceHookAddress = baseAddr + cameraDistanceHookFunctionOffset;
+    //
+    //cameraDistanceRetAddress = (void *)DetourAndGetRetAddress(cameraDistanceHookAddress, &CameraDistanceHooked);
 
-    cameraDistanceRetAddress = (void *)DetourAndGetRetAddress(cameraDistanceHookAddress, &CameraDistanceHooked);
+    float maxValue = 50.0f;
+    memory.Write(baseAddr + camearDistanceMaxValueOffset, &maxValue, sizeof(maxValue));
     return true;
 }
 
@@ -2229,37 +2237,66 @@ int (__stdcall *wspSendOriginAddress)(SOCKET s, LPWSABUF lpBuffers, DWORD dwBuff
                                      DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
                                      LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine, LPWSATHREADID lpThreadId,
                                      LPINT lpErrno) = nullptr;
-//int __stdcall WSPSendHooked(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDWORD lpNumberOfBytesSent,
-//                                     DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
-//                                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine, LPWSATHREADID lpThreadId,
-//                                     LPINT lpErrno)
-//{
-//    //get remote ip and port from socket
-//    sockaddr_in addr;
-//    int len = sizeof(addr);
-//    if (getpeername(s, (sockaddr *)&addr, &len) == 0)
-//    {
-//        spdlog::info("please holder");
-//        spdlog::info("send to {0}:{1}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-//    }
-//    else
-//        spdlog::error("Get peer name failed: {0}", WSAGetLastError());
-//    return wspSendOriginAddress(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
-//}
-//int __stdcall SendHooked(
-// SOCKET     s,
-// const char *buf,
-// int        len,
-// int        flags
-//)
-//{
-//    return sendOriginAddress(s, buf, len, flags);
-//}
+int __stdcall WSPSendHooked(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDWORD lpNumberOfBytesSent,
+                                     DWORD dwFlags, LPWSAOVERLAPPED lpOverlapped,
+                                     LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine, LPWSATHREADID lpThreadId,
+                                     LPINT lpErrno)
+{
+    //get remote ip and port from socket
+    sockaddr_in addr;
+    spdlog::info("WSPSend called");
+    int len = sizeof(addr);
+    if (getpeername(s, (sockaddr *)&addr, &len) == 0)
+    {
+        spdlog::info("please holder");
+        spdlog::info("send to {0}:{1}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    }
+    else
+        spdlog::error("Get peer name failed: {0}", WSAGetLastError());
+    return wspSendOriginAddress(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine, lpThreadId, lpErrno);
+}
+int __stdcall SendHooked(
+ SOCKET     s,
+ const char *buf,
+ int        len,
+ int        flags
+)
+{
+    sockaddr_in addr;
+    int addrLen = sizeof(addr);
+
+    // 使用getpeername获取对方的地址信息
+    if (getpeername(s, (sockaddr *)&addr, &addrLen) == 0)
+    {
+        char ipStr[INET_ADDRSTRLEN];
+
+        // 将二进制的IP地址转换为字符串形式
+        auto ret = inet_ntop(AF_INET, &addr.sin_addr, ipStr, sizeof(ipStr));
+        if (ret == NULL)
+        {
+            spdlog::error("inet_ntop failed: {0}", WSAGetLastError());
+        }
+        else
+        {
+            int port = ntohs(addr.sin_port);
+            spdlog::info("Send on socket {}:{} called ", std::string(ipStr), port);
+        }
+    }
+    else
+    {
+        spdlog::info("Send on socket {} called", (uintptr_t)s);
+    }
+    auto ret = sendOriginAddress(s, buf, len, flags);
+    spdlog::info("Send len {}", ret);
+    return ret;
+}
+
 std::mutex mtx;
 static auto lastTimeRecv = std::chrono::system_clock::now();
+typedef int(WINAPI *RECV)(SOCKET, char *, int, int);
+RECV TrueRecv = NULL;
 void RecvListerner()
 {
-    return;
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10000));
@@ -2284,7 +2321,7 @@ int __stdcall RecvHooked(
 {
     sockaddr_in addr;
     int addrLen = sizeof(addr);
-
+    int port    = -1;
     // 使用getpeername获取对方的地址信息
     if (getpeername(s, (sockaddr *)&addr, &addrLen) == 0)
     {
@@ -2298,7 +2335,7 @@ int __stdcall RecvHooked(
 		}
         else
         {
-            int port = ntohs(addr.sin_port);
+            port = ntohs(addr.sin_port);
             spdlog::info("Recv on socket {}:{} called ", std::string(ipStr), port);
         }
     }
@@ -2306,8 +2343,9 @@ int __stdcall RecvHooked(
     {
         spdlog::info("Recv on socket {} called", (uintptr_t)s);
     }
+    spdlog::info("Recv called");
     int ret = recvOriginAddress(s, buf, len, flags);
-    if (ret > 0 && ret != 6)
+    if (ret > 0 && ret != 6 && (port == 1843 || port ==1842))
     {
         spdlog::info("recv len {}",ret);
         auto currentTime = std::chrono::system_clock::now();
@@ -2375,7 +2413,6 @@ int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_
         Py_SetPythonHome(currentPath.wstring().c_str());
         return 0; 
         }();
-    spdlog::info("Plain send called!");
     if (GameManager::hookSendEnable)
     {
         auto modifiedPackage = CallPackageFilter(buffer, len); 
@@ -2401,6 +2438,38 @@ int __fastcall PlainSendHooked(void *pGameClient, void *edx, void *buffer, size_
     }
 	return plainSendPackage(pGameClient, edx, buffer, len);
 }
+#include <imagehlp.h>
+#pragma comment(lib, "Imagehlp.lib")
+
+FARPROC* GetProcAddressFromIAT(HMODULE hModule, const char* szDllName, const char* szProcName) {
+    ULONG ulSize = 0;
+    PIMAGE_IMPORT_DESCRIPTOR pImportDesc = (PIMAGE_IMPORT_DESCRIPTOR)ImageDirectoryEntryToData(
+        hModule, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &ulSize);
+    
+    if (pImportDesc == NULL)
+    {
+        spdlog::error("pImportDesc NULL");
+        return NULL;
+    }
+
+    while (pImportDesc->Name) {
+        const char* szCurrentDllName = (const char*)((PBYTE)hModule + pImportDesc->Name);
+        spdlog::info("Handle dll {}", szCurrentDllName);
+        if (_stricmp(szCurrentDllName, szDllName) == 0) {
+            spdlog::info("find {}", szDllName);
+            PIMAGE_THUNK_DATA pThunk = (PIMAGE_THUNK_DATA)((PBYTE)hModule + pImportDesc->FirstThunk);
+            while (pThunk->u1.Function) {
+                FARPROC* pfnAddress = (FARPROC*)&pThunk->u1.Function;
+                if (*pfnAddress == GetProcAddress(GetModuleHandleA(szDllName), szProcName)) {
+                    return pfnAddress;
+                }
+                pThunk++;
+            }
+        }
+        pImportDesc++;
+    }
+    return NULL;
+}
 
 void GameManager::HookSendAndRecv()
 {
@@ -2417,34 +2486,97 @@ void GameManager::HookSendAndRecv()
         spdlog::error("GetProcAddress failed: {0}", GetLastError());
         return;
     }
-    auto str = L"你好";
     spdlog::info("sendOriginAddress: {0:x}", (uintptr_t)sendOriginAddress);
-    recvOriginAddress = decltype(recvOriginAddress)(GetProcAddress(ws2_32, "recv"));
+    recvOriginAddress = decltype(recvOriginAddress)(GetModuleBaseAddress("123.dll") + 0x4ca5f);
     if (recvOriginAddress == NULL)
     {
         spdlog::error("GetProcAddress failed: {0}", GetLastError());
         return;
     }
     spdlog::info("recvOriginAddress: {0:x}", (uintptr_t)recvOriginAddress);
-
     auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
     if (baseAddr == NULL)
     {
         return;
     }
      
-   plainSendPackage = decltype(plainSendPackage)(baseAddr + rawSendPackageOffset);
-   spdlog::info("plainSendPackage: {0:x}", (uintptr_t)plainSendPackage);
-   // auto mswsock = LoadLibrary(L"mswsock.dll");
+    plainSendPackage = decltype(plainSendPackage)(baseAddr + rawSendPackageOffset);
+    spdlog::info("plainSendPackage: {0:x}", (uintptr_t)plainSendPackage);
+    //auto mswsock = LoadLibrary(L"mswsock.dll");
     //wspSendOriginAddress = decltype(wspSendOriginAddress)(GetProcAddress(mswsock, "_WSPSend@36"));
+
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
-    //DetourAttach(&(PVOID &)sendOriginAddress, SendHooked);
+    DetourAttach(&(PVOID &)sendOriginAddress, SendHooked);
     DetourAttach(&(PVOID &)recvOriginAddress, RecvHooked);
+
     DetourAttach(&(PVOID &)plainSendPackage, PlainSendHooked);
     //DetourAttach(&(PVOID &)wspSendOriginAddress, WSPSendHooked);
     DetourTransactionCommit();
 
     std::thread t1(RecvListerner);
     t1.detach();
+}
+
+std::string GameManager::CUser::GetName()
+{
+    std::string big5Str(name);
+    if (big5Str.empty())
+        return "(null)";
+    return boost::locale::conv::to_utf<char>(big5Str, "Big5");
+}
+#include <iphlpapi.h>
+#pragma comment(lib, "iphlpapi.lib")
+
+ULONG ( WINAPI *getAdapterInfoOriginal)(
+PIP_ADAPTER_INFO AdapterInfo,
+PULONG           SizePointer
+) = nullptr;
+ULONG WINAPI GetAdapterInfoHooked(
+PIP_ADAPTER_INFO AdapterInfo,
+PULONG           SizePointer
+)
+{
+    ULONG ret = getAdapterInfoOriginal(AdapterInfo, SizePointer);
+    if(ret != ERROR_SUCCESS)
+    {
+        return ret;
+    }
+
+    PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
+    // Loop through all the adapters
+    spdlog::info("GetAdapterInfoHooked called");
+    while (pAdapterInfo)
+    {
+        //get a random mac address
+        for (int i = 0; i < pAdapterInfo->AddressLength; i++)
+        {
+            pAdapterInfo->Address[i] = rand() % 256;
+        }
+        pAdapterInfo = pAdapterInfo->Next;
+    }
+
+    return ret;
+}
+void  GameManager::HookMachineCode()
+{
+
+    auto iphlpapi = LoadLibrary(L"iphlpapi.dll");
+    if (iphlpapi == NULL)
+    {
+        spdlog::error("LoadLibrary failed: {0}", GetLastError());
+        return;
+    }
+
+    getAdapterInfoOriginal = decltype(getAdapterInfoOriginal)(GetProcAddress(iphlpapi, "GetAdaptersInfo"));
+    if (getAdapterInfoOriginal == NULL)
+    {
+        spdlog::error("GetProcAddress failed: {0}", GetLastError());
+        return;
+    }
+    spdlog::info("GetAdaptersInfo hook address {0:x}", (uintptr_t)getAdapterInfoOriginal);
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    DetourAttach(&(PVOID &)getAdapterInfoOriginal, GetAdapterInfoHooked);
+    DetourTransactionCommit();
 }

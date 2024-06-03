@@ -139,7 +139,6 @@ DWORD WINAPI DoMagic(LPVOID lpParam)
     path += "\\test\\ClientDevLib_testdll.dll";
     spdlog::info("path: {}", path);
 
-    Sleep(5000);
     HMODULE hModule = LoadLibraryA(path.c_str());
     // if (!VirtualProtect((LPVOID)setWindowsHookPageStartAddress, 0x1000, PAGE_EXECUTE_READWRITE, &oldProtect))
     //     spdlog::info("VirtualProtect failed: {}", GetLastError());
