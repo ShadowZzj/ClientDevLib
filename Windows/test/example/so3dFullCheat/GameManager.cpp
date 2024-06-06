@@ -2487,7 +2487,7 @@ void GameManager::HookSendAndRecv()
         return;
     }
     spdlog::info("sendOriginAddress: {0:x}", (uintptr_t)sendOriginAddress);
-    recvOriginAddress = decltype(recvOriginAddress)(GetModuleBaseAddress("123.dll") + 0x4ca5f);
+    recvOriginAddress = decltype(recvOriginAddress)(GetModuleBaseAddress("123.dll") + 0x4cea7);
     if (recvOriginAddress == NULL)
     {
         spdlog::error("GetProcAddress failed: {0}", GetLastError());

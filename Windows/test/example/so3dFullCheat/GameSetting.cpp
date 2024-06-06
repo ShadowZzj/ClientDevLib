@@ -260,8 +260,8 @@ void SellItemWrapper(uint32_t bagId)
         bool preDll123AutoHuntEnabled = false;
         if (dll123BaseAddr != NULL)
         {
-            memory.Read(dll123BaseAddr + 0x1842A8, &preDll123AutoHuntEnabled, 1);
-            memory.Write(dll123BaseAddr + 0x1842A8, {0});
+            memory.Read(dll123BaseAddr + 0x184248, &preDll123AutoHuntEnabled, 1);
+            memory.Write(dll123BaseAddr + 0x184248, {0});
         }
 
         Sleep(1000);
@@ -276,7 +276,7 @@ void SellItemWrapper(uint32_t bagId)
         gameManager.fireFullPowerEnabled = preFullFirePower;
         // autoHuntManager->status          = preStatus;
         if (dll123BaseAddr)
-            memory.Write(dll123BaseAddr + 0x1842A8, {preDll123AutoHuntEnabled});
+            memory.Write(dll123BaseAddr + 0x184248, {preDll123AutoHuntEnabled});
         isSelling.store(false);
     }).detach();
 }
