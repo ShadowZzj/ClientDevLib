@@ -984,6 +984,14 @@ void GameSetting::CashItemHandler()
             i.close();
 
             auto cashItem = roleConfig["CashItem"];
+            std::string currentTimeString;
+            // convert currentTime to string
+            std::time_t currentTimeT  = std::chrono::system_clock::to_time_t(currentTime);
+            std::tm currentTimeStruct = *std::localtime(&currentTimeT);
+            std::stringstream ss;
+            ss << std::put_time(&currentTimeStruct, "%Y-%m-%d %H:%M:%S");
+            currentTimeString = ss.str();
+
             for (auto &cashItemInfo : cashItem)
             {
                 std::string itemName = cashItemInfo["name"];
@@ -995,14 +1003,7 @@ void GameSetting::CashItemHandler()
                 {
                     gameManager.UseCashItem(itemName);
                     Sleep(100);
-                    std::string currentTimeString;
-                    // convert currentTime to string
-                    std::time_t currentTimeT  = std::chrono::system_clock::to_time_t(currentTime);
-                    std::tm currentTimeStruct = *std::localtime(&currentTimeT);
-                    std::stringstream ss;
-                    ss << std::put_time(&currentTimeStruct, "%Y-%m-%d %H:%M:%S");
-                    currentTimeString = ss.str();
-
+                    
                     j["CashItemInfo"][itemName] = currentTimeString;
                 }
                 else
@@ -1017,7 +1018,6 @@ void GameSetting::CashItemHandler()
                     {
                         gameManager.UseCashItem(itemName);
                         Sleep(100);
-                        std::string currentTimeString;
                         j["CashItemInfo"][itemName] = currentTimeString;
                     }
                 }
@@ -1103,6 +1103,12 @@ void GameSetting::Render(bool &open)
         return;
     }
 
+    ImGui::Checkbox("TempPause", &gameManager.tempPauseEnable);
+    if (gameManager.tempPauseEnable)
+    {
+		ImGui::End();
+		return;
+	}
     static bool isAutoSwitch = true;
     ImGui::Checkbox("isAutoSwitch", &isAutoSwitch);
     auto aroundPlayers = gameManager.GetAroundPlayers();

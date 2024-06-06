@@ -2345,7 +2345,7 @@ int __stdcall RecvHooked(
     }
     spdlog::info("Recv called");
     int ret = recvOriginAddress(s, buf, len, flags);
-    if (ret > 0 && ret != 6 && (port == 1843 || port ==1842))
+    if (ret > 0 && ret != 6 && port > 1800 && port < 1900)
     {
         spdlog::info("recv len {}",ret);
         auto currentTime = std::chrono::system_clock::now();

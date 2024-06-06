@@ -604,6 +604,7 @@ class GameManager
     inline static bool hookSendEnable             = false;
     inline static bool isAutoSell                        = false;
     inline static bool autohuntEnable             = true;
+    inline static bool tempPauseEnable                   = false;
     nlohmann::json config;
 
   private:
