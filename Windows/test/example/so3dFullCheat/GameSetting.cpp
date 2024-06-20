@@ -1037,8 +1037,50 @@ void GameSetting::CashItemHandler()
         spdlog::error("CashItemHandler error with unknown error");
     }
 }
-void GameSetting::Render(bool &open)
+void Test()
 {
+    if (ImGui::Button("DeliverTeeth"))
+    {
+        std::thread test([=]() {
+            gameManager.DeliverTask(0x1d8e, 0x4ab0);
+            Sleep(100);
+            gameManager.DeliverTask(0x1d9b, 0x4ab0);
+        });
+        test.detach();
+    }
+
+    if (ImGui::Button("DeliverTree"))
+    {
+        std::thread test([=]() {
+            gameManager.DeliverTask(0x1d94, 0x4ab0);
+            Sleep(100);
+            gameManager.DeliverTask(0x1d9e, 0x4ab0);
+        });
+        test.detach();
+    }
+}
+void CheckLocalPlayer()
+{
+    int maxWaitSecond = 300;
+    while (true)
+    {
+        Sleep(1000);
+        GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
+        if (localPlayer != nullptr && localPlayer->GetName() != "")
+        {
+            break;
+        }
+
+        maxWaitSecond--;
+        if (maxWaitSecond <= 0)
+        {
+            spdlog::error("CheckLocalPlayer no player");
+            exit(0);
+        }
+    }
+}
+void GameSetting::Render(bool &open)
+    {
     ImGui::SetNextWindowBgAlpha(0.2f);
     ImGui::Begin("SealCheat", &open);
     // run once
@@ -1048,8 +1090,11 @@ void GameSetting::Render(bool &open)
         isInit = true;
         gameManager.EnablePopupWindowHook();
         gameManager.EnableCameraDistance();
+        std::thread checkLocalPlayer(CheckLocalPlayer);
+        checkLocalPlayer.detach();
     }
     ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
+    
     // AutoLoginHandler();
     GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
     if (localPlayer == nullptr || localPlayer->GetName() == "")
@@ -1176,6 +1221,7 @@ void GameSetting::Render(bool &open)
     }
 
     ImGui::Text("Around Players: %d", aroundPlayers.size());
+    Test();
     OpenBoxHandler();
     CashItemHandler();
     AutoHuntHandler();

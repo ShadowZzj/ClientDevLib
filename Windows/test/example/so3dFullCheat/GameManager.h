@@ -472,9 +472,38 @@ class GameManager
         float y;            // 0x0038
         float z;            // 0x003C
         char pad_0040[964]; // 0x0040
-    };                      // Size: 0x0404
+    };  
+    // Size: 0x0404
     static_assert(sizeof(AutoHuntManager) == 0x404);
     //end
+
+
+    class CQuestTable
+    {
+    };
+    class CQuest
+    {
+      public:
+        uint32_t vtable;              // 0x0000
+        char pad_0004[4];             // 0x0004
+        uint32_t index;               // 0x0008
+        class CQuestTable *N000051DD; // 0x000C
+        char pad_0010[12];            // 0x0010
+    };                                // Size: 0x001C
+    static_assert(sizeof(CQuest) == 0x1C);
+
+
+    class CQuestContainer
+    {
+      public:
+        char pad_0000[1032];     // 0x0000
+        class CQuest *cQuestPtr; // 0x0408
+
+        CQuest *GetCQuest(int index);
+    };                           // Size: 0x040C
+    static_assert(sizeof(CQuestContainer) == 0x40C);
+
+    inline static const uintptr_t cQuestContainerBaseOffset = 0xa1c350;
     inline static const std::string attackRangePattern = "C7 80 CC 2A 00 00 01 00 00 00 8B 8D";
     inline static const std::string attackSpeedPattern = "F3 0F 11 88 5c 23 00 00";
     inline static const std::string moveSpeedPattern =
@@ -503,6 +532,7 @@ class GameManager
     inline static const uintptr_t gChannelOffset             = 0x95ce08;
     inline static const uintptr_t gServerMinus1Offset        = 0x94c788;
     inline static const uintptr_t gRolesBeginOffset          = 0x95e438;
+    inline static const uintptr_t generalObjectOffset        = 0xa1cff0;
   public:
     GameManager();
     ~GameManager();
@@ -528,7 +558,7 @@ class GameManager
     void CloseRewardAttenceGui();
     void GetRewardAttenceReward(int index);
     void HookMachineCode();
-
+    void DeliverTask(int taskID, int npcID);
     CMenuContainerEx *GetMenuContainer(GUIIndex index);
     std::vector<SingleRewardInfo> GetRewardInfo(GUIIndex rewardGuiType);
     AutoHuntManager* GetAutoHuntManager();

@@ -2580,3 +2580,50 @@ void  GameManager::HookMachineCode()
     DetourAttach(&(PVOID &)getAdapterInfoOriginal, GetAdapterInfoHooked);
     DetourTransactionCommit();
 }
+
+void GameManager::DeliverTask(int taskID, int npcID)
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    uintptr_t gameClient = NULL;
+    auto res             = memory.Read(baseAddr + gameClientOffset, &gameClient, sizeof(gameClient));
+    if (!res)
+    {
+        spdlog::error("gameClient is null");
+        return;
+    }
+
+    auto callAddr = baseAddr + rawSendPackageOffset;
+
+    char buf[0x14]{0};
+    buf[0]             = 0x14;
+    *(DWORD *)&buf[4]  = 0x64592;
+    *(DWORD *)&buf[8]  = taskID;
+    *(DWORD *)&buf[12] = npcID;
+    *(DWORD *)&buf[16] = 0x1;
+
+    __asm
+    {
+        push ecx
+        push eax
+		mov ecx,gameClient
+        push 0x14
+        lea eax, buf
+        push eax
+		call callAddr
+        pop eax
+        pop ecx
+    }
+}
+
+
+
+GameManager::CQuest *GameManager::CQuestContainer::GetCQuest(int index)
+{
+    return cQuestPtr + index;
+}
