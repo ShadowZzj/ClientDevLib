@@ -603,6 +603,7 @@ class GameManager
     std::vector<CreatureWithAddress> GetMonsters(uint32_t range);
     std::vector<CreatureWithAddress> GetMonsters(CCreature creature, uint32_t range);
     static uintptr_t GetModuleBaseAddress(const std::string &moduleName);
+    void CloseSocket();
 
     void OpenSandBox();
     void OpenSandBoxImp(const std::vector<GameManager::Item> &items, int bagPos);

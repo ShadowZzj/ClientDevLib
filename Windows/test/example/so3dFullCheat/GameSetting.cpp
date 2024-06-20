@@ -9,7 +9,85 @@
 static void PlaceHolder()
 {
 }
+LONG NTAPI VEHhandler(struct _EXCEPTION_POINTERS *ExceptionInfo)
+{
+    spdlog::info("VEHHandler called");
 
+    // 获取异常代码和发生异常的位置
+    DWORD exceptionCode    = ExceptionInfo->ExceptionRecord->ExceptionCode;
+    PVOID exceptionAddress = ExceptionInfo->ExceptionRecord->ExceptionAddress;
+
+    // 打印异常代码和发生异常的位置
+    spdlog::info("Exception code: 0x{:X}", exceptionCode);
+    spdlog::info("Exception address: {}", exceptionAddress);
+    switch (exceptionCode)
+    {
+    case EXCEPTION_ACCESS_VIOLATION:
+        spdlog::info("Exception type: Access Violation");
+        break;
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+        spdlog::info("Exception type: Array Bounds Exceeded");
+        break;
+    case EXCEPTION_BREAKPOINT:
+        spdlog::info("Exception type: Breakpoint");
+        break;
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+        spdlog::info("Exception type: Datatype Misalignment");
+        break;
+    case EXCEPTION_FLT_DENORMAL_OPERAND:
+        spdlog::info("Exception type: Floating-point Denormal Operand");
+        break;
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+        spdlog::info("Exception type: Floating-point Divide by Zero");
+        break;
+    case EXCEPTION_FLT_INEXACT_RESULT:
+        spdlog::info("Exception type: Floating-point Inexact Result");
+        break;
+    case EXCEPTION_FLT_INVALID_OPERATION:
+        spdlog::info("Exception type: Floating-point Invalid Operation");
+        break;
+    case EXCEPTION_FLT_OVERFLOW:
+        spdlog::info("Exception type: Floating-point Overflow");
+        break;
+    case EXCEPTION_FLT_STACK_CHECK:
+        spdlog::info("Exception type: Floating-point Stack Check");
+        break;
+    case EXCEPTION_FLT_UNDERFLOW:
+        spdlog::info("Exception type: Floating-point Underflow");
+        break;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+        spdlog::info("Exception type: Illegal Instruction");
+        break;
+    case EXCEPTION_IN_PAGE_ERROR:
+        spdlog::info("Exception type: In Page Error");
+        break;
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+        spdlog::info("Exception type: Integer Divide by Zero");
+        break;
+    case EXCEPTION_INT_OVERFLOW:
+        spdlog::info("Exception type: Integer Overflow");
+        break;
+    case EXCEPTION_INVALID_DISPOSITION:
+        spdlog::info("Exception type: Invalid Disposition");
+        break;
+    case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+        spdlog::info("Exception type: Noncontinuable Exception");
+        break;
+    case EXCEPTION_PRIV_INSTRUCTION:
+        spdlog::info("Exception type: Privileged Instruction");
+        break;
+    case EXCEPTION_SINGLE_STEP:
+        spdlog::info("Exception type: Single Step");
+        break;
+    case EXCEPTION_STACK_OVERFLOW:
+        spdlog::info("Exception type: Stack Overflow");
+        break;
+    default:
+        spdlog::info("Exception type: Unknown");
+        break;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 void GameSetting::Init()
 {
     ImGuiStyle &style = ImGui::GetStyle();
@@ -267,9 +345,9 @@ void SellItemWrapper(uint32_t bagId)
         Sleep(1000);
         if (gameManager.UseCashItem(GameManager::cashSellerItemName))
         {
-            Sleep(1000);
+            Sleep(500);
             gameManager.SellItem(bagId);
-            Sleep(5000);
+            Sleep(500);
             gameManager.CloseSellerGui();
         }
         gameManager.autoPickItemEnable   = preAutoPickItem;
@@ -1039,6 +1117,20 @@ void GameSetting::CashItemHandler()
 }
 void Test()
 {
+    if (ImGui::Button("Test"))
+    {
+        gameManager.CloseSocket();
+    }
+
+    if (ImGui::Button("Crash"))
+    {
+        char *p = nullptr;
+        *p      = 1;
+    }
+        
+}
+void DeliverThing()
+{
     if (ImGui::Button("DeliverTeeth"))
     {
         std::thread test([=]() {
@@ -1114,6 +1206,7 @@ void GameSetting::Render(bool &open)
         SaveLoginUserName(loginUserName);
         gameManager.HookSendAndRecv();
         roleName = playerName;
+        //AddVectoredExceptionHandler(1, (PVECTORED_EXCEPTION_HANDLER)VEHhandler);
     }
     if (ImGui::Button("SaveConfig"))
     {

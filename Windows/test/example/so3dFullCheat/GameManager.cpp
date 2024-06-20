@@ -70,7 +70,7 @@ void GameManager::SellItem(unsigned int beginBagId)
             continue;
         }
         SellItem(i, item.count);
-        Sleep(200);
+        Sleep(100);
     }
 }
 uintptr_t GameManager::GetModuleBaseAddress(const std::string &moduleName)
@@ -1206,8 +1206,8 @@ void GameManager::ThrowBomb()
         auto currentCreature = creatures[i];
         if (currentCreature.creature.health <= 0)
             continue;
-        spdlog::info("Ready to throw bomb to {}   {}", currentCreature.creature.monsterStatTablePtr->GetName(),
-                     currentCreature.creature.monsterId);
+        //spdlog::info("Ready to throw bomb to {}   {}", currentCreature.creature.monsterStatTablePtr->GetName(),
+        //             currentCreature.creature.monsterId);
         std::vector<CreatureWithAddress> neighbors;
         //
         for (size_t j = 0; j < creatures.size(); j++)
@@ -1223,7 +1223,7 @@ void GameManager::ThrowBomb()
             }
         }
 
-        spdlog::info("Throw bomb with {} neighbors", neighbors.size());
+        //spdlog::info("Throw bomb with {} neighbors", neighbors.size());
         UINT32 *param = new UINT32[6 + neighbors.size()];
         size_t sizehh = 4 * (6 + neighbors.size());
         param[0]      = 0x53;
@@ -2087,16 +2087,20 @@ std::string GameManager::MonsterStatTable::GetName()
 bool GameManager::MonsterStatTable::IsMonster()
 {
     std::vector<int> monsterType;
-    spdlog::info("Monster name {}, type {}", GetName(), type);
     if (gameManager.config.find("monsterType") != gameManager.config.end())
     {
         monsterType = gameManager.config["monsterType"].get <std::vector<int>>();
     }
     if (std::find(monsterType.begin(), monsterType.end(), type) != monsterType.end()){
-        spdlog::info("find monster type {}", type);
         return TRUE;
     }
-    return type == CreatureType::Monster0 || type == CreatureType::Monster1 || type == CreatureType::Monster2 || type == CreatureType::Monster3 || type == CreatureType::Monster4 || type == CreatureType::Monster5 || type==CreatureType::Monster6;
+
+    auto retVal = type == CreatureType::Monster0 || type == CreatureType::Monster1 || type == CreatureType::Monster2 ||
+                  type == CreatureType::Monster3 || type == CreatureType::Monster4 || type == CreatureType::Monster5 ||
+                  type == CreatureType::Monster6;
+    if (!retVal)
+        spdlog::info("Monster name {}, type {}", GetName(), type);
+    return retVal;
 }
 
 
@@ -2343,11 +2347,9 @@ int __stdcall RecvHooked(
     {
         spdlog::info("Recv on socket {} called", (uintptr_t)s);
     }
-    spdlog::info("Recv called");
     int ret = recvOriginAddress(s, buf, len, flags);
     if (ret > 0 && ret != 6 && port > 1800 && port < 1900)
     {
-        spdlog::info("recv len {}",ret);
         auto currentTime = std::chrono::system_clock::now();
         std::lock_guard<std::mutex> lock(mtx);
         lastTimeRecv = currentTime;
@@ -2626,4 +2628,34 @@ void GameManager::DeliverTask(int taskID, int npcID)
 GameManager::CQuest *GameManager::CQuestContainer::GetCQuest(int index)
 {
     return cQuestPtr + index;
+}
+void GameManager::CloseSocket()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+    uintptr_t gameClient = NULL;
+    auto res             = memory.Read(baseAddr + gameClientOffset, &gameClient, sizeof(gameClient));
+    if (!res)
+    {
+        spdlog::error("gameClient is null");
+        return;
+    }
+    uintptr_t vtableStartAddr;
+    res = memory.Read(gameClient,&vtableStartAddr,sizeof(vtableStartAddr));
+    spdlog::info("vatable start addr {:x}", vtableStartAddr);
+
+    uintptr_t callAddr;
+    res = memory.Read(vtableStartAddr, &callAddr, sizeof(callAddr));
+    spdlog::info("call addr {:x}", callAddr);
+    __asm
+    {
+        mov ecx,gameClient
+        call callAddr
+    }
+    return;
 }
