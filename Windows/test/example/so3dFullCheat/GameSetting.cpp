@@ -1258,8 +1258,9 @@ void GameSetting::Render(bool &open)
     std::string localPlayerPosPrint =
         fmt::format("localPlayer pos {:.2f},{:.2f},{:.2f} hp:{} mp:{}", localPlayer->x, localPlayer->y, localPlayer->z,
                     localPlayer->GetCurrentHP(), localPlayer->GetCurrentMP());
-    ImGui::Text(localPlayerPosPrint.c_str());
-
+    ImGui::Text(localPlayerPosPrint.c_str());   
+    std::string moneyString = fmt::format("money: {}w", localPlayer->money / 10000);
+    ImGui::Text(moneyString.c_str());
     for (auto &player : aroundPlayers)
     {
         std::string name = player.GetName();
@@ -1315,6 +1316,7 @@ void GameSetting::Render(bool &open)
 
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     Test();
+    DeliverThing();
     OpenBoxHandler();
     CashItemHandler();
     AutoHuntHandler();
