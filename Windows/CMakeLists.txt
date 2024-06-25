@@ -83,6 +83,8 @@ test/example/so3dFullCheat/GameSetting.h
 test/example/so3dFullCheat/GameSetting.cpp
 test/example/so3dFullCheat/SpeedHack.h
 test/example/so3dFullCheat/SpeedHack.cpp
+test/example/so3dFullCheat/Messager.h
+test/example/so3dFullCheat/Messager.cpp
 )
 target_link_libraries(${PROJECT_NAME}_testdll ${PROJECT_NAME} ${WINDOWS_UTIL_LIB_FILES})
 target_include_directories(${PROJECT_NAME}_testdll PRIVATE ${WINDOWS_UTIL_INCLUDE_DIRS})

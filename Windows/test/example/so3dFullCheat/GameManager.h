@@ -4,6 +4,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <optional>
 class GameManager
 {
   public:
@@ -605,6 +606,10 @@ class GameManager
     std::vector<CreatureWithAddress> GetCreatures();
     std::vector<CreatureWithAddress> GetMonsters(uint32_t range);
     std::vector<CreatureWithAddress> GetMonsters(CCreature creature, uint32_t range);
+
+    std::optional<bool> Dll123IsAutoHuntEnable();
+    void GameManager::Dll123SetAutoHuntEnable(bool enable);
+    void Dll123SetAutoHuntPos(int x, int z);
     static uintptr_t GetModuleBaseAddress(const std::string &moduleName);
     void CloseSocket();
 
@@ -638,6 +643,7 @@ class GameManager
     inline static bool hookSendEnable             = false;
     inline static bool isAutoSell                        = false;
     inline static bool autohuntEnable             = true;
+    inline static bool autohuntFirmPositionEnable = false;
     inline static bool tempPauseEnable                   = false;
     nlohmann::json config;
 

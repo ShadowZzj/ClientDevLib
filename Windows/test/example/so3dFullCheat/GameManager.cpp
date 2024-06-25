@@ -657,6 +657,44 @@ void GameManager::CloseRewardAttenceGui()
 		popad
     }
 }
+std::optional<bool> GameManager::Dll123IsAutoHuntEnable()
+{
+    auto dll123BaseAddr              = GameManager::GetModuleBaseAddress("123.dll");
+    if (dll123BaseAddr == NULL)
+        return {};
+    zzj::Process thisProcess;
+    zzj::Memory memory(thisProcess);
+    bool preDll123AutoHuntEnabled = false;
+    memory.Read(dll123BaseAddr + 0x184248, &preDll123AutoHuntEnabled, 1);
+    return preDll123AutoHuntEnabled;
+}
+void GameManager::Dll123SetAutoHuntEnable(bool enable)
+{
+    auto dll123BaseAddr = GameManager::GetModuleBaseAddress("123.dll");
+    if (dll123BaseAddr == NULL)
+        return;
+    zzj::Process thisProcess;
+    zzj::Memory memory(thisProcess);
+    memory.Write(dll123BaseAddr + 0x184248, &enable, 1);
+
+}
+void GameManager::Dll123SetAutoHuntPos(int x, int z)
+{
+    auto dll123BaseAddr = GameManager::GetModuleBaseAddress("123.dll");
+    if (dll123BaseAddr == NULL)
+        return;
+    zzj::Process thisProcess;
+    zzj::Memory memory(thisProcess);
+
+    uintptr_t autoHuntPosPointer = NULL;
+    memory.Read(dll123BaseAddr + 0x184240, &autoHuntPosPointer, sizeof(autoHuntPosPointer));
+    if (autoHuntPosPointer == NULL)
+        return;
+
+    memory.Write(autoHuntPosPointer, &x, sizeof(x));
+    memory.Write(autoHuntPosPointer + 4, &z, sizeof(z));
+    
+}
 void GameManager::GetRewardAttenceReward(int index)
 {
     zzj::Process process;

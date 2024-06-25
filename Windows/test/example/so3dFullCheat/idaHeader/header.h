@@ -32,19 +32,19 @@ public:
 	char pad_2364[1216]; //0x2364
 	uint32_t dieTrigger; //0x2824
 	char loginUserName[16]; //0x2828
-	char pad_2838[384]; //0x2838
+	char pad_2838[147]; //0x2838
+	char password[16]; //0x28CB
+	char pad_28DB[221]; //0x28DB
 	uint64_t money; //0x29B8
 	uint32_t attack; //0x29C0
-	char pad_29C4[120]; //0x29C4
-	uint32_t comboValue; //0x2A3C
-	uint32_t maxComboValue; //0x2A40
-	char pad_2A44[136]; //0x2A44
+	char pad_29C4[264]; //0x29C4
 	uint32_t attackRange; //0x2ACC
 	char pad_2AD0[344]; //0x2AD0
 	uint32_t skillId; //0x2C28
 	uint32_t skillMode; //0x2C2C
-	char pad_2C30[6204]; //0x2C30
-}; //Size: 0x446C
+	char pad_2C30[6260]; //0x2C30
+}; //Size: 0x44A4
+
 
 
 class CDirectInput

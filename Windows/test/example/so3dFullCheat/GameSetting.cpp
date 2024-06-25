@@ -6,6 +6,7 @@
 #include <boost/filesystem.hpp>
 #include <future>
 #include <sstream>
+#include "Messager.h"
 static void PlaceHolder()
 {
 }
@@ -332,15 +333,11 @@ void SellItemWrapper(uint32_t bagId)
         gameManager.autoPickItemEnable   = false;
         auto preFullFirePower            = gameManager.fireFullPowerEnabled;
         gameManager.fireFullPowerEnabled = false;
-        auto dll123BaseAddr              = GameManager::GetModuleBaseAddress("123.dll");
-        zzj::Process thisProcess;
-        zzj::Memory memory(thisProcess);
-        bool preDll123AutoHuntEnabled = false;
-        if (dll123BaseAddr != NULL)
-        {
-            memory.Read(dll123BaseAddr + 0x184248, &preDll123AutoHuntEnabled, 1);
-            memory.Write(dll123BaseAddr + 0x184248, {0});
-        }
+
+
+        auto preDll123AutoHuntEnabledVar = gameManager.Dll123IsAutoHuntEnable();
+        gameManager.Dll123SetAutoHuntEnable(false);
+
 
         Sleep(1000);
         if (gameManager.UseCashItem(GameManager::cashSellerItemName))
@@ -353,8 +350,8 @@ void SellItemWrapper(uint32_t bagId)
         gameManager.autoPickItemEnable   = preAutoPickItem;
         gameManager.fireFullPowerEnabled = preFullFirePower;
         // autoHuntManager->status          = preStatus;
-        if (dll123BaseAddr)
-            memory.Write(dll123BaseAddr + 0x184248, {preDll123AutoHuntEnabled});
+        if(preDll123AutoHuntEnabledVar.has_value())
+            gameManager.Dll123SetAutoHuntEnable(preDll123AutoHuntEnabledVar.value());
         isSelling.store(false);
     }).detach();
 }
@@ -818,19 +815,56 @@ void SaveLoginUserName(const std::string &userName)
     o << j.dump(4);
     o.close();
 }
-void AutoHuntHandler()
+void GameSetting::AutoHuntHandler()
 {
     if (ImGui::Button("AutoHunt"))
     {
-        zzj::Process thisProcess;
-        zzj::Memory memory(thisProcess);
-        auto dll123BaseAddr           = GameManager::GetModuleBaseAddress("123.dll");
-        bool preDll123AutoHuntEnabled = false;
-        if (dll123BaseAddr != NULL)
+        auto preAutoHuntEnableVar = gameManager.Dll123IsAutoHuntEnable();
+        if(preAutoHuntEnableVar.has_value())
+            gameManager.Dll123SetAutoHuntEnable(!preAutoHuntEnableVar.value());
+    }
+
+    if(ImGui::Button("SaveAutoHuntPos"))
+    {
+        GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
+        if (localPlayer)
         {
-            memory.Read(dll123BaseAddr + 0x185284, &preDll123AutoHuntEnabled, 1);
-            memory.Write(dll123BaseAddr + 0x185284, {!preDll123AutoHuntEnabled});
+            int x = localPlayer->intX;
+            int z = localPlayer->intZ;
+
+            roleConfig["AutoHuntPosX"] = x;
+            roleConfig["AutoHuntPosZ"] = z;
+            boost::filesystem::path currentPath = zzj::GetDynamicLibPath(InitLog);
+            currentPath /= localPlayer->GetName() + ".json";
+            std::string fileName = currentPath.string();
+            fileName             = zzj::str::w2ansi(zzj::str::utf82w(fileName));
+            std::ofstream o(fileName);
+            o << std::setw(4) << roleConfig << std::endl;
         }
+    }
+
+    ImGui::Checkbox("AutohuntFirmPositionEnable", &GameManager::autohuntFirmPositionEnable);
+    if (GameManager::autohuntFirmPositionEnable)
+    {
+        if (roleConfig.find("AutoHuntPosX") != roleConfig.end() && roleConfig.find("AutoHuntPosZ") != roleConfig.end())
+        {
+            auto preAutohuntEnableVar = gameManager.Dll123IsAutoHuntEnable();
+            if(preAutohuntEnableVar.has_value() && preAutohuntEnableVar.value())
+            {
+                static auto lastTime = std::chrono::system_clock::now();
+                auto currentTime     = std::chrono::system_clock::now();
+                auto duration        = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTime);
+                if (duration.count() < 10)
+                {
+                    return;
+                }
+                gameManager.Dll123SetAutoHuntPos(roleConfig["AutoHuntPosX"], roleConfig["AutoHuntPosZ"]);
+                lastTime = currentTime;
+            }
+
+        }
+        else
+            ImGui::Text("AutoHuntPosX or AutoHuntPosZ not found");
     }
 }
 void GameSetting::AttackSpeed()
@@ -1229,6 +1263,32 @@ void CalculatorHookHandler()
             gameManager.DisableMaxCalculator();
     }
 }
+void MessagerHandler()
+{
+    static auto lastTime = std::chrono::system_clock::now();
+    auto currentTime     = std::chrono::system_clock::now();
+    auto duration        = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTime);
+    if (duration.count() < 60)
+    {
+        return;
+    }
+    Messager messager;
+
+
+    GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
+    if (localPlayer == nullptr)
+    {
+        return;
+    }
+
+    messager.PostMoney();
+    if(localPlayer->GetCurrentHP() == 0)
+    {
+        messager.PostDieInfo();
+    }
+
+    lastTime = currentTime;
+}
 void GameSetting::Render(bool &open)
     {
     ImGui::SetNextWindowBgAlpha(0.2f);
@@ -1374,6 +1434,7 @@ void GameSetting::Render(bool &open)
 
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     Test();
+    MessagerHandler();
     RoleConfigLoader(playerName);
     CalculatorHookHandler();
     DeliverThing();
@@ -1447,6 +1508,10 @@ void GameSetting::LoadRoleConfig(const std::string &name)
         {
             GameManager::isAutoSell = roleConfig["AutoSell"];
         }
+        if (roleConfig.find("AutohuntFirmPositionEnable") != roleConfig.end())
+        {
+            GameManager::autohuntFirmPositionEnable = roleConfig["AutohuntFirmPositionEnable"];
+        }
     }
     catch (const std::exception &ex)
     {
@@ -1462,13 +1527,17 @@ void GameSetting::SaveRoleConfig(const std::string &name)
 {
     boost::filesystem::path currentPath = zzj::GetDynamicLibPath(InitLog);
     currentPath /= name + ".json";
+
+    std::string fileName                     = currentPath.string();
+    fileName                                 = zzj::str::w2ansi(zzj::str::utf82w(fileName));
     roleConfig["FullFirePower"]    = GameManager::fireFullPowerEnabled;
     roleConfig["FullFirePowerVal"] = GameManager::fireFullPowerIntervalValue;
     roleConfig["ItemNoCoolDown"]   = GameManager::itemNoCoolDownEnable;
     roleConfig["CoolDownValue"]    = GameManager::itemCoolDown;
     roleConfig["SpeedHackValue"]   = GameManager::speedHack;
     roleConfig["AutoSell"]         = GameManager::isAutoSell;
-    std::ofstream o(currentPath.string());
+    roleConfig["AutohuntFirmPositionEnable"] = GameManager::autohuntFirmPositionEnable;
+    std::ofstream o(fileName);
     o << std::setw(4) << roleConfig << std::endl;
 }
 
