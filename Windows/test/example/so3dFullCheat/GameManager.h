@@ -352,7 +352,7 @@ class GameManager
     // SkillTable offset
     static const uintptr_t skillRangeOffset   = 0x14c;
     static const uintptr_t skillPretimeOffset = 0x150;
-
+    
     // end
 
     // GuiMenu
@@ -533,6 +533,7 @@ class GameManager
     inline static const uintptr_t gServerMinus1Offset        = 0x94c788;
     inline static const uintptr_t gRolesBeginOffset          = 0x95e438;
     inline static const uintptr_t generalObjectOffset        = 0xa1cff0;
+    inline static const uintptr_t calculatorOffset           = 0x4f76c0;
   public:
     GameManager();
     ~GameManager();
@@ -559,6 +560,8 @@ class GameManager
     void GetRewardAttenceReward(int index);
     void HookMachineCode();
     void DeliverTask(int taskID, int npcID);
+    void EnableMaxCalculator();
+    void DisableMaxCalculator();
     CMenuContainerEx *GetMenuContainer(GUIIndex index);
     std::vector<SingleRewardInfo> GetRewardInfo(GUIIndex rewardGuiType);
     AutoHuntManager* GetAutoHuntManager();

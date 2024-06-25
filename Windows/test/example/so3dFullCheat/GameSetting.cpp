@@ -885,7 +885,22 @@ void GameSetting::MoveSpeedHandler()
             gameManager.DisableMoveSpeed();
         }
     }
-    if (roleConfig.find("MoveSpeedEnable") != roleConfig.end())
+    float maxMoveSpeed = 25.0f;
+    ImGui::SliderFloat("MoveSpeed", &GameManager::moveSpeed, 1.0f, maxMoveSpeed);
+    if (GameManager::speedHackEnable)
+    {
+        float currentMoveSpeed = GameManager::moveSpeed;
+        if (GameManager::moveSpeedEnable)
+        {
+            currentMoveSpeed = currentMoveSpeed * GameManager::speedHack;
+            if (currentMoveSpeed > maxMoveSpeed)
+            {
+                GameManager::moveSpeed = maxMoveSpeed / GameManager::speedHack;
+            }
+        }
+        // slider from 1 to 10
+    }
+    else if (roleConfig.find("MoveSpeedEnable") != roleConfig.end())
     {
         auto preMoveSpeedEnable      = GameManager::moveSpeedEnable;
         GameManager::moveSpeedEnable = roleConfig["MoveSpeedEnable"];
@@ -898,21 +913,6 @@ void GameSetting::MoveSpeedHandler()
         {
             GameManager::moveSpeed = roleConfig["MoveSpeedValue"];
         }
-    }
-    float maxMoveSpeed = 14.0f;
-    if (GameManager::moveSpeedEnable)
-    {
-        float currentMoveSpeed = GameManager::moveSpeed;
-        if (GameManager::speedHackEnable)
-        {
-            currentMoveSpeed = currentMoveSpeed * GameManager::speedHack;
-            if (currentMoveSpeed > maxMoveSpeed)
-            {
-                GameManager::moveSpeed = maxMoveSpeed / GameManager::speedHack;
-            }
-        }
-        // slider from 1 to 10
-        ImGui::SliderFloat("MoveSpeed", &GameManager::moveSpeed, 1.0f, maxMoveSpeed);
     }
 }
 void OpenBoxHandler()
@@ -1150,6 +1150,42 @@ void DeliverThing()
         });
         test.detach();
     }
+    if (ImGui::Button("DeliverEngine"))
+    {
+        std::thread test([=]() {
+            gameManager.DeliverTask(0x1d90, 0x4ab0);
+            Sleep(100);
+            gameManager.DeliverTask(0x1d9c, 0x4ab0);
+        });
+        test.detach();
+    }
+    if (ImGui::Button("DeliverHairCard"))
+    {
+        std::thread test([=]() {
+            gameManager.DeliverTask(0x1d8c, 0x4ab0);
+            Sleep(100);
+            gameManager.DeliverTask(0x1d9a, 0x4ab0);
+        });
+        test.detach();
+    }
+}
+void TeleportHandler()
+{
+    if (ImGui::Button("Teleport-Fire"))
+    {
+        std::thread test([=]() { gameManager.DeliverTask(0x272b, 0x4aac); });
+        test.detach();
+    }
+    if (ImGui::Button("Teleport-Wood"))
+    {
+        std::thread test([=]() { gameManager.DeliverTask(0x272d, 0x4aac); });
+        test.detach();
+    }
+    if (ImGui::Button("Teleport-Sand"))
+    {
+        std::thread test([=]() { gameManager.DeliverTask(0x272f, 0x4aac); });
+        test.detach();
+    }
 }
 void CheckLocalPlayer()
 {
@@ -1169,6 +1205,28 @@ void CheckLocalPlayer()
             spdlog::error("CheckLocalPlayer no player");
             exit(0);
         }
+    }
+}
+void GameSetting::RoleConfigLoader(const std::string &name)
+{
+    static auto lastTime = std::chrono::system_clock::now();
+    auto currentTime     = std::chrono::system_clock::now();
+    auto duration        = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTime);
+    if (duration.count() >= 10)
+    {
+        lastTime = currentTime;
+        LoadRoleConfig(name);
+    }
+}
+void CalculatorHookHandler()
+{
+    static bool enabled = false;
+    if (ImGui::Checkbox("CalculatorMax", &enabled))
+    {
+        if (enabled)
+            gameManager.EnableMaxCalculator();
+        else
+            gameManager.DisableMaxCalculator();
     }
 }
 void GameSetting::Render(bool &open)
@@ -1316,6 +1374,8 @@ void GameSetting::Render(bool &open)
 
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     Test();
+    RoleConfigLoader(playerName);
+    CalculatorHookHandler();
     DeliverThing();
     OpenBoxHandler();
     CashItemHandler();
@@ -1355,19 +1415,25 @@ void GameSetting::LoadRoleConfig(const std::string &name)
         std::ifstream i(fileName);
         i >> roleConfig;
 
-        if (roleConfig.find("FullFirePower") != roleConfig.end())
-        {
-            GameManager::fireFullPowerEnabled = roleConfig["FullFirePower"];
-        }
-        if (roleConfig.find("FullFirePowerVal") != roleConfig.end())
-        {
-            GameManager::fireFullPowerIntervalValue = roleConfig["FullFirePowerVal"];
-        }
+        static auto firefullPowerOnceHandler = [=]() {
+            if (roleConfig.find("FullFirePower") != roleConfig.end())
+            {
+                GameManager::fireFullPowerEnabled = roleConfig["FullFirePower"];
+            }
+            if (roleConfig.find("FullFirePowerVal") != roleConfig.end())
+            {
+                GameManager::fireFullPowerIntervalValue = roleConfig["FullFirePowerVal"];
+            }
+            return 0;
+            }();
         if (roleConfig.find("ItemNoCoolDown") != roleConfig.end())
         {
+            auto preEnable                    = GameManager::itemNoCoolDownEnable;
             GameManager::itemNoCoolDownEnable = roleConfig["ItemNoCoolDown"];
-            if (GameManager::itemNoCoolDownEnable)
+            if (preEnable == false && GameManager::itemNoCoolDownEnable)
                 gameManager.EnableItemNoCoolDown();
+            else if (preEnable == true && !GameManager::itemNoCoolDownEnable)
+                gameManager.DisableItemNoCoolDown();
         }
         if (roleConfig.find("CoolDownValue") != roleConfig.end())
         {

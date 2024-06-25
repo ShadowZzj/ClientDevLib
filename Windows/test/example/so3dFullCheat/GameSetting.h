@@ -12,7 +12,7 @@ class GameSetting : public zzj::D3D::Setting
     virtual void Render(bool &open);
     void LoadRoleConfig(const std::string& name);
     void SaveRoleConfig(const std::string &name);
-    
+    void RoleConfigLoader(const std::string &name);
     void CashItemHandler();
     void MoveSpeedHandler();
     void AttackSpeed();

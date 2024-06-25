@@ -1679,11 +1679,11 @@ int __declspec(naked) SkillSpeedHooked1()
     static float pretime = 0.0001f;
     __asm
     {
-        pushad
+        push ebx
         movss xmm0, pretime
         mov ebx,GameManager::skillPretimeOffset
         movss [edx + ebx],xmm0
-        popad
+        pop ebx
         jmp skillSpeedRetAddress1
     }
 }
@@ -1693,11 +1693,11 @@ int __declspec(naked) SkillSpeedHooked2()
     static float skillSpeed = 0.001f;
     __asm
     {
-        pushad
+        push ebx
         movss xmm1, skillSpeed
         mov ebx,GameManager::skillSpeedOffset
         movss [eax + ebx],xmm1
-        popad
+        pop ebx
         jmp skillSpeedRetAddress2
     }
 }
@@ -1710,7 +1710,11 @@ int __declspec(naked) SkillCooDownCalculateHooked()
 {
     __asm
     {
-        pushad
+        push eax
+        push ebx
+        push edx
+        push ecx
+
         mov eax,skillCoolDownOffset
         mov ebx,[edx + eax]
         mov beforeCoolDown,ebx
@@ -1725,7 +1729,10 @@ int __declspec(naked) SkillCooDownCalculateHooked()
     __asm
     {
     retP:
-        popad 
+        pop ecx
+        pop edx
+        pop ebx
+        pop eax
         movss xmm1, beforeCoolDown
         jmp skillCooldownRetAddress
     }
@@ -2308,7 +2315,7 @@ void RecvListerner()
             auto currentTime = std::chrono::system_clock::now();
             std::lock_guard<std::mutex> lock(mtx);
             auto duration = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastTimeRecv);
-            if (duration.count() > 60)
+            if (duration.count() > 180)
             {
                 spdlog::error("recv timeout");
                 ExitProcess(0);
@@ -2489,12 +2496,7 @@ void GameManager::HookSendAndRecv()
         return;
     }
     spdlog::info("sendOriginAddress: {0:x}", (uintptr_t)sendOriginAddress);
-    recvOriginAddress = decltype(recvOriginAddress)(GetModuleBaseAddress("123.dll") + 0x4cea7);
-    if (recvOriginAddress == NULL)
-    {
-        spdlog::error("GetProcAddress failed: {0}", GetLastError());
-        return;
-    }
+
     spdlog::info("recvOriginAddress: {0:x}", (uintptr_t)recvOriginAddress);
     auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
     if (baseAddr == NULL)
@@ -2510,14 +2512,20 @@ void GameManager::HookSendAndRecv()
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     DetourAttach(&(PVOID &)sendOriginAddress, SendHooked);
-    DetourAttach(&(PVOID &)recvOriginAddress, RecvHooked);
+
+    auto base123      = GetModuleBaseAddress("123.dll");
+    if (base123 != NULL)
+    {
+        recvOriginAddress = decltype(recvOriginAddress)(base123 + 0x4cea7);
+        DetourAttach(&(PVOID &)recvOriginAddress, RecvHooked);
+        std::thread t1(RecvListerner);
+        t1.detach();
+    }
 
     DetourAttach(&(PVOID &)plainSendPackage, PlainSendHooked);
     //DetourAttach(&(PVOID &)wspSendOriginAddress, WSPSendHooked);
     DetourTransactionCommit();
 
-    std::thread t1(RecvListerner);
-    t1.detach();
 }
 
 std::string GameManager::CUser::GetName()
@@ -2621,6 +2629,38 @@ void GameManager::DeliverTask(int taskID, int npcID)
         pop eax
         pop ecx
     }
+}
+uint64_t(__fastcall *calculatorWorkFunc)(void *thisPtr, void *edx, void *buffer, uint64_t max, uint64_t a2, uint64_t a3,
+                                    int a4) = nullptr;
+uint64_t CalculatorHookFunction(void *thisPtr, void *edx, void *buffer, uint64_t max, uint64_t a2, uint64_t a3,
+                           int a4)
+{
+    return max;
+}
+void GameManager::EnableMaxCalculator()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+
+    calculatorWorkFunc = (decltype(calculatorWorkFunc))(baseAddr + calculatorOffset);
+
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    DetourAttach(&(PVOID &)calculatorWorkFunc, CalculatorHookFunction);
+    DetourTransactionCommit();
+}
+
+void GameManager::DisableMaxCalculator()
+{
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    DetourDetach(&(PVOID &)calculatorWorkFunc, CalculatorHookFunction);
+    DetourTransactionCommit();
 }
 
 
