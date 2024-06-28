@@ -1430,6 +1430,58 @@ GameManager::CItemContainer *GameManager::GetItemContainer()
     }
     return (GameManager::CItemContainer *)itemContainerAddr;
 }
+std::optional<GameManager::Item> GameManager::GetCurrentGearItem()
+{
+    auto gearMenu = GetMenuContainer(GUIIndex::CMagicSpringOption);
+    if (gearMenu == nullptr)
+    {
+		spdlog::error("gearMenu is null");
+		return {};
+	}
+
+    spdlog::info("GearMenu Address {:x}", (uintptr_t)gearMenu);
+    if (gearMenu->guiMenu)
+    {
+        if (gearMenu->guiMenu->data)
+        {
+            auto hasItem = gearMenu->guiMenu->data->hasItem;
+            if (hasItem == 0)
+            {
+                spdlog::info("no item");
+                return {};
+            }
+
+            auto bagPos = gearMenu->guiMenu->data->bagABSPos;
+            auto items = GetBagItems();
+            return items[bagPos];
+		}
+	}
+    return {};
+}
+void GameManager::ChangeGear()
+{
+    zzj::Process process;
+    zzj::Memory memory(process);
+    auto baseAddr = GetModuleBaseAddress("SO3DPlus.exe");
+    if (baseAddr == NULL)
+    {
+        return;
+    }
+
+    auto callFunc = useGearCallOffset + baseAddr;
+    auto gearMenu = GetMenuContainer(GUIIndex::CMagicSpringOption);
+    if (gearMenu == nullptr)
+    {
+        spdlog::error("gearMenu is null");
+        return;
+    }
+    __asm
+    {
+        mov ecx,gearMenu
+        call callFunc
+    }
+    return;
+}
 std::vector<GameManager::CreatureWithAddress> GameManager::GetMonsters(uint32_t range)
 {
     auto localPlayerPointer = GetLocalPlayerBase();

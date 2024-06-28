@@ -18,6 +18,7 @@ class GameSetting : public zzj::D3D::Setting
     void AttackSpeed();
     void GetReward();
     void AutoHuntHandler();
+    void AutoGear();
     boost::filesystem::path GetRoleRunningEnviromentPath(const std::string &name);
     virtual DWORD GetToggleMenuKey()
     {

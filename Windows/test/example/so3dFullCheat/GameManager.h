@@ -224,6 +224,43 @@ class GameManager
     }; // Size: 0x03A8
     static_assert(sizeof(CItemTable) == itemTableSize);
 #pragma pack(pop) // 恢复对齐设置
+    inline static uintptr_t useGearCallOffset = 0x384640;
+    enum class GearType : UINT32
+    {
+        None,
+        attack,
+        mana,
+        hitrate,
+        avoidance,
+        defence,
+        critical,
+        attackSpeed,
+        moveSpeed,
+        hp,
+        ap,
+        hpPercent,
+        apPercent,
+        damagePercent,
+        defensePercent,
+        powerLevel,
+        agileLevel,
+        intelligenceLevel,
+        luckyLevel,
+        staminaLevel,
+        spiritLevel,
+        levelMinus,
+        experience,
+        dungeonDamage
+    };
+    class GearInfo
+    {
+      public:
+        GearType type;  // 0x0000
+        uint16_t value; // 0x0004
+        uint16_t every; // 0x0006
+    };                  // Size: 0x0008
+    static_assert(sizeof(GearInfo) == 0x8);
+
     class Item
     {
       public:
@@ -235,7 +272,10 @@ class GameManager
         class CItemTable *itemTable; // 0x0020
         char pad_0024[4];            // 0x0024
         float cooldownLeft;          // 0x0028
-        char pad_002C[156];          // 0x002C
+        char pad_002C[120];          // 0x002C
+        uint32_t gearLevel;          // 0x00A4
+        class GearInfo gearInfo[3];  // 0x00A8
+        char pad_00C0[8];            // 0x00C0
     };                               // Size: 0x00C8
     static_assert(sizeof(Item) == itemStructSize);
 
@@ -363,6 +403,27 @@ class GameManager
     static const uintptr_t FindGuiWithIndexFuncOffset                          = 0x56a0c0;
     inline static const std::vector<unsigned int> guiMenuMultilevelOffset = {0x8,0x0,0x8};
     inline static const std::vector<unsigned int> firstGuiMenuMultilevelOffset = {0x0, 0x4};
+
+    
+    class CGUIMenuData
+    {
+      public:
+        uint32_t bagABSPos; // 0x0000
+        uint32_t hasItem;   // 0x0004
+        uint32_t bagPos;    // 0x0008
+        char pad_000C[56];  // 0x000C
+    };                      // Size: 0x0044
+
+    static_assert(sizeof(CGUIMenuData) == 0x44);
+    class CGUIMenu
+    {
+      public:
+        char pad_0000[876];       // 0x0000
+        class CGUIMenuData *data; // 0x036C
+        char pad_0370[20];        // 0x0370
+    };                            // Size: 0x0384
+
+    static_assert(sizeof(CGUIMenu) == 0x384);
     class CMenuContainerEx
     {
       public:
@@ -372,14 +433,17 @@ class GameManager
         uint32_t mouseY;     // 0x0018
         char pad_001C[9];    // 0x001C
         bool isClosed;       // 0x0025
-        char pad_0026[26]; // 0x0026
+        char pad_0026[18]; // 0x0026
+        CGUIMenu *guiMenu;
+        char pad_0038[4];    // 0x0038
     };
 
     enum GUIIndex : uint32_t
     {
-		RewardAccess = 0x3f,
+        RewardAccess  = 0x3f,
         RewardAttence = 0x3e,
-        Seller = 0x17
+        Seller = 0x17,
+        CMagicSpringOption = 0x4f
 	};
     class SingleRewardInfo
     {
@@ -598,6 +662,8 @@ class GameManager
     void HookSendAndRecv();
     void SetSpeed(float speed);
     CItemContainer *GetItemContainer();
+    std::optional<GameManager::Item> GetCurrentGearItem();
+    void ChangeGear();
     std::vector<std::string> GetAroundPlayersName();
     std::vector<CUser> GetAroundPlayers();
     std::vector<Item> GetBagItems();

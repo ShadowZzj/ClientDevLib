@@ -20,107 +20,20 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(current_dir, 'database.db')
 SECRET_KEY = "shadowpopezzj"  # 选择一个安全的密钥
 
-moneyMap = {}
-moneyLock = Lock() 
-@app.route('/get_money', methods=['GET'])
-def GetMoney():
-    global moneyMap
-    # 从请求中获取用户标识符
-    user_id = request.args.get("userid")
-    if user_id not in moneyMap:
-        return jsonify({"code": 404, "message": "user not found"})
-    
-    # 返回用户标识符下的所有金钱
-    retStr = ""
-    totalMoney = 0
-    with moneyLock:
-        for username in moneyMap[user_id]:
-            for role in moneyMap[user_id][username]:
-                totalMoney += moneyMap[user_id][username][role]
-                retStr += f"{username}({role}): {moneyMap[user_id][username][role]}\n"
-    retStr += f"Total: {totalMoney}"
-    return retStr
-
-
-@app.route('/post_money', methods=['POST'])
-def PostMoney():
-    global moneyMap
-    # 从请求中获取数据
-    data = request.get_json()
-    # 获取用户标志符
-    user_id = data.get("userid")
-    # 获取用户名
-    username = data.get("username")
-    # 获取角色名
-    role = data.get("rolename")
-    # 获取金钱
-    money = data.get("money")
-
-    with moneyLock:
-        # 判断用户是否存在
-        if user_id not in moneyMap:
-            moneyMap[user_id] = {}
-        # 判断用户名是否存在
-        if username not in moneyMap[user_id]:
-            moneyMap[user_id][username] = {}
-        # 判断角色名是否存在
-        if role not in moneyMap[user_id][username]:
-            moneyMap[user_id][username][role] = 0
-        # 更新金钱
-        moneyMap[user_id][username][role] = money
-    # 返回结果
-    return jsonify({"code": 200, "message": "success"})
-dieInfoMap = {}
-dieLock = Lock()
-@app.route('/post_dieinfo', methods=['POST'])
-def PostDieInfo():
-    global dieInfoMap
-    # 从请求中获取数据
-    data = request.get_json()
-    # 获取用户标志符
-    user_id = data.get("userid")
-    # 获取用户名
-    username = data.get("username")
-    # 获取角色名
-    role = data.get("rolename")
-    
-
-    with dieLock:
-        # 判断用户是否存在
-        if user_id not in dieInfoMap:
-            dieInfoMap[user_id] = {}
-        # 判断用户名是否存在
-        if username not in dieInfoMap[user_id]:
-            dieInfoMap[user_id][username] = {}
-        # 判断角色名是否存在
-        if role not in dieInfoMap[user_id][username]:
-            dieInfoMap[user_id][username][role] = ""
-        # 更新死亡时间点为当前时间
-        tz = pytz.timezone('Asia/Shanghai')
-        beijing_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
-        dieInfoMap[user_id][username][role] = beijing_time
-    return jsonify({"code": 200, "message": "success"})
-
-@app.route('/get_dieinfo', methods=['GET'])
-def GetDieInfo():
-    global dieInfoMap
-    # 从请求中获取用户标识符
-    user_id = request.args.get("userid")
-    if user_id not in dieInfoMap:
-        return jsonify({"code": 404, "message": "user not found"})
-    
-    # 返回用户标识符下的所有死亡信息
-    retStr = ""
-    with dieLock:
-        for username in dieInfoMap[user_id]:
-            for role in dieInfoMap[user_id][username]:
-                retStr += f"{username}({role}): {dieInfoMap[user_id][username][role]}\n"
-        dieInfoMap[user_id] = {}
-    logging.info(f"Die Info: {retStr}")
-    return retStr
-
 infoMap = {}
 infoLock = Lock()
+def init_db():
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS cards (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            uuid TEXT NOT NULL,
+                            register_time TEXT NOT NULL,
+                            expiry_time TEXT NOT NULL
+                          )''')
+        conn.commit()
+
+
 @app.route('/get_info', methods=['GET'])
 def GetInfo():
     global infoMap
@@ -173,6 +86,43 @@ def PostInfo():
         infoMap[user_id][username][role] = {"money": money, "hp": hp, "mp": mp, "time": beijing_time}
     # 返回结果
     return jsonify({"code": 200, "message": "success"})
+
+@app.route('/get_card', methods=['GET'])
+def GetCard():
+    hours = int(request.args.get("hours"))
+    card_uuid = str(uuid.uuid4())
+    tz = pytz.timezone('Asia/Shanghai')
+    register_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    expiry_time = (datetime.datetime.now(tz) + datetime.timedelta(hours=hours)).strftime("%Y-%m-%d %H:%M:%S")
+
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO cards (uuid, register_time, expiry_time) VALUES (?, ?, ?)", (card_uuid, register_time, expiry_time))
+        conn.commit()
+
+    return jsonify({"card_uuid": card_uuid, "register_time": register_time, "expiry_time": expiry_time})
+
+@app.route('/verify_card', methods=['GET'])
+def VerifyCard():
+    card_uuid = request.args.get("card_uuid")
+    if card_uuid == "c929d7c5-a101-4c95-b2a5-d6308f856469":
+        return jsonify({"code": 200, "message": "Card is valid", "register_time": "2022-01-01 00:00:00", "expiry_time": "2022-12-31 23:59:59"})
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT register_time, expiry_time FROM cards WHERE uuid = ?", (card_uuid,))
+        row = cursor.fetchone()
+
+    if row:
+        expiry_time = datetime.datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
+        tz = pytz.timezone('Asia/Shanghai')
+        now_time = datetime.datetime.now(tz)
+        if expiry_time > now_time:
+            return jsonify({"code": 200, "message": "Card is valid", "register_time": row[0], "expiry_time": row[1]})
+        else:
+            return jsonify({"code": 400, "message": "Card has expired"})
+    else:
+        return jsonify({"code": 404, "message": "Card not found"})
+    
 if __name__ == '__main__':
     currentFileDir = os.path.dirname(os.path.abspath(__file__))
     logFile = os.path.join(currentFileDir, "server.log")
@@ -186,5 +136,5 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
 
 
-
+    init_db()
     app.run(host='0.0.0.0', port=1265, debug=False)

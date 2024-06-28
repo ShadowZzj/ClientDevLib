@@ -1153,12 +1153,129 @@ void Test()
 {
     if (ImGui::Button("Test"))
     {
-        std::thread test([=]() {
-            gameManager.DeliverTask(0xd44, 0x4aab);
-        });
-        test.detach();
+        auto currentGearItemVar = gameManager.GetCurrentGearItem();
+        if (currentGearItemVar.has_value())
+        {
+			auto currentGearItem = currentGearItemVar.value();
+			spdlog::info("Current Gear item {} Gear level {} ", currentGearItem.itemTable->GetItemName(),currentGearItem.gearLevel);
+            for (auto gearInfo : currentGearItem.gearInfo)
+            {
+                spdlog::info("Gear Type: {} Gear value: {} Gear every {}", (int)gearInfo.type, gearInfo.value, gearInfo.every);
+            }
+		}
+    }
+
+    if (ImGui::Button("ChangeGear"))
+    {
+        gameManager.ChangeGear();
     }
         
+}
+
+void GameSetting::AutoGear()
+{
+    static bool autoGearEnable = false;
+    ImGui::Checkbox("AutoGear", &autoGearEnable);
+
+    static bool isThreadRunning = false;
+    static std::mutex roleConfigMutex;
+    static nlohmann::json funcRoleConfig;
+    {
+        std::lock_guard<std::mutex> guarder(roleConfigMutex);
+        funcRoleConfig = roleConfig;
+    }
+    if (!isThreadRunning)
+    {
+        std::thread gearChaningThread([]() {
+            do
+            {
+                if (!autoGearEnable)
+					continue;
+
+                nlohmann::json roleConfig;
+                {
+                    std::lock_guard<std::mutex> guarder(roleConfigMutex);
+                    roleConfig = funcRoleConfig;
+                }
+                try
+                {
+                    auto gearGoal   = roleConfig["GearGoal"];
+                    int targetLevel = gearGoal["level"];
+                    auto goals      = gearGoal["goals"];
+
+                    auto currentGearItemVar = gameManager.GetCurrentGearItem();
+                    if (!currentGearItemVar.has_value())
+                        continue;
+
+                    auto currentGearItem = currentGearItemVar.value();
+                    spdlog::info("Current Gear item {} Gear level {} ", currentGearItem.itemTable->GetItemName(),
+                                 currentGearItem.gearLevel);
+
+                    bool shouldChangeGear = false;
+                    if (currentGearItem.gearLevel < targetLevel)
+                        shouldChangeGear = true;
+
+                    if (!shouldChangeGear)
+                    {
+
+                        for (auto gearInfo : currentGearItem.gearInfo)
+                        {
+                            spdlog::info("Gear Type: {} Gear value: {} Gear every {}", (int)gearInfo.type,
+                                         gearInfo.value, gearInfo.every);
+                            bool isSatify = false;
+                            for (auto &goal : goals)
+                            {
+                                int goalType    = goal["type"];
+                                int goalValue   = goal["value"];
+                                bool everyFound = goal.find("every") != goal.end();
+
+                                bool condition1 = goalType == (int)gearInfo.type && goalValue <= gearInfo.value;
+
+                                bool condition2 = false;
+                                if (everyFound)
+                                {
+                                    int goalEvery = goal["every"];
+                                    condition2    = gearInfo.every <= goalEvery;
+                                }
+                                else
+                                    condition2 = true;
+
+                                if (condition1 && condition2)
+                                {
+                                    isSatify = true;
+                                    break;
+                                }
+                            }
+
+                            if (!isSatify)
+                            {
+                                shouldChangeGear = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (shouldChangeGear)
+                    {
+                        gameManager.ChangeGear();
+                    }
+                }
+                catch (const std::exception &ex)
+                {
+                    spdlog::error("AutoGear error with {}", ex.what());
+                }
+                catch (...)
+                {
+                    spdlog::error("AutoGear error with unknown error");
+                }
+            } while (std::this_thread::sleep_for(std::chrono::milliseconds(400)),1);
+            });
+        gearChaningThread.detach();
+        isThreadRunning = true;
+    }
+
+
+
 }
 void DeliverThing()
 {
@@ -1287,6 +1404,11 @@ void GameSetting::Render(bool &open)
         gameManager.EnableCameraDistance();
         std::thread checkLocalPlayer(CheckLocalPlayer);
         checkLocalPlayer.detach();
+        std::thread cardHandler([](){
+            Messager messager;
+            messager.CardHandler();
+        });
+        cardHandler.detach();
     }
     ImGui::Checkbox("HookSend", &GameManager::hookSendEnable);
     
@@ -1419,6 +1541,7 @@ void GameSetting::Render(bool &open)
 
     ImGui::Text("Around Players: %d", aroundPlayers.size());
     Test();
+    AutoGear();
     MessagerHandler();
     RoleConfigLoader(playerName);
     CalculatorHookHandler();
