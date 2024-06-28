@@ -1153,13 +1153,10 @@ void Test()
 {
     if (ImGui::Button("Test"))
     {
-        gameManager.CloseSocket();
-    }
-
-    if (ImGui::Button("Crash"))
-    {
-        char *p = nullptr;
-        *p      = 1;
+        std::thread test([=]() {
+            gameManager.DeliverTask(0xd44, 0x4aab);
+        });
+        test.detach();
     }
         
 }
@@ -1273,19 +1270,7 @@ void MessagerHandler()
         return;
     }
     Messager messager;
-
-
-    GameManager::CLocalUser *localPlayer = (GameManager::CLocalUser *)gameManager.GetLocalPlayerBase();
-    if (localPlayer == nullptr)
-    {
-        return;
-    }
-
-    messager.PostMoney();
-    if(localPlayer->GetCurrentHP() == 0)
-    {
-        messager.PostDieInfo();
-    }
+    messager.PostInfo();
 
     lastTime = currentTime;
 }

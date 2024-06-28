@@ -118,6 +118,61 @@ def GetDieInfo():
         dieInfoMap[user_id] = {}
     logging.info(f"Die Info: {retStr}")
     return retStr
+
+infoMap = {}
+infoLock = Lock()
+@app.route('/get_info', methods=['GET'])
+def GetInfo():
+    global infoMap
+    # 从请求中获取用户标识符
+    user_id = request.args.get("userid")
+    if user_id not in infoMap:
+        return jsonify({"code": 404, "message": "user not found"})
+    
+    # 返回用户标识符下的所有信息
+    retStr = ""
+    totalMoney = 0
+    with infoLock:
+        for username in infoMap[user_id]:
+            for role in infoMap[user_id][username]:
+                retStr += f"{username}({role}): hp={infoMap[user_id][username][role]['hp']}, mp={infoMap[user_id][username][role]['mp']}, money={infoMap[user_id][username][role]['money']}, time={infoMap[user_id][username][role]['time']}, Die={infoMap[user_id][username][role]['hp'] <= 0}\n"
+                totalMoney += infoMap[user_id][username][role]['money']
+    
+    retStr += f"Total Money: {totalMoney}"
+    return retStr
+
+@app.route('/post_info', methods=['POST'])
+def PostInfo():
+    global infoMap
+    # 从请求中获取数据
+    data = request.get_json()
+    # 获取用户标志符
+    user_id = data.get("userid")
+    # 获取用户名
+    username = data.get("username")
+    # 获取角色名
+    role = data.get("rolename")
+    # 获取信息
+    money = data.get("money")
+    hp = data.get("hp")
+    mp = data.get("mp")
+
+    with infoLock:
+        # 判断用户是否存在
+        if user_id not in infoMap:
+            infoMap[user_id] = {}
+        # 判断用户名是否存在
+        if username not in infoMap[user_id]:
+            infoMap[user_id][username] = {}
+        # 判断角色名是否存在
+        if role not in infoMap[user_id][username]:
+            infoMap[user_id][username][role] = {}
+        # 更新信息
+        tz = pytz.timezone('Asia/Shanghai')
+        beijing_time = datetime.datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+        infoMap[user_id][username][role] = {"money": money, "hp": hp, "mp": mp, "time": beijing_time}
+    # 返回结果
+    return jsonify({"code": 200, "message": "success"})
 if __name__ == '__main__':
     currentFileDir = os.path.dirname(os.path.abspath(__file__))
     logFile = os.path.join(currentFileDir, "server.log")
