@@ -1190,7 +1190,10 @@ void GameSetting::AutoGear()
             do
             {
                 if (!autoGearEnable)
-					continue;
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    continue;
+                }
 
                 nlohmann::json roleConfig;
                 {
@@ -1199,25 +1202,32 @@ void GameSetting::AutoGear()
                 }
                 try
                 {
+                    static int lastItemCount = -1;
+                    static bool lastTimeChanged = false;
                     auto gearGoal   = roleConfig["GearGoal"];
                     int targetLevel = gearGoal["level"];
+                    int targetCount       = gearGoal["count"];
                     auto goals      = gearGoal["goals"];
 
                     auto currentGearItemVar = gameManager.GetCurrentGearItem();
                     if (!currentGearItemVar.has_value())
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(500));
                         continue;
-
+                    }
                     auto currentGearItem = currentGearItemVar.value();
-                    spdlog::info("Current Gear item {} Gear level {} ", currentGearItem.itemTable->GetItemName(),
-                                 currentGearItem.gearLevel);
 
                     bool shouldChangeGear = false;
                     if (currentGearItem.gearLevel < targetLevel)
-                        shouldChangeGear = true;
+                    {
+                        gameManager.ChangeGear();
+                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                        continue;
+                    }
 
                     if (!shouldChangeGear)
                     {
-
+                        int satisfyCount = 0;
                         for (auto gearInfo : currentGearItem.gearInfo)
                         {
                             spdlog::info("Gear Type: {} Gear value: {} Gear every {}", (int)gearInfo.type,
@@ -1247,28 +1257,29 @@ void GameSetting::AutoGear()
                                 }
                             }
 
-                            if (!isSatify)
-                            {
-                                shouldChangeGear = true;
-                                break;
-                            }
+                            if (isSatify)
+                                satisfyCount++;
                         }
+                        shouldChangeGear = ! (satisfyCount >= targetCount);
                     }
 
                     if (shouldChangeGear)
                     {
                         gameManager.ChangeGear();
                     }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
                 }
                 catch (const std::exception &ex)
                 {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     spdlog::error("AutoGear error with {}", ex.what());
                 }
                 catch (...)
                 {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     spdlog::error("AutoGear error with unknown error");
                 }
-            } while (std::this_thread::sleep_for(std::chrono::milliseconds(400)),1);
+            } while (1);
             });
         gearChaningThread.detach();
         isThreadRunning = true;

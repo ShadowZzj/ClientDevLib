@@ -667,6 +667,7 @@ class GameManager
     std::vector<std::string> GetAroundPlayersName();
     std::vector<CUser> GetAroundPlayers();
     std::vector<Item> GetBagItems();
+    int GetItemCount(const std::string &name);
     std::vector<Item> GetCashItems();
     std::vector<CSkill> GetSkills();
     std::vector<CreatureWithAddress> GetCreatures();

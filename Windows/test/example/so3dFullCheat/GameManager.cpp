@@ -1044,6 +1044,24 @@ std::vector<GameManager::Item> GameManager::GetBagItems()
     }
 }
 
+int GameManager::GetItemCount(const std::string &name)
+{
+    auto items = GetBagItems();
+    int ret    = 0;
+    for (auto& item : items)
+    {
+        if (!item.itemTable)
+        {
+            continue;
+        }
+
+        std::string itemName = item.itemTable->GetItemName();
+        if (name == itemName)
+            ret += item.count;
+    }
+    return ret;
+}
+
 std::vector<GameManager::Item> GameManager::GetCashItems()
 {
     try
