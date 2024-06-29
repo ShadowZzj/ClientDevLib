@@ -1202,8 +1202,9 @@ void GameSetting::AutoGear()
                 }
                 try
                 {
-                    static int lastItemCount = -1;
+                    
                     static bool lastTimeChanged = false;
+                    static std::vector<GameManager::GearInfo> lastGearInfo;
                     auto gearGoal   = roleConfig["GearGoal"];
                     int targetLevel = gearGoal["level"];
                     int targetCount       = gearGoal["count"];
@@ -1212,6 +1213,8 @@ void GameSetting::AutoGear()
                     auto currentGearItemVar = gameManager.GetCurrentGearItem();
                     if (!currentGearItemVar.has_value())
                     {
+                        lastTimeChanged = false;
+                        lastGearInfo.clear();
                         std::this_thread::sleep_for(std::chrono::milliseconds(500));
                         continue;
                     }
@@ -1225,6 +1228,24 @@ void GameSetting::AutoGear()
                         continue;
                     }
 
+                    if (lastTimeChanged && !lastGearInfo.empty())
+                    {
+						bool isSame = true;
+                        for (int i = 0; i < lastGearInfo.size(); i++)
+                        {
+                            if (lastGearInfo[i] != currentGearItem.gearInfo[i])
+                            {
+								isSame = false;
+								break;
+							}
+						}
+                        if (isSame)
+                        {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                            continue;
+                        }
+					}
+					
                     if (!shouldChangeGear)
                     {
                         int satisfyCount = 0;
@@ -1263,11 +1284,18 @@ void GameSetting::AutoGear()
                         shouldChangeGear = ! (satisfyCount >= targetCount);
                     }
 
+                    lastGearInfo.clear();
                     if (shouldChangeGear)
                     {
+                        lastTimeChanged = true;
+                        for (auto gearInfo : currentGearItem.gearInfo)
+                        {
+                            lastGearInfo.push_back(gearInfo);
+                        }
                         gameManager.ChangeGear();
                     }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+                    else
+                        lastTimeChanged = false;
                 }
                 catch (const std::exception &ex)
                 {

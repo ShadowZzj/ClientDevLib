@@ -258,6 +258,12 @@ class GameManager
         GearType type;  // 0x0000
         uint16_t value; // 0x0004
         uint16_t every; // 0x0006
+
+    //operator ==
+        bool operator!=(const GearInfo& other) const
+        {
+		    return type != other.type || value != other.value || every != other.every;
+        }
     };                  // Size: 0x0008
     static_assert(sizeof(GearInfo) == 0x8);
 
