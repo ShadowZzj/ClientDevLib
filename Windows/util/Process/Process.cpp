@@ -261,7 +261,9 @@ namespace zzj
         };
         std::vector<char> path(MAX_PATH);
         GetModuleFileNameExA(handle, NULL, path.data(), MAX_PATH);
-        return path.data();
+        std::string ret = path.data();
+        ret = zzj::str::ansi2utf8(ret);
+        return ret;
     }
 
     int ProcessV2::GetModules(std::vector<ProcessV2::Module> &modules)
