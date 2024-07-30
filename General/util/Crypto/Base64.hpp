@@ -50,7 +50,18 @@ class Base64Help
 
         return ret;
     }
-
+    static std::vector<BYTE> Decode(const std::string& input)
+    {
+        uint32_t requiredBufSize = input.size() / 4 * 3;
+        std::vector<BYTE> ret(requiredBufSize);
+        size_t bufSize = requiredBufSize;
+        int retCode = Decode(input, (char*)ret.data(), bufSize);
+        if (retCode != SUCCESS)
+        {
+            ret.clear();
+        }
+        return ret;
+    }
     static int Decode(const std::string &input, char *buf, size_t &bufSize)
     {
         static constexpr unsigned char kDecodingTable[] = {

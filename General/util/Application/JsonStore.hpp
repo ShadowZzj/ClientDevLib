@@ -13,7 +13,7 @@ namespace zzj
 {
 class JsonStore
 {
-  public:
+   public:
     struct KeyNotExist
     {
     };
@@ -22,13 +22,13 @@ class JsonStore
         std::string message;
     };
 
-    template <typename T> using Result = std::variant<T, KeyNotExist, ExceptionOccured>;
+    template <typename T>
+    using Result = std::variant<T, KeyNotExist, ExceptionOccured>;
 
     Result<nlohmann::json> Get()
     {
         auto path = GetStorePath();
-        if (path.empty())
-            return ExceptionOccured{"Path does not exist"};
+        if (path.empty()) return ExceptionOccured{"Path does not exist"};
         auto mutexPtr = GetMutexForPath(path);
         std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
 
@@ -64,11 +64,11 @@ class JsonStore
             return ExceptionOccured{"Unknown exception"};
         }
     }
-    template <typename T> Result<T> Get(const std::string &key)
+    template <typename T>
+    Result<T> Get(const std::string &key)
     {
         auto path = GetStorePath();
-        if (path.empty())
-            return ExceptionOccured{"Path does not exist"};
+        if (path.empty()) return ExceptionOccured{"Path does not exist"};
 
         auto mutexPtr = GetMutexForPath(path);
         std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
@@ -94,8 +94,7 @@ class JsonStore
             std::ifstream ifs(path.string());
             nlohmann::json j;
             ifs >> j;
-            if (j.find(key) == j.end())
-                return KeyNotExist();
+            if (j.find(key) == j.end()) return KeyNotExist();
             return j[key].get<T>();
         }
         catch (const std::exception &e)
@@ -113,8 +112,7 @@ class JsonStore
         auto path = GetStorePath();
 
         // If the path does not exist, and the path is valid, create it
-        if (path.empty())
-            return ExceptionOccured{"Path is empty"};
+        if (path.empty()) return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
         std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
@@ -134,13 +132,13 @@ class JsonStore
             return ExceptionOccured{"Unknown exception"};
         }
     }
-    template <typename T> Result<T> Set(const std::string &key, const T &value)
+    template <typename T>
+    Result<T> Set(const std::string &key, const T &value)
     {
         auto path = GetStorePath();
 
         // If the path does not exist, and the path is valid, create it
-        if (path.empty())
-            return ExceptionOccured{"Path is empty"};
+        if (path.empty()) return ExceptionOccured{"Path is empty"};
 
         auto mutexPtr = GetMutexForPath(path);
         std::lock_guard<zzj::ProcessSync> lock(mutexPtr);
@@ -167,9 +165,20 @@ class JsonStore
             std::ifstream ifs(path.string());
             nlohmann::json j;
             ifs >> j;
-            j[key] = value;
-            std::ofstream ofs(path.string());
+            ifs.close();
+
+
+            boost::filesystem::path temp_path = path.string() + ".tmp";
+            std::ofstream ofs(temp_path.string());
+            if (!ofs.is_open())
+            {
+                throw std::runtime_error("Failed to open file for writing");
+            }
+
             ofs << j.dump(4);
+            ofs.close();
+
+            boost::filesystem::rename(temp_path, path);
             return value;
         }
         catch (const std::exception &e)
@@ -184,7 +193,7 @@ class JsonStore
 
     virtual boost::filesystem::path GetStorePath() = 0;
 
-  private:
+   private:
     inline static std::mutex mapMutex;
     inline static std::unordered_map<std::string, std::unique_ptr<zzj::ProcessSync>> mutexes;
 
@@ -196,4 +205,4 @@ class JsonStore
         return zzj::ProcessSync(uniqueName);
     }
 };
-}; // namespace zzj
+};  // namespace zzj
