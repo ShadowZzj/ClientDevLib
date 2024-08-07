@@ -4,7 +4,7 @@
 #include <optional>
 #include <sddl.h>
 #include <wtsapi32.h>
-
+#include <General/util/StrUtil.h>
 #pragma comment(lib, "Wtsapi32.lib")
 
 bool zzj::SystemInfo::IsWindowsVersionGreaterOrEqual(WORD wMajorVersion, WORD wMinorVersion, WORD wServicePackMajor)
@@ -112,6 +112,6 @@ std::optional<std::string> zzj::SystemInfo::GetComputerNameStr()
     DWORD dwLen  = 1024;
     BOOL bStatus = GetComputerNameA(szComputerName, &dwLen);
     if (bStatus)
-        return szComputerName;
+        return zzj::str::ansi2utf8(szComputerName);
     return {};
 }
