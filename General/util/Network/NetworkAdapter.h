@@ -41,6 +41,10 @@ class NetworkAdapter
     std::string friendlyName;
     std::string description;
     Type adapterType;
+    #ifdef _WIN32
+    bool isDynamicDns = false;
+    int SetDynamicDns() const;
+    #endif
 };
 class NetworkHelper
 {

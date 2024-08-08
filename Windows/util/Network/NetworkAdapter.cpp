@@ -7,6 +7,7 @@
 #include <iphlpapi.h>
 #include <Windows.h>
 #include <vector>
+#include <Windows/util/Registry/WinReg.hpp>
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ws2_32")
 using namespace zzj;
@@ -14,22 +15,19 @@ using namespace zzj;
 std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
 {
     std::vector<NetworkAdapter> adapters;
-    ULONG size              = 1024 * 15;
+    ULONG size = 1024 * 15;
     PIP_ADAPTER_ADDRESSES p = (IP_ADAPTER_ADDRESSES *)HeapAlloc(GetProcessHeap(), 0, size);
-    if (!p)
-        return {};
-    DEFER
-    {
-        HeapFree(GetProcessHeap(), 0, p);
-    };
+    if (!p) return {};
+    DEFER { HeapFree(GetProcessHeap(), 0, p); };
     ULONG ret;
     do
     {
-        ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, p, &size);
-        if (ret != ERROR_BUFFER_OVERFLOW)
-            break;
+        ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_INCLUDE_GATEWAYS,
+                                   NULL, p, &size);
+        if (ret != ERROR_BUFFER_OVERFLOW) break;
 
-        PIP_ADAPTER_ADDRESSES newp = (IP_ADAPTER_ADDRESSES *)HeapReAlloc(GetProcessHeap(), 0, p, size);
+        PIP_ADAPTER_ADDRESSES newp =
+            (IP_ADAPTER_ADDRESSES *)HeapReAlloc(GetProcessHeap(), 0, p, size);
         if (!newp)
         {
             return {};
@@ -47,24 +45,22 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
     {
         NetworkAdapter adapter;
         adapter.name = tp->AdapterName;
-        if (tp->FriendlyName)
-            adapter.friendlyName = str::w2utf8(tp->FriendlyName);
-        if (tp->Description)
-            adapter.description = str::w2utf8(tp->Description);
+        if (tp->FriendlyName) adapter.friendlyName = str::w2utf8(tp->FriendlyName);
+        if (tp->Description) adapter.description = str::w2utf8(tp->Description);
         switch (tp->IfType)
         {
-        case IF_TYPE_SOFTWARE_LOOPBACK:
-            adapter.adapterType = NetworkAdapter::Type::Loopback;
-            break;
-        case IF_TYPE_ETHERNET_CSMACD:
-            adapter.adapterType = NetworkAdapter::Type::Wired;
-            break;
-        case IF_TYPE_IEEE80211:
-            adapter.adapterType = NetworkAdapter::Type::Wireless;
-            break;
-        default:
-            adapter.adapterType = NetworkAdapter::Type::Other;
-            break;
+            case IF_TYPE_SOFTWARE_LOOPBACK:
+                adapter.adapterType = NetworkAdapter::Type::Loopback;
+                break;
+            case IF_TYPE_ETHERNET_CSMACD:
+                adapter.adapterType = NetworkAdapter::Type::Wired;
+                break;
+            case IF_TYPE_IEEE80211:
+                adapter.adapterType = NetworkAdapter::Type::Wireless;
+                break;
+            default:
+                adapter.adapterType = NetworkAdapter::Type::Other;
+                break;
         }
 
         for (PIP_ADAPTER_UNICAST_ADDRESS pu = tp->FirstUnicastAddress; pu != NULL; pu = pu->Next)
@@ -72,7 +68,7 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv4
             if (pu->Address.lpSockaddr->sa_family == AF_INET)
             {
-                sockaddr_in *si         = (sockaddr_in *)(pu->Address.lpSockaddr);
+                sockaddr_in *si = (sockaddr_in *)(pu->Address.lpSockaddr);
                 char a[INET_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET, &(si->sin_addr), a, sizeof(a)))
                     adapter.ipv4UniAddrs.push_back(a);
@@ -80,7 +76,7 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv6
             else if (pu->Address.lpSockaddr->sa_family == AF_INET6)
             {
-                sockaddr_in6 *si         = (sockaddr_in6 *)(pu->Address.lpSockaddr);
+                sockaddr_in6 *si = (sockaddr_in6 *)(pu->Address.lpSockaddr);
                 char a[INET6_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET6, &(si->sin6_addr), a, sizeof(a)))
                     adapter.ipv6UniAddrs.push_back(a);
@@ -91,7 +87,7 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv4
             if (pa->Address.lpSockaddr->sa_family == AF_INET)
             {
-                sockaddr_in *si         = (sockaddr_in *)(pa->Address.lpSockaddr);
+                sockaddr_in *si = (sockaddr_in *)(pa->Address.lpSockaddr);
                 char a[INET_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET, &(si->sin_addr), a, sizeof(a)))
                     adapter.ipv4AnyAddrs.push_back(a);
@@ -99,19 +95,20 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv6
             else if (pa->Address.lpSockaddr->sa_family == AF_INET6)
             {
-                sockaddr_in6 *si         = (sockaddr_in6 *)(pa->Address.lpSockaddr);
+                sockaddr_in6 *si = (sockaddr_in6 *)(pa->Address.lpSockaddr);
                 char a[INET6_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET6, &(si->sin6_addr), a, sizeof(a)))
                     adapter.ipv6AnyAddrs.push_back(a);
             }
         }
 
-        for (PIP_ADAPTER_MULTICAST_ADDRESS pm = tp->FirstMulticastAddress; pm != NULL; pm = pm->Next)
+        for (PIP_ADAPTER_MULTICAST_ADDRESS pm = tp->FirstMulticastAddress; pm != NULL;
+             pm = pm->Next)
         {
             // if ipv4
             if (pm->Address.lpSockaddr->sa_family == AF_INET)
             {
-                sockaddr_in *si         = (sockaddr_in *)(pm->Address.lpSockaddr);
+                sockaddr_in *si = (sockaddr_in *)(pm->Address.lpSockaddr);
                 char a[INET_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET, &(si->sin_addr), a, sizeof(a)))
                     adapter.ipv4MultAddrs.push_back(a);
@@ -119,18 +116,19 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv6
             else if (pm->Address.lpSockaddr->sa_family == AF_INET6)
             {
-                sockaddr_in6 *si         = (sockaddr_in6 *)(pm->Address.lpSockaddr);
+                sockaddr_in6 *si = (sockaddr_in6 *)(pm->Address.lpSockaddr);
                 char a[INET6_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET6, &(si->sin6_addr), a, sizeof(a)))
                     adapter.ipv6MultAddrs.push_back(a);
             }
         }
-        for (PIP_ADAPTER_DNS_SERVER_ADDRESS pd = tp->FirstDnsServerAddress; pd != NULL; pd = pd->Next)
+        for (PIP_ADAPTER_DNS_SERVER_ADDRESS pd = tp->FirstDnsServerAddress; pd != NULL;
+             pd = pd->Next)
         {
             // if ipv4
             if (pd->Address.lpSockaddr->sa_family == AF_INET)
             {
-                sockaddr_in *si         = (sockaddr_in *)(pd->Address.lpSockaddr);
+                sockaddr_in *si = (sockaddr_in *)(pd->Address.lpSockaddr);
                 char a[INET_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET, &(si->sin_addr), a, sizeof(a)))
                     adapter.ipv4DnsAddrs.push_back(a);
@@ -138,7 +136,7 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv6
             else if (pd->Address.lpSockaddr->sa_family == AF_INET6)
             {
-                sockaddr_in6 *si         = (sockaddr_in6 *)(pd->Address.lpSockaddr);
+                sockaddr_in6 *si = (sockaddr_in6 *)(pd->Address.lpSockaddr);
                 char a[INET6_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET6, &(si->sin6_addr), a, sizeof(a)))
                     adapter.ipv6DnsAddrs.push_back(a);
@@ -150,7 +148,7 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv4
             if (pg->Address.lpSockaddr->sa_family == AF_INET)
             {
-                sockaddr_in *si         = (sockaddr_in *)(pg->Address.lpSockaddr);
+                sockaddr_in *si = (sockaddr_in *)(pg->Address.lpSockaddr);
                 char a[INET_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET, &(si->sin_addr), a, sizeof(a)))
                     adapter.ipv4GatewayAddrs.push_back(a);
@@ -158,16 +156,15 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
             // if ipv6
             else if (pg->Address.lpSockaddr->sa_family == AF_INET6)
             {
-                sockaddr_in6 *si         = (sockaddr_in6 *)(pg->Address.lpSockaddr);
+                sockaddr_in6 *si = (sockaddr_in6 *)(pg->Address.lpSockaddr);
                 char a[INET6_ADDRSTRLEN] = {};
                 if (inet_ntop(AF_INET6, &(si->sin6_addr), a, sizeof(a)))
                     adapter.ipv6GatewayAddrs.push_back(a);
             }
         }
-        if (tp->DnsSuffix)
-            adapter.dnsSuffixes = str::w2utf8(tp->DnsSuffix);
+        if (tp->DnsSuffix) adapter.dnsSuffixes = str::w2utf8(tp->DnsSuffix);
         adapter.flags = tp->Flags;
-        adapter.mtu   = tp->Mtu;
+        adapter.mtu = tp->Mtu;
         if (tp->OperStatus == IfOperStatusUp)
             adapter.status = NetworkAdapter::NetworkStatus::Up;
         else
@@ -177,12 +174,30 @@ std::vector<NetworkAdapter> NetworkAdapter::GetNetworkAdapters()
         {
             // Get mac address hex string
             char mac_addr[19] = {0};
-            sprintf_s(mac_addr, 18, "%02X:%02X:%02X:%02X:%02X:%02X", tp->PhysicalAddress[0], tp->PhysicalAddress[1],
-                      tp->PhysicalAddress[2], tp->PhysicalAddress[3], tp->PhysicalAddress[4], tp->PhysicalAddress[5]);
+            sprintf_s(mac_addr, 18, "%02X:%02X:%02X:%02X:%02X:%02X", tp->PhysicalAddress[0],
+                      tp->PhysicalAddress[1], tp->PhysicalAddress[2], tp->PhysicalAddress[3],
+                      tp->PhysicalAddress[4], tp->PhysicalAddress[5]);
             adapter.macAddr = mac_addr;
         }
         else
             adapter.macAddr = "";
+
+        try
+        {
+            winreg::RegKey key;
+            key.Open(HKEY_LOCAL_MACHINE,
+                     L"SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\" +
+                         zzj::str::utf82w(adapter.name));
+            std::wstring nameServer = key.GetStringValue(L"NameServer");
+            if (nameServer.empty())
+                adapter.isDynamicDns = true;
+            else
+                adapter.isDynamicDns = false;
+        }
+        catch (const std::exception &e)
+        {
+            adapter.isDynamicDns = true;
+        }
         adapters.push_back(adapter);
     }
     return adapters;
@@ -205,13 +220,13 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr, const std::string &toIP)
         result = -1;
         goto exit;
     }
-    destination_address                            = toIP.c_str();
-    Addr                                           = {0};
-    addr                                           = inet_addr(destination_address);
+    destination_address = toIP.c_str();
+    Addr = {0};
+    addr = inet_addr(destination_address);
     ((struct sockaddr_in *)&Addr)->sin_addr.s_addr = addr;
-    ((struct sockaddr_in *)&Addr)->sin_family      = AF_INET;
-    ((struct sockaddr_in *)&Addr)->sin_port        = htons(9); // 9 is discard port
-    sockHandle                                     = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ((struct sockaddr_in *)&Addr)->sin_family = AF_INET;
+    ((struct sockaddr_in *)&Addr)->sin_port = htons(9);  // 9 is discard port
+    sockHandle = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (INVALID_SOCKET == sockHandle)
     {
         result = -1;
@@ -221,8 +236,8 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr, const std::string &toIP)
 
     // Set timeout value
 
-    timeout.tv_sec  = 2; // Timeout in seconds
-    timeout.tv_usec = 0; // ... and microseconds
+    timeout.tv_sec = 2;   // Timeout in seconds
+    timeout.tv_usec = 0;  // ... and microseconds
 
     if (setsockopt(sockHandle, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
     {
@@ -248,10 +263,59 @@ int NetworkHelper::GetOutIpAddress(std::string &ipAddr, const std::string &toIP)
         goto exit;
     }
     source_address = inet_ntoa(((struct sockaddr_in *)&Addr)->sin_addr);
-    ipAddr         = source_address;
+    ipAddr = source_address;
 exit:
-    if (sockHandle)
-        closesocket(sockHandle);
+    if (sockHandle) closesocket(sockHandle);
     WSACleanup();
     return result;
+}
+
+int zzj::NetworkAdapter::SetDynamicDns() const
+{
+    std::vector<NetworkAdapter> adapters;
+    ULONG size = 1024 * 15;
+    PIP_ADAPTER_ADDRESSES p = (IP_ADAPTER_ADDRESSES *)HeapAlloc(GetProcessHeap(), 0, size);
+    if (!p) return -1;
+    DEFER { HeapFree(GetProcessHeap(), 0, p); };
+    ULONG ret;
+    do
+    {
+        ret = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_INCLUDE_GATEWAYS,
+                                   NULL, p, &size);
+        if (ret != ERROR_BUFFER_OVERFLOW) break;
+
+        PIP_ADAPTER_ADDRESSES newp =
+            (IP_ADAPTER_ADDRESSES *)HeapReAlloc(GetProcessHeap(), 0, p, size);
+        if (!newp)
+        {
+            return -2;
+        }
+
+        p = newp;
+    } while (true);
+
+    if (ret != NO_ERROR)
+    {
+        return -3;
+    }
+
+    for (PIP_ADAPTER_ADDRESSES tp = p; tp != NULL; tp = tp->Next)
+    {
+        std::string friendlyNameUtf8;
+        if (!tp->FriendlyName) continue;
+        friendlyNameUtf8 = str::w2utf8(tp->FriendlyName);
+
+        if (friendlyNameUtf8 == this->friendlyName)
+        {
+            if (isDynamicDns) return 0;
+            std::string friendlyNameAnsi = str::w2ansi(tp->FriendlyName);
+            std::string command =
+                "netsh interface ip set dns name=\"" + friendlyNameAnsi + "\" source=dhcp";
+            int result = system(command.c_str());
+            if (result != 0) return -4;
+            return 0;
+        }
+    }
+
+    return -5;
 }
