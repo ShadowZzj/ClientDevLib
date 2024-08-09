@@ -14,8 +14,7 @@ namespace zzj
 
 class Certificate
 {
-  public:
-    
+   public:
     enum class StoreType
     {
         CurrentUser,
@@ -26,72 +25,62 @@ class Certificate
         User,
         Root,
     };
-    Certificate()
-    {
-    }
-    ~Certificate()
-    {
-    }
+    Certificate() {}
+    ~Certificate() {}
 
-    std::string name() const
-    {
-        return _name;
-    }
-    std::string sequence() const
-    {
-        return _sequence;
-    }
-    std::string issuer() const
-    {
-        return _issuer;
-    }
-
+    std::string name() const { return _name; }
+    std::string sequence() const { return _sequence; }
+    std::string issuer() const { return _issuer; }
+    static std::vector<BYTE> PEMToDer(const std::string &pem);
 #ifdef _WIN32
     int Delete(const StoreType &storeType, CertLocation certLocation);
-    static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(const std::string &issuer,
-                                                                            const StoreType &storeType,
-                                                                            CertLocation certLocation);
-    static std::tuple<int, std::vector<Certificate>> GetCerticifateByName(const std::string &name,
-                                                                          const StoreType &storeType,
-                                                                          CertLocation certLocation);
-    static std::tuple<int, std::vector<Certificate>> GetCerticifateBySequence(const std::string &sequence,
-                                                                              const StoreType &storeType,
-                                                                              CertLocation certLocation);
+    static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(
+        const std::string &issuer, const StoreType &storeType, CertLocation certLocation);
+    static std::tuple<int, std::vector<Certificate>> GetCerticifateByName(
+        const std::string &name, const StoreType &storeType, CertLocation certLocation);
+    static std::tuple<int, std::vector<Certificate>> GetCerticifateBySequence(
+        const std::string &sequence, const StoreType &storeType, CertLocation certLocation);
 
-    static std::tuple<int, std::vector<Certificate>> AddFromFile(const std::string &filePath, const std::string &passwd,
-                                                                 StoreType storeType, CertLocation certLocation);
+    static std::tuple<int, std::vector<Certificate>> AddFromFile(const std::string &filePath,
+                                                                 const std::string &passwd,
+                                                                 StoreType storeType,
+                                                                 CertLocation certLocation);
     static std::tuple<int, std::vector<Certificate>> AddFromContent(const std::string &content,
-                                                                    const std::string &passwd, StoreType storeType,
+                                                                    const std::string &passwd,
+                                                                    StoreType storeType,
                                                                     CertLocation certLocation);
     static std::tuple<int, std::vector<Certificate>> ReadFromFile(const std::string &filePath,
-                                                                  const std::string &passwd, StoreType storeType,
+                                                                  const std::string &passwd,
+                                                                  StoreType storeType,
                                                                   CertLocation certLocation);
     static std::tuple<int, std::vector<Certificate>> ReadFromContent(const std::string &content,
-                                                                     const std::string &passwd, StoreType storeType,
+                                                                     const std::string &passwd,
+                                                                     StoreType storeType,
                                                                      CertLocation certLocation);
 #else
-    bool isTrust() const
-    {
-        return _isTrust;
-    }
+    bool isTrust() const { return _isTrust; }
     int Delete();
-    static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(const std::string &issuer,
-                                                                            const StoreType &storeType,bool trusted = false);
-    static std::tuple<int, std::vector<Certificate>> GetCerticifateByName(const std::string &name,
-                                                                          const StoreType &storeType,bool trusted = false);
-    static std::tuple<int, std::vector<Certificate>> GetCerticifateBySequence(const std::string &sequence,
-                                                                              const StoreType &storeType,bool trusted = false);
+    static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(
+        const std::string &issuer, const StoreType &storeType, bool trusted = false);
+    static std::tuple<int, std::vector<Certificate>> GetCerticifateByName(
+        const std::string &name, const StoreType &storeType, bool trusted = false);
+    static std::tuple<int, std::vector<Certificate>> GetCerticifateBySequence(
+        const std::string &sequence, const StoreType &storeType, bool trusted = false);
 
-    static std::tuple<int, std::vector<Certificate>> AddFromFile(const std::string &filePath, const std::string &passwd,
+    static std::tuple<int, std::vector<Certificate>> AddFromFile(const std::string &filePath,
+                                                                 const std::string &passwd,
                                                                  StoreType storeType);
     static std::tuple<int, std::vector<Certificate>> AddFromContent(const std::string &content,
-                                                                    const std::string &passwd, StoreType storeType);
+                                                                    const std::string &passwd,
+                                                                    StoreType storeType);
     static std::tuple<int, std::vector<Certificate>> ReadFromFile(const std::string &filePath,
-                                                                  const std::string &passwd, StoreType storeType);
+                                                                  const std::string &passwd,
+                                                                  StoreType storeType);
     static std::tuple<int, std::vector<Certificate>> ReadFromContent(const std::string &content,
-                                                                     const std::string &passwd, StoreType storeType);
+                                                                     const std::string &passwd,
+                                                                     StoreType storeType);
 #endif
-  private:
+   private:
 #ifdef _WIN32
 #else
     bool _isTrust;
@@ -108,12 +97,12 @@ class Certificate
     };
 #ifdef _WIN32
     static std::tuple<int, std::vector<Certificate>> GetCerticifateTemplate(
-        const Certificate::StoreType &storeType, CertLocation certLocation, std::function<bool(Certificate)> predicate,
-        OperateType operateType = OperateType::Query);
+        const Certificate::StoreType &storeType, CertLocation certLocation,
+        std::function<bool(Certificate)> predicate, OperateType operateType = OperateType::Query);
     static std::tuple<int, std::vector<Certificate>> ImportCertificateTemplate(
-        const std::string &content, const std::string &passwd, const Certificate::StoreType &storeType,
-        CertLocation certLocation, std::function<bool(Certificate)> predicate,
-        OperateType operateType = OperateType::Query);
+        const std::string &content, const std::string &passwd,
+        const Certificate::StoreType &storeType, CertLocation certLocation,
+        std::function<bool(Certificate)> predicate, OperateType operateType = OperateType::Query);
     static std::tuple<int, Certificate> GetCertificate(PCCERT_CONTEXT pCertContext);
 #else
     enum class CertificateTemplateType
@@ -126,17 +115,22 @@ class Certificate
         TrustedAndName,
     };
     static std::tuple<int, std::vector<Certificate>> GetCerticifateTemplate(
-        const Certificate::StoreType &storeType, std::vector<std::function<bool(std::string)>> predicate,
+        const Certificate::StoreType &storeType,
+        std::vector<std::function<bool(std::string)>> predicate,
         CertificateTemplateType templateType, OperateType operateType = OperateType::Query);
     static std::tuple<int, std::vector<Certificate>> ImportCertificateTemplate(
-        const std::string &content, const std::string &passwd, const Certificate::StoreType &storeType,
-        std::vector<std::function<bool(Certificate)>> predicate, OperateType operateType = OperateType::Query);
+        const std::string &content, const std::string &passwd,
+        const Certificate::StoreType &storeType,
+        std::vector<std::function<bool(Certificate)>> predicate,
+        OperateType operateType = OperateType::Query);
     static std::tuple<int, std::vector<Certificate>> DoFromFileTemplate(
-        const std::string &filePath, const std::string &passwd, zzj::Certificate::StoreType storeType,
-        std::function<std::tuple<int, std::vector<Certificate>>(const std::string &filePath, const std::string &passwd,
-                                                                zzj::Certificate::StoreType storeType)>
+        const std::string &filePath, const std::string &passwd,
+        zzj::Certificate::StoreType storeType,
+        std::function<std::tuple<int, std::vector<Certificate>>(
+            const std::string &filePath, const std::string &passwd,
+            zzj::Certificate::StoreType storeType)>
             func);
     static std::tuple<int, Certificate> GetCertificateInfo(SecCertificateRef certificate);
 #endif
 };
-} // namespace zzj
+}  // namespace zzj

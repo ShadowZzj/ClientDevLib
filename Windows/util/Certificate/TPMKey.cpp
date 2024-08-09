@@ -167,8 +167,7 @@ int zzj::TPMKey::AssociateCertificate(PCCERT_CONTEXT pCertContext, const std::st
     keyProvInfo.dwFlags = 0;
     keyProvInfo.cProvParam = 0;
     keyProvInfo.rgProvParam = NULL;
-    keyProvInfo.dwKeySpec = AT_KEYEXCHANGE;
-
+    keyProvInfo.dwKeySpec = 0;
     if (!CertSetCertificateContextProperty(pCertContext, CERT_KEY_PROV_INFO_PROP_ID, 0,
                                            &keyProvInfo))
         return GetLastError();

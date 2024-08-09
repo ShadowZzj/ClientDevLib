@@ -21,7 +21,7 @@ class TPMKey
     int Open(const std::string &keycontainer);
     int ExportPublicKey(PCERT_PUBLIC_KEY_INFO *publicKeyInfo);
     template <typename T>
-    int SetProperty(const std::string &property, const T &value)
+    int SetProperty(const std::wstring &property, const T &value)
     {
         return NCryptSetProperty(_hKey, (PWSTR)property.c_str(), (PBYTE)&value, sizeof(T), 0);
     }
