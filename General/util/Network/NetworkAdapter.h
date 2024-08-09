@@ -2,6 +2,10 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#ifndef _WIN32
+#import <SystemConfiguration/SystemConfiguration.h>
+#endif
+
 namespace zzj
 {
 class NetworkAdapter
@@ -41,9 +45,14 @@ class NetworkAdapter
     std::string friendlyName;
     std::string description;
     Type adapterType;
-    #ifdef _WIN32
+
     bool isDynamicDns = false;
     int SetDynamicDns() const;
+    #ifndef _WIN32
+    static std::string GetDefaultGatewayAdapterName();
+    private:
+    static std::vector<NetworkAdapter> SCGetNetworkAdapters();
+    void GetDnsInfo(SCNetworkServiceRef service);
     #endif
 };
 class NetworkHelper

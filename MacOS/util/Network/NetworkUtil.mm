@@ -10,6 +10,7 @@ std::set<std::string> zzj::NetworkUtil::GetDNSServers()
 
     std::set<std::string> dnsServers;
     std::string line;
+    
     while (std::getline(is, line) || c.running())
     {
         if (line.empty())
