@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <wincrypt.h>
 #else
+using BYTE = char;
 #include <Foundation/Foundation.h>
 #endif
 namespace zzj
