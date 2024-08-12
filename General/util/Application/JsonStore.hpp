@@ -19,7 +19,13 @@ class JsonStore
     };
     struct ExceptionOccured
     {
+        enum class Type
+        {
+            JsonParseError,
+            UnknownError
+        };
         std::string message;
+        Type type = Type::UnknownError;
     };
 
     template <typename T>
@@ -54,6 +60,10 @@ class JsonStore
             nlohmann::json j;
             ifs >> j;
             return j;
+        }
+        catch (const nlohmann::json::parse_error &e)
+        {
+            return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
         }
         catch (const std::exception &e)
         {
@@ -96,6 +106,10 @@ class JsonStore
             ifs >> j;
             if (j.find(key) == j.end()) return KeyNotExist();
             return j[key].get<T>();
+        }
+        catch (const nlohmann::json::parse_error &e)
+        {
+            return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
         }
         catch (const std::exception &e)
         {
@@ -167,7 +181,6 @@ class JsonStore
             ifs >> j;
             ifs.close();
 
-
             boost::filesystem::path temp_path = path.string() + ".tmp";
             std::ofstream ofs(temp_path.string());
             if (!ofs.is_open())
@@ -180,6 +193,10 @@ class JsonStore
 
             boost::filesystem::rename(temp_path, path);
             return value;
+        }
+        catch (const nlohmann::json::parse_error &e)
+        {
+            return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
         }
         catch (const std::exception &e)
         {
