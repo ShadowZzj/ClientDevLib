@@ -100,6 +100,12 @@ if(WIN32)
                 file(COPY ${_file} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO})
             endif()
         endforeach()
+
+        if (${FEATURE_OLLVM})
+            execute_process(
+                COMMAND python ${CMAKE_CURRENT_LIST_DIR}/Scripts/ollvm_config.py ${CMAKE_BINARY_DIR}
+            )
+	    endif()
     endfunction()
 elseif(APPLE)
     include(${CMAKE_CURRENT_LIST_DIR}/MacFeatures.cmake)
