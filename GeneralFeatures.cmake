@@ -7,14 +7,14 @@ function(GenerateGeneralUtil)
 	"${GENERAL_FEATURES_CMAKE_DIR}/General/util/*.hpp"
 	)
 	
-	if (${FEATURE_AES})
-		message(STATUS "AES FEATURE: ${FEATURE_AES}")
+	if ((NOT DEFINED FEATURE_CRYPTO) OR (NOT ${FEATURE_CRYPTO}))
 		file(GLOB FEATURE_FILES
-		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/AES/*.h"
-		"${GENERAL_FEATURES_CMAKE_DIR}/General/ThirdParty/AES/*.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Crypto/AES.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Crypto/AES.cpp"
 		)
-
-		list(APPEND GENERAL_UTIL_FILES ${FEATURE_FILES})
+		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
+	else()
+		message(STATUS "CURL FEATURE: ${FEATURE_CRYPTO}")
 	endif()
 
 	if(${FEATURE_SQLITE3PP})

@@ -9,6 +9,7 @@
 #include <variant>
 #include <spdlog/spdlog.h>
 #include <General/util/Sync/ProcessSync.hpp>
+#include <General/util/Exception/Exception.h>
 namespace zzj
 {
 class JsonStore
@@ -42,8 +43,8 @@ class JsonStore
         {
             try
             {
-                std::ofstream ofs(path.string());
-                ofs << "{}";
+                std::ofstream ofs(path.string(), std::ios::binary);
+                ofs << Encrypt("{}");
             }
             catch (const std::exception &e)
             {
@@ -56,12 +57,30 @@ class JsonStore
         }
         try
         {
-            std::ifstream ifs(path.string());
-            nlohmann::json j;
-            ifs >> j;
+            std::ifstream ifs(path.string(), std::ios::binary);
+            std::string content((std::istreambuf_iterator<char>(ifs)),
+                                (std::istreambuf_iterator<char>()));
+            ifs.close();
+            nlohmann::json j = nlohmann::json::parse(content, nullptr, false);
+            if (j.is_discarded())
+            {
+                // try to decrypt
+                content = Decrypt(content);
+                j = nlohmann::json::parse(content, nullptr, false);
+                if (j.is_discarded())
+                {
+                    return ExceptionOccured{"Failed to parse json",
+                                            ExceptionOccured::Type::JsonParseError};
+                }
+            }
+
             return j;
         }
         catch (const nlohmann::json::parse_error &e)
+        {
+            return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
+        }
+        catch (const CryptoException &e)
         {
             return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
         }
@@ -87,8 +106,8 @@ class JsonStore
         {
             try
             {
-                std::ofstream ofs(path.string());
-                ofs << "{}";
+                std::ofstream ofs(path.string(), std::ios::binary);
+                ofs << Encrypt("{}");
             }
             catch (const std::exception &e)
             {
@@ -101,13 +120,31 @@ class JsonStore
         }
         try
         {
-            std::ifstream ifs(path.string());
-            nlohmann::json j;
-            ifs >> j;
+            std::ifstream ifs(path.string(), std::ios::binary);
+            std::string content((std::istreambuf_iterator<char>(ifs)),
+                                (std::istreambuf_iterator<char>()));
+            ifs.close();
+            nlohmann::json j = nlohmann::json::parse(content, nullptr, false);
+            if (j.is_discarded())
+            {
+                // try to decrypt
+                content = Decrypt(content);
+                j = nlohmann::json::parse(content, nullptr, false);
+                if (j.is_discarded())
+                {
+                    return ExceptionOccured{"Failed to parse json",
+                                            ExceptionOccured::Type::JsonParseError};
+                }
+            }
+
             if (j.find(key) == j.end()) return KeyNotExist();
             return j[key].get<T>();
         }
         catch (const nlohmann::json::parse_error &e)
+        {
+            return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
+        }
+        catch (const CryptoException &e)
         {
             return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
         }
@@ -133,8 +170,8 @@ class JsonStore
 
         try
         {
-            std::ofstream ofs(path.string());
-            ofs << content.dump(4);
+            std::ofstream ofs(path.string(), std::ios::binary);
+            ofs << Encrypt(content.dump(4));
             return content;
         }
         catch (const std::exception &e)
@@ -161,8 +198,8 @@ class JsonStore
         {
             try
             {
-                std::ofstream ofs(path.string());
-                ofs << "{}";
+                std::ofstream ofs(path.string(), std::ios::binary);
+                ofs << Encrypt("{}");
             }
             catch (const std::exception &e)
             {
@@ -176,25 +213,41 @@ class JsonStore
 
         try
         {
-            std::ifstream ifs(path.string());
-            nlohmann::json j;
-            ifs >> j;
+            std::ifstream ifs(path.string(), std::ios::binary);
+            std::string content((std::istreambuf_iterator<char>(ifs)),
+                                (std::istreambuf_iterator<char>()));
             ifs.close();
+            nlohmann::json j = nlohmann::json::parse(content, nullptr, false);
+            if (j.is_discarded())
+            {
+                // try to decrypt
+                content = Decrypt(content);
+                j = nlohmann::json::parse(content, nullptr, false);
+                if (j.is_discarded())
+                {
+                    return ExceptionOccured{"Failed to parse json",
+                                            ExceptionOccured::Type::JsonParseError};
+                }
+            }
 
             boost::filesystem::path temp_path = path.string() + ".tmp";
-            std::ofstream ofs(temp_path.string());
+            std::ofstream ofs(temp_path.string(), std::ios::binary);
             if (!ofs.is_open())
             {
                 throw std::runtime_error("Failed to open file for writing");
             }
 
-            ofs << j.dump(4);
+            ofs << Encrypt(j.dump(4));
             ofs.close();
 
             boost::filesystem::rename(temp_path, path);
             return value;
         }
         catch (const nlohmann::json::parse_error &e)
+        {
+            return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
+        }
+        catch (const CryptoException &e)
         {
             return ExceptionOccured{e.what(), ExceptionOccured::Type::JsonParseError};
         }
@@ -209,6 +262,8 @@ class JsonStore
     }
 
     virtual boost::filesystem::path GetStorePath() = 0;
+    virtual std::string Encrypt(const std::string &content) { return content; }
+    virtual std::string Decrypt(const std::string &content) { return content; }
 
    private:
     inline static std::mutex mapMutex;

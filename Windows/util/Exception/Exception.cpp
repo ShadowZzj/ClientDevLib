@@ -29,7 +29,4 @@ HRESULT Win32Exception::GetErrorCode() const noexcept
     return hr;
 }
 
-std::string Win32Exception::GetErrorString() const noexcept
-{
-    return TranslateErrorCode(hr);
-}
+std::string Win32Exception::GetErrorString() const noexcept { return TranslateErrorCode(hr); }
