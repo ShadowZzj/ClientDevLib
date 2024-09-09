@@ -230,6 +230,7 @@ class JsonStore
                 }
             }
 
+            j[key] = value;
             boost::filesystem::path temp_path = path.string() + ".tmp";
             std::ofstream ofs(temp_path.string(), std::ios::binary);
             if (!ofs.is_open())
