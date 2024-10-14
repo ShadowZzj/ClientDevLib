@@ -24,6 +24,8 @@ class Service : public ServiceInterface
     virtual void ServiceFunc() override{}
     virtual int SetServiceStartType(StartUpType startType) override;
     virtual int GetServiceStartType(StartUpType &startType) override;
+    virtual std::string GetServiceBinPath() override;
+    virtual int SetServiceBinPath(const std::string &binPath) override;
     virtual void Run() override;
     int EnableService();
     int DisableService();

@@ -39,6 +39,8 @@ class WinService
     static int GetServiceStartUpType(const char *serviceName, int &startupType);
     static int IsServiceInstalled(const char *serviceName, bool &installed);
     static int IsServiceRunning(const char *serviceName, bool &running);
+    static std::string GetServiceBinPath(const char *serviceName);
+    static int SetServiceBinPath(const char *serviceName, const char *binPath);
 
   protected:
     std::string name;

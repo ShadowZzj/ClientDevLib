@@ -41,4 +41,3 @@ int zzj::ServiceInterface::Protect(ServiceInterface *otherService)
 exit:
     return result;
 }
-
