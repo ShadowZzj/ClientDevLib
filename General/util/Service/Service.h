@@ -39,6 +39,8 @@ class ServiceInterface
     virtual int GetServiceStartType(StartUpType &startType) = 0;
     virtual std::string GetServiceBinPath() = 0;
     virtual int SetServiceBinPath(const std::string &binPath) = 0;
+    virtual std::string BinPath() = 0;
+
     virtual ControlStatus CheckSafeStop(int seconds) = 0;
     std::string GetServiceName() { return serviceName; }
 

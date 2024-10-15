@@ -345,16 +345,16 @@ std::string zzj::Service::GetServiceBinPath()
     else
     {
         std::cerr << "Unable to open file: " << GetPlistFileFullName() << std::endl;
-        return -2;
+        return "";
     }
 
     try
     {
         std::string content = plistStream.str();
         Plist::readPlist(content.c_str(), content.size(), rootDict);
-        std::vector<std::string> programArgs =
-            boost::any_cast<std::vector<std::string>>(rootDict["ProgramArguments"]);
-        return programArgs[0];
+        std::vector<boost::any> programArgs =
+            boost::any_cast<std::vector<boost::any>>(rootDict["ProgramArguments"]);
+        return boost::any_cast<std::string>(programArgs[0]);
     }
     catch (...)
     {
@@ -379,18 +379,45 @@ int zzj::Service::SetServiceBinPath(const std::string &binPath)
         return -2;
     }
 
-    try
-    {
+    try {
         std::string content = plistStream.str();
         Plist::readPlist(content.c_str(), content.size(), rootDict);
-        std::vector<std::string> programArgs =
-            boost::any_cast<std::vector<std::string>>(rootDict["ProgramArguments"]);
-        programArgs[0] = binPath;
-        rootDict["ProgramArguments"] = programArgs;
-        Plist::writePlistXML(GetPlistFileFullName().c_str(), rootDict);
-    }
-    catch (...)
-    {
+        // 检查 ProgramArguments 是否为 std::vector<boost::any>
+        const boost::any& programArgsAny = rootDict["ProgramArguments"];
+ 
+        if (programArgsAny.type() == typeid(std::vector<boost::any>)) {
+            // 将 std::vector<boost::any> 转换为 std::vector<std::string>
+            std::vector<boost::any> programArgsAnyVector = boost::any_cast<std::vector<boost::any>>(programArgsAny);
+            std::vector<std::string> programArgs;
+
+            for (const auto& arg : programArgsAnyVector) {
+                // 将 boost::any 转换为 std::string
+                programArgs.push_back(boost::any_cast<std::string>(arg));
+            }
+
+            // 修改第一个参数
+            programArgsAnyVector[0] = binPath;
+ 
+            // 将修改后的 std::vector<std::string> 放回字典中
+            rootDict["ProgramArguments"] = programArgsAnyVector;
+            auto path = GetPlistFileFullName();
+            if ([[NSFileManager defaultManager]
+                    fileExistsAtPath:[NSString stringWithUTF8String:path.c_str()]])
+                [[NSFileManager defaultManager]
+                    removeItemAtPath:[NSString stringWithUTF8String:path.c_str()]
+                               error:nil];
+            Plist::writePlistXML(path.c_str(), rootDict);
+            chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        } else {
+            // 如果 ProgramArguments 不是 std::vector<boost::any>
+            std::cerr << "ProgramArguments type mismatch." << std::endl;
+            return -1;
+        }
+    } catch (boost::bad_any_cast &e) {
+        std::cerr << "Bad any_cast: " << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error occurred." << std::endl;
         return -1;
     }
 }

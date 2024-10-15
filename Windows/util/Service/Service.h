@@ -82,7 +82,7 @@ class Service : public ServiceInterface
     virtual int SetServiceBinPath(const std::string &binPath) override;
     virtual ControlStatus CheckSafeStop(int seconds) override;
 
-    std::string BinPath() { return binPath; }
+    virtual std::string BinPath() override { return binPath; }
     virtual void OnStop() { return; }
     virtual void OnShutdown() { return; }
     virtual void OnPreShutDown() { return; }
