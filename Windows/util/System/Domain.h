@@ -6,6 +6,7 @@ namespace zzj
     {
         public:
         static bool IsDomainJoined();
+        static bool IsAADJoined();
         static Domain GetDomain();
 
         private:

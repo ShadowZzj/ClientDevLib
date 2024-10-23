@@ -1,4 +1,5 @@
 #include "Domain.h"
+#include <boost/process.hpp>
 #include <windows.h>
 #include <DSRole.h>
 #include <DsGetDC.h>
@@ -37,7 +38,29 @@ bool zzj::Domain::IsDomainJoined()
     DsRoleFreeMemory(pdsrib);
     return false;
 }
+bool zzj::Domain::IsAADJoined()
+{
+    boost::process::ipstream pipeStream;
+    boost::process::child child("dsregcmd /status", boost::process::std_out > pipeStream);
+    child.wait();
+    std::string line;
+    while (pipeStream && std::getline(pipeStream, line) && !line.empty())
+    {
+        if (line.find("AzureAdJoined") != std::string::npos)
+        {
+            if (line.find("YES") != std::string::npos)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 
+    return false;
+}
 zzj::Domain zzj::Domain::GetDomain()
 {
     if (IsDomainJoined())
