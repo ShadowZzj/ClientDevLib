@@ -300,9 +300,6 @@ std::optional<zzj::UserInfo> zzj::UserInfo::GetActiveUserInfo()
         spdlog::error("session id empty");
         return {};
     }
-    auto ret = GetUserInfoBySessionId(*sessionId);
-    if (!ret.has_value())
-        return {};
     zzj::Process currentProcess;
     HANDLE impersonateHandle = NULL;
     DEFER
@@ -318,6 +315,9 @@ std::optional<zzj::UserInfo> zzj::UserInfo::GetActiveUserInfo()
             return {};
         }
     }
+    auto ret = GetUserInfoBySessionId(*sessionId);
+    if (!ret.has_value()) return {};
+
     char guid[256 + 1] = {0};
     DWORD sizeExtended = ARRAYSIZE(guid);
 
