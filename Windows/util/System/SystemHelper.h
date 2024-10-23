@@ -29,6 +29,7 @@ class SystemInfo
     static bool IsWindows8OrGreater();
     static bool IsWindows8Point1OrGreater();
     static bool IsWindows10OrGreater();
+    static bool IsWindows11OrGreater();
     static bool IsWindowsServer();
 
     static std::optional<VersionInfo> GetWindowsVersion();
