@@ -42,9 +42,13 @@ bool zzj::Domain::IsAADJoined()
 {
     boost::process::ipstream pipeStream;
     boost::process::child child("dsregcmd /status", boost::process::std_out > pipeStream);
-    child.wait();
+
+    std::vector<std::string> data;
     std::string line;
-    while (pipeStream && std::getline(pipeStream, line) && !line.empty())
+    while (std::getline(pipeStream, line) && !line.empty()) data.push_back(line);
+
+    child.wait();
+    for (const auto &line : data)
     {
         if (line.find("AzureAdJoined") != std::string::npos)
         {
@@ -52,7 +56,7 @@ bool zzj::Domain::IsAADJoined()
             {
                 return true;
             }
-            else
+            else if (line.find("NO") != std::string::npos)
             {
                 return false;
             }
@@ -61,6 +65,7 @@ bool zzj::Domain::IsAADJoined()
 
     return false;
 }
+
 zzj::Domain zzj::Domain::GetDomain()
 {
     if (IsDomainJoined())
