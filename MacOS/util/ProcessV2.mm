@@ -25,17 +25,9 @@
 #include <boost/filesystem.hpp>
 namespace zzj
 {
-ProcessV2::ProcessV2()
-{
-}
-ProcessV2::ProcessV2(int pid)
-{
-    this->pid = pid;
-}
-ProcessV2::ProcessV2(const std::string &name)
-{
-    this->processName = name;
-}
+ProcessV2::ProcessV2() {}
+ProcessV2::ProcessV2(int pid) { this->pid = pid; }
+ProcessV2::ProcessV2(const std::string &name) { this->processName = name; }
 int ProcessV2::GetPid()
 {
     if (!processName.empty())
@@ -51,14 +43,8 @@ bool ProcessV2::IsProcessAlive()
     else
         return IsProcessAlive(pid);
 }
-std::vector<ThreadV2> ProcessV2::GetProcessThreads()
-{
-    return {};
-}
-std::vector<ThreadV2> ProcessV2::GetProcessThreads(int pid)
-{
-    return {};
-}
+std::vector<ThreadV2> ProcessV2::GetProcessThreads() { return {}; }
+std::vector<ThreadV2> ProcessV2::GetProcessThreads(int pid) { return {}; }
 std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
 {
     std::vector<ProcessV2> ret;
@@ -66,19 +52,18 @@ std::vector<ProcessV2> ProcessV2::GetRunningProcesses()
     struct process_iterator it;
     struct process proc;
     struct process_filter filter;
-    filter.pid              = 0;
+    filter.pid = 0;
     filter.include_children = 0;
     init_process_iterator(&it, &filter);
     while (get_next_process(&it, &proc) != -1)
     {
         ProcessV2 process;
-        process.pid         = proc.pid;
+        process.pid = proc.pid;
         process.processName = str::ansi2utf8(proc.command);
         ret.push_back(process);
     }
 
-    if (close_process_iterator(&it) != 0)
-        return {};
+    if (close_process_iterator(&it) != 0) return {};
     return ret;
 }
 
@@ -90,13 +75,12 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
     else if (!processName.empty())
         tmpPid = GetProcessIdByName(processName);
 
-    if (tmpPid < 0)
-        return -1;
+    if (tmpPid < 0) return -1;
 
     struct process_iterator it;
     struct process proc;
     struct process_filter filter;
-    filter.pid              = 0;
+    filter.pid = 0;
     filter.include_children = 0;
     init_process_iterator(&it, &filter);
     while (get_next_process(&it, &proc) != -1)
@@ -107,8 +91,7 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
             break;
         }
     }
-    if (close_process_iterator(&it) != 0)
-        return -2;
+    if (close_process_iterator(&it) != 0) return -2;
 
     task_t task;
     kern_return_t error;
@@ -121,14 +104,14 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
     }
     count = TASK_BASIC_INFO_COUNT;
     error = task_info(task, TASK_BASIC_INFO, (task_info_t)&ti, &count);
-    if (error != KERN_SUCCESS)
-        return -4;
+    if (error != KERN_SUCCESS) return -4;
     vm_region_basic_info_data_64_t b_info;
     vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
     vm_size_t size;
     mach_port_t object_name;
     count = VM_REGION_BASIC_INFO_COUNT_64;
-    error = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info, &count, &object_name);
+    error = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO, (vm_region_info_t)&b_info,
+                         &count, &object_name);
     if (error != KERN_SUCCESS)
     {
         mach_port_deallocate(mach_task_self(), task);
@@ -146,12 +129,11 @@ int ProcessV2::GetStatistic(StatisticTimePoint &statictic)
 }
 int ProcessV2::GetProcessIdByName(const std::string &name)
 {
-    auto ret      = GetRunningProcesses();
+    auto ret = GetRunningProcesses();
     auto utf8Name = str::ansi2utf8(name);
     for (auto &p : ret)
     {
-        if (p.processName.find(name) != p.processName.npos)
-            return p.pid;
+        if (p.processName.find(name) != p.processName.npos) return p.pid;
     }
     return -1;
 }
@@ -160,8 +142,7 @@ std::string ProcessV2::GetProcessNameById(const int &pid)
 {
     char pathBuffer[PROC_PIDPATHINFO_MAXSIZE]{0};
     int result = proc_pidpath(pid, pathBuffer, sizeof(pathBuffer));
-    if (result <= 0)
-        return "";
+    if (result <= 0) return "";
     boost::filesystem::path path(pathBuffer);
     return path.filename().string();
 }
@@ -172,12 +153,11 @@ bool ProcessV2::IsProcessAlive(const std::string &name)
     struct process_iterator it;
     struct process proc;
     struct process_filter filter;
-    filter.pid              = 0;
+    filter.pid = 0;
     filter.include_children = 0;
     init_process_iterator(&it, &filter);
     while (get_next_process(&it, &proc) != -1)
     {
-
         if (name == proc.command && kill(pid, 0) == 0)
         {
             pid = proc.pid;
@@ -200,40 +180,32 @@ bool ProcessV2::IsProcessAlive(const std::string &name)
 }
 bool ProcessV2::IsProcessAlive(int pid)
 {
-    if (pid < 0)
-        return false;
+    if (pid < 0) return false;
 
-    if (kill(pid, 0) != 0)
-        return false;
+    if (kill(pid, 0) != 0) return false;
 
     return true;
 }
 bool ProcessV2::SuspendPid(int pid)
 {
-    if (kill(pid, SIGSTOP) == 0)
-        return true;
+    if (kill(pid, SIGSTOP) == 0) return true;
     return false;
 }
 bool ProcessV2::ResumePid(int pid)
 {
-    if (kill(pid, SIGCONT) == 0)
-        return true;
+    if (kill(pid, SIGCONT) == 0) return true;
     return false;
 }
 
 ProcessV2::Snapshot::Snapshot()
 {
-
     int res = init_process_iterator(&i, &filter);
     if (res != 0)
     {
         throw std::runtime_error("init_process_iterator failed");
     }
 }
-ProcessV2::Snapshot::~Snapshot()
-{
-    close_process_iterator(&i);
-}
+ProcessV2::Snapshot::~Snapshot() { close_process_iterator(&i); }
 std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &processName)
 {
     std::vector<ProcessV2> ret;
@@ -247,14 +219,14 @@ std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &proc
             if (cmdString == processName)
             {
                 ProcessV2 process;
-                process.pid                        = proc.pid;
-                process.processName                = str::ansi2utf8(proc.command);
+                process.pid = proc.pid;
+                process.processName = str::ansi2utf8(proc.command);
                 process.statisticTimePoint.cpuUsed = std::chrono::milliseconds(proc.cputime);
                 struct rusage_info_v1 rusageInfo;
-                int rusageRet = proc_pid_rusage(proc.pid, RUSAGE_INFO_V1, (rusage_info_t *)&rusageInfo);
-                if (rusageRet != 0)
-                    continue;
-                    
+                int rusageRet =
+                    proc_pid_rusage(proc.pid, RUSAGE_INFO_V1, (rusage_info_t *)&rusageInfo);
+                if (rusageRet != 0) continue;
+
                 process.statisticTimePoint.memoryUsed = rusageInfo.ri_phys_footprint;
                 ret.push_back(process);
             }
@@ -270,4 +242,13 @@ std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &proc
     }
     return ret;
 }
-} // namespace zzj
+std::string ProcessV2::GetExecutableFilePath()
+{
+    char pathBuffer[PROC_PIDPATHINFO_MAXSIZE]{0};
+    int result = proc_pidpath(pid, pathBuffer, sizeof(pathBuffer));
+    if (result <= 0) return "";
+    boost::filesystem::path path(pathBuffer);
+    return path.string();
+}
+
+}  // namespace zzj
