@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#ifndef _WIN32
+using BYTE = char;
+#endif
 namespace zzj
 {
 class Base64Help
