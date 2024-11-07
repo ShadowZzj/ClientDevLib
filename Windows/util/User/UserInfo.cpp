@@ -234,7 +234,7 @@ std::optional<std::string> GetUserHomeDirectoryByName(const std::string &userNam
             auto profileImagePath = subKeyKey.TryGetStringValue(L"ProfileImagePath");
             if (!profileImagePath)
                 continue;
-            auto homeDir = zzj::str::w2utf8(*profileImagePath);
+            auto homeDir = zzj::str::w2utf8(profileImagePath.GetValue());
             return homeDir;
         }
 
