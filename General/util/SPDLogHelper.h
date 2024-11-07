@@ -31,6 +31,31 @@
     spdlog::warn("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__))
 #define LOG_DEBUG(...) \
     spdlog::debug("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__))
+
+#define LOG_MODULE_INFO(module, ...) \
+if(spdlog::get(module) != nullptr) \
+spdlog::get(module)->info("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__));\
+else \
+spdlog::info("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__))
+
+#define LOG_MODULE_ERROR(module, ...) \
+if(spdlog::get(module) != nullptr) \
+spdlog::get(module)->error("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__));\
+else \
+spdlog::error("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__))
+
+#define LOG_MODULE_WARN(module, ...) \
+if(spdlog::get(module) != nullptr) \
+spdlog::get(module)->warn("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__));\
+else \
+spdlog::warn("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__))
+
+#define LOG_MODULE_DEBUG(module, ...) \
+if(spdlog::get(module) != nullptr) \
+spdlog::get(module)->debug("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__));\
+else \
+spdlog::debug("[{}:{}:{}] {}", FILE_NAME, __func__, __LINE__, fmt::format(__VA_ARGS__))
+
 class SPDLogHelp
 {
    public:
