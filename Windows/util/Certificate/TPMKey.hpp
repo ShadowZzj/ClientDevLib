@@ -4,6 +4,7 @@
 #include <string>
 #include <tchar.h>
 #include <vector>
+#include <wincrypt.h>
 namespace zzj
 {
 class TPMKey
