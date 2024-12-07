@@ -18,6 +18,7 @@ class TPMKey
     }
     int Create(const std::string &keycontainer, LPCWSTR algorithm = BCRYPT_RSA_ALGORITHM,
                DWORD keyLength = 2048, DWORD flags = NCRYPT_OVERWRITE_KEY_FLAG);
+    int Delete();
     int Finalize();
     int Open(const std::string &keycontainer);
     int ExportPublicKey(PCERT_PUBLIC_KEY_INFO *publicKeyInfo);

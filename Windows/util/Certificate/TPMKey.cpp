@@ -29,7 +29,15 @@ int zzj::TPMKey::Create(const std::string &keycontainer, LPCWSTR algorithm, DWOR
     }
     return 0;
 }
-
+int zzj::TPMKey::Delete()
+{
+    if (_hKey == NULL)
+    {
+        return -1;
+    }
+    NCryptDeleteKey(_hKey, 0);
+    return 0;
+}
 int zzj::TPMKey::Finalize()
 {
     if (_hKey == NULL) return -1;
