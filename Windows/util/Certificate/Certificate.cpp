@@ -139,6 +139,7 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
     }
 
     std::vector<Certificate> certs;
+    std::vector<PCCERT_CONTEXT> certContexts;
     while (pCertContext = CertEnumCertificatesInStore(myCertStore, pCertContext))
     {
         auto [result, cert] = GetCertificate(pCertContext);
@@ -146,28 +147,110 @@ std::tuple<int, std::vector<Certificate>> Certificate::GetCerticifateTemplate(
         {
             return {-4, {}};
         }
-        if (predicate(cert))
+        if (!predicate(cert))
         {
-            certs.push_back(cert);
+            continue;
         }
-
+        certs.push_back(cert);
         switch (operateType)
         {
-            case OperateType::Delete:
-                result = CertDeleteCertificateFromStore(pCertContext);
-                if (!result)
+            case OperateType::Delete:{
+                PCCERT_CONTEXT dupContext = CertDuplicateCertificateContext(pCertContext);
+                if (dupContext)
                 {
-                    return {-5, {}};
+                    certContexts.push_back(dupContext);
                 }
                 break;
+            }
             case OperateType::Query:
                 break;
             default:
                 break;
         }
     }
+
+    if (operateType == OperateType::Delete)
+    {
+        for (auto &pCertContext : certContexts)
+        {
+            CertDeleteCertificateFromStore(pCertContext);
+        }
+    }
     return {0, certs};
 }
+bool IsPemContent(const std::string &data) {
+    // Strip PEM headers and footers
+    std::string base64Data;
+    const std::string header = "-----BEGIN CERTIFICATE-----";
+    const std::string footer = "-----END CERTIFICATE-----";
+    size_t start = data.find(header);
+    size_t end = data.find(footer);
+    if (start == std::string::npos || end == std::string::npos)
+    {
+        return false;
+    }
+    return true;
+}
+// Helper function to extract all certificates from PEM content
+std::vector<std::string> ExtractCertificatesFromPEM(const std::string &pemData)
+{
+    std::vector<std::string> certificates;
+    const std::string header = "-----BEGIN CERTIFICATE-----";
+    const std::string footer = "-----END CERTIFICATE-----";
+
+    size_t start = 0;
+    while ((start = pemData.find(header, start)) != std::string::npos)
+    {
+        size_t end = pemData.find(footer, start);
+        if (end == std::string::npos) break;
+
+        end += footer.length();
+        certificates.push_back(pemData.substr(start, end - start));
+        start = end;
+    }
+
+    return certificates;
+}
+
+std::vector<BYTE> ConvertSinglePemToBinary(const std::string &pemContent)
+{
+    // Strip PEM headers and footers
+    std::string base64Data;
+    const std::string header = "-----BEGIN CERTIFICATE-----";
+    const std::string footer = "-----END CERTIFICATE-----";
+    size_t start = pemContent.find(header);
+    size_t end = pemContent.find(footer);
+    if (start == std::string::npos || end == std::string::npos)
+    {
+        return {};
+    }
+
+    base64Data = pemContent.substr(start + header.size(), end - (start + header.size()));
+
+    // Remove newlines from Base64 data
+    base64Data.erase(std::remove(base64Data.begin(), base64Data.end(), '\n'), base64Data.end());
+    base64Data.erase(std::remove(base64Data.begin(), base64Data.end(), '\r'), base64Data.end());
+
+    // Convert Base64 to binary
+    DWORD binarySize = 0;
+    if (!CryptStringToBinaryA(base64Data.c_str(), 0, CRYPT_STRING_BASE64, NULL, &binarySize, NULL,
+                              NULL))
+    {
+        std::cerr << "Failed to calculate binary size: " << GetLastError() << std::endl;
+        return {};
+    }
+
+    std::vector<BYTE> binaryData(binarySize);
+    if (!CryptStringToBinaryA(base64Data.c_str(), 0, CRYPT_STRING_BASE64, binaryData.data(),
+                              &binarySize, NULL, NULL))
+    {
+        std::cerr << "Failed to convert Base64 to binary: " << GetLastError() << std::endl;
+        return {};
+    }
+
+    return binaryData;
+}
+
 std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate(
     const std::string &content, const std::string &passwd, const Certificate::StoreType &storeType,
     CertLocation certLocation, std::function<bool(Certificate)> predicate, OperateType operateType)
@@ -209,22 +292,10 @@ std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate
     {
         case StoreType::LocalMachine:
             myCertStore =
-                CertOpenStore(CERT_STORE_PROV_SYSTEM,  // the store provider type
-                              0,                       // the encoding type is not needed
-                              NULL,                    // use the default HCRYPTPROV
-                              CERT_SYSTEM_STORE_LOCAL_MACHINE,
-                              // set the store location in a
-                              // registry location
-                              certLocationString.c_str()  // the store name as a Unicode string
-                );
-            caCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,  // the store provider type
-                                        0,                       // the encoding type is not needed
-                                        NULL,                    // use the default HCRYPTPROV
-                                        CERT_SYSTEM_STORE_LOCAL_MACHINE,
-                                        // set the store location in a
-                                        // registry location
-                                        L"Root"  // the store name as a Unicode string
-            );
+                CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE,
+                              certLocationString.c_str());
+            caCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL,
+                                        CERT_SYSTEM_STORE_LOCAL_MACHINE, L"Root");
             break;
         case StoreType::CurrentUser: {
             auto [result, isService] = currentProcess.IsServiceProcess();
@@ -240,23 +311,10 @@ std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate
                     return {-2, {}};
                 }
             }
-            myCertStore =
-                CertOpenStore(CERT_STORE_PROV_SYSTEM,  // the store provider type
-                              0,                       // the encoding type is not needed
-                              NULL,                    // use the default HCRYPTPROV
-                              CERT_SYSTEM_STORE_CURRENT_USER,
-                              // set the store location in a
-                              // registry location
-                              certLocationString.c_str()  // the store name as a Unicode string
-                );
-            caCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,  // the store provider type
-                                        0,                       // the encoding type is not needed
-                                        NULL,                    // use the default HCRYPTPROV
-                                        CERT_SYSTEM_STORE_CURRENT_USER,
-                                        // set the store location in a
-                                        // registry location
-                                        L"Root"  // the store name as a Unicode string
-            );
+            myCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL,
+                                        CERT_SYSTEM_STORE_CURRENT_USER, certLocationString.c_str());
+            caCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL,
+                                        CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
             break;
         }
         default:
@@ -267,21 +325,62 @@ std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate
     {
         return {-3, {}};
     }
-
-    blob.cbData = content.size();
-    blob.pbData = (BYTE *)content.data();
     password = str::UTF8Str2Wstr(passwd.c_str());
 
-    // import certificate to mem store.
-    memCertStore = PFXImportCertStore(&blob, password.c_str(), PKCS12_INCLUDE_EXTENDED_PROPERTIES);
-    if (NULL == memCertStore)
+    if (!IsPemContent(content))
     {
-        return {-4, {}};
+        blob.cbData = content.size();
+        blob.pbData = (BYTE *)content.data();
+        // Import certificate to memory store.
+        memCertStore =
+            PFXImportCertStore(&blob, password.c_str(), PKCS12_INCLUDE_EXTENDED_PROPERTIES);
+        if (NULL == memCertStore)
+        {
+            return {-4, {}};
+        }
+    }
+    else
+    {
+        auto pemCertificates = ExtractCertificatesFromPEM(content);
+        if (pemCertificates.empty())
+        {
+            return {-7, {}};
+        }
+
+        // Create a memory store to hold multiple certificates
+        memCertStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, NULL, 0, NULL);
+        if (!memCertStore)
+        {
+            return {-8, {}};
+        }
+
+        for (const auto &pemCert : pemCertificates)
+        {
+            auto derData = ConvertSinglePemToBinary(pemCert);
+            if (derData.empty())
+            {
+                continue;
+            }
+
+            PCCERT_CONTEXT tempCertContext = CertCreateCertificateContext(
+                X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, derData.data(), derData.size());
+            if (!tempCertContext)
+            {
+                continue;
+            }
+
+            if (!CertAddCertificateContextToStore(memCertStore, tempCertContext,
+                                                  CERT_STORE_ADD_ALWAYS, NULL))
+            {
+                CertFreeCertificateContext(tempCertContext);
+                continue;
+            }
+
+            CertFreeCertificateContext(tempCertContext);
+        }
     }
 
     std::vector<Certificate> certs;
-    // get certificate from mem store,  if signer name equals to subject name,
-    // store the cert to Trusted.
     while (pCertContext =
                CertFindCertificateInStore(memCertStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0,
                                           CERT_FIND_ANY, NULL, pCertContext))
@@ -311,7 +410,7 @@ std::tuple<int, std::vector<Certificate>> Certificate::ImportCertificateTemplate
                                                           CERT_STORE_ADD_REPLACE_EXISTING, NULL);
                 if (!result)
                 {
-                    return {-6, {}};  // add cert failed.
+                    return {-6, {}};  // Add cert failed.
                 }
                 break;
             default:
@@ -400,6 +499,6 @@ int zzj::Certificate::Delete(const StoreType &storeType, CertLocation certLocati
         storeType, certLocation,
         [this](Certificate cert)
         { return cert._sequence == _sequence && cert._name == _name && cert._issuer == _issuer; },
-        OperateType::Query);
+        OperateType::Delete);
     return result;
 }
