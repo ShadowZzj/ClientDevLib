@@ -8,10 +8,9 @@
 #include <wincrypt.h>
 #include <General/util/Crypto/Base64.hpp>
 #include <General/util/StrUtil.h>
-
-#pragma comment(lib, "ncrypt.lib")
 #pragma comment(lib, "crypt32.lib")
-
+#pragma comment(lib, "bcrypt.lib")
+#pragma comment(lib, "ncrypt.lib")
 int zzj::TPMKey::Create(const std::string &keycontainer, LPCWSTR algorithm, DWORD keyLength,
                         DWORD flags)
 {
@@ -24,6 +23,30 @@ int zzj::TPMKey::Create(const std::string &keycontainer, LPCWSTR algorithm, DWOR
     if (status != ERROR_SUCCESS)
     {
         NCryptFreeObject(_hProv);
+        _hProv = NULL;
+        return status;
+    }
+
+    DWORD _keyLength = keyLength;
+    status =
+        NCryptSetProperty(_hKey, NCRYPT_LENGTH_PROPERTY, (PBYTE)&_keyLength, sizeof(_keyLength), 0);
+    if (status != ERROR_SUCCESS)
+    {
+        NCryptFreeObject(_hKey);
+        NCryptFreeObject(_hProv);
+        _hKey = NULL;
+        _hProv = NULL;
+        return status;
+    }
+
+    DWORD dwKeyUsage = NCRYPT_ALLOW_ALL_USAGES;
+    status = NCryptSetProperty(_hKey, NCRYPT_KEY_USAGE_PROPERTY, (PBYTE)&dwKeyUsage,
+                               sizeof(dwKeyUsage), 0);
+    if (status != ERROR_SUCCESS)
+    {
+        NCryptFreeObject(_hKey);
+        NCryptFreeObject(_hProv);
+        _hKey = NULL;
         _hProv = NULL;
         return status;
     }
@@ -165,6 +188,93 @@ int zzj::TPMKey::GenerateCsrPemFormat(const std::string &certSubjectNameFullQual
     return 0;
 }
 
+int zzj::TPMKey::SignDataSha256(const std::vector<BYTE> &data, std::vector<BYTE> &signature)
+{
+    // 1) Query which algorithm group the key belongs to (RSA or ECC).
+    WCHAR algoGroup[32] = {0};
+    DWORD cbProp = 0;
+    NTSTATUS nts =
+        NCryptGetProperty(_hKey, NCRYPT_ALGORITHM_GROUP_PROPERTY,
+                          reinterpret_cast<PBYTE>(algoGroup), sizeof(algoGroup), &cbProp, 0);
+    if (nts != ERROR_SUCCESS) return nts;
+
+    // 2) Decide whether we need padding info (for RSA) or not (ECC).
+    PVOID pPaddingInfo = nullptr;
+    DWORD dwFlags = 0;
+
+    BCRYPT_PKCS1_PADDING_INFO pi;
+    ZeroMemory(&pi, sizeof(pi));
+    // If the key is RSA, use PKCS#1 padding (as an example).
+    // If the key is ECC, use no padding, etc.
+    if (!_wcsicmp(algoGroup, NCRYPT_RSA_ALGORITHM_GROUP))
+    {
+        // Typically should match the hash algorithm actually used
+        pi.pszAlgId = BCRYPT_SHA256_ALGORITHM;
+        pPaddingInfo = &pi;
+        dwFlags = BCRYPT_PAD_PKCS1;
+    }
+    else if (!_wcsicmp(algoGroup, NCRYPT_ECDSA_ALGORITHM_GROUP))
+    {
+        // ECC => no padding needed
+        pPaddingInfo = nullptr;
+        dwFlags = 0;
+    }
+    else
+    {
+        // Unsupported algorithm group
+        return -1;
+    }
+
+    // 3) Call CryptHashCertificate2 to hash the data
+    std::vector<BYTE> hashValue(32);
+    ULONG cb = hashValue.size();
+    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, data.data(), data.size(),
+                               hashValue.data(), &cb))
+    {
+        return GetLastError();
+    }
+
+    // 4) Call NCryptSignHash to sign the hash
+
+    BYTE *pbSignature = nullptr;
+    DWORD cbSignature = 0;
+
+    while (true)
+    {
+        nts = NCryptSignHash(_hKey, pPaddingInfo, hashValue.data(),
+                             cb,  // size of data
+                             pbSignature, cbSignature, &cbSignature, dwFlags);
+
+        if (!BCRYPT_SUCCESS(nts))
+        {
+            if (pbSignature)
+            {
+                delete[] pbSignature;
+                pbSignature = nullptr;
+            }
+            return nts;
+        }
+
+        if (pbSignature)
+        {
+            // We have the signature
+            signature.resize(cbSignature);
+            memcpy(signature.data(), pbSignature, cbSignature);
+            delete[] pbSignature;  // cleanup
+            pbSignature = nullptr;
+            break;
+        }
+        else
+        {
+            // First pass: pbSignature == NULL => we got the required cbSignature
+            pbSignature = new BYTE[cbSignature];
+            ZeroMemory(pbSignature, cbSignature);
+        }
+    }
+
+    return 0;
+}
+
 int zzj::TPMKey::AssociateCertificate(PCCERT_CONTEXT pCertContext, const std::string &keycontainer)
 {
     std::wstring keycontainerW = zzj::str::utf82w(keycontainer);
@@ -181,4 +291,38 @@ int zzj::TPMKey::AssociateCertificate(PCCERT_CONTEXT pCertContext, const std::st
         return GetLastError();
 
     return 0;
+}
+std::shared_ptr<zzj::TPMKey> zzj::TPMKey::OpenTpmKeyFromCertificate(PCCERT_CONTEXT pCertContext)
+{
+    // 1) Retrieve the size needed for CERT_KEY_PROV_INFO_PROP_ID
+    DWORD cbData = 0;
+    if (!CertGetCertificateContextProperty(pCertContext, CERT_KEY_PROV_INFO_PROP_ID, nullptr,
+                                           &cbData))
+    {
+        return nullptr;
+    }
+
+    // 2) Allocate buffer and get the property
+    std::unique_ptr<BYTE[]> buffer(new BYTE[cbData]);
+    CRYPT_KEY_PROV_INFO *pKeyProvInfo = reinterpret_cast<CRYPT_KEY_PROV_INFO *>(buffer.get());
+
+    if (!CertGetCertificateContextProperty(pCertContext, CERT_KEY_PROV_INFO_PROP_ID, pKeyProvInfo,
+                                           &cbData))
+    {
+        return nullptr;
+    }
+
+    // Extract the container name and provider name
+    std::wstring containerName =
+        pKeyProvInfo->pwszContainerName ? pKeyProvInfo->pwszContainerName : L"";
+    std::wstring providerName = pKeyProvInfo->pwszProvName ? pKeyProvInfo->pwszProvName : L"";
+
+    std::shared_ptr<TPMKey> tpmKey(new TPMKey());
+    int keyOpenRes = tpmKey->Open(zzj::str::w2utf8(containerName));
+    if (keyOpenRes != 0)
+    {
+        return nullptr;
+    }
+
+    return tpmKey;
 }
