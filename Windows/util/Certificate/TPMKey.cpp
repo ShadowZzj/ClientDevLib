@@ -110,6 +110,7 @@ int zzj::TPMKey::ExportPublicKey(PCERT_PUBLIC_KEY_INFO *publicKeyInfo)
     if (!res) return GetLastError();
 
     *publicKeyInfo = pPublicKeyInfo;
+    
     return 0;
 }
 
@@ -325,4 +326,71 @@ std::shared_ptr<zzj::TPMKey> zzj::TPMKey::OpenTpmKeyFromCertificate(PCCERT_CONTE
     }
 
     return tpmKey;
+}
+
+std::tuple<int,bool> zzj::TPMKey::VerifyDataSha256(const std::vector<BYTE> &data, const std::vector<BYTE> &signature)
+{
+    // 1) Query which algorithm group the key belongs to (RSA or ECC).
+    WCHAR algoGroup[32] = {0};
+    DWORD cbProp = 0;
+    NTSTATUS nts =
+        NCryptGetProperty(_hKey, NCRYPT_ALGORITHM_GROUP_PROPERTY,
+                          reinterpret_cast<PBYTE>(algoGroup), sizeof(algoGroup), &cbProp, 0);
+    if (nts != ERROR_SUCCESS) return {nts, false};
+
+    // 2) Decide whether we need padding info (for RSA) or not (ECC).
+    PVOID pPaddingInfo = nullptr;
+    DWORD dwFlags = 0;
+
+    BCRYPT_PKCS1_PADDING_INFO pi;
+    ZeroMemory(&pi, sizeof(pi));
+    // If the key is RSA, use PKCS#1 padding (as an example).
+    // If the key is ECC, use no padding, etc.
+    if (!_wcsicmp(algoGroup, NCRYPT_RSA_ALGORITHM_GROUP))
+    {
+        // Typically should match the hash algorithm actually used
+        pi.pszAlgId = BCRYPT_SHA256_ALGORITHM;
+        pPaddingInfo = &pi;
+        dwFlags = BCRYPT_PAD_PKCS1;
+    }
+    else if (!_wcsicmp(algoGroup, NCRYPT_ECDSA_ALGORITHM_GROUP))
+    {
+        // ECC => no padding needed
+        pPaddingInfo = nullptr;
+        dwFlags = 0;
+    }
+    else
+    {
+        // Unsupported algorithm group
+        return {-1, false};
+    }
+
+    // 3) Call CryptHashCertificate2 to hash the data
+    std::vector<BYTE> hashValue(32);
+    ULONG cb = hashValue.size();
+    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, data.data(), data.size(),
+                               hashValue.data(), &cb))
+    {
+        return {GetLastError(), false};
+    }
+    // 4) We need to get the public key
+    NCRYPT_KEY_HANDLE hPublicKey = NULL;
+    nts = NCryptGetProperty(_hKey, NCRYPT_PUBLIC_KEY_PROPERTY, (PBYTE)&hPublicKey, sizeof(hPublicKey),
+                            &cbProp, 0);
+    if (nts != ERROR_SUCCESS)
+    {
+        return {nts, false};
+    }
+
+    // 5) Call NCryptVerifySignature to verify the signature
+    nts = NCryptVerifySignature(hPublicKey, pPaddingInfo, hashValue.data(), hashValue.size(),
+                                signature.data(), signature.size(), dwFlags);
+    if (!BCRYPT_SUCCESS(nts))
+    {
+        return {nts, false};
+    }
+
+    
+
+    return {0, true};
 }

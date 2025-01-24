@@ -6,6 +6,7 @@
 #include <vector>
 #include <wincrypt.h>
 #include <memory>
+#include <tuple>
 namespace zzj
 {
 class TPMKey
@@ -33,6 +34,7 @@ class TPMKey
                              std::vector<BYTE> &csrDer);
     int GenerateCsrPemFormat(const std::string &certSubjectNameFullQualified, std::string &csrPem);
     int SignDataSha256(const std::vector<BYTE> &data, std::vector<BYTE> &signature);
+    std::tuple<int,bool> VerifyDataSha256(const std::vector<BYTE> &data, const std::vector<BYTE> &signature);
     static int AssociateCertificate(PCCERT_CONTEXT pCertContext, const std::string &keycontainer);
     static std::shared_ptr<TPMKey> OpenTpmKeyFromCertificate(PCCERT_CONTEXT pCertContext);
    private:
