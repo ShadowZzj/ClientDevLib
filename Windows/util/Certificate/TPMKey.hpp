@@ -33,8 +33,8 @@ class TPMKey
     int GenerateCsrDerFormat(const std::string &certSubjectNameFullQualified,
                              std::vector<BYTE> &csrDer);
     int GenerateCsrPemFormat(const std::string &certSubjectNameFullQualified, std::string &csrPem);
-    int SignDataSha256(const std::vector<BYTE> &data, std::vector<BYTE> &signature);
-    std::tuple<int,bool> VerifyDataSha256(const std::vector<BYTE> &data, const std::vector<BYTE> &signature);
+    int SignDataSha256(const std::vector<char> &data, std::vector<char> &signature);
+    std::tuple<int,bool> VerifyDataSha256(const std::vector<char> &data, const std::vector<char> &signature);
     static int AssociateCertificate(PCCERT_CONTEXT pCertContext, const std::string &keycontainer);
     static std::shared_ptr<TPMKey> OpenTpmKeyFromCertificate(PCCERT_CONTEXT pCertContext);
    private:

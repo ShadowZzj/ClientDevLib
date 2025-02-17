@@ -110,7 +110,7 @@ int zzj::TPMKey::ExportPublicKey(PCERT_PUBLIC_KEY_INFO *publicKeyInfo)
     if (!res) return GetLastError();
 
     *publicKeyInfo = pPublicKeyInfo;
-    
+
     return 0;
 }
 
@@ -189,7 +189,7 @@ int zzj::TPMKey::GenerateCsrPemFormat(const std::string &certSubjectNameFullQual
     return 0;
 }
 
-int zzj::TPMKey::SignDataSha256(const std::vector<BYTE> &data, std::vector<BYTE> &signature)
+int zzj::TPMKey::SignDataSha256(const std::vector<char> &data, std::vector<char> &signature)
 {
     // 1) Query which algorithm group the key belongs to (RSA or ECC).
     WCHAR algoGroup[32] = {0};
@@ -229,7 +229,7 @@ int zzj::TPMKey::SignDataSha256(const std::vector<BYTE> &data, std::vector<BYTE>
     // 3) Call CryptHashCertificate2 to hash the data
     std::vector<BYTE> hashValue(32);
     ULONG cb = hashValue.size();
-    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, data.data(), data.size(),
+    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, (const BYTE*)data.data(), data.size(),
                                hashValue.data(), &cb))
     {
         return GetLastError();
@@ -328,7 +328,8 @@ std::shared_ptr<zzj::TPMKey> zzj::TPMKey::OpenTpmKeyFromCertificate(PCCERT_CONTE
     return tpmKey;
 }
 
-std::tuple<int,bool> zzj::TPMKey::VerifyDataSha256(const std::vector<BYTE> &data, const std::vector<BYTE> &signature)
+std::tuple<int, bool> zzj::TPMKey::VerifyDataSha256(const std::vector<char> &data,
+                                                    const std::vector<char> &signature)
 {
     // 1) Query which algorithm group the key belongs to (RSA or ECC).
     WCHAR algoGroup[32] = {0};
@@ -368,29 +369,65 @@ std::tuple<int,bool> zzj::TPMKey::VerifyDataSha256(const std::vector<BYTE> &data
     // 3) Call CryptHashCertificate2 to hash the data
     std::vector<BYTE> hashValue(32);
     ULONG cb = hashValue.size();
-    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, data.data(), data.size(),
+    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, (const BYTE*)data.data(), data.size(),
                                hashValue.data(), &cb))
     {
         return {GetLastError(), false};
     }
-    // 4) We need to get the public key
-    NCRYPT_KEY_HANDLE hPublicKey = NULL;
-    nts = NCryptGetProperty(_hKey, NCRYPT_PUBLIC_KEY_PROPERTY, (PBYTE)&hPublicKey, sizeof(hPublicKey),
-                            &cbProp, 0);
-    if (nts != ERROR_SUCCESS)
-    {
-        return {nts, false};
-    }
 
-    // 5) Call NCryptVerifySignature to verify the signature
-    nts = NCryptVerifySignature(hPublicKey, pPaddingInfo, hashValue.data(), hashValue.size(),
-                                signature.data(), signature.size(), dwFlags);
+    // 4) Export the public key
+    DWORD cbPublicKey = 0;
+    nts = NCryptExportKey(_hKey, NULL, BCRYPT_RSAPUBLIC_BLOB, NULL, NULL, 0, &cbPublicKey, 0);
     if (!BCRYPT_SUCCESS(nts))
     {
         return {nts, false};
     }
 
-    
+    // Allocate memory to hold the public key
+    BYTE *pbPublicKey = new BYTE[cbPublicKey];
+    if (pbPublicKey == NULL)
+    {
+        return {ERROR_OUTOFMEMORY, false};
+    }
+    DEFER { 
+        if (pbPublicKey != NULL)
+            delete[] pbPublicKey; 
+    };
+    // Now export the public key into the allocated buffer
+    nts = NCryptExportKey(_hKey, NULL, BCRYPT_RSAPUBLIC_BLOB, NULL, pbPublicKey, cbPublicKey,
+                          &cbPublicKey, 0);
+    if (!BCRYPT_SUCCESS(nts))
+    {
+        return {nts, false};
+    }
 
-    return {0, true};
+    // You now have the public key in pbPublicKey. You can use this to verify the signature.
+
+    NCRYPT_KEY_HANDLE hPublicKey = NULL;
+    // Use pbPublicKey to create a new NCRYPT_KEY_HANDLE for verification if needed
+    nts = NCryptImportKey(_hProv, NULL, BCRYPT_RSAPUBLIC_BLOB, NULL, &hPublicKey, pbPublicKey,
+                          cbPublicKey, 0);
+    if (!BCRYPT_SUCCESS(nts))
+    {
+        return {nts, false};
+    }
+    DEFER
+    {
+        if (hPublicKey != NULL) NCryptFreeObject(hPublicKey);
+    };
+    // 5) Call NCryptVerifySignature to verify the signature
+    nts = NCryptVerifySignature(hPublicKey, pPaddingInfo, hashValue.data(), hashValue.size(),
+                                (unsigned char*)signature.data(), signature.size(), dwFlags);
+    if (BCRYPT_SUCCESS(nts))
+    {
+        return {0, true};
+    }
+    else if (nts == NTE_BAD_SIGNATURE)
+    {
+        return {0, false};
+    }
+    else
+    {
+        return {nts, false};
+    }
 }
