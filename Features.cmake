@@ -126,6 +126,7 @@ elseif(APPLE)
     set(LuaLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/lua/mac/universal/lib/libLua-5.4.3_static.a)
     set(ZipperLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/zipper/libzip/mac/universal/libZipper.a)
     set(ZLibLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/zlib/lib/mac/libz.a)
+    set(libgit2Dll ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/libgit2/build/mac/universal/libgit2.1.9.0.dylib)
     file(GLOB GrpcLib ${CMAKE_CURRENT_LIST_DIR}/General/ThirdParty/grpc/mac/universal/lib/*.a)
 
     function(GenerateUtil)
