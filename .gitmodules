@@ -1,18 +1,21 @@
 [submodule "General/ThirdParty/cpp-httplib"]
-	path = General/ThirdParty/cpp-httplib
-	url = https://github.com/yhirose/cpp-httplib.git
+path = General/ThirdParty/cpp-httplib
+url = https://github.com/yhirose/cpp-httplib.git
 [submodule "General/ThirdParty/imgui"]
-	path = General/ThirdParty/imgui
-	url = https://github.com/ocornut/imgui.git
+path = General/ThirdParty/imgui
+url = https://github.com/ocornut/imgui.git
 [submodule "General/ThirdParty/assimp/source"]
-	path = General/ThirdParty/assimp/source
-	url = https://github.com/assimp/assimp.git
+path = General/ThirdParty/assimp/source
+url = https://github.com/assimp/assimp.git
 [submodule "General/ThirdParty/Catch2"]
-	path = General/ThirdParty/Catch2
-	url = https://github.com/catchorg/Catch2.git
+path = General/ThirdParty/Catch2
+url = https://github.com/catchorg/Catch2.git
 [submodule "General/ThirdParty/Detours/src"]
-	path = General/ThirdParty/Detours/src
-	url = git@github.com:microsoft/Detours.git
+path = General/ThirdParty/Detours/src
+url = git@github.com:microsoft/Detours.git
 [submodule "General/ThirdParty/pybind11"]
-	path = General/ThirdParty/pybind11
-	url = https://github.com/pybind/pybind11.git
+path = General/ThirdParty/pybind11
+url = https://github.com/pybind/pybind11.git
+[submodule "General/ThirdParty/libgit2/src"]
+	path = General/ThirdParty/libgit2/src
+	url = https://github.com/libgit2/libgit2.git
