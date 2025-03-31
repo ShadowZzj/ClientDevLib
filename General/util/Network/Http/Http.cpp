@@ -29,15 +29,15 @@ size_t WriteHeader(void *ptr, size_t size, size_t nmemb, void *stream)
     std::string header;
     header.append((char *)ptr, size * nmemb);
     nlohmann::json *json = (nlohmann::json *)stream;
-    std::string key      = header.substr(0, header.find(":"));
-    std::string value    = header.substr(header.find(":") + 1);
+    std::string key = header.substr(0, header.find(":"));
+    std::string value = header.substr(header.find(":") + 1);
     if (json->find(key) != json->end())
     {
         // if the value type is string, then make it array
         if ((*json)[key].is_string())
         {
             nlohmann::json tmp = (*json)[key];
-            (*json)[key]       = nlohmann::json::array();
+            (*json)[key] = nlohmann::json::array();
             (*json)[key].push_back(tmp);
         }
         (*json)[key].push_back(value);
@@ -93,16 +93,17 @@ std::string zzj::Http::DecodeUri(const std::string &uri)
     return decoded;
 }
 
-std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int connectionTimeOut, int timeout)
+std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int connectionTimeOut,
+                                       int timeout)
 {
     CURL *curl;
     FILE *fp;
     CURLcode res;
-    std::string ret         = "";
+    std::string ret = "";
     std::string outFileName = url.substr(url.find_last_of("/") + 1);
     boost::filesystem::path outFileFullPath = path;
-    outFileFullPath                         = outFileFullPath / outFileName;
-    curl                    = curl_easy_init();
+    outFileFullPath = outFileFullPath / outFileName;
+    curl = curl_easy_init();
     if (curl)
     {
         fp = fopen(outFileFullPath.string().c_str(), "wb");
@@ -132,8 +133,7 @@ std::string zzj::Http::DownloadFromUrl(std::string url, std::string path, int co
     ret = outFileFullPath.string().c_str();
 exit:
     curl_easy_cleanup(curl);
-    if (fp)
-        fclose(fp);
+    if (fp) fclose(fp);
 
     return ret;
 }
@@ -142,14 +142,14 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
 {
     try
     {
-        CURL *curl           = curl_easy_init();
-        curl_mime *form      = NULL;
+        CURL *curl = curl_easy_init();
+        curl_mime *form = NULL;
         curl_mimepart *field = NULL;
         CURLcode res;
         int result = 0;
         char errBuf[CURL_ERROR_SIZE];
         struct curl_slist *http_headers = NULL;
-        retString                       = "";
+        retString = "";
         std::string postRetContent;
         std::string bodyData;
         std::string cert;
@@ -157,8 +157,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
 
         DEFER
         {
-            if (0 != result)
-                spdlog::error("Http post result {},ret :{} ", result, errBuf);
+            if (0 != result) spdlog::error("Http post result {},ret :{} ", result, errBuf);
             curl_slist_free_all(http_headers);
             curl_easy_cleanup(curl);
             curl_mime_free(form);
@@ -190,7 +189,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
                     return result;
                 }
                 std::string header = it.key() + ":" + it.value().get<std::string>();
-                http_headers       = curl_slist_append(http_headers, header.c_str());
+                http_headers = curl_slist_append(http_headers, header.c_str());
             }
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_headers);
         }
@@ -231,9 +230,9 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
                     result = -3;
                     return result;
                 }
-                nlohmann::json files  = body["data"]["files"];
+                nlohmann::json files = body["data"]["files"];
                 nlohmann::json fields = body["data"]["fields"];
-                form                  = curl_mime_init(curl);
+                form = curl_mime_init(curl);
                 for (auto it = files.begin(); it != files.end(); it++)
                 {
                     if (!it.value().is_string())
@@ -243,7 +242,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
                         return result;
                     }
                     std::string fileName = it.value().get<std::string>();
-                    field                = curl_mime_addpart(form);
+                    field = curl_mime_addpart(form);
                     curl_mime_name(field, it.key().c_str());
                     curl_mime_filedata(field, fileName.c_str());
                 }
@@ -256,7 +255,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
                         return result;
                     }
                     std::string fieldValue = it.value().get<std::string>();
-                    field                  = curl_mime_addpart(form);
+                    field = curl_mime_addpart(form);
                     curl_mime_name(field, it.key().c_str());
                     curl_mime_data(field, fieldValue.c_str(), CURL_ZERO_TERMINATED);
                 }
@@ -306,7 +305,19 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             {
                 cert = ssl["cert"];
                 curl_easy_setopt(curl, CURLOPT_SSLCERT, cert.c_str());
-                curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "P12");
+            }
+            if (ssl.find("cert_type") != ssl.end())
+            {
+                std::string cert_type = ssl["cert_type"];
+                curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, cert_type.c_str());
+            }
+            if (ssl.find("cert_blob") != ssl.end())
+            {
+                std::string cert_blob = ssl["cert_blob"];
+                curl_blob certBlob{.data = (void *)cert_blob.c_str(),
+                                   .len = cert_blob.size(),
+                                   .flags = CURL_BLOB_COPY};
+                curl_easy_setopt(curl, CURLOPT_SSLCERT_BLOB, &certBlob);
             }
             if (ssl.find("keypasswd") != ssl.end())
             {
@@ -336,11 +347,11 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
 
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
         nlohmann::json retJson;
-        retJson["code"]          = responseCode;
-        retJson["header"]        = postRetHeader;
-        retJson["body"]          = postRetContent;
+        retJson["code"] = responseCode;
+        retJson["header"] = postRetHeader;
+        retJson["body"] = postRetContent;
         retJson["extra"]["time"] = time;
-        retString                = retJson.dump();
+        retString = retJson.dump();
         return result;
     }
     catch (const std::exception &e)
@@ -360,15 +371,14 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         int result = 0;
         char errBuf[CURL_ERROR_SIZE];
         struct curl_slist *http_headers = NULL;
-        retString                       = "";
+        retString = "";
         std::string postRetContent;
         std::string bodyData;
         std::string cert;
         std::string keypasswd;
         DEFER
         {
-            if (0 != result)
-                spdlog::error("Http get result {},ret :{} ", result, errBuf);
+            if (0 != result) spdlog::error("Http get result {},ret :{} ", result, errBuf);
             curl_slist_free_all(http_headers);
             curl_easy_cleanup(curl);
             curl_mime_free(form);
@@ -419,9 +429,9 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                     result = -3;
                     return result;
                 }
-                nlohmann::json files  = body["data"]["files"];
+                nlohmann::json files = body["data"]["files"];
                 nlohmann::json fields = body["data"]["fields"];
-                form                  = curl_mime_init(curl);
+                form = curl_mime_init(curl);
                 for (auto it = files.begin(); it != files.end(); it++)
                 {
                     if (!it.value().is_string())
@@ -431,7 +441,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                         return result;
                     }
                     std::string fileName = it.value().get<std::string>();
-                    field                = curl_mime_addpart(form);
+                    field = curl_mime_addpart(form);
                     curl_mime_name(field, it.key().c_str());
                     curl_mime_filedata(field, fileName.c_str());
                 }
@@ -444,7 +454,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                         return result;
                     }
                     std::string fieldValue = it.value().get<std::string>();
-                    field                  = curl_mime_addpart(form);
+                    field = curl_mime_addpart(form);
                     curl_mime_name(field, it.key().c_str());
                     curl_mime_data(field, fieldValue.c_str(), CURL_ZERO_TERMINATED);
                 }
@@ -469,7 +479,7 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                     return result;
                 }
                 std::string header = it.key() + ":" + it.value().get<std::string>();
-                http_headers       = curl_slist_append(http_headers, header.c_str());
+                http_headers = curl_slist_append(http_headers, header.c_str());
             }
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_headers);
         }
@@ -548,22 +558,22 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         try
         {
             nlohmann::json retJson;
-            retJson["code"]          = responseCode;
-            retJson["header"]        = postRetHeader;
-            retJson["body"]          = postRetContent;
+            retJson["code"] = responseCode;
+            retJson["header"] = postRetHeader;
+            retJson["body"] = postRetContent;
             retJson["extra"]["time"] = time;
-            retJson["extra"]["remoteIp"] = ip == nullptr ? "" :  std::string(ip);
-            retString                = retJson.dump();
+            retJson["extra"]["remoteIp"] = ip == nullptr ? "" : std::string(ip);
+            retString = retJson.dump();
         }
         catch (std::exception &e)
         {
             spdlog::error("http json error with {}, do not return body", e.what());
             nlohmann::json retJson;
-            retJson["code"]          = responseCode;
-            retJson["header"]        = postRetHeader;
+            retJson["code"] = responseCode;
+            retJson["header"] = postRetHeader;
             retJson["extra"]["time"] = time;
             retJson["extra"]["remoteIp"] = ip == nullptr ? "" : std::string(ip);
-            retString                = retJson.dump();
+            retString = retJson.dump();
         }
         return result;
     }
@@ -572,6 +582,10 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         spdlog::error("Http post json error {}", e.what());
         return -2;
     }
+}
+CURLsslset zzj::Http::CurlSelectSSLBackend(curl_sslbackend backend)
+{
+    return curl_global_sslset(backend, nullptr, nullptr);
 }
 int zzj::Http::PostFile(const std::string &apiPath, std::map<std::string, std::string> headers,
                         std::map<std::string, std::string> bodyParam, const std::string &fileKey,
@@ -582,10 +596,10 @@ int zzj::Http::PostFile(const std::string &apiPath, std::map<std::string, std::s
     CURLcode res;
 
     char errBuf[CURL_ERROR_SIZE];
-    curl_mime *form               = NULL;
-    curl_mimepart *field          = NULL;
+    curl_mime *form = NULL;
+    curl_mimepart *field = NULL;
     struct curl_slist *headerlist = NULL;
-    curl                          = curl_easy_init();
+    curl = curl_easy_init();
     if (curl)
     {
         /* Create the form */
@@ -609,7 +623,7 @@ int zzj::Http::PostFile(const std::string &apiPath, std::map<std::string, std::s
         for (auto &header : headers)
         {
             std::string tmpheader = header.first + ": " + header.second;
-            headerlist            = curl_slist_append(headerlist, tmpheader.c_str());
+            headerlist = curl_slist_append(headerlist, tmpheader.c_str());
         }
         /* what URL that receives this POST */
         curl_easy_setopt(curl, CURLOPT_URL, apiPath.c_str());
@@ -656,7 +670,7 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
     char *version = curl_version();
 
     struct curl_slist *http_headers = NULL;
-    ret                             = "";
+    ret = "";
     if (!curl)
     {
         result = -1;
@@ -665,7 +679,8 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
     http_headers = curl_slist_append(http_headers, "Accept: application/json");
     http_headers = curl_slist_append(http_headers, "Content-Type: application/json");
     http_headers = curl_slist_append(http_headers, "charsets: utf-8");
-    http_headers = curl_slist_append(http_headers, "Authorization: Bearer 52371ee0a435aa1a1fe670585eb32958");
+    http_headers =
+        curl_slist_append(http_headers, "Authorization: Bearer 52371ee0a435aa1a1fe670585eb32958");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_headers);
 
     curl_easy_setopt(curl, CURLOPT_URL, apiPath);
@@ -686,23 +701,22 @@ int zzj::Http::Post(const char *apiPath, const char *str, std::string &ret, bool
         // ret = "";
         switch (res)
         {
-        case CURLE_UNSUPPORTED_PROTOCOL:
-            result = -1;
-        case CURLE_COULDNT_CONNECT:
-            result = -2;
-        case CURLE_HTTP_RETURNED_ERROR:
-            result = -3;
-        case CURLE_READ_ERROR:
-            result = -4;
-        default:
-            result = res;
+            case CURLE_UNSUPPORTED_PROTOCOL:
+                result = -1;
+            case CURLE_COULDNT_CONNECT:
+                result = -2;
+            case CURLE_HTTP_RETURNED_ERROR:
+                result = -3;
+            case CURLE_READ_ERROR:
+                result = -4;
+            default:
+                result = res;
         }
         goto exit;
     }
 
 exit:
-    if (0 != result)
-        spdlog::error("Http post result {},ret :{} ", result, errBuf);
+    if (0 != result) spdlog::error("Http post result {},ret :{} ", result, errBuf);
     curl_slist_free_all(http_headers);
     curl_easy_cleanup(curl);
     return result;
@@ -719,7 +733,7 @@ int zzj::Http::PostMutualAuth(const char *apiPath, const char *str, std::string 
     printf("libcurl version: %s\n", version);
 
     struct curl_slist *http_headers = NULL;
-    ret                             = "";
+    ret = "";
     if (!curl)
     {
         result = -1;
@@ -752,16 +766,16 @@ int zzj::Http::PostMutualAuth(const char *apiPath, const char *str, std::string 
         ret = "";
         switch (res)
         {
-        case CURLE_UNSUPPORTED_PROTOCOL:
-            result = -1;
-        case CURLE_COULDNT_CONNECT:
-            result = -2;
-        case CURLE_HTTP_RETURNED_ERROR:
-            result = -3;
-        case CURLE_READ_ERROR:
-            result = -4;
-        default:
-            result = res;
+            case CURLE_UNSUPPORTED_PROTOCOL:
+                result = -1;
+            case CURLE_COULDNT_CONNECT:
+                result = -2;
+            case CURLE_HTTP_RETURNED_ERROR:
+                result = -3;
+            case CURLE_READ_ERROR:
+                result = -4;
+            default:
+                result = res;
         }
 
         spdlog::error("Http post result {},ret :{} ", result, errBuf);
@@ -807,16 +821,16 @@ int zzj::Http::Get(const char *apiPath, std::string &ret)
         ret = "";
         switch (res)
         {
-        case CURLE_UNSUPPORTED_PROTOCOL:
-            result = -1;
-        case CURLE_COULDNT_CONNECT:
-            result = -2;
-        case CURLE_HTTP_RETURNED_ERROR:
-            result = -3;
-        case CURLE_READ_ERROR:
-            result = -4;
-        default:
-            result = res;
+            case CURLE_UNSUPPORTED_PROTOCOL:
+                result = -1;
+            case CURLE_COULDNT_CONNECT:
+                result = -2;
+            case CURLE_HTTP_RETURNED_ERROR:
+                result = -3;
+            case CURLE_READ_ERROR:
+                result = -4;
+            default:
+                result = res;
         }
         goto exit;
     }
