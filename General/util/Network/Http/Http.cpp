@@ -314,9 +314,9 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             if (ssl.find("cert_blob") != ssl.end())
             {
                 std::string cert_blob = ssl["cert_blob"];
-                curl_blob certBlob{.data = (void *)cert_blob.c_str(),
-                                   .len = cert_blob.size(),
-                                   .flags = CURL_BLOB_COPY};
+                curl_blob certBlob{(void *)cert_blob.c_str(),
+                                   cert_blob.size(),
+                                   CURL_BLOB_COPY};
                 curl_easy_setopt(curl, CURLOPT_SSLCERT_BLOB, &certBlob);
             }
             if (ssl.find("keypasswd") != ssl.end())
@@ -534,9 +534,9 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             if (ssl.find("cert_blob") != ssl.end())
             {
                 std::string cert_blob = ssl["cert_blob"];
-                curl_blob certBlob{.data = (void *)cert_blob.c_str(),
-                                   .len = cert_blob.size(),
-                                   .flags = CURL_BLOB_COPY};
+                curl_blob certBlob{(void *)cert_blob.c_str(),
+                                   cert_blob.size(),
+                                   CURL_BLOB_COPY};
                 curl_easy_setopt(curl, CURLOPT_SSLCERT_BLOB, &certBlob);
             }
             if (ssl.find("keypasswd") != ssl.end())
