@@ -526,9 +526,22 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
                 cert = ssl["cert"];
                 curl_easy_setopt(curl, CURLOPT_SSLCERT, cert.c_str());
             }
+            if (ssl.find("cert_type") != ssl.end())
+            {
+                std::string cert_type = ssl["cert_type"];
+                curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, cert_type.c_str());
+            }
+            if (ssl.find("cert_blob") != ssl.end())
+            {
+                std::string cert_blob = ssl["cert_blob"];
+                curl_blob certBlob{.data = (void *)cert_blob.c_str(),
+                                   .len = cert_blob.size(),
+                                   .flags = CURL_BLOB_COPY};
+                curl_easy_setopt(curl, CURLOPT_SSLCERT_BLOB, &certBlob);
+            }
             if (ssl.find("keypasswd") != ssl.end())
             {
-                keypasswd = ssl["keypasswd"];
+                std::string keypasswd = ssl["keypasswd"];
                 curl_easy_setopt(curl, CURLOPT_KEYPASSWD, keypasswd.c_str());
             }
         }
