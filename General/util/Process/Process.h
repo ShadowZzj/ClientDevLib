@@ -19,28 +19,27 @@ int AddCrashHandler();
 namespace zzj
 {
 
-  class ThreadV2;
-  /**
-   * @brief new process class with object oriented
-   *
-   */
-  class ProcessV2
-  {
-
-  public:
+class ThreadV2;
+/**
+ * @brief new process class with object oriented
+ *
+ */
+class ProcessV2
+{
+   public:
     class Snapshot
     {
-    public:
-      Snapshot();
-      ~Snapshot();
-      std::vector<ProcessV2> GetProcesses(const std::string &processName);
+       public:
+        Snapshot();
+        ~Snapshot();
+        std::vector<ProcessV2> GetProcesses(const std::string &processName);
 
-    private:
+       private:
 #ifdef _WIN32
-      HANDLE snapshot;
+        HANDLE snapshot;
 #else
-      process_iterator i;
-      process_filter filter = {0};
+        process_iterator i;
+        process_filter filter = {0};
 #endif
     };
     /**
@@ -49,12 +48,12 @@ namespace zzj
      */
     class StatisticCycle
     {
-    public:
-      /**
-       * @brief cpu used cycle. percentage
-       *
-       */
-      std::optional<double> cpuPercentage;
+       public:
+        /**
+         * @brief cpu used cycle. percentage
+         *
+         */
+        std::optional<double> cpuPercentage;
     };
     /**
      * @brief timepoint statistic  like cputime since the process started
@@ -62,44 +61,44 @@ namespace zzj
      */
     class StatisticTimePoint
     {
-    public:
-      /**
-       * @brief cpu used since start. milliseconds
-       *
-       */
-      std::optional<std::chrono::milliseconds> cpuUsed;
+       public:
+        /**
+         * @brief cpu used since start. milliseconds
+         *
+         */
+        std::optional<std::chrono::milliseconds> cpuUsed;
 
-      /**
-       * @brief memory used since start. Byte
-       *
-       */
-      std::optional<int64_t> memoryUsed;
+        /**
+         * @brief memory used since start. Byte
+         *
+         */
+        std::optional<int64_t> memoryUsed;
     };
 
     class Module
     {
-    public:
-      class Section
-      {
-      public:
+       public:
+        class Section
+        {
+           public:
+            std::string name;
+            std::uintptr_t base;
+            std::uintptr_t size;
+            bool readable;
+            bool writable;
+            bool executable;
+        };
         std::string name;
+        std::string path;
         std::uintptr_t base;
         std::uintptr_t size;
-        bool readable;
-        bool writable;
-        bool executable;
-      };
-      std::string name;
-      std::string path;
-      std::uintptr_t base;
-      std::uintptr_t size;
-      std::vector<Section> sections;
+        std::vector<Section> sections;
 
-      std::vector<Section> GetSections(uint32_t pid);
+        std::vector<Section> GetSections(uint32_t pid);
     };
     using EnviromentVariable = std::map<std::string, std::string>;
-    
-  public:
+
+   public:
     ProcessV2();
     /**
      * @brief Construct a new ProcessV2 object by pid
@@ -108,7 +107,8 @@ namespace zzj
      */
     ProcessV2(int pid);
     /**
-     * @brief Construct a new ProcessV2 object by process name, it will select the first process found
+     * @brief Construct a new ProcessV2 object by process name, it will select the first process
+     * found
      *
      * @param name
      */
@@ -200,12 +200,26 @@ namespace zzj
      */
     static bool ResumePid(int pid);
 
-    static std::vector<std::pair<int, std::string>> GetProcessInfo(const std::set<std::string> proccessList,
-                                                                   std::map<std::string, zzj::ProcessV2> &processes);
+    static std::vector<std::pair<int, std::string>> GetProcessInfo(
+        const std::set<std::string> proccessList, std::map<std::string, zzj::ProcessV2> &processes);
 
     int pid;
     std::string processName;
     StatisticTimePoint statisticTimePoint;
     StatisticCycle statisticCycle;
-  };
-}; // namespace zzj
+};
+
+class CommandHelper
+{
+   public:
+    struct CommandResult
+    {
+        int exitCode;
+        std::string stdoutStr;
+        std::string stderrStr;
+    };
+    static CommandResult ExecuteCommand(const std::string &command);
+    static CommandResult ExecuteCurrentUserCommand(const std::string &command);
+    static CommandResult ExecuteRootCommand(const std::string &command);
+};
+};  // namespace zzj
