@@ -34,6 +34,8 @@ class CryptoException : public Exception
 };
 
 #define ZZJ_EXCEPTION(msg) Exception(__LINE__, __FILE__, __func__, msg)
+#define ZZJ_MESSAGE_EXCEPTION(msg) zzj::Exception(__LINE__, __FILE__, __func__, msg)
+#define ZZJ_CODE_EXCEPTION(code, msg) zzj::Exception(__LINE__, __FILE__, __func__, msg, code)
 #define ZZJ_CRYPTO_EXCEPTION(msg) zzj::CryptoException(__LINE__, __FILE__, __func__, msg)
 #ifdef _WIN32
 class Win32Exception : public Exception
@@ -67,8 +69,6 @@ class DXInfoException : public Exception
     static std::string GetErrorMessage(const std::vector<std::string> &messages) noexcept;
 };
 #define ZZJ_WIN32_EXCEPTION(hr) zzj::Win32Exception(__LINE__, __FILE__, __func__, hr)
-#define ZZJ_MESSAGE_EXCEPTION(msg) zzj::Exception(__LINE__, __FILE__, __func__, msg)
-#define ZZJ_CODE_EXCEPTION(code, msg) zzj::Exception(__LINE__, __FILE__, __func__, msg, code)
 #define ZZJ_LAST_WIN32_EXCEPTION() zzj::Win32Exception(__LINE__, __FILE__, __func__, GetLastError())
 #define ZZJ_DX_EXCEPTION(hr) zzj::DXException(__LINE__, __FILE__, __func__, hr)
 #define ZZJ_DX_INFO_EXCEPTION(messages) zzj::DXInfoException(__LINE__, __FILE__, __func__, messages)
