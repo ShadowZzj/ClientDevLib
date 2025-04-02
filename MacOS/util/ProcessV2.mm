@@ -26,7 +26,7 @@
 #include <boost/filesystem.hpp>
 namespace zzj
 {
-ProcessV2::ProcessV2() {}
+ProcessV2::ProcessV2() { this->pid = getpid(); }
 ProcessV2::ProcessV2(int pid) { this->pid = pid; }
 ProcessV2::ProcessV2(const std::string &name) { this->processName = name; }
 int ProcessV2::GetPid()
@@ -267,8 +267,7 @@ CommandHelper::CommandResult CommandHelper::ExecuteRootCommand(const std::string
     auto userInfoVar = zzj::UserInfo::GetActiveUserInfo();
     if (!userInfoVar.has_value()) throw std::runtime_error("Failed to get active user info.");
     auto uid = userInfoVar->uid;
-    std::string launchasUserCommand =
-        "launchctl asuser " + uid + " sudo -u root ";
+    std::string launchasUserCommand = "launchctl asuser " + uid + " sudo -u root ";
     return ExecuteCommand(launchasUserCommand + command);
 }
 

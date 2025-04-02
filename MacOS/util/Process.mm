@@ -235,6 +235,10 @@ std::string zzj::Process::GetProcessExePath()
     return ret;
 }
 
+int zzj::Process::GetCurrentProcessId() {
+    return getpid();
+}
+
 bool zzj::Process::ProcessIsState(const char *processName)
 {
     FILE *fp;

@@ -22,6 +22,7 @@ class Process
     static int CreateUserProcess(const char *fullPath, const char *userName, std::vector<std::string> args,std::wstring &outPut);
     static int CreateUserProcess(const char *fullPath, const char *userName, std::vector<std::string> args,bool waitForExit);
     static std::string GetProcessExePath();
+    static int GetCurrentProcessId();
     static bool ProcessIsState(const char* processName);
     static void TerminateProcess(const char* processName, const char* arg);
     static void TerminateProcessById(int pid);
