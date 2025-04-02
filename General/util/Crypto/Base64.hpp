@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #ifndef _WIN32
 using BYTE = char;
 #endif
@@ -52,6 +53,14 @@ class Base64Help
         }
 
         return ret;
+    }
+    static std::string Encode(const std::vector<char> &data)
+    {
+        return Encode(data.data(), data.size());
+    }
+    static std::string Encode(const std::string &data)
+    {
+        return Encode(data.data(), data.size());
     }
     static std::vector<BYTE> Decode(const std::string& input)
     {

@@ -11,17 +11,21 @@ namespace zzj
 class Exception : public std::exception
 {
    public:
-    Exception(int line, const std::string &file, const std::string &func,
-              const std::string &msg) noexcept;
+    Exception(int line, const std::string &file, const std::string &func, const std::string &msg,
+              int code = 0) noexcept;
     const char *what() const noexcept override;
+    int GetCode() const;
+    std::string GetMsg() const;
 
-   protected:
+   protected: 
     int line;
     std::string file;
     std::string msg;
     mutable std::string exceptionMessage;
     std::string func;
+    int code;
 };
+
 class CryptoException : public Exception
 {
    public:
@@ -64,6 +68,7 @@ class DXInfoException : public Exception
 };
 #define ZZJ_WIN32_EXCEPTION(hr) zzj::Win32Exception(__LINE__, __FILE__, __func__, hr)
 #define ZZJ_MESSAGE_EXCEPTION(msg) zzj::Exception(__LINE__, __FILE__, __func__, msg)
+#define ZZJ_CODE_EXCEPTION(code, msg) zzj::Exception(__LINE__, __FILE__, __func__, msg, code)
 #define ZZJ_LAST_WIN32_EXCEPTION() zzj::Win32Exception(__LINE__, __FILE__, __func__, GetLastError())
 #define ZZJ_DX_EXCEPTION(hr) zzj::DXException(__LINE__, __FILE__, __func__, hr)
 #define ZZJ_DX_INFO_EXCEPTION(messages) zzj::DXInfoException(__LINE__, __FILE__, __func__, messages)

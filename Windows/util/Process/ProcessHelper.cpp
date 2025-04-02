@@ -18,15 +18,9 @@ DWORD Process::GetSessionId()
     return sessionId;
 }
 
-DWORD Process::GetProcessId()
-{
-    return processId;
-}
+DWORD Process::GetProcessId() { return processId; }
 
-HANDLE Process::GetProcessHandle()
-{
-    return *process;
-}
+HANDLE Process::GetProcessHandle() { return *process; }
 DWORD Process::GetSessionId(DWORD processId)
 {
     DWORD sessionId;
@@ -39,17 +33,16 @@ DWORD Process::GetSessionId(DWORD processId)
 bool Process::IsMutexExist(std::string mutex)
 {
     std::wstring userNameWide = str::utf82w(mutex.c_str());
-    HANDLE hMutex             = CreateMutexW(NULL, false, userNameWide.c_str());
-    DWORD err                 = GetLastError();
-    if (err == ERROR_ALREADY_EXISTS)
-        return true;
+    HANDLE hMutex = CreateMutexW(NULL, false, userNameWide.c_str());
+    DWORD err = GetLastError();
+    if (err == ERROR_ALREADY_EXISTS) return true;
     return false;
 }
 
 std::string zzj::Process::GetProcessUserName()
 {
-    char *buf       = nullptr;
-    DWORD bufSize   = 0;
+    char *buf = nullptr;
+    DWORD bufSize = 0;
     std::string ret = "";
     if (!GetUserNameA(buf, &bufSize) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
     {
@@ -75,14 +68,12 @@ std::vector<DWORD> Process::GetProcessId(std::wstring processName)
 {
     std::vector<DWORD> pids;
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (INVALID_HANDLE_VALUE == hSnapshot)
-        return std::vector<DWORD>();
+    if (INVALID_HANDLE_VALUE == hSnapshot) return std::vector<DWORD>();
 
     PROCESSENTRY32 pe = {sizeof(pe)};
     for (BOOL ret = Process32First(hSnapshot, &pe); ret; ret = Process32Next(hSnapshot, &pe))
     {
-        if (std::wstring(pe.szExeFile) == processName.c_str())
-            pids.push_back(pe.th32ProcessID);
+        if (std::wstring(pe.szExeFile) == processName.c_str()) pids.push_back(pe.th32ProcessID);
     }
     CloseHandle(hSnapshot);
     return pids;
@@ -145,10 +136,7 @@ bool Process::SetProcessDirectory(const wchar_t *dir)
     }
 }
 
-bool zzj::Process::BindProcess(HANDLE handle)
-{
-    return InitWithHandle(handle);
-}
+bool zzj::Process::BindProcess(HANDLE handle) { return InitWithHandle(handle); }
 
 bool zzj::Process::BindProcess(DWORD processId, DWORD deriredAccess)
 {
@@ -157,8 +145,7 @@ bool zzj::Process::BindProcess(DWORD processId, DWORD deriredAccess)
 bool zzj::Process::IsAlive()
 {
     DWORD exitCode;
-    if (GetExitCodeProcess(*process, &exitCode))
-        return exitCode == STILL_ACTIVE;
+    if (GetExitCodeProcess(*process, &exitCode)) return exitCode == STILL_ACTIVE;
     return false;
 }
 std::tuple<int, zzj::Process::ProcessType> zzj::Process::GetProcessType()
@@ -186,10 +173,10 @@ std::tuple<int, zzj::Process::ProcessType> zzj::Process::GetProcessType()
 }
 std::tuple<int, bool> zzj::Process::IsServiceProcess()
 {
-    bool is_service        = false;
-    HANDLE token           = NULL;
+    bool is_service = false;
+    HANDLE token = NULL;
     PTOKEN_USER token_user = NULL;
-    DWORD return_length    = 0;
+    DWORD return_length = 0;
 
     if (!OpenProcessToken(*process, TOKEN_QUERY, &token))
     {
@@ -224,12 +211,12 @@ std::tuple<int, bool> zzj::Process::IsServiceProcess()
 }
 std::tuple<int, bool> zzj::Process::IsAdminProcess()
 {
-    BOOL is_admin                         = FALSE;
+    BOOL is_admin = FALSE;
     SID_IDENTIFIER_AUTHORITY nt_authority = SECURITY_NT_AUTHORITY;
-    PSID administrators_group             = NULL;
+    PSID administrators_group = NULL;
 
-    if (AllocateAndInitializeSid(&nt_authority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
-                                 0, &administrators_group))
+    if (AllocateAndInitializeSid(&nt_authority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                 DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &administrators_group))
     {
         bool isSuccess = CheckTokenMembership(*process, administrators_group, &is_admin);
         if (!isSuccess)
@@ -244,10 +231,9 @@ std::tuple<int, bool> zzj::Process::IsAdminProcess()
 uintptr_t zzj::Process::GetModuleBaseAddress(const std::string &moduleName)
 {
     uintptr_t moduleBaseAddress = 0;
-    std::wstring wmoduleName    = zzj::str::utf82w(moduleName);
-    HANDLE hSnapshot            = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
-    if (INVALID_HANDLE_VALUE == hSnapshot)
-        return 0;
+    std::wstring wmoduleName = zzj::str::utf82w(moduleName);
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId);
+    if (INVALID_HANDLE_VALUE == hSnapshot) return 0;
 
     MODULEENTRY32 me = {sizeof(me)};
     for (BOOL ret = Module32First(hSnapshot, &me); ret; ret = Module32Next(hSnapshot, &me))
@@ -265,11 +251,10 @@ void EnvHelper::RefreshEnv()
 {
     env.clear();
     wchar_t *envStr = GetEnvironmentStringsW();
-    if (!envStr)
-        return;
+    if (!envStr) return;
 
     wchar_t *str = envStr;
-    long prePos  = 0;
+    long prePos = 0;
     while (*str)
     {
         /* key=value */
@@ -277,8 +262,8 @@ void EnvHelper::RefreshEnv()
         long i = tmp.find(L"=");
         if (i > 0)
         {
-            std::wstring key           = tmp.substr(0, i);
-            std::wstring val           = tmp.substr(i + 1, tmp.length());
+            std::wstring key = tmp.substr(0, i);
+            std::wstring val = tmp.substr(i + 1, tmp.length());
             env[zzj::str::w2utf8(key)] = zzj::str::w2utf8(val);
         }
 
@@ -293,8 +278,7 @@ void EnvHelper::RefreshEnv()
 DWORD EnvHelper::GetEnvVariable(const char *key, char *value, size_t len)
 {
     DWORD requireLen = GetEnvironmentVariableA(key, value, 0);
-    if (len <= requireLen)
-        return requireLen;
+    if (len <= requireLen) return requireLen;
 
     GetEnvironmentVariableA(key, value, len);
     return 0;
@@ -303,8 +287,7 @@ DWORD EnvHelper::GetEnvVariable(const char *key, char *value, size_t len)
 DWORD EnvHelper::GetEnvVariable(const wchar_t *key, wchar_t *value, size_t len)
 {
     DWORD requireLen = GetEnvironmentVariableW(key, value, 0);
-    if (len <= requireLen)
-        return requireLen;
+    if (len <= requireLen) return requireLen;
 
     GetEnvironmentVariableW(key, value, len);
     return 0;
@@ -313,8 +296,7 @@ DWORD EnvHelper::GetEnvVariable(const wchar_t *key, wchar_t *value, size_t len)
 DWORD EnvHelper::ExpandEnvVariable(const char *key, char *value, size_t len)
 {
     DWORD requireLen = ExpandEnvironmentStringsA(key, NULL, 0);
-    if (len <= requireLen)
-        return requireLen;
+    if (len <= requireLen) return requireLen;
 
     ExpandEnvironmentStringsA(key, value, len);
     return 0;
@@ -323,8 +305,7 @@ DWORD EnvHelper::ExpandEnvVariable(const char *key, char *value, size_t len)
 DWORD EnvHelper::ExpandEnvVariable(const wchar_t *key, wchar_t *value, size_t len)
 {
     DWORD requireLen = ExpandEnvironmentStringsW(key, NULL, 0);
-    if (len <= requireLen)
-        return requireLen;
+    if (len <= requireLen) return requireLen;
 
     ExpandEnvironmentStringsW(key, value, len);
     return 0;
@@ -371,17 +352,14 @@ ProcessIterator::ProcessIterator() : snapshot_handle(INVALID_HANDLE_VALUE)
 
 ProcessIterator::~ProcessIterator()
 {
-    if (INVALID_HANDLE_VALUE != snapshot_handle)
-        ::CloseHandle(snapshot_handle);
+    if (INVALID_HANDLE_VALUE != snapshot_handle) ::CloseHandle(snapshot_handle);
 }
 
 bool ProcessIterator::SnapshotAll(ProcessEntries &entries)
 {
-    if (INVALID_HANDLE_VALUE == snapshot_handle)
-        return false;
+    if (INVALID_HANDLE_VALUE == snapshot_handle) return false;
 
-    if (!GetFirstEntry(entries))
-        return false;
+    if (!GetFirstEntry(entries)) return false;
 
     PROCESSENTRY32W pe32w;
     InitEntry(&pe32w);
@@ -399,11 +377,9 @@ bool ProcessIterator::SnapshotAll(ProcessEntries &entries)
 
 bool ProcessIterator::SnapshotFilterExeName(ProcessEntries &entries, const wchar_t *exename)
 {
-    if (INVALID_HANDLE_VALUE == snapshot_handle)
-        return false;
+    if (INVALID_HANDLE_VALUE == snapshot_handle) return false;
 
-    if (!GetFirstEntry(entries))
-        return false;
+    if (!GetFirstEntry(entries)) return false;
 
     // first entry is not equal to exename
     if (0 != _wcsicmp(exename, entries.back().ExeName.c_str()))
@@ -415,7 +391,6 @@ bool ProcessIterator::SnapshotFilterExeName(ProcessEntries &entries, const wchar
     InitEntry(&pe32w);
     while (::Process32NextW(snapshot_handle, &pe32w))
     {
-
         // ensure null terminated
         pe32w.szExeFile[MAX_PATH - 1] = 0;
         if (0 == _wcsicmp(exename, pe32w.szExeFile))
@@ -436,8 +411,7 @@ bool ProcessIterator::GetFirstEntry(ProcessEntries &entries)
     PROCESSENTRY32W pe32w;
     InitEntry(&pe32w);
 
-    if (!::Process32FirstW(snapshot_handle, &pe32w))
-        return false;
+    if (!::Process32FirstW(snapshot_handle, &pe32w)) return false;
 
     ProcessEntry pe;
     // get first entry
@@ -455,12 +429,11 @@ void ProcessIterator::InitEntry(PROCESSENTRY32W *pe32)
 
 void ProcessIterator::ConvertPE32ToPE(PROCESSENTRY32W *pe32, ProcessEntry *pe)
 {
-    if (nullptr == pe32 || nullptr == pe)
-        return;
+    if (nullptr == pe32 || nullptr == pe) return;
 
-    pe->ProcessId          = pe32->th32ProcessID;
-    pe->ParentProcessId    = pe32->th32ParentProcessID;
-    pe->ThreadCount        = pe32->cntThreads;
+    pe->ProcessId = pe32->th32ProcessID;
+    pe->ParentProcessId = pe32->th32ParentProcessID;
+    pe->ThreadCount = pe32->cntThreads;
     pe->ThreadPriorityBase = pe32->pcPriClassBase;
 
     // ensure null terminated
@@ -471,9 +444,8 @@ void ProcessIterator::ConvertPE32ToPE(PROCESSENTRY32W *pe32, ProcessEntry *pe)
     HANDLE hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pe32->th32ProcessID);
     if (NULL != hProcess)
     {
-
         wchar_t ProcessPath[1024] = {0};
-        DWORD dwSize              = 1023;
+        DWORD dwSize = 1023;
         if (::QueryFullProcessImageNameW(hProcess, 0, ProcessPath, &dwSize))
         {
             pe->ExeFullPath = ProcessPath;
@@ -492,8 +464,8 @@ bool getTokenInfo(HANDLE hToken, TOKEN_INFORMATION_CLASS infotype, std::vector<c
         {
             tokeninfobuf.resize(static_cast<size_t>(dwTokenInfoLen), 0);
             memset(&tokeninfobuf[0], 0, static_cast<size_t>(dwTokenInfoLen));
-            if (::GetTokenInformation(hToken, infotype, reinterpret_cast<LPVOID>(&tokeninfobuf[0]), dwTokenInfoLen,
-                                      &dwTokenInfoLen))
+            if (::GetTokenInformation(hToken, infotype, reinterpret_cast<LPVOID>(&tokeninfobuf[0]),
+                                      dwTokenInfoLen, &dwTokenInfoLen))
             {
                 return true;
             }
@@ -504,8 +476,8 @@ bool getTokenInfo(HANDLE hToken, TOKEN_INFORMATION_CLASS infotype, std::vector<c
 
 bool GetActiveExplorerTokenInfo(DWORD pid, ActiveExplorerInfo *pinfo)
 {
-    bool bRet       = false;
-    HANDLE hToken   = NULL;
+    bool bRet = false;
+    HANDLE hToken = NULL;
     HANDLE hProcess = NULL;
 
     do
@@ -521,34 +493,36 @@ bool GetActiveExplorerTokenInfo(DWORD pid, ActiveExplorerInfo *pinfo)
         }
 
         // init token info
-        pinfo->ElevationType             = TokenElevationTypeDefault;
+        pinfo->ElevationType = TokenElevationTypeDefault;
         pinfo->ElevationType_LinkedToken = TokenElevationTypeDefault;
-        pinfo->IsElevated                = false;
-        pinfo->IsElevated_LinkedToken    = false;
+        pinfo->IsElevated = false;
+        pinfo->IsElevated_LinkedToken = false;
 
         // get token user info
         std::vector<char> TokenInfoBuf(5, 0);
         if (getTokenInfo(hToken, TokenUser, TokenInfoBuf))
         {
             PTOKEN_USER pTU = reinterpret_cast<PTOKEN_USER>(&TokenInfoBuf[0]);
-            LPWSTR lpwSid   = NULL;
+            LPWSTR lpwSid = NULL;
             if (::ConvertSidToStringSidW(pTU->User.Sid, &lpwSid))
             {
                 pinfo->UserSid = lpwSid;
 
                 // get user name and domain name
-                DWORD dwUserNameLen   = 0;
+                DWORD dwUserNameLen = 0;
                 DWORD dwDomainNameLen = 0;
-                SID_NAME_USE sidType  = SidTypeUnknown;
-                ::LookupAccountSidW(NULL, pTU->User.Sid, NULL, &dwUserNameLen, NULL, &dwDomainNameLen, &sidType);
+                SID_NAME_USE sidType = SidTypeUnknown;
+                ::LookupAccountSidW(NULL, pTU->User.Sid, NULL, &dwUserNameLen, NULL,
+                                    &dwDomainNameLen, &sidType);
                 if (dwUserNameLen > 0)
                 {
                     std::vector<wchar_t> username_buf(static_cast<size_t>(dwUserNameLen + 2), 0);
-                    std::vector<wchar_t> domainname_buf(static_cast<size_t>(dwDomainNameLen + 2), 0);
-                    if (::LookupAccountSidW(NULL, pTU->User.Sid, &username_buf[0], &dwUserNameLen, &domainname_buf[0],
-                                            &dwDomainNameLen, &sidType))
+                    std::vector<wchar_t> domainname_buf(static_cast<size_t>(dwDomainNameLen + 2),
+                                                        0);
+                    if (::LookupAccountSidW(NULL, pTU->User.Sid, &username_buf[0], &dwUserNameLen,
+                                            &domainname_buf[0], &dwDomainNameLen, &sidType))
                     {
-                        pinfo->UserName   = reinterpret_cast<const wchar_t *>(&username_buf[0]);
+                        pinfo->UserName = reinterpret_cast<const wchar_t *>(&username_buf[0]);
                         pinfo->DomainName = reinterpret_cast<const wchar_t *>(&domainname_buf[0]);
                     }
                 }
@@ -560,7 +534,7 @@ bool GetActiveExplorerTokenInfo(DWORD pid, ActiveExplorerInfo *pinfo)
         if (getTokenInfo(hToken, TokenElevationType, TokenInfoBuf))
         {
             PTOKEN_ELEVATION_TYPE pti = reinterpret_cast<PTOKEN_ELEVATION_TYPE>(&TokenInfoBuf[0]);
-            pinfo->ElevationType      = *pti;
+            pinfo->ElevationType = *pti;
         }
         if (getTokenInfo(hToken, TokenElevation, TokenInfoBuf))
         {
@@ -578,7 +552,8 @@ bool GetActiveExplorerTokenInfo(DWORD pid, ActiveExplorerInfo *pinfo)
             std::vector<char> TokenInfoBuf_lt(5, 0);
             if (getTokenInfo(pti->LinkedToken, TokenElevationType, TokenInfoBuf_lt))
             {
-                PTOKEN_ELEVATION_TYPE pti_lt     = reinterpret_cast<PTOKEN_ELEVATION_TYPE>(&TokenInfoBuf_lt[0]);
+                PTOKEN_ELEVATION_TYPE pti_lt =
+                    reinterpret_cast<PTOKEN_ELEVATION_TYPE>(&TokenInfoBuf_lt[0]);
                 pinfo->ElevationType_LinkedToken = *pti_lt;
             }
             if (getTokenInfo(pti->LinkedToken, TokenElevation, TokenInfoBuf_lt))
@@ -619,7 +594,7 @@ bool GetActiveExplorerProcess(DWORD *pid, DWORD *sessionid)
     }
 
     // get active explorer.exe process
-    bool bFind                = false;
+    bool bFind = false;
     DWORD dwActiveExplorerPid = 0;
     ProcessIterator pi;
     ProcessIterator::ProcessEntries pe;
@@ -638,7 +613,7 @@ bool GetActiveExplorerProcess(DWORD *pid, DWORD *sessionid)
         {
             if (dwSessionId == dwActiveConsoleSessionId)
             {
-                bFind               = true;
+                bFind = true;
                 dwActiveExplorerPid = peinfo.ProcessId;
 
                 break;
@@ -650,7 +625,7 @@ bool GetActiveExplorerProcess(DWORD *pid, DWORD *sessionid)
         return false;
     }
 
-    *pid       = dwActiveExplorerPid;
+    *pid = dwActiveExplorerPid;
     *sessionid = dwActiveConsoleSessionId;
     return true;
 }
@@ -660,7 +635,7 @@ bool Process::GetActiveExplorerInfo(ActiveExplorerInfo *pinfo)
     // LsaEnumerateLogonSessions,LsaGetLogonSessionData
     // we can use the functions above to get Logon info.
 
-    DWORD explorer_pid       = 0;
+    DWORD explorer_pid = 0;
     DWORD explorer_sessionid = 0;
     if (!GetActiveExplorerProcess(&explorer_pid, &explorer_sessionid))
     {
@@ -680,12 +655,12 @@ bool Process::GetActiveExplorerInfo(ActiveExplorerInfo *pinfo)
 
 bool AdjustPrivilege(LPCWSTR lpwPrivilegeName, bool bEnable)
 {
-    bool bRet     = false;
+    bool bRet = false;
     HANDLE hToken = NULL;
     if (::OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
     {
         TOKEN_PRIVILEGES tp = {0};
-        tp.PrivilegeCount   = 1;
+        tp.PrivilegeCount = 1;
         if (::LookupPrivilegeValueW(NULL, lpwPrivilegeName, &tp.Privileges[0].Luid))
         {
             tp.Privileges[0].Attributes = bEnable ? SE_PRIVILEGE_ENABLED : 0;
@@ -703,41 +678,36 @@ bool AdjustPrivilege(LPCWSTR lpwPrivilegeName, bool bEnable)
 
     return bRet;
 }
-DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevated, bool bWait, DWORD dwWaitTime,
-                                   bool show)
+DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevated, bool bWait,
+                                   DWORD dwWaitTime, bool show)
 {
-    DWORD dwPid                    = 0;
-    HANDLE hActiveUserProcess      = NULL;
+    DWORD dwPid = 0;
+    HANDLE hActiveUserProcess = NULL;
     HANDLE hActiveUserProcessToken = NULL;
-    HANDLE hCreateProcessToken     = NULL;
-    LPVOID lpEnvironment           = NULL;
+    HANDLE hCreateProcessToken = NULL;
+    LPVOID lpEnvironment = NULL;
 
-    if (!AdjustPrivilege(SE_INCREASE_QUOTA_NAME, true))
-        return dwPid;
-    if (!AdjustPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME, true))
-        return dwPid;
+    if (!AdjustPrivilege(SE_INCREASE_QUOTA_NAME, true)) return dwPid;
+    if (!AdjustPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME, true)) return dwPid;
 
-    size_t BuffCount    = commandLine.size() + 1;
+    size_t BuffCount = commandLine.size() + 1;
     WCHAR *szCommanline = new WCHAR[BuffCount];
-    if (szCommanline == nullptr)
-        return dwPid;
+    if (szCommanline == nullptr) return dwPid;
     memset(szCommanline, 0, BuffCount * sizeof(WCHAR));
     memcpy(szCommanline, commandLine.c_str(), (BuffCount - 1) * sizeof(WCHAR));
 
     do
     {
         ActiveExplorerInfo aei;
-        if (!GetActiveExplorerInfo(&aei))
-            break;
+        if (!GetActiveExplorerInfo(&aei)) break;
 
         hActiveUserProcess = ::OpenProcess(PROCESS_ALL_ACCESS, false, aei.ProcessId);
-        if (NULL == hActiveUserProcess)
-            break;
+        if (NULL == hActiveUserProcess) break;
         if (!::OpenProcessToken(hActiveUserProcess, TOKEN_ALL_ACCESS, &hActiveUserProcessToken))
             break;
 
         bool bTokenTempNeedClose = false;
-        HANDLE hTokenTemp        = NULL;
+        HANDLE hTokenTemp = NULL;
         if (bElevated)
         {
             if (TokenElevationTypeDefault == aei.ElevationType && aei.IsElevated)
@@ -748,14 +718,16 @@ DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevat
             {
                 hTokenTemp = hActiveUserProcessToken;
             }
-            else if (TokenElevationTypeFull == aei.ElevationType_LinkedToken && aei.IsElevated_LinkedToken)
+            else if (TokenElevationTypeFull == aei.ElevationType_LinkedToken &&
+                     aei.IsElevated_LinkedToken)
             {
                 std::vector<char> TokenInfoBuf(5, 0);
                 if (getTokenInfo(hActiveUserProcessToken, TokenLinkedToken, TokenInfoBuf))
                 {
-                    PTOKEN_LINKED_TOKEN pti = reinterpret_cast<PTOKEN_LINKED_TOKEN>(&TokenInfoBuf[0]);
-                    hTokenTemp              = pti->LinkedToken;
-                    bTokenTempNeedClose     = true;
+                    PTOKEN_LINKED_TOKEN pti =
+                        reinterpret_cast<PTOKEN_LINKED_TOKEN>(&TokenInfoBuf[0]);
+                    hTokenTemp = pti->LinkedToken;
+                    bTokenTempNeedClose = true;
                 }
             }
         }
@@ -768,8 +740,8 @@ DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevat
             break;
         }
 
-        BOOL bDup = ::DuplicateTokenEx(hTokenTemp, TOKEN_ALL_ACCESS, NULL, SecurityIdentification, TokenPrimary,
-                                       &hCreateProcessToken);
+        BOOL bDup = ::DuplicateTokenEx(hTokenTemp, TOKEN_ALL_ACCESS, NULL, SecurityIdentification,
+                                       TokenPrimary, &hCreateProcessToken);
         if (bTokenTempNeedClose && NULL != hTokenTemp)
         {
             ::CloseHandle(hTokenTemp);
@@ -779,14 +751,14 @@ DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevat
             break;
         }
 
-        if (!::CreateEnvironmentBlock(&lpEnvironment, hActiveUserProcessToken, FALSE))
-            break;
+        if (!::CreateEnvironmentBlock(&lpEnvironment, hActiveUserProcessToken, FALSE)) break;
 
-        DWORD dwCreationFlags = NORMAL_PRIORITY_CLASS | CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT;
-        STARTUPINFOW siw      = {0};
-        siw.cb                = sizeof(STARTUPINFOW);
-        siw.lpDesktop         = (LPWSTR)L"winsta0\\default";
-        siw.dwFlags           = STARTF_USESHOWWINDOW;
+        DWORD dwCreationFlags =
+            NORMAL_PRIORITY_CLASS | CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT;
+        STARTUPINFOW siw = {0};
+        siw.cb = sizeof(STARTUPINFOW);
+        siw.lpDesktop = (LPWSTR)L"winsta0\\default";
+        siw.dwFlags = STARTF_USESHOWWINDOW;
         if (show)
             siw.wShowWindow = SW_SHOW;
         else
@@ -794,8 +766,8 @@ DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevat
 
         PROCESS_INFORMATION pi = {0};
 
-        if (!::CreateProcessAsUserW(hCreateProcessToken, NULL, szCommanline, NULL, NULL, FALSE, dwCreationFlags,
-                                    lpEnvironment, NULL, &siw, &pi))
+        if (!::CreateProcessAsUserW(hCreateProcessToken, NULL, szCommanline, NULL, NULL, FALSE,
+                                    dwCreationFlags, lpEnvironment, NULL, &siw, &pi))
         {
             break;
         }
@@ -816,40 +788,220 @@ DWORD Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevat
     AdjustPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME, false);
     AdjustPrivilege(SE_INCREASE_QUOTA_NAME, false);
 
-    if (NULL != hActiveUserProcess)
-        ::CloseHandle(hActiveUserProcess);
-    if (NULL != hActiveUserProcessToken)
-        ::CloseHandle(hActiveUserProcessToken);
-    if (NULL != hCreateProcessToken)
-        ::CloseHandle(hCreateProcessToken);
-    if (NULL != lpEnvironment)
-        ::DestroyEnvironmentBlock(lpEnvironment);
+    if (NULL != hActiveUserProcess) ::CloseHandle(hActiveUserProcess);
+    if (NULL != hActiveUserProcessToken) ::CloseHandle(hActiveUserProcessToken);
+    if (NULL != hCreateProcessToken) ::CloseHandle(hCreateProcessToken);
+    if (NULL != lpEnvironment) ::DestroyEnvironmentBlock(lpEnvironment);
 
     return dwPid;
 }
 
-BOOL zzj::Process::RegularCreateProcess(std::string path, bool show, std::string cmdLine, bool wait, DWORD *errCode)
+Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, bool bElevated,
+                                   std::wstring &stdOutput, std::wstring &stdError)
+{
+    DWORD dwPid = 0;
+    HANDLE hActiveUserProcess = NULL;
+    HANDLE hActiveUserProcessToken = NULL;
+    HANDLE hCreateProcessToken = NULL;
+    LPVOID lpEnvironment = NULL;
+
+    HANDLE hStdOutRead = NULL;
+    HANDLE hStdOutWrite = NULL;
+    HANDLE hStdErrRead = NULL;
+    HANDLE hStdErrWrite = NULL;
+
+    SECURITY_ATTRIBUTES sa = {0};
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+
+    // 使用DEFER确保所有资源在函数结束时被释放
+    DEFER
+    {
+        if (hStdOutRead) CloseHandle(hStdOutRead);
+        if (hStdOutWrite) CloseHandle(hStdOutWrite);
+        if (hStdErrRead) CloseHandle(hStdErrRead);
+        if (hStdErrWrite) CloseHandle(hStdErrWrite);
+        if (hActiveUserProcess) ::CloseHandle(hActiveUserProcess);
+        if (hActiveUserProcessToken) ::CloseHandle(hActiveUserProcessToken);
+        if (hCreateProcessToken) ::CloseHandle(hCreateProcessToken);
+        if (lpEnvironment) ::DestroyEnvironmentBlock(lpEnvironment);
+    };
+
+    // 创建管道
+    if (!CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0)) throw std::runtime_error("CreatePipe failed");
+
+    if (!CreatePipe(&hStdErrRead, &hStdErrWrite, &sa, 0)) throw std::runtime_error("CreatePipe failed");
+
+    if (!SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0)) throw std::runtime_error("SetHandleInformation failed");
+
+    if (!SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0)) throw std::runtime_error("SetHandleInformation failed");
+
+    // 获取活动的资源管理器信息
+    ActiveExplorerInfo aei;
+    if (!GetActiveExplorerInfo(&aei)) throw std::runtime_error("GetActiveExplorerInfo failed");
+
+    hActiveUserProcess = ::OpenProcess(PROCESS_ALL_ACCESS, false, aei.ProcessId);
+    if (NULL == hActiveUserProcess) throw std::runtime_error("OpenProcess failed");
+
+    if (!::OpenProcessToken(hActiveUserProcess, TOKEN_ALL_ACCESS, &hActiveUserProcessToken))
+        throw std::runtime_error("OpenProcessToken failed");
+
+    // 处理Token
+    bool bTokenTempNeedClose = false;
+    HANDLE hTokenTemp = NULL;
+    if (bElevated)
+    {
+        if (TokenElevationTypeDefault == aei.ElevationType && aei.IsElevated)
+        {
+            hTokenTemp = hActiveUserProcessToken;
+        }
+        else if (TokenElevationTypeFull == aei.ElevationType && aei.IsElevated)
+        {
+            hTokenTemp = hActiveUserProcessToken;
+        }
+        else if (TokenElevationTypeFull == aei.ElevationType_LinkedToken &&
+                 aei.IsElevated_LinkedToken)
+        {
+            std::vector<char> TokenInfoBuf(5, 0);
+            if (getTokenInfo(hActiveUserProcessToken, TokenLinkedToken, TokenInfoBuf))
+            {
+                PTOKEN_LINKED_TOKEN pti = reinterpret_cast<PTOKEN_LINKED_TOKEN>(&TokenInfoBuf[0]);
+                hTokenTemp = pti->LinkedToken;
+                bTokenTempNeedClose = true;
+            }
+        }
+    }
+    else
+    {
+        hTokenTemp = hActiveUserProcessToken;
+    }
+
+    if (NULL == hTokenTemp) throw std::runtime_error("DuplicateTokenEx failed");
+
+    // 使用DEFER确保临时token被关闭
+    DEFER
+    {
+        if (bTokenTempNeedClose && NULL != hTokenTemp)
+        {
+            ::CloseHandle(hTokenTemp);
+        }
+    };
+
+    BOOL bDup = ::DuplicateTokenEx(hTokenTemp, TOKEN_ALL_ACCESS, NULL, SecurityIdentification,
+                                   TokenPrimary, &hCreateProcessToken);
+    if (!bDup) throw std::runtime_error("DuplicateTokenEx failed");
+
+    DWORD dwCreationFlags = NORMAL_PRIORITY_CLASS |  CREATE_UNICODE_ENVIRONMENT;
+    dwCreationFlags |= CREATE_NO_WINDOW;
+
+    STARTUPINFOA siw = {0};
+    siw.cb = sizeof(STARTUPINFOA);
+    siw.dwFlags = STARTF_USESTDHANDLES;
+    siw.hStdOutput = hStdOutWrite;
+    siw.hStdError = hStdErrWrite;
+    siw.lpDesktop = (LPSTR) "winsta0\\default";
+    siw.wShowWindow = SW_HIDE;
+
+    // 创建环境块
+    if (!::CreateEnvironmentBlock(&lpEnvironment, hActiveUserProcessToken, FALSE)) throw std::runtime_error("CreateEnvironmentBlock failed");
+
+    PROCESS_INFORMATION pi = {0};
+    std::string cmd = zzj::str::w2ansi(commandLine);
+
+    // 创建进程
+    if (!::CreateProcessAsUserA(hCreateProcessToken, NULL, (LPSTR)cmd.c_str(), NULL, NULL, TRUE,
+                                dwCreationFlags, lpEnvironment, NULL, &siw, &pi))
+    {
+        throw std::runtime_error("CreateProcessAsUserA failed");
+    }
+
+    DEFER
+    {
+        ::CloseHandle(pi.hThread);
+        ::CloseHandle(pi.hProcess);
+    };
+
+    CloseHandle(hStdOutWrite);
+    hStdOutWrite = NULL;
+    CloseHandle(hStdErrWrite);
+    hStdErrWrite = NULL;
+
+    std::string outResult;
+    std::string errResult;
+
+    ::WaitForSingleObject(pi.hProcess, INFINITE);
+    DWORD exitCode = -1;
+    if (!GetExitCodeProcess(pi.hProcess, &exitCode))
+    {
+        throw std::runtime_error("GetExitCodeProcess failed");
+    }
+    
+    auto readFromPipe = [](HANDLE hPipe)
+    {
+        constexpr DWORD BUFFER_SIZE = 4096;
+        char buffer[BUFFER_SIZE];
+        DWORD bytesRead;
+        std::string output;
+
+        while (true)
+        {
+            if (!ReadFile(hPipe, buffer, BUFFER_SIZE, &bytesRead, NULL) || bytesRead == 0)
+            {
+                break;
+            }
+            output.append(buffer, bytesRead);
+        }
+        return output;
+    };
+
+    outResult = readFromPipe(hStdOutRead);
+    errResult = readFromPipe(hStdErrRead);
+
+    stdOutput = zzj::str::ansi2w(outResult);
+    stdError = zzj::str::ansi2w(errResult);
+
+    dwPid = pi.dwProcessId;
+
+    return Process::ExitCode{exitCode};
+}
+
+Process::ExitCode Process::SystemCreateProcess(const std::string &commandLine, bool bElevated,
+                                   std::string &stdOutput, std::string &stdError)
+{
+    std::wstring wStdOutput;
+    std::wstring wStdError;
+
+    auto exitCode =
+        SystemCreateProcess(zzj::str::utf82w(commandLine), bElevated, wStdOutput, wStdError);
+
+    stdOutput = zzj::str::w2utf8(wStdOutput);
+    stdError = zzj::str::w2utf8(wStdError);
+
+    return exitCode;
+}
+
+BOOL zzj::Process::RegularCreateProcess(std::string path, bool show, std::string cmdLine, bool wait,
+                                        DWORD *errCode)
 {
     STARTUPINFOA stinfo;
     ZeroMemory((void *)&stinfo, sizeof(STARTUPINFO));
     PROCESS_INFORMATION ProcessInfo;
-    stinfo.cb      = sizeof(STARTUPINFO);
+    stinfo.cb = sizeof(STARTUPINFO);
     stinfo.dwFlags = STARTF_USESHOWWINDOW;
     if (!show)
         stinfo.wShowWindow = SW_HIDE;
     else
         stinfo.wShowWindow = SW_NORMAL;
-    if (!cmdLine.empty())
-        path = path + " " + cmdLine;
-    if (!CreateProcessA(NULL, (LPSTR)path.c_str(), NULL, NULL, false, 0, NULL, NULL, &stinfo, &ProcessInfo))
+    if (!cmdLine.empty()) path = path + " " + cmdLine;
+    if (!CreateProcessA(NULL, (LPSTR)path.c_str(), NULL, NULL, false, 0, NULL, NULL, &stinfo,
+                        &ProcessInfo))
         return false;
     else
     {
-        if (wait)
-            WaitForSingleObject(ProcessInfo.hProcess, INFINITE);
+        if (wait) WaitForSingleObject(ProcessInfo.hProcess, INFINITE);
 
-        if (errCode)
-            GetExitCodeProcess(ProcessInfo.hProcess, errCode);
+        if (errCode) GetExitCodeProcess(ProcessInfo.hProcess, errCode);
 
         // Close process and thread handles.
         CloseHandle(ProcessInfo.hProcess);
@@ -864,16 +1016,17 @@ zzj::Process::Token zzj::Process::GetToken(DWORD desiredAccess)
         throw std::runtime_error("OpenProcessToken failed");
     return Token(hToken);
 }
-BOOL zzj::Process::AdminCreateProcess(const char *pszFileName, bool show, const char *param, bool wait)
+BOOL zzj::Process::AdminCreateProcess(const char *pszFileName, bool show, const char *param,
+                                      bool wait)
 {
     SHELLEXECUTEINFOA ShExecInfo = {0};
-    ShExecInfo.cbSize            = sizeof(SHELLEXECUTEINFO);
-    ShExecInfo.fMask             = SEE_MASK_NOCLOSEPROCESS;
-    ShExecInfo.hwnd              = NULL;
-    ShExecInfo.lpVerb            = "runas";
-    ShExecInfo.lpFile            = pszFileName;
-    ShExecInfo.lpParameters      = param;
-    ShExecInfo.lpDirectory       = NULL;
+    ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+    ShExecInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+    ShExecInfo.hwnd = NULL;
+    ShExecInfo.lpVerb = "runas";
+    ShExecInfo.lpFile = pszFileName;
+    ShExecInfo.lpParameters = param;
+    ShExecInfo.lpDirectory = NULL;
     if (show)
         ShExecInfo.nShow = SW_SHOW;
     else
@@ -884,8 +1037,7 @@ BOOL zzj::Process::AdminCreateProcess(const char *pszFileName, bool show, const 
     {
         return false;
     }
-    if (wait)
-        WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
+    if (wait) WaitForSingleObject(ShExecInfo.hProcess, INFINITE);
     CloseHandle(ShExecInfo.hProcess);
 
     return true;
@@ -893,13 +1045,11 @@ BOOL zzj::Process::AdminCreateProcess(const char *pszFileName, bool show, const 
 
 BOOL zzj::Process::IsProcessAdmin()
 {
-
     BOOL bElevated = FALSE;
-    HANDLE hToken  = NULL;
+    HANDLE hToken = NULL;
 
     // Get current process token
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-        return FALSE;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) return FALSE;
 
     TOKEN_ELEVATION tokenEle;
     DWORD dwRetLen = 0;
@@ -919,7 +1069,7 @@ BOOL zzj::Process::IsProcessAdmin()
 
 bool Process::KillProcess(DWORD pid)
 {
-    bool bRet       = false;
+    bool bRet = false;
     HANDLE hProcess = ::OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (NULL != hProcess)
     {
@@ -934,28 +1084,24 @@ bool Process::KillProcess(DWORD pid)
 std::vector<Process> Process::GetProcessByName(const std::string &processName)
 {
     std::vector<Process> ret;
-    std::wstring wName      = zzj::str::utf82w(processName);
+    std::wstring wName = zzj::str::utf82w(processName);
     std::vector<DWORD> pids = GetProcessId(wName);
     for (auto pid : pids)
     {
         Process process(pid, PROCESS_ALL_ACCESS);
-        if (process.IsValid())
-            ret.push_back(process);
+        if (process.IsValid()) ret.push_back(process);
     }
     return ret;
 }
 
 bool zzj::Process::KillProcess(const char *name)
 {
-
     std::wstring wName = zzj::str::utf82w(name);
 
     std::vector<DWORD> pids = GetProcessId(wName);
-    if (pids.size() == 0)
-        return true;
+    if (pids.size() == 0) return true;
 
-    for (auto pid : pids)
-        KillProcess(pid);
+    for (auto pid : pids) KillProcess(pid);
     return true;
 }
 
@@ -969,7 +1115,7 @@ std::wstring zzj::Process::GetModulePath(std::wstring moduleName)
         mHandle = GetModuleHandleW(moduleName.c_str());
 
     GetModuleFileNameW(mHandle, szFilePath, MAX_PATH);
-    (wcsrchr(szFilePath, L'\\'))[1] = 0; // ɾ���ļ�����ֻ���·���ִ�
+    (wcsrchr(szFilePath, L'\\'))[1] = 0;  
     return szFilePath;
 }
 
@@ -992,7 +1138,7 @@ std::vector<uint8_t> zzj::Memory::ReadUntilZero(uintptr_t address)
 bool zzj::Memory::Read(uintptr_t address, void *buffer, size_t size)
 {
     SIZE_T numRead = 0;
-    bool ret       = true;
+    bool ret = true;
 
     DWORD oldProtect;
     bool isProtectChange = false;
@@ -1008,8 +1154,8 @@ bool zzj::Memory::Read(uintptr_t address, void *buffer, size_t size)
             VirtualProtectEx(*process.process, (LPVOID)address, size, oldProtect, &oldProtect);
     };
 
-    if (mbi.Protect & PAGE_READONLY || mbi.Protect & PAGE_READWRITE || mbi.Protect & PAGE_EXECUTE_READ ||
-        mbi.Protect & PAGE_EXECUTE_READWRITE)
+    if (mbi.Protect & PAGE_READONLY || mbi.Protect & PAGE_READWRITE ||
+        mbi.Protect & PAGE_EXECUTE_READ || mbi.Protect & PAGE_EXECUTE_READWRITE)
     {
         isProtectChange = false;
     }
@@ -1054,7 +1200,6 @@ bool zzj::Memory::Write(uintptr_t address, const void *buffer, size_t size)
 
 bool zzj::Memory::Write(uintptr_t address, std::vector<uint8_t> buf)
 {
-
     return Write(address, buf.data(), buf.size());
 }
 
@@ -1074,16 +1219,15 @@ bool zzj::Memory::Nop(uintptr_t address, size_t size)
     return Write(address, nop.data(), size);
 }
 
-uintptr_t zzj::Memory::FindMultiPleLevelAddress(uintptr_t baseAddress, std::vector<unsigned int> offsets)
+uintptr_t zzj::Memory::FindMultiPleLevelAddress(uintptr_t baseAddress,
+                                                std::vector<unsigned int> offsets)
 {
     uintptr_t address = baseAddress;
-    if (!Read(address, &address, sizeof(address)))
-        return uintptr_t();
+    if (!Read(address, &address, sizeof(address))) return uintptr_t();
     for (auto offset : offsets)
     {
         address += offset;
-        if (!Read(address, &address, sizeof(address)))
-            return uintptr_t();
+        if (!Read(address, &address, sizeof(address))) return uintptr_t();
     }
     return address;
 }
@@ -1101,7 +1245,7 @@ std::vector<MODULEENTRY32> zzj::Memory::GetModuleInfos()
 
     std::vector<MODULEENTRY32> moduleInfos;
 
-    // 遍历所有模块
+    
     if (Module32First(hSnapshot, &moduleEntry))
     {
         do
@@ -1119,21 +1263,21 @@ std::optional<MODULEENTRY32> zzj::Memory::GetModuleInfo(const std::string &modul
     auto modules = GetModuleInfos();
     for (auto &module : modules)
     {
-        if (module.szModule == zzj::str::utf82w(moduleName))
-            return module;
+        if (module.szModule == zzj::str::utf82w(moduleName)) return module;
     }
     return std::nullopt;
 }
-std::vector<MemoryInfo> zzj::Memory::PatternScan(uintptr_t startAddress, size_t searchSize, const std::string &pattern)
+std::vector<MemoryInfo> zzj::Memory::PatternScan(uintptr_t startAddress, size_t searchSize,
+                                                 const std::string &pattern)
 {
-
-    spdlog::info("PatternScan startAddress:{:#x} searchSize:{:#x} pattern:{}", startAddress, searchSize, pattern);
+    spdlog::info("PatternScan startAddress:{:#x} searchSize:{:#x} pattern:{}", startAddress,
+                 searchSize, pattern);
     std::vector<MemoryInfo> matches;
-    if (pattern.empty() || startAddress == 0 || searchSize == 0)
-        return matches;
+    if (pattern.empty() || startAddress == 0 || searchSize == 0) return matches;
 
-    try {
-        // 解析模式
+    try
+    {
+        
         std::istringstream iss(pattern);
         std::string byteString;
         std::vector<std::pair<uint8_t, bool>> bytePattern;
@@ -1141,31 +1285,34 @@ std::vector<MemoryInfo> zzj::Memory::PatternScan(uintptr_t startAddress, size_t 
         {
             if (byteString == "??")
             {
-                bytePattern.emplace_back(0, true); // Wildcard
+                bytePattern.emplace_back(0, true);  // Wildcard
             }
             else
             {
-                bytePattern.emplace_back(static_cast<uint8_t>(std::stoul(byteString, nullptr, 16)), false); // Regular byte
+                bytePattern.emplace_back(static_cast<uint8_t>(std::stoul(byteString, nullptr, 16)),
+                                         false);  // Regular byte
             }
         }
         size_t patternSize = bytePattern.size();
 
-        // 定义每次读取的块大小，例如 4096 字节
+        
         const size_t blockSize = 4096;
-        std::vector<uint8_t> buffer(blockSize + patternSize); // 额外读取 patternSize 以覆盖边界情况
+        std::vector<uint8_t> buffer(blockSize +
+                                    patternSize);  
 
         size_t processedSize = 0;
         while (processedSize < searchSize)
         {
-            size_t currentBlockSize = blockSize < (searchSize - processedSize) ? blockSize : (searchSize - processedSize);
-            // 读取当前块
+            size_t currentBlockSize =
+                blockSize < (searchSize - processedSize) ? blockSize : (searchSize - processedSize);
+            
             if (!Read(startAddress + processedSize, buffer.data(), currentBlockSize + patternSize))
             {
                 processedSize += currentBlockSize;
                 continue;
             }
 
-            // 执行模式匹配
+            
             for (size_t i = 0; i < currentBlockSize; i++)
             {
                 bool found = true;
@@ -1181,10 +1328,11 @@ std::vector<MemoryInfo> zzj::Memory::PatternScan(uintptr_t startAddress, size_t 
                 {
                     uintptr_t foundAddress = startAddress + processedSize + i;
                     MEMORY_BASIC_INFORMATION memInfo;
-                    if (VirtualQueryEx(process.GetProcessHandle(), reinterpret_cast<LPCVOID>(foundAddress), &memInfo,
-                        sizeof(memInfo)) != 0)
+                    if (VirtualQueryEx(process.GetProcessHandle(),
+                                       reinterpret_cast<LPCVOID>(foundAddress), &memInfo,
+                                       sizeof(memInfo)) != 0)
                     {
-                        matches.push_back({ foundAddress, memInfo });
+                        matches.push_back({foundAddress, memInfo});
                     }
                 }
             }
@@ -1192,14 +1340,14 @@ std::vector<MemoryInfo> zzj::Memory::PatternScan(uintptr_t startAddress, size_t 
             processedSize += currentBlockSize;
         }
     }
-    catch (const std::exception& e)
+    catch (const std::exception &e)
     {
-		spdlog::error("PatternScan failed:{}", e.what());
-	}
+        spdlog::error("PatternScan failed:{}", e.what());
+    }
     catch (...)
     {
-		spdlog::error("PatternScan failed");
-	}
+        spdlog::error("PatternScan failed");
+    }
 
     return matches;
 }

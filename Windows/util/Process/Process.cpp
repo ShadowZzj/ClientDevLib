@@ -1,3 +1,5 @@
+#include "Process.h"
+#include "ProcessHelper.h"
 #include <General/util/BaseUtil.hpp>
 #include <General/util/Process/Process.h>
 #include <General/util/Process/Thread.h>
@@ -6,7 +8,6 @@
 #include <psapi.h>
 #include <set>
 #include <tlhelp32.h>
-#include "Process.h"
 
 namespace zzj
 {
@@ -439,38 +440,21 @@ std::vector<ProcessV2> ProcessV2::Snapshot::GetProcesses(const std::string &proc
     return ret;
 }
 
-CommandHelper::CommandResult zzj::CommandHelper::ExecuteCommand(const std::string &command)
-{
-    namespace bp = boost::process;
-    bp::ipstream pipe_out;  
-    bp::ipstream pipe_err;  
-    
-    bp::child c("/bin/bash", "-c", command, bp::std_out > pipe_out, bp::std_err > pipe_err);
-    std::string line;
-    std::string output;
-    std::string error;
-    
-    while (std::getline(pipe_out, line))
-    {
-        output += line + "\n";
-    }
-    
-    while (std::getline(pipe_err, line))
-    {
-        error += line + "\n";
-    }
-    
-    c.wait();
-    int exitCode = c.exit_code();
-    return {exitCode, output, error};
-}
 CommandHelper::CommandResult zzj::CommandHelper::ExecuteCurrentUserCommand(
     const std::string &command)
 {
-    return CommandResult();
+    std::string strout;
+    std::string strError;
+    auto exitCode =
+        Process::SystemCreateProcess(command, false, strout, strError);
+    return CommandResult{static_cast<int>(exitCode.exitCode), strout, strError};
 }
 CommandHelper::CommandResult zzj::CommandHelper::ExecuteRootCommand(const std::string &command)
 {
-    return CommandResult();
+    std::string strout;
+    std::string strError;
+    auto exitCode =
+        Process::SystemCreateProcess(command, true, strout, strError);
+    return CommandResult{static_cast<int>(exitCode.exitCode), strout, strError};
 }
 }  // namespace zzj
