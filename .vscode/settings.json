@@ -116,5 +116,6 @@
         "rgba(79,236,236,0.3)"
     ],
     "cmake.sourceDirectory": "D:/repos/red-pass/redpass-daemon/ClientDevLib/General/ThirdParty/assimp/source/contrib/pugixml",
-    "dotnet.defaultSolution": "disable"
+    "dotnet.defaultSolution": "disable",
+    "python.analysis.extraPaths": ["D:/BaiduNetdiskDownload/IDA_Pro_v8.3_Portable/python/3"]
 }

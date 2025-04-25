@@ -99,6 +99,15 @@ class ProcessV2
     using EnviromentVariable = std::map<std::string, std::string>;
 
    public:
+    class BasicInfo
+    {
+       public:
+        DWORD pid;
+        DWORD parentPid;
+        FILETIME createTime;
+        std::wstring imagePath;
+        std::wstring commandLine;
+    };
     ProcessV2();
     /**
      * @brief Construct a new ProcessV2 object by pid
@@ -114,6 +123,8 @@ class ProcessV2
      */
     ProcessV2(const std::string &name);
     std::string GetExecutableFilePath();
+    std::string GetProcessCommandLine();
+    BasicInfo GetBasicInfo();
     /**
      * @brief Get Pid
      *

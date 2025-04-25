@@ -129,7 +129,7 @@ void ProcessInfoStatistic::Run()
         if (m_isStop.load())
             break;
 
-        // 进行写锁定
+        
         std::unique_lock<std::shared_mutex> lock(m_mutex);
         std::vector<ProcessV2> nowProcessObjects = GetCurrentProcessObjects(m_monitorProcessSet);
         auto nowTime                             = std::chrono::steady_clock::now();
@@ -144,7 +144,7 @@ void ProcessInfoStatistic::Run()
                                  return processObject.pid == nowProcessObject.pid &&
                                         processObject.processName == nowProcessObject.processName;
                              });
-            // 对于之前已经存在的进程，结合之前的cpu使用率进行线性计算cpu使用率
+            
             if (lastProcessObjectIter != m_lastProcessObjects.end())
                 CalculateCpuPercentage(*lastProcessObjectIter, nowProcessObject,
                                        std::chrono::milliseconds(deltaTimeMilliSeconds));
@@ -152,7 +152,7 @@ void ProcessInfoStatistic::Run()
                 notExistBeforeProcessObjects.push_back(&nowProcessObject);
         }
 
-        // 对于之前不存在的进程，直接计算cpu使用率
+        
         if (0 != notExistBeforeProcessObjects.size())
             CalculateNotExistProcessCpuPercentage(notExistBeforeProcessObjects, nowTime);
         for (auto iter = nowProcessObjects.begin(); iter != nowProcessObjects.end();)

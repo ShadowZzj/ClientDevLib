@@ -815,7 +815,7 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     sa.bInheritHandle = TRUE;
     sa.lpSecurityDescriptor = NULL;
 
-    // 使用DEFER确保所有资源在函数结束时被释放
+    
     DEFER
     {
         if (hStdOutRead) CloseHandle(hStdOutRead);
@@ -828,7 +828,7 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
         if (lpEnvironment) ::DestroyEnvironmentBlock(lpEnvironment);
     };
 
-    // 创建管道
+    
     if (!CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0)) throw std::runtime_error("CreatePipe failed");
 
     if (!CreatePipe(&hStdErrRead, &hStdErrWrite, &sa, 0)) throw std::runtime_error("CreatePipe failed");
@@ -837,7 +837,7 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
 
     if (!SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0)) throw std::runtime_error("SetHandleInformation failed");
 
-    // 获取活动的资源管理器信息
+    
     ActiveExplorerInfo aei;
     if (!GetActiveExplorerInfo(&aei)) throw std::runtime_error("GetActiveExplorerInfo failed");
 
@@ -847,7 +847,7 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     if (!::OpenProcessToken(hActiveUserProcess, TOKEN_ALL_ACCESS, &hActiveUserProcessToken))
         throw std::runtime_error("OpenProcessToken failed");
 
-    // 处理Token
+    
     bool bTokenTempNeedClose = false;
     HANDLE hTokenTemp = NULL;
     if (bElevated)
@@ -879,7 +879,7 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
 
     if (NULL == hTokenTemp) throw std::runtime_error("DuplicateTokenEx failed");
 
-    // 使用DEFER确保临时token被关闭
+    
     DEFER
     {
         if (bTokenTempNeedClose && NULL != hTokenTemp)
@@ -903,13 +903,13 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     siw.lpDesktop = (LPSTR) "winsta0\\default";
     siw.wShowWindow = SW_HIDE;
 
-    // 创建环境块
+    
     if (!::CreateEnvironmentBlock(&lpEnvironment, hActiveUserProcessToken, FALSE)) throw std::runtime_error("CreateEnvironmentBlock failed");
 
     PROCESS_INFORMATION pi = {0};
     std::string cmd = zzj::str::w2ansi(commandLine);
 
-    // 创建进程
+    
     if (!::CreateProcessAsUserA(hCreateProcessToken, NULL, (LPSTR)cmd.c_str(), NULL, NULL, TRUE,
                                 dwCreationFlags, lpEnvironment, NULL, &siw, &pi))
     {

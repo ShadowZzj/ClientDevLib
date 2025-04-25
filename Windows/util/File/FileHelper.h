@@ -23,7 +23,8 @@ class FileHelper
     static std::string GetCurrentUserProgramDataFolder();
     static zzj::File GetFileInstance(const std::string &imagePath);
     static std::string GetProgramFilesFolder();
-     
+    static std::string ConvertDevicePathToDosPath(const std::string &devicePath);
+    static std::wstring ConvertDevicePathToDosPath(const std::wstring &devicePath);
     protected: 
     DECLARE_LUA_EXPORT(FileHelper)
 };

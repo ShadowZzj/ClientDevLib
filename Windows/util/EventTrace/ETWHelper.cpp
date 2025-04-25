@@ -1,21 +1,17 @@
 #include "ETWHelper.h"
 #include <iostream>
-ETWHelper::ETWHelper()
+namespace zzj
 {
-}
+ETWHelper::ETWHelper() {}
 
-ETWHelper::~ETWHelper()
-{
-}
+ETWHelper::~ETWHelper() {}
 
 bool ETWHelper::CreateSession(const std::wstring &sessionName)
 {
     try
     {
-        if (!event_tracing::is_running_elevated())
-            return false;
-        if (m_sessions.find(sessionName) != m_sessions.end())
-            return false;
+        if (!event_tracing::is_running_elevated()) return false;
+        if (m_sessions.find(sessionName) != m_sessions.end()) return false;
 
         auto session = std::make_shared<event_tracing::event_trace_session>(sessionName);
         SessionInfo info;
@@ -41,8 +37,7 @@ bool ETWHelper::RemoveSession(const std::wstring &sessionName)
     {
         if (auto sessionInfo = m_sessions.find(sessionName); sessionInfo != m_sessions.end())
         {
-            for (auto trace : sessionInfo->second.sessionTraces)
-                trace.second->stop();
+            for (auto trace : sessionInfo->second.sessionTraces) trace.second->stop();
 
             sessionInfo->second.sessionImp->close_trace_session();
             m_sessions.erase(sessionInfo);
@@ -55,7 +50,6 @@ bool ETWHelper::RemoveSession(const std::wstring &sessionName)
         std::cout << e.what() << std::endl;
         return false;
     }
-
 }
 
 bool ETWHelper::AddConsumer(const std::wstring &sessionName, const std::wstring &consumerName)
@@ -75,21 +69,24 @@ bool ETWHelper::RemoveConsumer(const std::wstring &sessionName, const std::wstri
 {
     if (auto iter = m_sessions.find(sessionName); iter != m_sessions.end())
     {
-        if (auto traceIter = iter->second.sessionTraces.find(consumerName);traceIter != iter->second.sessionTraces.end())
+        if (auto traceIter = iter->second.sessionTraces.find(consumerName);
+            traceIter != iter->second.sessionTraces.end())
             iter->second.sessionTraces.erase(traceIter);
         return true;
     }
     return false;
 }
 
-bool ETWHelper::AddProvider(const std::wstring& sessionName, const std::wstring &guidName,const std::uint32_t &keyword)
+bool ETWHelper::AddProvider(const std::wstring &sessionName, const std::wstring &guidName,
+                            const std::uint32_t &keyword)
 {
     try
     {
         event_tracing::ms_guid msGuid = event_tracing::event_provider_list().get_guid(guidName);
         if (auto iter = m_sessions.find(sessionName); iter != m_sessions.end())
         {
-            iter->second.sessionImp->enable_trace(msGuid, event_tracing::event_trace_session::trace_level::verbose, keyword);
+            iter->second.sessionImp->enable_trace(
+                msGuid, event_tracing::event_trace_session::trace_level::verbose, keyword);
             return true;
         }
         return false;
@@ -101,7 +98,7 @@ bool ETWHelper::AddProvider(const std::wstring& sessionName, const std::wstring 
     }
 }
 
-bool ETWHelper::RemoveProvider(const std::wstring& sessionName, const std::wstring &guidName)
+bool ETWHelper::RemoveProvider(const std::wstring &sessionName, const std::wstring &guidName)
 {
     try
     {
@@ -118,12 +115,12 @@ bool ETWHelper::RemoveProvider(const std::wstring& sessionName, const std::wstri
         std::cout << e.what() << std::endl;
         return false;
     }
-
 }
 
-bool ETWHelper::SetProviderHandlerForConsumer(const std::wstring &sessionName, const std::wstring &consumerName,
-                                   const std::wstring &guidName, std::uint32_t eventId,
-                                   std::function<void(PEVENT_RECORD pRecord)> &&handler)
+bool ETWHelper::SetProviderHandlerForConsumer(const std::wstring &sessionName,
+                                              const std::wstring &consumerName,
+                                              const std::wstring &guidName, std::uint32_t eventId,
+                                              std::function<void(PEVENT_RECORD pRecord)> &&handler)
 {
     try
     {
@@ -132,15 +129,15 @@ bool ETWHelper::SetProviderHandlerForConsumer(const std::wstring &sessionName, c
             if (auto traceIter = iter->second.sessionTraces.find(consumerName);
                 traceIter != iter->second.sessionTraces.end())
             {
-                event_tracing::ms_guid msGuid = event_tracing::event_provider_list().get_guid(guidName);
+                event_tracing::ms_guid msGuid =
+                    event_tracing::event_provider_list().get_guid(guidName);
                 if (eventId == UINT_MAX)
-                    traceIter->second->on_trace_event(msGuid,handler);
+                    traceIter->second->on_trace_event(msGuid, handler);
                 else
                     traceIter->second->on_trace_event(msGuid, eventId, handler);
                 return true;
             }
             return false;
-
         }
         return false;
     }
@@ -149,19 +146,20 @@ bool ETWHelper::SetProviderHandlerForConsumer(const std::wstring &sessionName, c
         std::cout << e.what() << std::endl;
         return false;
     }
-
 }
 
-bool ETWHelper::SetProviderHandlerForConsumer(const std::wstring &sessionName, const std::wstring &consumerName,
+bool ETWHelper::SetProviderHandlerForConsumer(const std::wstring &sessionName,
+                                              const std::wstring &consumerName,
                                               const std::wstring &providerName,
                                               std::function<void(PEVENT_RECORD pRecord)> &&handler)
 {
-
-    return SetProviderHandlerForConsumer(sessionName, consumerName, providerName, UINT_MAX,
-                                         std::forward<std::function<void(PEVENT_RECORD pRecord)>>(handler));
+    return SetProviderHandlerForConsumer(
+        sessionName, consumerName, providerName, UINT_MAX,
+        std::forward<std::function<void(PEVENT_RECORD pRecord)>>(handler));
 }
 
-bool ETWHelper::StartConsumerAsync(const std::wstring &sessionName, const std::wstring &consumerName)
+bool ETWHelper::StartConsumerAsync(const std::wstring &sessionName,
+                                   const std::wstring &consumerName)
 {
     try
     {
@@ -183,10 +181,9 @@ bool ETWHelper::StartConsumerAsync(const std::wstring &sessionName, const std::w
         std::cout << e.what() << std::endl;
         return false;
     }
-
 }
 
-bool ETWHelper::StopConsumer(const std::wstring &sessionName,const std::wstring &consumerName)
+bool ETWHelper::StopConsumer(const std::wstring &sessionName, const std::wstring &consumerName)
 {
     try
     {
@@ -207,3 +204,4 @@ bool ETWHelper::StopConsumer(const std::wstring &sessionName,const std::wstring 
     }
 }
 
+}  // namespace zzj

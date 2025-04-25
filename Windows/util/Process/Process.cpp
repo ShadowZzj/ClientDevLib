@@ -8,7 +8,9 @@
 #include <psapi.h>
 #include <set>
 #include <tlhelp32.h>
-
+#include <Windows/util/ApiLoader/Apis.h>
+#include <General/util/Exception/Exception.h>
+#include <spdlog/spdlog.h>
 namespace zzj
 {
 ProcessV2::ProcessV2() { this->pid = GetCurrentProcessId(); }
@@ -445,16 +447,147 @@ CommandHelper::CommandResult zzj::CommandHelper::ExecuteCurrentUserCommand(
 {
     std::string strout;
     std::string strError;
-    auto exitCode =
-        Process::SystemCreateProcess(command, false, strout, strError);
+    auto exitCode = Process::SystemCreateProcess(command, false, strout, strError);
     return CommandResult{static_cast<int>(exitCode.exitCode), strout, strError};
 }
 CommandHelper::CommandResult zzj::CommandHelper::ExecuteRootCommand(const std::string &command)
 {
     std::string strout;
     std::string strError;
-    auto exitCode =
-        Process::SystemCreateProcess(command, true, strout, strError);
+    auto exitCode = Process::SystemCreateProcess(command, true, strout, strError);
     return CommandResult{static_cast<int>(exitCode.exitCode), strout, strError};
+}
+
+std::string ProcessV2::GetProcessCommandLine()
+{
+    zzj::ApiLoader::pNtQueryInformationProcess NtQueryInformationProcess = nullptr;
+    zzj::ApiLoader::API *api = zzj::ApiLoader::API::GetInstance();
+    if (api)
+    {
+        NtQueryInformationProcess = (zzj::ApiLoader::pNtQueryInformationProcess)api->GetAPI(
+            zzj::ApiLoader::API_IDENTIFIER::API_NtQueryInformationProcess);
+    }
+    if (!NtQueryInformationProcess)
+    {
+        throw ZZJ_CODE_EXCEPTION(-1, "NtQueryInformationProcess not found");
+    }
+
+    HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
+    if (NULL == handle)
+    {
+        throw ZZJ_CODE_EXCEPTION(-1, "OpenProcess fail");
+    }
+    DEFER { CloseHandle(handle); };
+    PROCESS_BASIC_INFORMATION processBasicInfo;
+    ULONG returnLength;
+
+    auto status = NtQueryInformationProcess(handle, ProcessBasicInformation, &processBasicInfo,
+                                            sizeof(processBasicInfo), &returnLength);
+    if (status != 0)
+    {
+        throw ZZJ_CODE_EXCEPTION(-1, "NtQueryInformationProcess fail");
+    }
+
+    PEB peb;
+    if (!ReadProcessMemory(handle, processBasicInfo.PebBaseAddress, &peb, sizeof(peb), NULL))
+    {
+        throw ZZJ_CODE_EXCEPTION(-2, "ReadProcessMemory fail");
+    }
+    RTL_USER_PROCESS_PARAMETERS params;
+    if (!ReadProcessMemory(handle, peb.ProcessParameters, &params, sizeof(params), NULL))
+    {
+        throw ZZJ_CODE_EXCEPTION(-3, "ReadProcessMemory fail");
+    }
+
+    if (params.CommandLine.Length > 0)
+    {
+        wchar_t *buffer = new wchar_t[params.CommandLine.Length / sizeof(wchar_t) + 1];
+        if (ReadProcessMemory(handle, params.CommandLine.Buffer, buffer, params.CommandLine.Length,
+                              NULL))
+        {
+            buffer[params.CommandLine.Length / sizeof(wchar_t)] = L'\0';
+            std::wstring wstr(buffer);
+            std::string ret = zzj::str::w2utf8(wstr);
+            delete[] buffer;
+            return ret;
+        }
+    }
+
+    throw ZZJ_CODE_EXCEPTION(-4, "GetCommandLine fail");
+}
+
+ProcessV2::BasicInfo ProcessV2::GetBasicInfo()
+{
+    BasicInfo ret;
+    ret.pid = pid;
+
+    try
+    {
+        zzj::ApiLoader::pNtQueryInformationProcess NtQueryInformationProcess = nullptr;
+        zzj::ApiLoader::API *api = zzj::ApiLoader::API::GetInstance();
+        if (api)
+        {
+            NtQueryInformationProcess = (zzj::ApiLoader::pNtQueryInformationProcess)api->GetAPI(
+                zzj::ApiLoader::API_IDENTIFIER::API_NtQueryInformationProcess);
+        }
+        if (!NtQueryInformationProcess)
+        {
+            throw ZZJ_CODE_EXCEPTION(-5, "NtQueryInformationProcess not found");
+        }
+        HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
+        if (NULL == handle)
+        {
+            throw ZZJ_CODE_EXCEPTION(-1, "OpenProcess fail");
+        }
+        DEFER { CloseHandle(handle); };
+
+        PROCESS_BASIC_INFORMATION processBasicInfo;
+        ULONG returnLength;
+        auto status = NtQueryInformationProcess(handle, ProcessBasicInformation, &processBasicInfo,
+                                                sizeof(processBasicInfo), &returnLength);
+        if (status != 0)
+        {
+            throw ZZJ_CODE_EXCEPTION(-2, "NtQueryInformationProcess fail");
+        }
+        ret.parentPid = (DWORD)processBasicInfo.Reserved3;
+        ret.imagePath = zzj::str::utf82w(GetExecutableFilePath());
+
+        // Initialize FILETIME structure to zeros
+        FILETIME createTime = {0};
+        FILETIME exitTime = {0};
+        FILETIME kernelTime = {0};
+        FILETIME userTime = {0};
+
+        // Check if GetProcessTimes succeeds
+        if (GetProcessTimes(handle, &createTime, &exitTime, &kernelTime, &userTime))
+        {
+            // Safely copy the FILETIME structure
+            memcpy(&ret.createTime, &createTime, sizeof(FILETIME));
+        }
+        else
+        {
+            // Handle error - set create time to current time as fallback
+            GetSystemTimeAsFileTime(&ret.createTime);
+        }
+
+        ret.commandLine = zzj::str::utf82w(GetProcessCommandLine());
+        return ret;
+    }
+    catch (const zzj::Exception &e)
+    {
+        spdlog::error("GetBasicInfo fail: {}", e.what());
+        ret.commandLine = L"";
+        ret.parentPid = 0;
+        ret.imagePath = L"";
+        return ret;
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::error("GetBasicInfo fail: {}", e.what());
+        ret.commandLine = L"";
+        ret.parentPid = 0;
+        ret.imagePath = L"";
+        return ret;
+    }
 }
 }  // namespace zzj

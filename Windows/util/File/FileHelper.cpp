@@ -13,7 +13,8 @@
 #include <tchar.h>
 #include <windows.h>
 #include <wtsapi32.h>
-
+#include <General/util/Exception/Exception.h>
+#include <General/util/StrUtil.h>
 using namespace zzj;
 
 bool FileHelper::ReadFileAtOffset(std::string fileName, void *buffer, unsigned long numToRead, unsigned long fileOffset)
@@ -228,7 +229,7 @@ std::string zzj::FileHelper::GetCurrentUserProgramDataFolder()
         }
         char szAppDataPath[MAX_PATH];
 
-        // 获取AppData\Roaming目录的路径
+        
         if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, szAppDataPath)))
         {
             return std::string(szAppDataPath);
@@ -335,7 +336,7 @@ bool zzj::FileHelper::DeleteDirPossible(const std::string &filePathName)
         return bRet;
     }
 
-    //遍历文件夹
+    
     std::string strDir = filePathName;
     if (strDir[strDir.length() - 1] != '\\')
     {
@@ -396,4 +397,41 @@ std::string zzj::FileHelper::GetProgramFilesFolder()
     }
     else
         return "";
+}
+
+std::string zzj::FileHelper::ConvertDevicePathToDosPath(const std::string &devicePath)
+{
+    char drivers[512] = {0};
+    if (!GetLogicalDriveStringsA(ARRAYSIZE(drivers) - 1, drivers))
+    {
+        throw ZZJ_CODE_EXCEPTION(-1, "GetLogicalDriveStringsA failed");
+    }
+    for (char *drive = drivers; *drive; drive += strlen(drive) + 1)
+    {
+        std::string dosDevice = drive;
+        if (dosDevice.back() == '\\')
+        {
+            dosDevice.pop_back();
+        }
+
+        char deviceName[MAX_PATH] = {0};
+        if (QueryDosDeviceA(dosDevice.c_str(), deviceName, ARRAYSIZE(deviceName)) == 0)
+        {
+            continue;
+        }
+
+        std::string deviceNameStr = deviceName;
+        if (devicePath.find(deviceNameStr) == 0)
+        {
+            std::string dosPath = dosDevice;
+            dosPath += devicePath.substr(deviceNameStr.length());
+            return dosPath;
+        }
+    }
+    throw ZZJ_CODE_EXCEPTION(-1, "ConvertDevicePathToDosPath failed");
+}
+
+std::wstring zzj::FileHelper::ConvertDevicePathToDosPath(const std::wstring &devicePath)
+{
+    return zzj::str::utf82w(ConvertDevicePathToDosPath(zzj::str::w2utf8(devicePath)));
 }

@@ -330,7 +330,7 @@ std::optional<zzj::UserInfo> zzj::UserInfo::GetActiveUserInfo()
 std::vector<zzj::UserInfo> zzj::UserInfo::GetComputerUserInfos()
 {
     DWORD dwLevel        = 1;
-    DWORD dwFilter       = FILTER_NORMAL_ACCOUNT; // 只获取普通用户，不包括系统账户等
+    DWORD dwFilter       = FILTER_NORMAL_ACCOUNT; 
     DWORD dwPrefMaxLen   = MAX_PREFERRED_LENGTH;
     DWORD dwEntriesRead  = 0;
     DWORD dwTotalEntries = 0;
@@ -373,7 +373,7 @@ std::vector<zzj::UserInfo> zzj::UserInfo::GetComputerUserInfos()
                 ret.push_back(*userInfo);
             pTmpBuf++;
         }
-    } while (nStatus == ERROR_MORE_DATA); // 如果缓冲区不够大，继续获取
+    } while (nStatus == ERROR_MORE_DATA); 
 
     return ret;
 }
