@@ -93,7 +93,7 @@ class ProcessV2
         std::uintptr_t base;
         std::uintptr_t size;
         std::vector<Section> sections;
-
+	
         std::vector<Section> GetSections(uint32_t pid);
     };
     using EnviromentVariable = std::map<std::string, std::string>;
@@ -102,9 +102,11 @@ class ProcessV2
     class BasicInfo
     {
        public:
+#ifdef _WIN32
         DWORD pid;
         DWORD parentPid;
         FILETIME createTime;
+#endif
         std::wstring imagePath;
         std::wstring commandLine;
     };
