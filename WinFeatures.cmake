@@ -193,7 +193,6 @@ function(GenerateWindowsUtil)
 		list(APPEND WINDOWS_UTIL_DLL_FILES ${CurlDll} ${SSLDll} ${CryptoDll})
 	endif()
 
-
 	if (${FEATURE_GRPC})
 		message(STATUS "gRPC feature: ${FEATURE_GRPC}")
 		list(APPEND WINDOWS_UTIL_LIB_FILES ${GrpcLib} ${SSLLib} ${CryptoLib})
