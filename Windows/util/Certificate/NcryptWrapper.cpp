@@ -7,7 +7,6 @@
 #include <strsafe.h>
 #include <shlobj.h> // Add this include for FOLDERID_RoamingAppData
 #include <General/util/SPDLogHelper.h>
-#include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <Shlwapi.h>
@@ -17,7 +16,7 @@
 //------------------------------------------------------------------------------
 // Utility functions (utils.go -> to_wstring, to_string)
 //------------------------------------------------------------------------------
-std::wstring ncrypt_utils::to_wstring(const std::string &utf8) {
+std::wstring zzj::ncrypt_utils::to_wstring(const std::string &utf8) {
     // utils.go wide()
     int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
     std::wstring wstr(len, L'\0');
@@ -25,7 +24,7 @@ std::wstring ncrypt_utils::to_wstring(const std::string &utf8) {
     return wstr;
 }
 
-std::string ncrypt_utils::to_string(const std::wstring &wstr) {
+std::string zzj::ncrypt_utils::to_string(const std::wstring &wstr) {
     // utils.go conversion back
     int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
     std::string str(len, '\0');
@@ -36,14 +35,16 @@ std::string ncrypt_utils::to_string(const std::wstring &wstr) {
 //------------------------------------------------------------------------------
 // NCryptProvider (ncrypt.go -> NCryptOpenStorageProvider)
 //------------------------------------------------------------------------------
-NCryptProvider::NCryptProvider(const std::wstring &providerName, DWORD flags) {
+zzj::NCryptProvider::NCryptProvider(const std::wstring &providerName, DWORD flags)
+{
     // ncrypt.go: NCryptOpenStorageProvider
     SECURITY_STATUS st = NCryptOpenStorageProvider(&hProv_, providerName.c_str(), flags);
     if (FAILED(st)) throw NCryptException("NCryptOpenStorageProvider failed", st);
 
 }
 
-NCryptProvider::~NCryptProvider() {
+zzj::NCryptProvider::~NCryptProvider()
+{
     // ncrypt.go: NCryptFreeObject
     if (hProv_) NCryptFreeObject(hProv_);
 }
@@ -51,7 +52,7 @@ NCryptProvider::~NCryptProvider() {
 //------------------------------------------------------------------------------
 // NCryptKey (ncrypt.go -> NCryptCreatePersistedKey, NCryptOpenKey, NCryptFinalizeKey)
 //------------------------------------------------------------------------------
-NCryptKey::NCryptKey(NCRYPT_PROV_HANDLE prov,
+zzj::NCryptKey::NCryptKey(NCRYPT_PROV_HANDLE prov,
                      const std::wstring &keyName,
                      const std::wstring &algorithm,
                      DWORD legacyKeySpec,
@@ -62,12 +63,14 @@ NCryptKey::NCryptKey(NCRYPT_PROV_HANDLE prov,
     if (FAILED(st)) throw NCryptException("NCryptCreatePersistedKey failed", st);
 }
 
-NCryptKey::~NCryptKey() {
+zzj::NCryptKey::~NCryptKey()
+{
     // ncrypt.go: NCryptFreeObject
     if (hKey_) NCryptFreeObject(hKey_);
 }
 
-void NCryptKey::finalize(DWORD flags) {
+void zzj::NCryptKey::finalize(DWORD flags)
+{
     // ncrypt.go: NCryptFinalizeKey
     SECURITY_STATUS st = NCryptFinalizeKey(hKey_, flags);
     if (FAILED(st)) throw NCryptException("NCryptFinalizeKey failed", st);
@@ -76,7 +79,8 @@ void NCryptKey::finalize(DWORD flags) {
 //------------------------------------------------------------------------------
 // exportKey (utils.go -> NCryptExportKey)
 //------------------------------------------------------------------------------
-std::vector<BYTE> NCryptKey::ExportKey(const std::wstring &BlobType) const {
+std::vector<BYTE> zzj::NCryptKey::ExportKey(const std::wstring &BlobType) const
+{
     // utils.go NCryptExportKey size
     DWORD size = 0;
     SECURITY_STATUS st = NCryptExportKey(
@@ -98,7 +102,8 @@ std::vector<BYTE> NCryptKey::ExportKey(const std::wstring &BlobType) const {
 //------------------------------------------------------------------------------
 // getProperty (ncrypt.go -> NCryptGetProperty)
 //------------------------------------------------------------------------------
-std::vector<BYTE> NCryptKey::GetProperty(const std::wstring &property, DWORD flags) const {
+std::vector<BYTE> zzj::NCryptKey::GetProperty(const std::wstring &property, DWORD flags) const
+{
     DWORD size = 0;
     SECURITY_STATUS st = NCryptGetProperty(hKey_, property.c_str(), nullptr, 0, &size, flags);
     if (FAILED(st)) throw NCryptException("NCryptGetProperty size failed", st);
@@ -112,7 +117,7 @@ std::vector<BYTE> NCryptKey::GetProperty(const std::wstring &property, DWORD fla
 //------------------------------------------------------------------------------
 // signHash (utils.go -> NCryptSignHash)
 //------------------------------------------------------------------------------
-std::vector<BYTE> NCryptKey::SignHash(const std::vector<BYTE> &hash,
+std::vector<BYTE> zzj::NCryptKey::SignHash(const std::vector<BYTE> &hash,
                                       const std::wstring &hashAlg,
                                       DWORD flags) const {
     // utils.go NCryptSignHash size
@@ -134,7 +139,8 @@ std::vector<BYTE> NCryptKey::SignHash(const std::vector<BYTE> &hash,
     return sig;
 }
 
-void NCryptKey::Destroy(DWORD flags) {
+void zzj::NCryptKey::Destroy(DWORD flags)
+{
     // ncrypt.go NCryptDeleteKey
     SECURITY_STATUS st = NCryptDeleteKey(hKey_, flags);
     if (FAILED(st)) throw NCryptException("NCryptDeleteKey failed", st);
@@ -144,10 +150,10 @@ void NCryptKey::Destroy(DWORD flags) {
 //------------------------------------------------------------------------------
 // enumKeys (ncrypt.go -> NCryptEnumKeys)
 //------------------------------------------------------------------------------
-std::vector<KeyDescriptor> enumKeys(NCRYPT_PROV_HANDLE prov,
-                                    const std::wstring &scope,
-                                    DWORD flags) {
-    std::vector<KeyDescriptor> list;
+std::vector<zzj::sshagent::KeyDescriptor> zzj::sshagent::enumKeys(NCRYPT_PROV_HANDLE prov,
+                                                   const std::wstring &scope, DWORD flags)
+{
+    std::vector<zzj::sshagent::KeyDescriptor> list;
     PVOID enumState = nullptr;
     while (true) {
         NCryptKeyName *pName = nullptr;
@@ -157,9 +163,10 @@ std::vector<KeyDescriptor> enumKeys(NCRYPT_PROV_HANDLE prov,
             scope.empty() ? nullptr : scope.c_str(),
             &pName, &enumState, flags);
         if (st == NTE_NO_MORE_ITEMS) break;
-        if (FAILED(st)) throw NCryptException("NCryptEnumKeys failed", st);
+        if (FAILED(st)) throw zzj::NCryptException("NCryptEnumKeys failed", st);
 
-        KeyDescriptor kd{pName->pszName, pName->pszAlgid, pName->dwLegacyKeySpec, pName->dwFlags};
+        zzj::sshagent::KeyDescriptor kd{pName->pszName, pName->pszAlgid, pName->dwLegacyKeySpec,
+                                        pName->dwFlags};
         list.push_back(kd);
         // ncrypt.go NCryptFreeBuffer
         NCryptFreeBuffer(pName);
@@ -167,168 +174,11 @@ std::vector<KeyDescriptor> enumKeys(NCRYPT_PROV_HANDLE prov,
     return list;
 }
 
-//------------------------------------------------------------------------------
-// marshalPublicKey (utils.go -> unmarshalRSA/ECC placeholder)
-//------------------------------------------------------------------------------
-std::vector<BYTE> MarshalPublicKey(NCRYPT_KEY_HANDLE hKey) {
-    DWORD size = 0;
-    SECURITY_STATUS st = NCryptExportKey(
-        hKey, 0, BCRYPT_RSAPUBLIC_BLOB, nullptr, nullptr, 0, &size, 0);
-    if (FAILED(st)) {
-        throw NCryptException("NCryptExportKey failed", st);
-    }
-
-    std::vector<BYTE> Blob(size);
-    st = NCryptExportKey(hKey, 0, BCRYPT_RSAPUBLIC_BLOB, nullptr, Blob.data(), size, &size, 0);
-    if (FAILED(st)) {
-        throw NCryptException("NCryptExportKey failed", st);
-    }
-
-    struct BCRYPT_RSAKEY_BLOB {
-        ULONG Magic;
-        ULONG BitLength;
-        ULONG cbPublicExp;
-        ULONG cbModulus;
-        ULONG cbPrime1;
-        ULONG cbPrime2;
-    };
-
-    BYTE* ptr = Blob.data();
-    auto* header = reinterpret_cast<BCRYPT_RSAKEY_BLOB*>(ptr);
-    BYTE* exp = ptr + sizeof(BCRYPT_RSAKEY_BLOB);
-    BYTE* mod = exp + header->cbPublicExp;
-
-    std::vector<BYTE> wire;
-
-    auto append_mpint = [&](const BYTE* data, DWORD len) {
-        /* while (len > 0 && data[0] == 0)
-            ++data, --len;
-        wire.push_back((len >> 24) & 0xFF);
-        wire.push_back((len >> 16) & 0xFF);
-        wire.push_back((len >> 8) & 0xFF);
-        wire.push_back(len & 0xFF);
-        wire.insert(wire.end(), data, data + len);
-        */
-        // 1. 小端 → tmp，再反转得大端
-        std::vector<BYTE> tmp(data, data + len);
-        std::reverse(tmp.begin(), tmp.end());
-        // 2. 去掉 MSB 端前导 0
-        auto it = tmp.begin();
-        while (it != tmp.end() && *it == 0) ++it;
-        std::vector<BYTE> beData(it, tmp.end());
-        // 3. 如果最高位被置 1，插一个 0x00 在前面
-        if (!beData.empty() && (beData[0] & 0x80))
-        {
-            beData.insert(beData.begin(), 0x00);
-        }
-        // 4. 写长度（4 字节大端）和写内容
-        DWORD outLen = static_cast<DWORD>(beData.size());
-        wire.push_back((outLen >> 24) & 0xFF);
-        wire.push_back((outLen >> 16) & 0xFF);
-        wire.push_back((outLen >> 8) & 0xFF);
-        wire.push_back(outLen & 0xFF);
-        wire.insert(wire.end(), beData.begin(), beData.end());
-    };
-
-    auto append_str = [&](const char* s) {
-        DWORD len = strlen(s);
-        wire.push_back((len >> 24) & 0xFF);
-        wire.push_back((len >> 16) & 0xFF);
-        wire.push_back((len >> 8) & 0xFF);
-        wire.push_back(len & 0xFF);
-        wire.insert(wire.end(), s, s + len);
-    };
-
-    append_str("ssh-rsa");
-    append_mpint(exp, header->cbPublicExp);
-    append_mpint(mod, header->cbModulus);
-
-    return wire;
-}
-std::vector<BYTE> MarshalPublicKeyHandleFromName(NCryptKeyName *pName)
-{
-    if (!pName || !pName->pszName)
-    {
-        throw std::invalid_argument("Invalid NCryptKeyName pointer or empty name.");
-    }
-
-    // Open provider
-    NCryptProvider provider(ncrypt::MS_PLATFORM_PROVIDER);
-    NCRYPT_PROV_HANDLE hProv = provider.handle();
-
-    // Open key by name
-    NCRYPT_KEY_HANDLE hKey = 0;
-    SECURITY_STATUS st = NCryptOpenKey(hProv, &hKey, pName->pszName, 0, 0);
-    if (FAILED(st))
-    {
-        throw NCryptException("NCryptOpenKey failed", st);
-    }
-
-    // Marshal public key
-    std::vector<BYTE> blob = MarshalPublicKey(hKey);
-
-    // Free key handle
-    NCryptFreeObject(hKey);
-
-    return blob;
-}
-//------------------------------------------------------------------------------
-// NCryptSigner (signer.go -> newNCryptSigner, Sign, handlePinTimer)
-//------------------------------------------------------------------------------
-NCryptSigner::NCryptSigner(NCRYPT_KEY_HANDLE keyHandle, int pinTimeoutSeconds)
-    : keyHandle_(keyHandle), pinTimeoutSec_(pinTimeoutSeconds), timerActive_(false) {
-    // signer.go newNCryptSigner: load publicKey
-    pubKeyBlob_ = MarshalPublicKey(keyHandle_);
-}
-
-NCryptSigner::~NCryptSigner() {
-    // signer.go handlePinTimer cleanup
-    purgePinCache();
-}
-
-std::vector<BYTE> NCryptSigner::Sign(const std::vector<BYTE> &digest,
-                                     const std::wstring &hashAlg) {
-    // signer.go Sign(): call NCryptSignHash
-    std::vector<BYTE> sig = 
-        NCryptKey(0, L"", L"", 0, 0).SignHash(digest, hashAlg, NCRYPT_SILENT_FLAG);
-
-    // signer.go handlePinTimer logic
-    if (pinTimeoutSec_ > 0 && !timerActive_) {
-        timerActive_ = true;
-        std::thread([this]() {
-            std::this_thread::sleep_for(std::chrono::seconds(pinTimeoutSec_));
-            purgePinCache();
-        }).detach();
-    }
-    return sig;
-}
-
-std::vector<BYTE> NCryptSigner::PublicKey() const {
-    // signer.go Public()
-    return pubKeyBlob_;
-}
-
-void NCryptSigner::setPinTimeout(int seconds) {
-    // signer.go SetPINTimeout
-    pinTimeoutSec_ = seconds;
-}
-
-void NCryptSigner::purgePinCache()
-{
-    // signer.go handlePinTimer: NCryptSetProperty to clear PIN
-    std::lock_guard<std::mutex> lock(mutex_);
-    NCryptSetProperty(
-        keyHandle_,
-        NCRYPT_PIN_PROPERTY,
-        nullptr, 0, 0);
-    timerActive_ = false;
-}
-
-sshagent::KeyManagerAgent::KeyManagerAgent() { 
+zzj::sshagent::KeyManagerAgent::KeyManagerAgent() { 
     OpenProvider();
 }
 
-sshagent::KeyManagerAgent::~KeyManagerAgent() {
+zzj::sshagent::KeyManagerAgent::~KeyManagerAgent() {
     // TODO: stop listener if running
     std::lock_guard<std::mutex> lk(identities_mutex_);
     for (auto &id : identities_)
@@ -338,9 +188,10 @@ sshagent::KeyManagerAgent::~KeyManagerAgent() {
     identities_.clear();
     // free provider
     if (hProv_) NCryptFreeObject(hProv_);
+    CleanupAllProcesses();
 }
 
-bool sshagent::KeyManagerAgent::InitDeployment()
+bool zzj::sshagent::KeyManagerAgent::InitDeployment()
 {
     std::wstring container = L"redpass-ssh";
     //std::wstring password = L"123456";
@@ -351,7 +202,7 @@ bool sshagent::KeyManagerAgent::InitDeployment()
     return DeploySSH(container, 2048, pubDir);
 }
 
-void sshagent::KeyManagerAgent::CreateNewRSAKey(const std::wstring &containerName, int keySize)
+void zzj::sshagent::KeyManagerAgent::CreateNewRSAKey(const std::wstring &containerName, int keySize)
 {
     // Open storage provider
     NCryptProvider provider(ncrypt::MS_PLATFORM_PROVIDER);
@@ -385,7 +236,7 @@ void sshagent::KeyManagerAgent::CreateNewRSAKey(const std::wstring &containerNam
 
 }
 
-std::vector<BYTE> sshagent::KeyManagerAgent::ExportRSAPublicKey(const std::wstring &containerName)
+std::vector<BYTE> zzj::sshagent::KeyManagerAgent::ExportRSAPublicKey(const std::wstring &containerName)
 {
     // Open provider and key
     NCryptProvider provider(ncrypt::MS_PLATFORM_PROVIDER);
@@ -401,7 +252,7 @@ std::vector<BYTE> sshagent::KeyManagerAgent::ExportRSAPublicKey(const std::wstri
     return Blob;
 }
 
-bool sshagent::KeyManagerAgent::DestroyRSAKey(const std::wstring &containerName)
+bool zzj::sshagent::KeyManagerAgent::DestroyRSAKey(const std::wstring &containerName)
 {
     NCryptProvider provider(ncrypt::MS_PLATFORM_PROVIDER);
     NCRYPT_PROV_HANDLE hProv = provider.handle();
@@ -409,7 +260,7 @@ bool sshagent::KeyManagerAgent::DestroyRSAKey(const std::wstring &containerName)
     SECURITY_STATUS st = NCryptOpenKey(hProv, &hKey, containerName.c_str(), 0, 0);
     if (FAILED(st))
     {
-        // 密钥可能不存在，这不一定是个错误
+        // The key may not exist, which is not necessarily an error
         //LOG_WARNING("Key container not found: %ws", containerName.c_str());
         return false;
     }
@@ -426,7 +277,7 @@ bool sshagent::KeyManagerAgent::DestroyRSAKey(const std::wstring &containerName)
     return true;
 }
 
-bool sshagent::KeyManagerAgent::DeploySSH(const std::wstring &containerName, int keySize,
+bool zzj::sshagent::KeyManagerAgent::DeploySSH(const std::wstring &containerName, int keySize,
                                           const std::wstring &pubOutDir)
 {
     OpenProvider();
@@ -438,17 +289,15 @@ bool sshagent::KeyManagerAgent::DeploySSH(const std::wstring &containerName, int
     {
         if (kd.name == containerName)
         {
-            // 同步 identities_ 缓存
             ReloadAllIdentities();
             return true;
-      ; 
         }
     }
     // Create new key with password
     NCRYPT_KEY_HANDLE hKey = 0;
     //SECURITY_STATUS st = NCryptCreatePersistedKey(hProv_, &hKey, BCRYPT_RSA_ALGORITHM, containerName.c_str(), 0, NCRYPT_MACHINE_KEY_FLAG);
-    SECURITY_STATUS st = NCryptCreatePersistedKey(hProv_, &hKey, BCRYPT_RSA_ALGORITHM, containerName.c_str(), 0,
-                                 /* 用户级 key，无需管理员权限 */ 0);
+    /* User-level key, no administrator privileges required */
+    SECURITY_STATUS st = NCryptCreatePersistedKey(hProv_, &hKey, BCRYPT_RSA_ALGORITHM, containerName.c_str(), 0, 0);
     if (FAILED(st)) return false;
     // Set length
     st = NCryptSetProperty(hKey, NCRYPT_LENGTH_PROPERTY, reinterpret_cast<BYTE *>(&keySize),
@@ -477,17 +326,16 @@ bool sshagent::KeyManagerAgent::DeploySSH(const std::wstring &containerName, int
     }
     NCryptFreeObject(hKey);
     bool ok = CallNcryptAgent(containerName);
-    //if (ok) { // 同步 identities_ 缓存 ReloadAllIdentities();   }
+    // if (ok) { // Sync identities_ cache ReloadAllIdentities(); }
     return ok;
 }
 
-
-// 添加安全调用 exe 的辅助函数
-bool sshagent::KeyManagerAgent::CallNcryptAgent(const std::wstring &containerName)
+// Add auxiliary functions for safely calling exe
+bool zzj::sshagent::KeyManagerAgent::CallNcryptAgent(const std::wstring &containerName)
 {
     try
     {
-        // 获取当前模块路径
+        // Get the current module path
         wchar_t modulePath[MAX_PATH];
         if (GetModuleFileNameW(nullptr, modulePath, MAX_PATH) == 0)
         {
@@ -495,10 +343,10 @@ bool sshagent::KeyManagerAgent::CallNcryptAgent(const std::wstring &containerNam
             return false;
         }
 
-        // 构建 exe 路径
+        // Build exe path
         std::wstring exePath = GetExecutablePath(modulePath);
 
-        // 验证文件存在
+        // Verify that the file exists
         if (!PathFileExistsW(exePath.c_str()))
         {
             LOG_ERROR("NcryptAgent.exe not found at: " +
@@ -506,11 +354,11 @@ bool sshagent::KeyManagerAgent::CallNcryptAgent(const std::wstring &containerNam
             return false;
         }
 
-        // 构建命令行参数
+        // Build command line parameters
         std::wstring commandLine = L"\"" + exePath + L"\" \"" + containerName + L"\"";
 
-        // 安全调用进程
-        return ExecuteProcess(commandLine);
+        // Start a process (non-blocking)
+        return ExecuteProcess(commandLine, containerName);
     }
     catch (const std::exception &e)
     {
@@ -519,23 +367,19 @@ bool sshagent::KeyManagerAgent::CallNcryptAgent(const std::wstring &containerNam
     }
 }
 
-// 获取 NcryptAgent.exe 的完整路径
-std::wstring sshagent::KeyManagerAgent::GetExecutablePath(const std::wstring &modulePath)
+// Get the full path of NcryptAgent.exe
+std::wstring zzj::sshagent::KeyManagerAgent::GetExecutablePath(const std::wstring &modulePath)
 {
-    // 从当前模块路径推导出项目根目录
+    // Derived the project root directory from the current module path
     std::wstring path = modulePath;
-
-    // 移除文件名，得到目录
+    // Remove the file name and get the directory
     size_t lastSlash = path.find_last_of(L'\\');
     if (lastSlash != std::wstring::npos)
     {
         path = path.substr(0, lastSlash);
     }
-
-    // 相对路径应该是：..\NcryptAgent\build\NcryptAgent.exe
     std::wstring exePath = path + L"\\NcryptAgent.exe";
 
-    // 规范化路径
     wchar_t canonicalPath[MAX_PATH];
     if (PathCanonicalizeW(canonicalPath, exePath.c_str()))
     {
@@ -546,27 +390,31 @@ std::wstring sshagent::KeyManagerAgent::GetExecutablePath(const std::wstring &mo
 }
 
 
-bool sshagent::KeyManagerAgent::ExecuteProcess(const std::wstring &commandLine)
+bool zzj::sshagent::KeyManagerAgent::ExecuteProcess(const std::wstring &commandLine, const std::wstring &containerName)
 {
     STARTUPINFOW si = {};
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
 
-    // 创建命令行的可修改副本
+
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+
+    // Create a modifiable copy of the command line
     std::vector<wchar_t> cmdLine(commandLine.begin(), commandLine.end());
     cmdLine.push_back(L'\0');
 
-    // 创建进程
-    BOOL success = CreateProcessW(nullptr,           // 应用程序名称
-                                  cmdLine.data(),    // 命令行
-                                  nullptr,           // 进程安全属性
-                                  nullptr,           // 线程安全属性
-                                  FALSE,             // 不继承句柄
-                                  CREATE_NO_WINDOW,  // 创建标志（隐藏窗口）
-                                  nullptr,           // 环境变量
-                                  nullptr,           // 当前目录
-                                  &si,               // 启动信息
-                                  &pi                // 进程信息
+    // Create a process
+    BOOL success = CreateProcessW(nullptr,                              // Application name
+                                  cmdLine.data(),                       // Command line
+                                  nullptr,                              // Process safety attributes
+                                  nullptr,                              // Thread safety attributes
+                                  FALSE,                                // Do not inherit handles
+                                  CREATE_NO_WINDOW | DETACHED_PROCESS,  // Create a detached process
+                                  nullptr,                              // Environment variables
+                                  nullptr,                              // Current directory
+                                  &si,                                  // Startup information
+                                  &pi                                   // Process information
     );
 
     if (!success)
@@ -576,62 +424,118 @@ bool sshagent::KeyManagerAgent::ExecuteProcess(const std::wstring &commandLine)
         return false;
     }
 
-    // 等待进程完成（可选，根据需求决定）
-    DWORD waitResult = WaitForSingleObject(pi.hProcess, 30000);  // 30秒超时
-
-    DWORD exitCode = 0;
-    bool result = false;
-
+    //Check if the process started successfully (wait briefly)
+    DWORD waitResult = WaitForSingleObject(pi.hProcess, 1000); 
     if (waitResult == WAIT_OBJECT_0)
     {
-        // 进程正常结束，获取退出码
-        if (GetExitCodeProcess(pi.hProcess, &exitCode))
+        // The process ended quickly, possibly startup failure.
+        DWORD exitCode;
+        if (GetExitCodeProcess(pi.hProcess, &exitCode) && exitCode != 0)
         {
-            result = (exitCode == 0);  // 假设0表示成功
-            if (!result)
+            LOG_ERROR("NcryptAgent.exe failed to start, exit code: " + std::to_string(exitCode));
+            CloseHandle(pi.hProcess);
+            CloseHandle(pi.hThread);
+            return false;
+        }
+    }
+    // Save the process handle for subsequent management
+    {
+        std::lock_guard<std::mutex> lock(m_processMutex);
+        // If a process with the same name already exists, close the old one first
+        auto it = m_activeProcesses.find(containerName);
+        if (it != m_activeProcesses.end())
+        {
+            TerminateProcess(it->second, 0);
+            CloseHandle(it->second);
+        }
+        m_activeProcesses[containerName] = pi.hProcess;
+    }
+
+    // Close the thread handle (no need to save)
+    CloseHandle(pi.hThread);
+
+    LOG_INFO("NcryptAgent.exe started successfully for container redpass-ssh " );
+    return true;
+
+}
+
+bool zzj::sshagent::KeyManagerAgent::StopNcryptAgent(const std::wstring &containerName)
+{
+    std::lock_guard<std::mutex> lock(m_processMutex);
+
+    auto it = m_activeProcesses.find(containerName);
+    if (it == m_activeProcesses.end())
+    {
+        LOG_INFO("No active process found for container: " +
+                    std::string(containerName.begin(), containerName.end()));
+        return true;  
+    }
+
+    HANDLE hProcess = it->second;
+    bool success = true;
+
+    // Check if the process is still running
+    DWORD exitCode;
+    if (GetExitCodeProcess(hProcess, &exitCode))
+    {
+        if (exitCode == STILL_ACTIVE)
+        {
+            if (!TerminateProcess(hProcess, 0))
             {
-                LOG_ERROR("NcryptAgent.exe returned error code: " + std::to_string(exitCode));
+                LOG_ERROR("Failed to terminate NcryptAgent process");
+                success = false;
+            }
+            else
+            {
+                WaitForSingleObject(hProcess, 1000);  
             }
         }
     }
-    else if (waitResult == WAIT_TIMEOUT)
+
+    CloseHandle(hProcess);
+    m_activeProcesses.erase(it);
+
+    if (success)
     {
-        LOG_ERROR("NcryptAgent.exe execution timeout");
-        TerminateProcess(pi.hProcess, 1);
-    }
-    else
-    {
-        LOG_ERROR("Wait for NcryptAgent.exe failed");
+        LOG_INFO("NcryptAgent.exe stopped for container redpass-ssh " );
     }
 
-    // 清理资源
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    return result;
+    return success;
 }
 
-bool sshagent::KeyManagerAgent::SaveCertificateFile(const std::wstring &containerName,
-                                                    const std::vector<BYTE> &certBlob,
-                                                    const std::wstring &pubOutDir){
-    // Ensure output directory exists
-    if (certBlob.size() == 0 || certBlob.size() > 1024 * 1024) return false;
-    if (!EnsureDirectoryExists(pubOutDir)) return false;
-    CreateDirectoryW(pubOutDir.c_str(), nullptr);
-    std::wstring outFile = pubOutDir + L"\\" + containerName + L"-cert.pub";
-    return WriteBlobToFile(outFile, certBlob);
+void zzj::sshagent::KeyManagerAgent::CleanupAllProcesses()
+{
+    std::lock_guard<std::mutex> lock(m_processMutex);
 
+    for (auto &pair : m_activeProcesses)
+    {
+        const std::wstring &containerName = pair.first;
+        HANDLE hProcess = pair.second;
+
+        DWORD exitCode;
+        if (GetExitCodeProcess(hProcess, &exitCode) && exitCode == STILL_ACTIVE)
+        {
+            LOG_INFO("Terminating NcryptAgent for container: " +
+                     std::string(containerName.begin(), containerName.end()));
+            TerminateProcess(hProcess, 0);
+            WaitForSingleObject(hProcess, 3000);  // 等待3秒
+        }
+        CloseHandle(hProcess);
+    }
+
+    m_activeProcesses.clear();
+    LOG_INFO("All NcryptAgent processes cleaned up");
 }
 
-// 检查文件是否存在
-bool sshagent::fileExists(const std::wstring &path)
+// Check if the file exists
+bool zzj::sshagent::KeyManagerAgent::fileExists(const std::wstring &path)
 {
     DWORD attrs = GetFileAttributesW(path.c_str());
     return (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-// 从缓存中移除身份
-void sshagent::KeyManagerAgent::RemoveIdentityFromCache(const std::wstring &containerName)
+// Remove the identity from the cache
+void zzj::sshagent::KeyManagerAgent::RemoveIdentityFromCache(const std::wstring &containerName)
 {
     std::lock_guard<std::mutex> lk(identities_mutex_);
     std::string containerNameStr = ncrypt_utils::to_string(containerName); 
@@ -639,13 +543,11 @@ void sshagent::KeyManagerAgent::RemoveIdentityFromCache(const std::wstring &cont
     {
         if (it->Comment == containerNameStr)
         {
-            // 释放密钥句柄
             if (it->hKey)
             {
                 NCryptFreeObject(it->hKey);
                 it->hKey = 0;
             }
-            // 从缓存移除
             it = identities_.erase(it);
             LOG_INFO("Removed identity from cache");
         }
@@ -656,22 +558,23 @@ void sshagent::KeyManagerAgent::RemoveIdentityFromCache(const std::wstring &cont
     }
 }
 
-bool sshagent::KeyManagerAgent::unDeploySSH(const std::wstring &containerName,
+bool zzj::sshagent::KeyManagerAgent::unDeploySSH(const std::wstring &containerName,
                                             const std::wstring &pubOutDir)
 {
     bool success = true;
+    if (!StopNcryptAgent(containerName))
+    {
+        LOG_ERROR("Failed to stop NcryptAgent process");
+        success = false;
+    }
 
-    // 1. 删除密钥容器
     if (!DestroyRSAKey(containerName))
     {
         LOG_ERROR("Failed to delete key container");
         success = false;
     }
-
-    // 2. 清除缓存中的身份
     RemoveIdentityFromCache(containerName);
 
-    // 3. 删除公钥文件
     std::wstring pubKeyPath = pubOutDir + L"\\" + containerName + L".pub";
     if (fileExists(pubKeyPath))
     {
@@ -682,7 +585,6 @@ bool sshagent::KeyManagerAgent::unDeploySSH(const std::wstring &containerName,
         }
     }
 
-    // 4. 删除证书文件（如果存在）
     std::wstring certPath = pubOutDir + L"\\" + containerName + L"-cert.pub";
     if (fileExists(certPath))
     {
@@ -692,14 +594,54 @@ bool sshagent::KeyManagerAgent::unDeploySSH(const std::wstring &containerName,
             success = false;
         }
     }
-
-    // 5. 清理部署标记（可选，根据需求）
-    // DeploymentChecker::ClearDeployment();
+    //DeploymentChecker::ClearDeployment();
 
     return success;
 }
 
-static bool WriteBlobToFile(const std::wstring &fullPath, const std::vector<BYTE> &data)
+bool zzj::sshagent::DeploymentChecker::IsDeployed()
+{
+    wchar_t *roaming = nullptr;
+    if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming))) return false;
+    std::wstring flag = std::wstring(roaming) + L"\\nCryptAgent\\deployed.flag";
+    CoTaskMemFree(roaming);
+    return GetFileAttributesW(flag.c_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
+void zzj::sshagent::DeploymentChecker::MarkDeployed()
+{
+    wchar_t *roaming = nullptr;
+    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming)))
+    {
+        std::wstring dir = std::wstring(roaming) + L"\\nCryptAgent";
+        CreateDirectoryW(dir.c_str(), nullptr);
+        std::wstring flag = dir + L"\\deployed.flag";
+        WriteBlobToFile(flag, std::vector<BYTE>{}); 
+        CoTaskMemFree(roaming);
+    }
+}
+
+void zzj::sshagent::DeploymentChecker::ClearDeployment(const std::wstring &containerName)
+{
+    wchar_t *roaming = nullptr;
+    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming)))
+    {
+        std::wstring flag = std::wstring(roaming) + L"\\nCryptAgent\\deployed.flag";
+        DeleteFileW(flag.c_str());
+        std::wstring dir = std::wstring(roaming) + L"\\nCryptAgent";
+        std::wstring pubKey = dir + L"\\" + containerName + L".pub";
+        DeleteFileW(pubKey.c_str());
+
+        std::wstring cert = dir + L"\\" + containerName + L"-cert.pub";
+        DeleteFileW(cert.c_str());
+        CoTaskMemFree(roaming);
+        
+    }
+}
+
+
+bool zzj::sshagent::DeploymentChecker::WriteBlobToFile(const std::wstring &fullPath,
+                                                              const std::vector<BYTE> &data)
 {
     // Set minimal security: only current user
     SECURITY_ATTRIBUTES sa = {sizeof(sa), nullptr, FALSE};
@@ -727,223 +669,48 @@ static bool WriteBlobToFile(const std::wstring &fullPath, const std::vector<BYTE
     CloseHandle(hFile);
     return true;
 }
-bool ReadBlobFromFile(const std::wstring &fullPath, std::vector<BYTE> &outData,
-                      size_t maxSize = 1024 * 1024)  // 默认 1MB 上限
-{
-    // 使用最小安全：仅本用户可读
-    SECURITY_ATTRIBUTES sa{sizeof(sa), nullptr, FALSE};
 
-    // 以只读方式打开
-    HANDLE hFile = CreateFileW(fullPath.c_str(),
-                               GENERIC_READ,     // 只读
-                               FILE_SHARE_READ,  // 允许其他读
-                               &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hFile == INVALID_HANDLE_VALUE) return false;
-
-    // 获取文件大小
-    LARGE_INTEGER filesize = {};
-    if (!GetFileSizeEx(hFile, &filesize) || filesize.QuadPart <= 0 ||
-        filesize.QuadPart > static_cast<LONGLONG>(maxSize))
-    {
-        CloseHandle(hFile);
-        return false;
-    }
-
-    DWORD toRead = static_cast<DWORD>(filesize.QuadPart);
-    outData.resize(toRead);
-
-    DWORD totalRead = 0;
-    BYTE *buffer = outData.data();
-    while (totalRead < toRead)
-    {
-        DWORD chunk = 0;
-        BOOL ok = ReadFile(hFile, buffer + totalRead, toRead - totalRead, &chunk, nullptr);
-        if (!ok || chunk == 0)
-        {
-            CloseHandle(hFile);
-            return false;
-        }
-        totalRead += chunk;
-    }
-
-    CloseHandle(hFile);
-    return true;
-}
-
-bool EnsureDirectoryExists(const std::wstring &dir)
-{
-    size_t pos = 0;
-    std::wstring path;
-    while ((pos = dir.find(L'\\', pos)) != std::wstring::npos)
-    {
-        path = dir.substr(0, pos++);
-        if (path.empty()) continue;
-        CreateDirectoryW(path.c_str(), nullptr);
-    }
-    return CreateDirectoryW(dir.c_str(), nullptr) || GetLastError() == ERROR_ALREADY_EXISTS;
-}
-
-
-std::string base64_encode(const BYTE *data, size_t length)
-{
-    DWORD base64Len = 0;
-    if (!CryptBinaryToStringA(data, static_cast<DWORD>(length),
-                              CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &base64Len))
-    {
-        throw std::runtime_error("Base64 length error");
-    }
-
-    std::string result(base64Len, '\0');
-    if (!CryptBinaryToStringA(data, static_cast<DWORD>(length),
-                              CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, &result[0], &base64Len))
-    {
-        throw std::runtime_error("Base64 encoding error");
-    }
-    //result.pop_back();  // 移除尾部的null字符
-    if (!result.empty() && result.back() == '\0')
-    {
-        result.pop_back();
-    }
-    return result;
-}
-
-// 宽字符串转UTF-8字符串
-std::string narrow(const std::wstring &wstr)
-{
-    int size = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
-    std::string result(size, 0);
-    WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], size, NULL, NULL);
-    return result.c_str();  // 自动处理末尾空字符
-}
-
-bool WriteStringToFile(const std::wstring &filePath, const std::string &content)
-{
-    HANDLE hFile = CreateFileW(filePath.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                               FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == INVALID_HANDLE_VALUE)
-    {
-        return false;
-    }
-    DWORD written = 0;
-    if (!WriteFile(hFile, content.data(), static_cast<DWORD>(content.size()), &written, NULL))
-    {
-        CloseHandle(hFile);
-        return false;
-    }
-    CloseHandle(hFile);
-    return written == content.size();
-}
-
-
-bool sshagent::KeyManagerAgent::ExportPublicKeyToFile(const std::wstring &containerName,
-                                            const std::wstring &pubOutDir){
-    try
-    {
-        auto Blob = ExportRSAPublicKey(containerName);
-        // 转换为Base64
-        const std::string base64Data = base64_encode(Blob.data(), Blob.size());
-        // Ensure output directory exists// 构建公钥文件内容
-        const std::string pubKeyContent = "ssh-rsa " + base64Data ;
-
-        // 确保输出目录存在
-        if (!EnsureDirectoryExists(pubOutDir)) return false;
-        // Path: <pubOutDir>\<MD5>.pub
-        // 2. 计算 MD5 指纹（Legacy MD5）并去掉冒号 → 文件名核心
-        //std::string fp = MD5HexNoColons(Blob.data(), static_cast<DWORD>(Blob.size()));
-        std::wstring outFile = pubOutDir + L"\\" + containerName + L".pub";
-        return WriteStringToFile(outFile, pubKeyContent);
-    }
-    catch (...)
-    {
-        return false;
-    }
-}
-
-bool sshagent::DeploymentChecker::IsDeployed()
-{
-    wchar_t *roaming = nullptr;
-    if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming))) return false;
-    std::wstring flag = std::wstring(roaming) + L"\\nCryptAgent\\deployed.flag";
-    CoTaskMemFree(roaming);
-    return GetFileAttributesW(flag.c_str()) != INVALID_FILE_ATTRIBUTES;
-}
-
-void sshagent::DeploymentChecker::MarkDeployed()
-{
-    wchar_t *roaming = nullptr;
-    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming)))
-    {
-        std::wstring dir = std::wstring(roaming) + L"\\nCryptAgent";
-        CreateDirectoryW(dir.c_str(), nullptr);
-        std::wstring flag = dir + L"\\deployed.flag";
-        WriteBlobToFile(flag, std::vector<BYTE>{});  // 写一个空文件
-        CoTaskMemFree(roaming);
-    }
-}
-
-void sshagent::DeploymentChecker::ClearDeployment(const std::wstring &containerName)
-{
-    wchar_t *roaming = nullptr;
-    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming)))
-    {
-        std::wstring flag = std::wstring(roaming) + L"\\nCryptAgent\\deployed.flag";
-        DeleteFileW(flag.c_str());
-        std::wstring dir = std::wstring(roaming) + L"\\nCryptAgent";
-        // 删除公钥文件
-        std::wstring pubKey = dir + L"\\" + containerName + L".pub";
-        DeleteFileW(pubKey.c_str());
-
-        // 删除证书文件
-        std::wstring cert = dir + L"\\" + containerName + L"-cert.pub";
-        DeleteFileW(cert.c_str());
-        CoTaskMemFree(roaming);
-        
-    }
-}
-
-bool sshagent::UploadPublicKey(const std::vector<BYTE> &pubBlob, const std::string &principal,
+bool zzj::sshagent::KeyManagerAgent::UploadPublicKey(const std::vector<BYTE> &pubBlob,
+                                                     const std::string &principal,
                                const std::string &caEndpoint)
 {
     return TRUE;
 }
 
-bool sshagent::DownloadSSHCertificate(const std::string &certUrl, const std::wstring &outPath)
+bool zzj::sshagent::KeyManagerAgent::DownloadSSHCertificate(const std::string &certUrl,
+                                                            const std::wstring &outPath)
 {
     return TRUE;
 }
 
-
-
-std::vector<sshagent::KeyManagerAgent::Identity> sshagent::KeyManagerAgent::ExportAllIdentities()
+std::vector<zzj::sshagent::KeyManagerAgent::Identity> zzj::sshagent::KeyManagerAgent::ExportAllIdentities()
 {
     std::lock_guard<std::mutex> lk(identities_mutex_);
-    return identities_;  // 返回当前缓存
+    return identities_;  
 }
 
-const DWORD sshagent::KeyManagerAgent::READ_BUF_SIZE = 64 * 1024;
-const int sshagent::KeyManagerAgent::STABLE_CHECKS = 4;
-const std::chrono::milliseconds sshagent::KeyManagerAgent::STABLE_DELAY(200);
-const std::chrono::seconds sshagent::KeyManagerAgent::TOTAL_TIMEOUT(20);
-bool sshagent::KeyManagerAgent::ReadFileToBuffer(const std::wstring &path, std::vector<char> &out)
+
+const DWORD zzj::sshagent::KeyManagerAgent::READ_BUF_SIZE = 64 * 1024;
+const int zzj::sshagent::KeyManagerAgent::STABLE_CHECKS = 4;
+const std::chrono::milliseconds zzj::sshagent::KeyManagerAgent::STABLE_DELAY(200);
+const std::chrono::seconds zzj::sshagent::KeyManagerAgent::TOTAL_TIMEOUT(20);
+bool zzj::sshagent::KeyManagerAgent::ReadFileToBuffer(const std::wstring &path, std::vector<char> &out)
 {
     HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
                                FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE){
         return false;
     }
-    // 获取文件大小
     LARGE_INTEGER fileSize;
     if (!GetFileSizeEx(hFile, &fileSize)){
         CloseHandle(hFile);
         return false;
     }
-    // 检查文件大小是否合理
     if (fileSize.QuadPart < 0 || fileSize.QuadPart > MAXDWORD){
         CloseHandle(hFile);
         return false;
     }
     DWORD fileSizeDW = static_cast<DWORD>(fileSize.QuadPart);
-    // 调整缓冲区大小
     try
     {
         out.resize(fileSizeDW);
@@ -953,14 +720,13 @@ bool sshagent::KeyManagerAgent::ReadFileToBuffer(const std::wstring &path, std::
         CloseHandle(hFile);
         return false;
     }
-    // 读取文件内容
     DWORD bytesRead = 0;
     BOOL success = FALSE;
     if (fileSizeDW > 0){
         success = ReadFile(hFile, out.data(), fileSizeDW, &bytesRead, NULL);
     }
     else{
-        success = TRUE;  // 空文件
+        success = TRUE;  // empty
         bytesRead = 0;
     }
     CloseHandle(hFile);
@@ -973,15 +739,15 @@ bool sshagent::KeyManagerAgent::ReadFileToBuffer(const std::wstring &path, std::
 }
 
 
-HANDLE sshagent::KeyManagerAgent::TryOpenFileReadExclusive(const std::wstring &path)
+HANDLE zzj::sshagent::KeyManagerAgent::TryOpenFileReadExclusive(const std::wstring &path)
 {
     HANDLE h = CreateFileW(path.c_str(), GENERIC_READ,
-                           FILE_SHARE_READ,  // 允许其他读者，如果写者拒绝共享则可能失败
+                           FILE_SHARE_READ,  // Allow other readers
                            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     return h;
 }
 
-bool sshagent::KeyManagerAgent::WaitFileStable(const std::wstring &fullpath,
+bool zzj::sshagent::KeyManagerAgent::WaitFileStable(const std::wstring &fullpath,
                                      std::chrono::milliseconds perInterval, int stableNeeded,
                                      std::chrono::seconds timeout)
 {
@@ -992,11 +758,11 @@ bool sshagent::KeyManagerAgent::WaitFileStable(const std::wstring &fullpath,
 
     while (clock::now() < deadline)
     {
-        // 尝试获取文件大小
+        // Try to get the file size
         WIN32_FILE_ATTRIBUTE_DATA fad;
         if (!GetFileAttributesExW(fullpath.c_str(), GetFileExInfoStandard, &fad))
         {
-            // 文件可能还不存在
+            // The file may not exist yet
             std::this_thread::sleep_for(perInterval);
             continue;
         }
@@ -1006,29 +772,24 @@ bool sshagent::KeyManagerAgent::WaitFileStable(const std::wstring &fullpath,
         size.HighPart = fad.nFileSizeHigh;
         long long curSize = static_cast<long long>(size.QuadPart);
 
-        // 尝试打开文件以检测写者是否仍持有独占锁
+        // Try to open the file to detect if the writer still holds the exclusive lock
         HANDLE h = TryOpenFileReadExclusive(fullpath);
         if (h == INVALID_HANDLE_VALUE){
-            // 无法打开读取 - 可能仍在被写入（写者拒绝共享）
             stableCount = 0;
             std::this_thread::sleep_for(perInterval);
             continue;
         }
         else{
-            // 打开成功 - 立即关闭
             CloseHandle(h);
         }
 
-        if (curSize == prevSize)
-        {
+        if (curSize == prevSize){
             stableCount++;
-            if (stableCount >= stableNeeded)
-            {
+            if (stableCount >= stableNeeded){
                 return true;
             }
         }
-        else
-        {
+        else{
             prevSize = curSize;
             stableCount = 0;
         }
@@ -1039,29 +800,26 @@ bool sshagent::KeyManagerAgent::WaitFileStable(const std::wstring &fullpath,
     return false;
 }
 
-bool sshagent::KeyManagerAgent::SignPubKeyWithCA(const std::wstring &pubPath,
+bool zzj::sshagent::KeyManagerAgent::SignPubKeyWithCA(const std::wstring &pubPath,
                                        const std::vector<char> &pubContent,
                                        const std::string &principal)
 {
-    // 实现SSH CA签名逻辑 需要调用实际的SSH CA API
     try
     {
-        // 1. 将公钥内容转换为适当格式
+        // 1. Convert the public key content to the appropriate format
         std::string pubKeyStr(pubContent.begin(), pubContent.end());
 
-        // 2. 调用SSH CA上传公钥并申请证书
-        // 这里应该调用现有的sshagent::UploadPublicKey函数
+        // 2. Call SSH CA to upload the public key and apply for a certificate
         // if (!sshagent::UploadPublicKey(pubKeyStr, principal, sshCaUploadUrl_)) {
         //     return false;
         // }
 
-        // 3. 下载证书并保存
+        // 3. Download the certificate and save it
         std::wstring certPath = pubPath.substr(0, pubPath.find_last_of(L'.')) + L"-cert.pub";
         // if (!sshagent::DownloadSSHCertificate(sshCaDownloadUrl_, certPath)) {
         //     return false;
         // }
 
-        // 临时实现：标记处理成功
         LOG_INFO("SignPubKeyWithCA: Successfully processed " +
                  std::string(pubPath.begin(), pubPath.end()));
         return true;
@@ -1073,34 +831,34 @@ bool sshagent::KeyManagerAgent::SignPubKeyWithCA(const std::wstring &pubPath,
     }
 }
 
-// 辅助：尝试创建 marker 文件（原子：CREATE_NEW）
-// 返回 handle（非 INVALID_HANDLE_VALUE）表示创建成功，调用方负责 CloseHandle +
-// DeleteFile(markerPath). 如果创建失败并且 GetLastError() == ERROR_FILE_EXISTS 则表示已有 marker。
-static HANDLE CreateSigningMarker(const std::wstring &markerPath)
+// Auxiliary: Attempt to create a marker file (atom: CREATE_NEW)
+// Return handle (not INVALID_HANDLE_VALUE) to indicate successful creation. The caller is
+// responsible for CloseHandle + DeleteFile(markerPath). If creation fails and GetLastError() ==
+// ERROR_FILE_EXISTS, the marker already exists.
+HANDLE zzj::sshagent::KeyManagerAgent::CreateSigningMarker(const std::wstring &markerPath)
 {
     HANDLE h = CreateFileW(markerPath.c_str(), GENERIC_WRITE,
-                           0,  // 不允许共享，确保独占
+                           0,  // Disallow sharing, ensure exclusive use
                            NULL,
-                           CREATE_NEW,  // 原子创建，如果已存在则失败
+                           CREATE_NEW,  // Atomically create, fails if the file already exists
                            FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
-    // 如果成功，返回 handle（会在后续 CloseHandle 即删除）
+    // If successful, returns the handle (which will be deleted in the subsequent CloseHandle call)
     return h;
 }
 
-// 删除 marker（若仍存在）
-static void RemoveSigningMarkerHandle(HANDLE hMarker)
+// Delete the marker (if it still exists)
+void zzj::sshagent::KeyManagerAgent::RemoveSigningMarkerHandle(HANDLE hMarker)
 {
     if (hMarker != INVALID_HANDLE_VALUE)
     {
-        // 如果 OPEN 时使用 FILE_FLAG_DELETE_ON_CLOSE，CloseHandle 会自动删除文件。
+        // If FILE_FLAG_DELETE_ON_CLOSE was used during OPEN, CloseHandle will automatically delete
+        // the file.
         CloseHandle(hMarker);
     }
 }
-
-// 检查 marker 是否存在并且是否为 stale（超过 timeout）
-// 如果存在返回 true；同时如果超过 timeout 返回 true 并 sets staleOut true.
-static bool IsSigningMarkerPresent(const std::wstring &markerPath, std::chrono::seconds timeout,
-                                   bool &staleOut)
+// Check if the marker exists and is stale (timeout exceeded)
+// If it exists, return true; if timeout exceeded, return true and set staleOut to true.
+bool zzj::sshagent::KeyManagerAgent::IsSigningMarkerPresent(const std::wstring &markerPath, std::chrono::seconds timeout, bool &staleOut)
 {
     staleOut = false;
     WIN32_FILE_ATTRIBUTE_DATA fad;
@@ -1108,7 +866,7 @@ static bool IsSigningMarkerPresent(const std::wstring &markerPath, std::chrono::
     {
         return false;
     }
-    // 获取最后写入时间
+    // Get the last write time
     FILETIME ftWrite = fad.ftLastWriteTime;
     // Convert to system time
     ULONGLONG qw = (static_cast<ULONGLONG>(ftWrite.dwHighDateTime) << 32) | ftWrite.dwLowDateTime;
@@ -1138,7 +896,7 @@ static bool IsSigningMarkerPresent(const std::wstring &markerPath, std::chrono::
 // Wait for marker removal OR certificate file creation (either one stops waiting)
 // Returns true if certificate exists (and presumably ready) or marker removed and no cert =
 // continue, false if timeout.
-static bool WaitForMarkerRemovalOrCert(const std::wstring &markerPath, const std::wstring &certPath,
+bool zzj::sshagent::KeyManagerAgent::WaitForMarkerRemovalOrCert( const std::wstring &markerPath, const std::wstring &certPath,
                                        std::chrono::seconds timeout)
 {
     using clock = std::chrono::steady_clock;
@@ -1162,7 +920,7 @@ static bool WaitForMarkerRemovalOrCert(const std::wstring &markerPath, const std
 }
 
 
-bool sshagent::KeyManagerAgent::MonitorAndSignPubKey(const std::wstring &watchDir,
+bool zzj::sshagent::KeyManagerAgent::MonitorAndSignPubKey(const std::wstring &watchDir,
                                            const std::wstring &expectedFilename,
                                            const std::string &principal)
 {
@@ -1199,17 +957,14 @@ bool sshagent::KeyManagerAgent::MonitorAndSignPubKey(const std::wstring &watchDi
 
     while (true)
     {
-        // 提取文件名（不是以null结尾的）
-        std::wstring filename(pInfo->FileName,
-                              pInfo->FileName + pInfo->FileNameLength / sizeof(WCHAR));
+        std::wstring filename(pInfo->FileName, pInfo->FileName + pInfo->FileNameLength / sizeof(WCHAR));
 
-        // 检查是否是我们期望的文件
         if (filename == expectedFilename)
         {
             matchedFile = filename;
             found = true;
 
-            // 如果是重命名新名称，认为是原子移动，可能已准备就绪
+            // If it is a rename, it is considered an atomic move and may be ready
             if (pInfo->Action == FILE_ACTION_RENAMED_NEW_NAME)
             {
                 isAtomicMove = true;
@@ -1231,19 +986,16 @@ bool sshagent::KeyManagerAgent::MonitorAndSignPubKey(const std::wstring &watchDi
     }
 
     CloseHandle(hDir);
-
     if (!found)
     {
         LOG_INFO("MonitorAndSignPubKey: Expected file not found in directory changes");
         return false;
     }
 
-    // 完整路径
     std::wstring fullpath = watchDir + L"\\" + matchedFile;
     std::wstring certPath = fullpath.substr(0, fullpath.find_last_of(L'.')) + L"-cert.pub";
     std::wstring markerPath = fullpath + L".signing";
-
-    // 等待文件稳定
+    // Wait for the file to stabilize
     bool ready =
         WaitFileStable(fullpath, STABLE_DELAY, isAtomicMove ? 2 : STABLE_CHECKS, TOTAL_TIMEOUT);
     if (!ready)
@@ -1367,9 +1119,7 @@ bool sshagent::KeyManagerAgent::MonitorAndSignPubKey(const std::wstring &watchDi
         bool certReady = WaitFileStable(certPath, STABLE_DELAY, 3, TOTAL_TIMEOUT);
         if (!certReady)
         {
-            LOG_ERROR(
-                "MonitorAndSignPubKey: signing reported success but cert did not "
-                "appear/stabilize: " +
+            LOG_ERROR("MonitorAndSignPubKey: signing reported success but cert did not " "appear/stabilize: " +
                 std::string(certPath.begin(), certPath.end()));
             // we still remove marker to allow retries, but signal failure
             RemoveSigningMarkerHandle(hMarker);
@@ -1390,23 +1140,120 @@ bool sshagent::KeyManagerAgent::MonitorAndSignPubKey(const std::wstring &watchDi
     }
 }
 
+//------------------------------------------------------------------------------
+// marshalPublicKey (utils.go -> unmarshalRSA/ECC placeholder)
+//------------------------------------------------------------------------------
+std::vector<BYTE> zzj::sshagent::KeyManagerAgent::MarshalPublicKey(NCRYPT_KEY_HANDLE hKey)
+{
+    DWORD size = 0;
+    SECURITY_STATUS st =
+        NCryptExportKey(hKey, 0, BCRYPT_RSAPUBLIC_BLOB, nullptr, nullptr, 0, &size, 0);
+    if (FAILED(st))
+    {
+        throw zzj::NCryptException("NCryptExportKey failed", st);
+    }
 
-void sshagent::KeyManagerAgent::OpenProvider() {
+    std::vector<BYTE> Blob(size);
+    st = NCryptExportKey(hKey, 0, BCRYPT_RSAPUBLIC_BLOB, nullptr, Blob.data(), size, &size, 0);
+    if (FAILED(st))
+    {
+        throw zzj::NCryptException("NCryptExportKey failed", st);
+    }
+
+    struct BCRYPT_RSAKEY_BLOB
+    {
+        ULONG Magic;
+        ULONG BitLength;
+        ULONG cbPublicExp;
+        ULONG cbModulus;
+        ULONG cbPrime1;
+        ULONG cbPrime2;
+    };
+
+    BYTE *ptr = Blob.data();
+    auto *header = reinterpret_cast<BCRYPT_RSAKEY_BLOB *>(ptr);
+    BYTE *exp = ptr + sizeof(BCRYPT_RSAKEY_BLOB);
+    BYTE *mod = exp + header->cbPublicExp;
+
+    std::vector<BYTE> wire;
+
+    auto append_mpint = [&](const BYTE *data, DWORD len)
+    {
+        /* while (len > 0 && data[0] == 0)
+            ++data, --len;
+        wire.push_back((len >> 24) & 0xFF);
+        wire.push_back((len >> 16) & 0xFF);
+        wire.push_back((len >> 8) & 0xFF);
+        wire.push_back(len & 0xFF);
+        wire.insert(wire.end(), data, data + len);
+        */
+        // 1. Little endian → tmp, then reverse to big endian
+        std::vector<BYTE> tmp(data, data + len);
+        std::reverse(tmp.begin(), tmp.end());
+        // 2. Remove the leading 0 at the MSB end
+        auto it = tmp.begin();
+        while (it != tmp.end() && *it == 0) ++it;
+        std::vector<BYTE> beData(it, tmp.end());
+        // 3. If the highest bit is set to 1, insert a 0x00 in front
+        if (!beData.empty() && (beData[0] & 0x80))
+        {
+            beData.insert(beData.begin(), 0x00);
+        }
+        // 4. Write length (4 bytes big endian) and write content
+        DWORD outLen = static_cast<DWORD>(beData.size());
+        wire.push_back((outLen >> 24) & 0xFF);
+        wire.push_back((outLen >> 16) & 0xFF);
+        wire.push_back((outLen >> 8) & 0xFF);
+        wire.push_back(outLen & 0xFF);
+        wire.insert(wire.end(), beData.begin(), beData.end());
+    };
+
+    auto append_str = [&](const char *s)
+    {
+        DWORD len = strlen(s);
+        wire.push_back((len >> 24) & 0xFF);
+        wire.push_back((len >> 16) & 0xFF);
+        wire.push_back((len >> 8) & 0xFF);
+        wire.push_back(len & 0xFF);
+        wire.insert(wire.end(), s, s + len);
+    };
+
+    append_str("ssh-rsa");
+    append_mpint(exp, header->cbPublicExp);
+    append_mpint(mod, header->cbModulus);
+
+    return wire;
+}
+
+bool zzj::sshagent::KeyManagerAgent::EnsureDirectoryExists(const std::wstring &dir)
+{
+    size_t pos = 0;
+    std::wstring path;
+    while ((pos = dir.find(L'\\', pos)) != std::wstring::npos)
+    {
+        path = dir.substr(0, pos++);
+        if (path.empty()) continue;
+        CreateDirectoryW(path.c_str(), nullptr);
+    }
+    return CreateDirectoryW(dir.c_str(), nullptr) || GetLastError() == ERROR_ALREADY_EXISTS;
+}
+
+void zzj::sshagent::KeyManagerAgent::OpenProvider() {
     if (hProv_) return;
     SECURITY_STATUS st = NCryptOpenStorageProvider(&hProv_, ncrypt::MS_PLATFORM_PROVIDER, 0);
     if (FAILED(st)) throw NCryptException("NCryptOpenStorageProvider failed", st);
 }
 
-void sshagent::KeyManagerAgent::ReloadAllIdentities() {
+void zzj::sshagent::KeyManagerAgent::ReloadAllIdentities() {
     std::lock_guard<std::mutex> lk(identities_mutex_);
     identities_.clear();
-    // 枚举所有持久化 key
+    // Enumerate all persistent keys
     NCryptKeyName *pName = nullptr;
     PVOID enumState = nullptr;
     while (true)
     {
-        SECURITY_STATUS st = NCryptEnumKeys(hProv_,   // openProvider 已经打开 hProv_
-                                            nullptr,  // 无特殊 scope
+        SECURITY_STATUS st = NCryptEnumKeys(hProv_,   // OpenProvider is already open hProv_
+                                            nullptr,  // No special scope
                                             &pName, &enumState, 0);
         if (st == NTE_NO_MORE_ITEMS) break;
         if (FAILED(st)) throw NCryptException("NCryptEnumKeys failed", st);
@@ -1429,10 +1276,4 @@ void sshagent::KeyManagerAgent::ReloadAllIdentities() {
 
 }
 
-bool sshagent::RevokeSSHCertificate(const std::string &caRevokeEndpoint,
-                                    const std::wstring &certSerial)
-{
-    return false;
-}
 
-void sshagent::CleanupAll(const std::string &caRevokeEndpoint, const std::wstring &containerName) {}
