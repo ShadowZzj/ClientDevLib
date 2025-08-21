@@ -41,23 +41,34 @@ class ProcessSync
 #else
         std::string filePath = zzj::File::GetSystemAppDataFolder() + "/" + folderName;
         if (!zzj::IsDirExist(filePath.c_str()))
-            zzj::File::MkdirRecursive(filePath, S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IRWXU);
+            zzj::File::MkdirRecursive(filePath, S_IRWXG | S_IRWXO | S_IRWXU);
+        else
+        {
+            //Ê£ÄÊü•Êñá‰ª∂Â§πÊùÉÈôêÊòØÂê¶ÊòØ777
+            if (boost::filesystem::status(filePath).permissions() != (boost::filesystem::perms::owner_all | boost::filesystem::perms::group_all | boost::filesystem::perms::others_all))
+            {
+                boost::filesystem::permissions(filePath, boost::filesystem::all_all);
+            }
+        }
         ret = filePath;
 #endif
         boost::filesystem::path globalLockPath = ret / "global.lock";
         {
             std::ofstream ofs(globalLockPath.string(), std::ios::app);
             #ifdef _WIN32
-            SetNamedSecurityInfoA((LPSTR)globalLockPath.string().c_str(), // Œƒº˛ªÚƒø¬ºµƒ√˚≥∆
-                                 SE_FILE_OBJECT,                       // ÷∏ æŒ™Œƒº˛/ƒø¬º
-                                 DACL_SECURITY_INFORMATION,            // …Ë÷√DACL
-                                 NULL,                                 // ≤ª∏ƒ±‰À˘”–’ﬂ
-                                 NULL,                                 // ≤ª∏ƒ±‰◊È
-                                 NULL,                                 //  πDACLŒ™ø’
-                                 NULL                                  // ≤ª…Ë÷√SACL
+            SetNamedSecurityInfoA((LPSTR)globalLockPath.string().c_str(), 
+                                 SE_FILE_OBJECT,                       
+                                 DACL_SECURITY_INFORMATION,            
+                                 NULL,                                 
+                                 NULL,                                 
+                                 NULL,                                
+                                 NULL                                  
                                  );
             #else
-            boost::filesystem::permissions(globalLockPath, boost::filesystem::all_all);
+            if (boost::filesystem::status(globalLockPath).permissions() != (boost::filesystem::perms::owner_all | boost::filesystem::perms::group_all | boost::filesystem::perms::others_all))
+            {
+                boost::filesystem::permissions(globalLockPath, boost::filesystem::all_all);
+            }
             #endif
         }
         boost::interprocess::file_lock globalLock(globalLockPath.string().c_str());
@@ -68,16 +79,19 @@ class ProcessSync
         {
             std::ofstream ofs(fileLockPath.string(), std::ios::app);
 #ifdef _WIN32
-            SetNamedSecurityInfoA((LPSTR)fileLockPath.string().c_str(), // Œƒº˛ªÚƒø¬ºµƒ√˚≥∆
-                                  SE_FILE_OBJECT,                         // ÷∏ æŒ™Œƒº˛/ƒø¬º
-                                  DACL_SECURITY_INFORMATION,              // …Ë÷√DACL
-                                  NULL,                                   // ≤ª∏ƒ±‰À˘”–’ﬂ
-                                  NULL,                                   // ≤ª∏ƒ±‰◊È
-                                  NULL,                                   //  πDACLŒ™ø’
-                                  NULL                                    // ≤ª…Ë÷√SACL
+            SetNamedSecurityInfoA((LPSTR)fileLockPath.string().c_str(), 
+                                  SE_FILE_OBJECT,                         
+                                  DACL_SECURITY_INFORMATION,             
+                                  NULL,                                   
+                                  NULL,                                   
+                                  NULL,                                   
+                                  NULL                                    
             );
 #else
-            boost::filesystem::permissions(fileLockPath, boost::filesystem::all_all);
+            if (boost::filesystem::status(fileLockPath).permissions() != (boost::filesystem::perms::owner_all | boost::filesystem::perms::group_all | boost::filesystem::perms::others_all))
+            {
+                boost::filesystem::permissions(fileLockPath, boost::filesystem::all_all);
+            }
 #endif
         }
         m_fileLock         = std::make_unique<boost::interprocess::file_lock>(fileLockPath.string().c_str());
