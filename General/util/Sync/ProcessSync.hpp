@@ -44,7 +44,7 @@ class ProcessSync
             zzj::File::MkdirRecursive(filePath, S_IRWXG | S_IRWXO | S_IRWXU);
         else
         {
-            //检查文件夹权限是否是777
+            
             if (boost::filesystem::status(filePath).permissions() != (boost::filesystem::perms::owner_all | boost::filesystem::perms::group_all | boost::filesystem::perms::others_all))
             {
                 boost::filesystem::permissions(filePath, boost::filesystem::all_all);

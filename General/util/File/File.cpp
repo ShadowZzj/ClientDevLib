@@ -172,7 +172,7 @@ int zzj::FileV2::RenameCopy(boost::filesystem::path src, boost::filesystem::path
     try
     {
         std::map<std::string, std::string> oldToNew;
-        //重命名操作
+
         for (auto &it : boost::filesystem::recursive_directory_iterator(src))
         {
             if (boost::filesystem::is_directory(it))
@@ -195,7 +195,7 @@ int zzj::FileV2::RenameCopy(boost::filesystem::path src, boost::filesystem::path
         }
         
 #ifdef _WIN32
-        //复制操作
+
         std::filesystem::copy(src.string(), dst.string(),
                               std::filesystem::copy_options::recursive |
                               std::filesystem::copy_options::overwrite_existing);
