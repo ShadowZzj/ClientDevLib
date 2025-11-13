@@ -67,6 +67,20 @@ function(GenerateGeneralUtil)
 	else()
 		message(STATUS "CURL FEATURE: ${FEATURE_CURL}")
 	endif()
+
+	if ((NOT DEFINED FEATURE_SSH) OR (NOT ${FEATURE_SSH}))
+		file(GLOB FEATURE_FILES
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/SSH/SSHCertificate.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/SSH/SSHCertificate.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/SSH/Bytebuffer.hpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/SSH/SSHAgentProtocol.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/SSH/SSHAgentProtocol.cpp"
+		)
+		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
+	else()
+		message(STATUS "SSH FEATURE: ${FEATURE_SSH}")
+		set(FEATURE_OPENSSL ON)
+	endif()
 	if(${FEATURE_D3D9})
 		message(STATUS "D3D9Hook feature: ${FEATURE_D3D9}")
 		set (FEATURE_IMGUI_WIN32_DIRECTX9 ON)

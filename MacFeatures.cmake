@@ -54,6 +54,11 @@ function(GenerateMacOSUtil)
 		list(APPEND MACOS_UTIL_DLL_FILES ${CurlDll} ${SSLDll} ${CryptoDll})
 	endif()
 
+	if (${FEATURE_SSH})
+		message(STATUS "SSH feature: ${FEATURE_SSH}")
+		set(FEATURE_OPENSSL ON)
+	endif()
+
 	if (${FEATURE_GRPC})
 		message(STATUS "gRPC feature: ${FEATURE_GRPC}")
 		list(APPEND MACOS_UTIL_LIB_FILES ${GrpcLib} ${SSLDll} ${CryptoDll} ${ZlibLib})

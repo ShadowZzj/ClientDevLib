@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <ncrypt.h>
+#include <bcrypt.h>
 #include <tchar.h>
 #include <vector>
 #include <wincrypt.h>
@@ -94,7 +95,7 @@ int zzj::TPMKey::Open(const std::string &keycontainer)
     return 0;
 }
 
-int zzj::TPMKey::ExportPublicKey(PCERT_PUBLIC_KEY_INFO *publicKeyInfo)
+int zzj::TPMKey::ExportPublicKeyX509(PCERT_PUBLIC_KEY_INFO *publicKeyInfo)
 {
     if (_hKey == NULL) return -1;
 
@@ -113,7 +114,163 @@ int zzj::TPMKey::ExportPublicKey(PCERT_PUBLIC_KEY_INFO *publicKeyInfo)
 
     return 0;
 }
+int zzj::TPMKey::ExportPublicKeySSH(std::vector<uint8_t> &publicKey)
+{
+    if (_hKey == NULL) return -1;
 
+    // Helper function to ensure mpint positive (add leading 0x00 if MSB is set)
+    auto ensurePositive = [](std::vector<uint8_t> &bytes)
+    {
+        if (!bytes.empty() && (bytes[0] & 0x80) != 0)
+        {
+            bytes.insert(bytes.begin(), 0x00);
+        }
+    };
+
+    // Query which algorithm group the key belongs to (RSA or ECC)
+    WCHAR algoGroup[32] = {0};
+    DWORD cbProp = 0;
+    SECURITY_STATUS status =
+        NCryptGetProperty(_hKey, NCRYPT_ALGORITHM_GROUP_PROPERTY,
+                          reinterpret_cast<PBYTE>(algoGroup), sizeof(algoGroup), &cbProp, 0);
+    if (status != ERROR_SUCCESS) return status;
+
+    if (!_wcsicmp(algoGroup, NCRYPT_RSA_ALGORITHM_GROUP))
+    {
+        // Export RSA public key as BCRYPT_RSAPUBLIC_BLOB (same as SSHKey::exportPublicKey)
+        DWORD publicBlobLen = 0;
+        status = NCryptExportKey(_hKey, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, NULL, 0, &publicBlobLen, 0);
+        if (status != ERROR_SUCCESS) return status;
+
+        std::vector<BYTE> publicBlob(publicBlobLen);
+        status = NCryptExportKey(_hKey, 0, BCRYPT_RSAPUBLIC_BLOB, NULL, publicBlob.data(),
+                                 publicBlobLen, &publicBlobLen, 0);
+        if (status != ERROR_SUCCESS) return status;
+
+        BCRYPT_RSAKEY_BLOB *rsaBlob = (BCRYPT_RSAKEY_BLOB *)publicBlob.data();
+        BYTE *exponentRaw = publicBlob.data() + sizeof(BCRYPT_RSAKEY_BLOB);
+        BYTE *modulusRaw = exponentRaw + rsaBlob->cbPublicExp;
+
+        // BCRYPT stores exponent in LITTLE-ENDIAN format (per Windows docs)
+        // Convert to big-endian minimal representation
+        std::vector<uint8_t> expBytes(8, 0);
+        for (DWORD i = 0; i < rsaBlob->cbPublicExp; i++)
+        {
+            expBytes[8 - rsaBlob->cbPublicExp + i] = exponentRaw[i];
+        }
+
+        uint64_t expValue = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            expValue = (expValue << 8) | expBytes[i];
+        }
+
+        std::vector<uint8_t> expBytesMinimal;
+        if (expValue == 0)
+        {
+            expBytesMinimal.push_back(0);
+        }
+        else
+        {
+            while (expValue > 0)
+            {
+                expBytesMinimal.insert(expBytesMinimal.begin(), (uint8_t)(expValue & 0xFF));
+                expValue >>= 8;
+            }
+        }
+
+        // BCRYPT stores modulus in BIG-ENDIAN format
+        std::vector<uint8_t> modulusBigEndian(rsaBlob->cbModulus);
+        for (DWORD i = 0; i < rsaBlob->cbModulus; i++)
+        {
+            modulusBigEndian[i] = modulusRaw[i];
+        }
+
+        // Ensure mpint positive
+        ensurePositive(expBytesMinimal);
+        ensurePositive(modulusBigEndian);
+
+        // SSH format: type + exponent + modulus
+        zzj::SSH::ByteBuffer sshKey;
+        sshKey.writeString("ssh-rsa");
+        sshKey.writeString(expBytesMinimal);
+        sshKey.writeString(modulusBigEndian);
+        publicKey = sshKey.data;
+
+        return 0;
+    }
+    else if (!_wcsicmp(algoGroup, NCRYPT_ECDSA_ALGORITHM_GROUP))
+    {
+        // Export ECDSA public key as BCRYPT_ECCPUBLIC_BLOB
+        DWORD publicBlobLen = 0;
+        status = NCryptExportKey(_hKey, 0, BCRYPT_ECCPUBLIC_BLOB, NULL, NULL, 0, &publicBlobLen, 0);
+        if (status != ERROR_SUCCESS) return status;
+
+        std::vector<BYTE> publicBlob(publicBlobLen);
+        status = NCryptExportKey(_hKey, 0, BCRYPT_ECCPUBLIC_BLOB, NULL, publicBlob.data(),
+                                 publicBlobLen, &publicBlobLen, 0);
+        if (status != ERROR_SUCCESS) return status;
+
+        if (publicBlobLen < sizeof(BCRYPT_ECCKEY_BLOB)) return -1;
+
+        BCRYPT_ECCKEY_BLOB *eccBlob = (BCRYPT_ECCKEY_BLOB *)publicBlob.data();
+        BYTE *xCoord = publicBlob.data() + sizeof(BCRYPT_ECCKEY_BLOB);
+        BYTE *yCoord = xCoord + eccBlob->cbKey;
+
+        // Determine curve name based on magic number
+        const char *sshCurveName = nullptr;
+        const char *sshKeyType = nullptr;
+
+        switch (eccBlob->dwMagic)
+        {
+            case BCRYPT_ECDH_PUBLIC_P256_MAGIC:
+            case BCRYPT_ECDSA_PUBLIC_P256_MAGIC:
+                sshKeyType = "ecdsa-sha2-nistp256";
+                sshCurveName = "nistp256";
+                break;
+            case BCRYPT_ECDH_PUBLIC_P384_MAGIC:
+            case BCRYPT_ECDSA_PUBLIC_P384_MAGIC:
+                sshKeyType = "ecdsa-sha2-nistp384";
+                sshCurveName = "nistp384";
+                break;
+            case BCRYPT_ECDH_PUBLIC_P521_MAGIC:
+            case BCRYPT_ECDSA_PUBLIC_P521_MAGIC:
+                sshKeyType = "ecdsa-sha2-nistp521";
+                sshCurveName = "nistp521";
+                break;
+            default:
+                return -1;  // Unsupported curve
+        }
+
+        // BCRYPT stores coordinates in big-endian format (fixed length: cbKey bytes)
+        std::vector<uint8_t> xCoordVec(xCoord, xCoord + eccBlob->cbKey);
+        std::vector<uint8_t> yCoordVec(yCoord, yCoord + eccBlob->cbKey);
+
+        // SSH mpint format requires positive numbers: if MSB is set, add leading 0x00
+        ensurePositive(xCoordVec);
+        ensurePositive(yCoordVec);
+
+        // Build public key point: 04 || X || Y (uncompressed point format)
+        std::vector<uint8_t> publicKeyPoint;
+        publicKeyPoint.push_back(0x04);  // Uncompressed point indicator
+        publicKeyPoint.insert(publicKeyPoint.end(), xCoordVec.begin(), xCoordVec.end());
+        publicKeyPoint.insert(publicKeyPoint.end(), yCoordVec.begin(), yCoordVec.end());
+
+        // SSH ECDSA format: key_type + curve_name + public_key_point
+        zzj::SSH::ByteBuffer sshKey;
+        sshKey.writeString(sshKeyType);
+        sshKey.writeString(sshCurveName);
+        sshKey.writeString(publicKeyPoint);
+        publicKey = sshKey.data;
+
+        return 0;
+    }
+    else
+    {
+        // Unsupported algorithm group
+        return -1;
+    }
+}
 int zzj::TPMKey::GenerateCsrDerFormat(const std::string &certSubjectNameFullQualified,
                                       std::vector<BYTE> &csrDer)
 {
@@ -131,7 +288,7 @@ int zzj::TPMKey::GenerateCsrDerFormat(const std::string &certSubjectNameFullQual
                        NULL, certNameBlob.pbData, &certNameBlob.cbData, NULL))
         return GetLastError();
     PCERT_PUBLIC_KEY_INFO publicKey = nullptr;
-    auto status = ExportPublicKey(&publicKey);
+    auto status = ExportPublicKeyX509(&publicKey);
     if (status != 0) return status;
     DEFER { LocalFree(publicKey); };
 
@@ -229,8 +386,8 @@ int zzj::TPMKey::SignDataSha256(const std::vector<char> &data, std::vector<char>
     // 3) Call CryptHashCertificate2 to hash the data
     std::vector<BYTE> hashValue(32);
     ULONG cb = hashValue.size();
-    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, (const BYTE*)data.data(), data.size(),
-                               hashValue.data(), &cb))
+    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, (const BYTE *)data.data(),
+                               data.size(), hashValue.data(), &cb))
     {
         return GetLastError();
     }
@@ -272,6 +429,139 @@ int zzj::TPMKey::SignDataSha256(const std::vector<char> &data, std::vector<char>
             ZeroMemory(pbSignature, cbSignature);
         }
     }
+
+    return 0;
+}
+
+int zzj::TPMKey::SignSSH(const std::vector<uint8_t> &data, uint32_t flags,
+                         std::vector<uint8_t> &sshSignature)
+{
+    if (_hKey == NULL) return -1;
+
+    // Query which algorithm group the key belongs to (RSA or ECC)
+    WCHAR algoGroup[32] = {0};
+    DWORD cbProp = 0;
+    SECURITY_STATUS status =
+        NCryptGetProperty(_hKey, NCRYPT_ALGORITHM_GROUP_PROPERTY,
+                          reinterpret_cast<PBYTE>(algoGroup), sizeof(algoGroup), &cbProp, 0);
+    if (status != ERROR_SUCCESS) return status;
+
+    LPCWSTR hashAlgorithm = BCRYPT_SHA256_ALGORITHM;
+    const char *signatureType = nullptr;
+    DWORD hashSize = 32;  // SHA-256 produces 32 bytes
+    PVOID pPaddingInfo = nullptr;
+    DWORD dwFlags = 0;
+
+    if (!_wcsicmp(algoGroup, NCRYPT_RSA_ALGORITHM_GROUP))
+    {
+        // RSA key: determine hash algorithm and signature type based on flags
+        // SSH_AGENT_RSA_SHA2_256 (2) -> SHA-256, rsa-sha2-256
+        // SSH_AGENT_RSA_SHA2_512 (4) -> SHA-512, rsa-sha2-512
+        // Default (0) -> SHA-256, ssh-rsa (for compatibility)
+        zzj::SSH::SSHSignatureFlags sshFlags = static_cast<zzj::SSH::SSHSignatureFlags>(flags);
+        if ((sshFlags & zzj::SSH::SSHSignatureFlags::RSA_SHA2_512) ==
+            zzj::SSH::SSHSignatureFlags::RSA_SHA2_512)
+        {
+            hashAlgorithm = BCRYPT_SHA512_ALGORITHM;
+            signatureType = "rsa-sha2-512";
+            hashSize = 64;
+        }
+        else if ((sshFlags & zzj::SSH::SSHSignatureFlags::RSA_SHA2_256) ==
+                 zzj::SSH::SSHSignatureFlags::RSA_SHA2_256)
+        {
+            hashAlgorithm = BCRYPT_SHA256_ALGORITHM;
+            signatureType = "rsa-sha2-256";
+            hashSize = 32;
+        }
+        else
+        {
+            // Default to SHA-256 for modern compatibility
+            hashAlgorithm = BCRYPT_SHA256_ALGORITHM;
+            signatureType = "ssh-rsa";
+            hashSize = 32;
+        }
+
+        BCRYPT_PKCS1_PADDING_INFO pi;
+        ZeroMemory(&pi, sizeof(pi));
+        pi.pszAlgId = hashAlgorithm;
+        pPaddingInfo = &pi;
+        dwFlags = BCRYPT_PAD_PKCS1;
+    }
+    else if (!_wcsicmp(algoGroup, NCRYPT_ECDSA_ALGORITHM_GROUP))
+    {
+        // ECDSA key: determine signature type based on curve
+        // For ECDSA, flags are typically ignored, but we'll use appropriate hash for curve
+        hashAlgorithm = BCRYPT_SHA256_ALGORITHM;
+        hashSize = 32;
+        pPaddingInfo = nullptr;
+        dwFlags = 0;
+
+        // Get curve name to determine signature type
+        DWORD publicBlobLen = 0;
+        status = NCryptExportKey(_hKey, 0, BCRYPT_ECCPUBLIC_BLOB, NULL, NULL, 0, &publicBlobLen, 0);
+        if (status != ERROR_SUCCESS) return status;
+
+        std::vector<BYTE> publicBlob(publicBlobLen);
+        status = NCryptExportKey(_hKey, 0, BCRYPT_ECCPUBLIC_BLOB, NULL, publicBlob.data(),
+                                 publicBlobLen, &publicBlobLen, 0);
+        if (status != ERROR_SUCCESS) return status;
+
+        if (publicBlobLen < sizeof(BCRYPT_ECCKEY_BLOB)) return -1;
+
+        BCRYPT_ECCKEY_BLOB *eccBlob = (BCRYPT_ECCKEY_BLOB *)publicBlob.data();
+        switch (eccBlob->dwMagic)
+        {
+            case BCRYPT_ECDH_PUBLIC_P256_MAGIC:
+            case BCRYPT_ECDSA_PUBLIC_P256_MAGIC:
+                signatureType = "ecdsa-sha2-nistp256";
+                break;
+            case BCRYPT_ECDH_PUBLIC_P384_MAGIC:
+            case BCRYPT_ECDSA_PUBLIC_P384_MAGIC:
+                signatureType = "ecdsa-sha2-nistp384";
+                hashSize = 48;  // SHA-384 for P-384
+                hashAlgorithm = BCRYPT_SHA384_ALGORITHM;
+                break;
+            case BCRYPT_ECDH_PUBLIC_P521_MAGIC:
+            case BCRYPT_ECDSA_PUBLIC_P521_MAGIC:
+                signatureType = "ecdsa-sha2-nistp521";
+                hashSize = 64;  // SHA-512 for P-521
+                hashAlgorithm = BCRYPT_SHA512_ALGORITHM;
+                break;
+            default:
+                return -1;  // Unsupported curve
+        }
+    }
+    else
+    {
+        return -1;  // Unsupported algorithm group
+    }
+
+    // Hash the data using selected algorithm
+    std::vector<BYTE> hashValue(hashSize);
+    ULONG cbHash = hashValue.size();
+    if (!CryptHashCertificate2(hashAlgorithm, 0, 0, (const BYTE *)data.data(), data.size(),
+                               hashValue.data(), &cbHash))
+    {
+        return GetLastError();
+    }
+
+    // Get signature length
+    DWORD signatureLen = 0;
+    status = NCryptSignHash(_hKey, pPaddingInfo, hashValue.data(), cbHash, NULL, 0, &signatureLen,
+                            dwFlags);
+    if (status != ERROR_SUCCESS) return status;
+
+    // Sign the hash
+    std::vector<BYTE> signature(signatureLen);
+    status = NCryptSignHash(_hKey, pPaddingInfo, hashValue.data(), cbHash, signature.data(),
+                            signatureLen, &signatureLen, dwFlags);
+    if (status != ERROR_SUCCESS) return status;
+
+    // Build SSH format signature: signature_type + signature_data
+    zzj::SSH::ByteBuffer sshSig;
+    sshSig.writeString(signatureType);
+    sshSig.writeString(std::vector<uint8_t>(signature.begin(), signature.end()));
+    sshSignature = sshSig.data;
 
     return 0;
 }
@@ -369,8 +659,8 @@ std::tuple<int, bool> zzj::TPMKey::VerifyDataSha256(const std::vector<char> &dat
     // 3) Call CryptHashCertificate2 to hash the data
     std::vector<BYTE> hashValue(32);
     ULONG cb = hashValue.size();
-    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, (const BYTE*)data.data(), data.size(),
-                               hashValue.data(), &cb))
+    if (!CryptHashCertificate2(BCRYPT_SHA256_ALGORITHM, 0, 0, (const BYTE *)data.data(),
+                               data.size(), hashValue.data(), &cb))
     {
         return {GetLastError(), false};
     }
@@ -389,9 +679,9 @@ std::tuple<int, bool> zzj::TPMKey::VerifyDataSha256(const std::vector<char> &dat
     {
         return {ERROR_OUTOFMEMORY, false};
     }
-    DEFER { 
-        if (pbPublicKey != NULL)
-            delete[] pbPublicKey; 
+    DEFER
+    {
+        if (pbPublicKey != NULL) delete[] pbPublicKey;
     };
     // Now export the public key into the allocated buffer
     nts = NCryptExportKey(_hKey, NULL, BCRYPT_RSAPUBLIC_BLOB, NULL, pbPublicKey, cbPublicKey,
@@ -417,7 +707,7 @@ std::tuple<int, bool> zzj::TPMKey::VerifyDataSha256(const std::vector<char> &dat
     };
     // 5) Call NCryptVerifySignature to verify the signature
     nts = NCryptVerifySignature(hPublicKey, pPaddingInfo, hashValue.data(), hashValue.size(),
-                                (unsigned char*)signature.data(), signature.size(), dwFlags);
+                                (unsigned char *)signature.data(), signature.size(), dwFlags);
     if (BCRYPT_SUCCESS(nts))
     {
         return {0, true};
