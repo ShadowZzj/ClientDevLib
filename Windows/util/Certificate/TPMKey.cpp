@@ -721,3 +721,20 @@ std::tuple<int, bool> zzj::TPMKey::VerifyDataSha256(const std::vector<char> &dat
         return {nts, false};
     }
 }
+
+// Static function: Check if TPM is available on this device
+bool zzj::TPMKey::IsTPMAvailable()
+{
+    NCRYPT_PROV_HANDLE hProv = NULL;
+    SECURITY_STATUS status = NCryptOpenStorageProvider(&hProv, MS_PLATFORM_KEY_STORAGE_PROVIDER, 0);
+
+    if (status == ERROR_SUCCESS)
+    {
+        NCryptFreeObject(hProv);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}

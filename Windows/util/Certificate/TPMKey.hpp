@@ -69,6 +69,9 @@ class TPMKey
     static int AssociateCertificate(PCCERT_CONTEXT pCertContext, const std::string &keycontainer);
     static std::shared_ptr<TPMKey> OpenTpmKeyFromCertificate(PCCERT_CONTEXT pCertContext);
 
+    // Check if TPM is available on this device
+    static bool IsTPMAvailable();
+
     // Get key handle for direct operations (e.g., signing)
     NCRYPT_KEY_HANDLE GetKeyHandle() const { return _hKey; }
 
