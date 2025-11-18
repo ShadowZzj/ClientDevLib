@@ -32,7 +32,7 @@ class Certificate
     std::string name() const { return _name; }
     std::string sequence() const { return _sequence; }
     std::string issuer() const { return _issuer; }
-    static std::vector<BYTE> PEMToDer(const std::string &pem);
+    static std::vector<uint8_t> PEMToDer(const std::string &pem);
 #ifdef _WIN32
     int Delete(const StoreType &storeType, CertLocation certLocation);
     static std::tuple<int, std::vector<Certificate>> GetCerticifateByIssuer(

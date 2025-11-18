@@ -1,6 +1,6 @@
 #include "Certificate.h"
 #include <General/util/Crypto/Base64.hpp>
-std::vector<BYTE> zzj::Certificate::PEMToDer(const std::string &pem)
+std::vector<uint8_t> zzj::Certificate::PEMToDer(const std::string &pem)
 {
     const std::string beginCert = "-----BEGIN CERTIFICATE-----";
     const std::string endCert = "-----END CERTIFICATE-----";
@@ -9,7 +9,7 @@ std::vector<BYTE> zzj::Certificate::PEMToDer(const std::string &pem)
     size_t end = pem.find(endCert);
     if (start == std::string::npos || end == std::string::npos)
     {
-        return std::vector<BYTE>();
+        return std::vector<uint8_t>();
     }
 
     start += beginCert.size();
