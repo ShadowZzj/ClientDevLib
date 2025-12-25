@@ -19,3 +19,6 @@ url = https://github.com/pybind/pybind11.git
 [submodule "General/ThirdParty/libgit2/src"]
 	path = General/ThirdParty/libgit2/src
 	url = https://github.com/libgit2/libgit2.git
+[submodule "General/ThirdParty/SDL/src"]
+	path = General/ThirdParty/SDL/src
+	url = https://github.com/libsdl-org/SDL.git
