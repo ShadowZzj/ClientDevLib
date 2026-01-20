@@ -176,6 +176,34 @@ add_executable(list_sdl_exports
     test/example/rawinput_demo/list_sdl_exports.cpp
 )
 
+# inject_dota2: 使用 GHInjector 将 sdl3_hook_dll.dll 注入到 dota2.exe（已注入则跳过）
+add_executable(inject_dota2
+    test/example/rawinput_demo/inject_dota2.cpp
+)
+target_include_directories(inject_dota2 PRIVATE
+    ${PRO_SUP}/General/ThirdParty  # GHInjector/Injection.h
+)
+if(MSVC)
+  target_compile_options(inject_dota2 PRIVATE /utf-8 /FS)
+endif()
+add_custom_command(TARGET inject_dota2 POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${PRO_SUP}/General/ThirdParty/GHInjector/GH Injector - x64.dll"
+    "$<TARGET_FILE_DIR:inject_dota2>/GH Injector - x64.dll"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${PRO_SUP}/General/ThirdParty/GHInjector/GH Injector SM - x86.exe"
+    "$<TARGET_FILE_DIR:inject_dota2>/GH Injector SM - x86.exe"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${PRO_SUP}/General/ThirdParty/GHInjector/GH Injector SM - x64.exe"
+    "$<TARGET_FILE_DIR:inject_dota2>/GH Injector SM - x64.exe"
+  VERBATIM
+)
+
+# inject_simple: 最简 CreateRemoteThread + LoadLibraryA 注入（已注入则跳过）
+add_executable(inject_simple
+    test/example/rawinput_demo/inject_simple.cpp
+)
+
 # sdl3_hook_dll: 跨进程注入 DLL，hook SDL3 的 SDL_PollEvent
 add_library(sdl3_hook_dll SHARED
     test/example/rawinput_demo/sdl3_hook_dll.cpp
@@ -227,7 +255,7 @@ endif()
 
 
 set_property(
-  TARGET autologin ${PROJECT_NAME} ${PROJECT_NAME}_testdll ccxx ${PROJECT_NAME}_test rawinput_demo rawinput_detour_demo rawinput_hook_dll dinput_hook_dll dinput_demo sdl3_hook_dll list_sdl_exports
+  TARGET autologin ${PROJECT_NAME} ${PROJECT_NAME}_testdll ccxx ${PROJECT_NAME}_test rawinput_demo rawinput_detour_demo rawinput_hook_dll dinput_hook_dll dinput_demo sdl3_hook_dll list_sdl_exports inject_dota2 inject_simple
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 #iterate the file in ${WINDOWS_UTIL_DLL_FILES} glob, and copy them to the CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO

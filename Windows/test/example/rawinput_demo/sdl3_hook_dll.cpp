@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <deque>
+#include <atomic>
 #include <mutex>
 #include <vector>
 #include <string>
@@ -128,11 +129,17 @@ static volatile bool g_shouldExit = false;
 static SDL_PeepEvents_t Real_SDL_PeepEvents = nullptr;
 
 // ============================================================================
-// 事件注入时使用固定字段（与目标程序日志保持一致）
-static constexpr SDL_WindowID kFixedWindowID = (SDL_WindowID)3;
-static constexpr SDL_KeyboardID kFixedKeyboardWhich = (SDL_KeyboardID)0;
-static constexpr SDL_MouseID kFixedMouseWhich = (SDL_MouseID)0;
-static constexpr SDL_Keymod kFixedKeyMod = (SDL_Keymod)0x9000;
+// 注入事件上下文（windowID/which/mod 等）
+// 默认值保留旧行为；但会在 hook 运行时尽量从“真实事件”学习并更新，提高兼容性。
+static std::atomic<uint32_t> g_injectWindowID{ 3u };
+static std::atomic<uint32_t> g_injectKeyboardWhich{ 0u };
+static std::atomic<uint32_t> g_injectMouseWhich{ 0u };
+static std::atomic<uint32_t> g_injectKeyMod{ 0x9000u };
+
+static inline SDL_WindowID InjectWindowID() { return (SDL_WindowID)g_injectWindowID.load(); }
+static inline SDL_KeyboardID InjectKeyboardWhich() { return (SDL_KeyboardID)g_injectKeyboardWhich.load(); }
+static inline SDL_MouseID InjectMouseWhich() { return (SDL_MouseID)g_injectMouseWhich.load(); }
+static inline SDL_Keymod InjectKeyMod() { return (SDL_Keymod)g_injectKeyMod.load(); }
 
 static inline Uint64 NowSdlTimestampNs()
 {
@@ -160,6 +167,12 @@ static constexpr wchar_t kPipeName[] = L"\\\\.\\pipe\\redpass_sdl3_hook_input";
 
 static std::mutex g_injectQueueMutex;
 static std::deque<SDL_Event> g_injectQueue;
+
+// ============================================================================
+// SDL 输入拦截开关（只拦截“真实输入”，不拦截我们注入的事件）
+// NOTE: this must be declared before PipeServerThread uses it.
+// ============================================================================
+static volatile bool g_blockRealInput = true;  // 注入后默认开启：屏蔽真实键盘/鼠标输入
 
 static void EnqueueInjectedEvent(const SDL_Event& e)
 {
@@ -197,6 +210,15 @@ enum class PipeCmd : uint16_t {
     MouseLeftUp    = 2,  // payload: float x, float y
     MouseLeftClick = 3,  // payload: float x, float y, uint32 interval_ms
 
+    MouseMove       = 4, // payload: float x, float y, float xrel, float yrel, uint32 state
+    MouseRightDown  = 5, // payload: float x, float y
+    MouseRightUp    = 6, // payload: float x, float y
+    MouseRightClick = 7, // payload: float x, float y, uint32 interval_ms
+    MouseWheel      = 8, // payload: float wheel_x, float wheel_y, float mouse_x, float mouse_y, int32 direction
+
+    SetBlockRealInput    = 100, // payload: uint8 block (0/1)
+    ToggleBlockRealInput = 101, // payload: empty
+
     KeyDown  = 10,       // payload: uint8 name_len, char[name_len]
     KeyUp    = 11,       // payload: uint8 name_len, char[name_len]
     KeyPress = 12,       // payload: uint8 name_len, char[name_len], uint32 interval_ms
@@ -211,6 +233,26 @@ struct MouseClickXYI {
     float x;
     float y;
     uint32_t interval_ms;
+};
+
+struct MouseMotionXYRelState {
+    float x;
+    float y;
+    float xrel;
+    float yrel;
+    uint32_t state;
+};
+
+struct MouseWheelXYMouseDir {
+    float wheel_x;
+    float wheel_y;
+    float mouse_x;
+    float mouse_y;
+    int32_t direction;
+};
+
+struct BlockFlag {
+    uint8_t block;
 };
 
 static bool ReadExact(HANDLE h, void* buf, DWORD len)
@@ -240,11 +282,11 @@ static SDL_Event MakeKeyEvent(bool down, const ResolvedKey& rk)
     e.type = down ? SDL_EVENT_KEY_DOWN : SDL_EVENT_KEY_UP;
     MarkInjected(e);
     e.key.timestamp = NowSdlTimestampNs();
-    e.key.windowID = kFixedWindowID;
-    e.key.which = kFixedKeyboardWhich;
+    e.key.windowID = InjectWindowID();
+    e.key.which = InjectKeyboardWhich();
     e.key.scancode = rk.scancode;
     e.key.key = rk.key;
-    e.key.mod = kFixedKeyMod;
+    e.key.mod = InjectKeyMod();
     e.key.raw = rk.raw;
     e.key.down = down;
     e.key.repeat = false;
@@ -258,14 +300,79 @@ static SDL_Event MakeMouseButtonEvent(bool down, uint8_t button, uint8_t clicks,
     e.type = down ? SDL_EVENT_MOUSE_BUTTON_DOWN : SDL_EVENT_MOUSE_BUTTON_UP;
     MarkInjected(e);
     e.button.timestamp = NowSdlTimestampNs();
-    e.button.windowID = kFixedWindowID;
-    e.button.which = kFixedMouseWhich;
+    e.button.windowID = InjectWindowID();
+    e.button.which = InjectMouseWhich();
     e.button.button = button;
     e.button.down = down;
     e.button.clicks = clicks;
     e.button.x = x;
     e.button.y = y;
     return e;
+}
+
+static SDL_Event MakeMouseMotionEvent(float x, float y, float xrel, float yrel, uint32_t state)
+{
+    SDL_Event e{};
+    memset(&e, 0, sizeof(e));
+    e.type = SDL_EVENT_MOUSE_MOTION;
+    MarkInjected(e);
+    e.motion.timestamp = NowSdlTimestampNs();
+    e.motion.windowID = InjectWindowID();
+    e.motion.which = InjectMouseWhich();
+    e.motion.state = (Uint32)state;
+    e.motion.x = x;
+    e.motion.y = y;
+    e.motion.xrel = xrel;
+    e.motion.yrel = yrel;
+    return e;
+}
+
+static SDL_Event MakeMouseWheelEvent(float wx, float wy, float mx, float my, int32_t direction)
+{
+    SDL_Event e{};
+    memset(&e, 0, sizeof(e));
+    e.type = SDL_EVENT_MOUSE_WHEEL;
+    MarkInjected(e);
+    e.wheel.timestamp = NowSdlTimestampNs();
+    e.wheel.windowID = InjectWindowID();
+    e.wheel.which = InjectMouseWhich();
+    e.wheel.x = wx;
+    e.wheel.y = wy;
+    e.wheel.mouse_x = mx;
+    e.wheel.mouse_y = my;
+    e.wheel.direction = (SDL_MouseWheelDirection)direction;
+    e.wheel.integer_x = (Sint32)(wx >= 0 ? wx + 0.5f : wx - 0.5f);
+    e.wheel.integer_y = (Sint32)(wy >= 0 ? wy + 0.5f : wy - 0.5f);
+    return e;
+}
+
+static inline void UpdateInjectContextFromEvent(const SDL_Event& e)
+{
+    if (IsInjected(e))
+        return;
+    const Uint32 t = (Uint32)e.type;
+
+    if (t == SDL_EVENT_KEY_DOWN || t == SDL_EVENT_KEY_UP)
+    {
+        if ((uint32_t)e.key.windowID != 0) g_injectWindowID.store((uint32_t)e.key.windowID);
+        g_injectKeyboardWhich.store((uint32_t)e.key.which);
+        g_injectKeyMod.store((uint32_t)e.key.mod);
+    }
+    else if (t == SDL_EVENT_MOUSE_MOTION)
+    {
+        if ((uint32_t)e.motion.windowID != 0) g_injectWindowID.store((uint32_t)e.motion.windowID);
+        g_injectMouseWhich.store((uint32_t)e.motion.which);
+    }
+    else if (t == SDL_EVENT_MOUSE_BUTTON_DOWN || t == SDL_EVENT_MOUSE_BUTTON_UP)
+    {
+        if ((uint32_t)e.button.windowID != 0) g_injectWindowID.store((uint32_t)e.button.windowID);
+        g_injectMouseWhich.store((uint32_t)e.button.which);
+    }
+    else if (t == SDL_EVENT_MOUSE_WHEEL)
+    {
+        if ((uint32_t)e.wheel.windowID != 0) g_injectWindowID.store((uint32_t)e.wheel.windowID);
+        g_injectMouseWhich.store((uint32_t)e.wheel.which);
+    }
 }
 
 static DWORD WINAPI PipeServerThread(LPVOID)
@@ -286,17 +393,20 @@ static DWORD WINAPI PipeServerThread(LPVOID)
 
         if (g_pipeHandle == INVALID_HANDLE_VALUE)
         {
-            if (g_logger) g_logger->error("[PIPE] CreateNamedPipeW failed: {}", (uint32_t)GetLastError());
+            const DWORD err = GetLastError();
+            if (g_logger) g_logger->error("[PIPE] CreateNamedPipeW failed: {} (0x{:X})", err, err);
             Sleep(500);
             continue;
         }
 
         if (g_logger)
-            g_logger->info("[PIPE] waiting client on \\\\.\\pipe\\redpass_sdl3_hook_input");
+            g_logger->info("[PIPE] Pipe created, waiting for client connection...");
 
         BOOL ok = ConnectNamedPipe(g_pipeHandle, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
         if (!ok)
         {
+            const DWORD err = GetLastError();
+            if (g_logger) g_logger->warn("[PIPE] ConnectNamedPipe failed: {} (0x{:X})", err, err);
             CloseHandle(g_pipeHandle);
             g_pipeHandle = INVALID_HANDLE_VALUE;
             continue;
@@ -309,17 +419,24 @@ static DWORD WINAPI PipeServerThread(LPVOID)
         {
             PipeMsgHeader hdr{};
             if (!ReadExact(g_pipeHandle, &hdr, (DWORD)sizeof(hdr)))
+            {
+                if (g_logger) g_logger->info("[PIPE] ReadExact header failed, client likely disconnected");
                 break;
+            }
 
             if (hdr.magic != kPipeMagic || hdr.size > 4096)
             {
-                if (g_logger) g_logger->warn("[PIPE] bad header magic=0x{:X} size={}", hdr.magic, hdr.size);
+                if (g_logger) g_logger->warn("[PIPE] Invalid header: magic=0x{:X} (expected 0x{:X}) size={}", 
+                    hdr.magic, kPipeMagic, hdr.size);
                 break;
             }
 
             std::vector<uint8_t> payload(hdr.size);
             if (hdr.size > 0 && !ReadExact(g_pipeHandle, payload.data(), hdr.size))
+            {
+                if (g_logger) g_logger->warn("[PIPE] ReadExact payload failed (size={})", hdr.size);
                 break;
+            }
 
             const PipeCmd cmd = (PipeCmd)hdr.type;
             switch (cmd)
@@ -343,6 +460,57 @@ static DWORD WINAPI PipeServerThread(LPVOID)
                     up.button.timestamp = down.button.timestamp + (Uint64)m->interval_ms * 1000000ULL;
                     EnqueueInjectedEvent(down);
                     EnqueueInjectedEvent(up);
+                }
+                break;
+            case PipeCmd::MouseMove:
+                if (hdr.size == sizeof(MouseMotionXYRelState))
+                {
+                    const MouseMotionXYRelState* mm = (const MouseMotionXYRelState*)payload.data();
+                    EnqueueInjectedEvent(MakeMouseMotionEvent(mm->x, mm->y, mm->xrel, mm->yrel, mm->state));
+                }
+                break;
+            case PipeCmd::MouseRightDown:
+            case PipeCmd::MouseRightUp:
+                if (hdr.size == sizeof(MouseXY))
+                {
+                    const MouseXY* m = (const MouseXY*)payload.data();
+                    const bool down = (cmd == PipeCmd::MouseRightDown);
+                    EnqueueInjectedEvent(MakeMouseButtonEvent(down, SDL_BUTTON_RIGHT, 1, m->x, m->y));
+                }
+                break;
+            case PipeCmd::MouseRightClick:
+                if (hdr.size == sizeof(MouseClickXYI))
+                {
+                    const MouseClickXYI* m = (const MouseClickXYI*)payload.data();
+                    const SDL_Event down = MakeMouseButtonEvent(true, SDL_BUTTON_RIGHT, 1, m->x, m->y);
+                    SDL_Event up = MakeMouseButtonEvent(false, SDL_BUTTON_RIGHT, 1, m->x, m->y);
+                    up.button.timestamp = down.button.timestamp + (Uint64)m->interval_ms * 1000000ULL;
+                    EnqueueInjectedEvent(down);
+                    EnqueueInjectedEvent(up);
+                }
+                break;
+            case PipeCmd::MouseWheel:
+                if (hdr.size == sizeof(MouseWheelXYMouseDir))
+                {
+                    const MouseWheelXYMouseDir* w = (const MouseWheelXYMouseDir*)payload.data();
+                    EnqueueInjectedEvent(MakeMouseWheelEvent(w->wheel_x, w->wheel_y, w->mouse_x, w->mouse_y, w->direction));
+                }
+                break;
+            case PipeCmd::SetBlockRealInput:
+                if (hdr.size == sizeof(BlockFlag))
+                {
+                    const BlockFlag* b = (const BlockFlag*)payload.data();
+                    g_blockRealInput = (b->block != 0);
+                    if (g_logger)
+                        g_logger->info("[INPUT-BLOCK] set via pipe: {}", g_blockRealInput ? "BLOCKED" : "ALLOWED");
+                }
+                break;
+            case PipeCmd::ToggleBlockRealInput:
+                if (hdr.size == 0)
+                {
+                    g_blockRealInput = !g_blockRealInput;
+                    if (g_logger)
+                        g_logger->info("[INPUT-BLOCK] toggled via pipe: {}", g_blockRealInput ? "BLOCKED" : "ALLOWED");
                 }
                 break;
             case PipeCmd::KeyDown:
@@ -380,7 +548,7 @@ static DWORD WINAPI PipeServerThread(LPVOID)
                         }
                         else
                         {
-                            if (g_logger) g_logger->warn("[PIPE] resolve key failed: '{}'", name);
+                            if (g_logger) g_logger->warn("[PIPE] Resolve key failed: '{}'", name);
                         }
                     }
                 }
@@ -400,11 +568,6 @@ static DWORD WINAPI PipeServerThread(LPVOID)
 
     return 0;
 }
-
-// ============================================================================
-// SDL 输入拦截（只拦截“真实输入”，不拦截我们注入的事件）
-// ============================================================================
-static volatile bool g_blockRealInput = true;  // 注入后默认开启：屏蔽真实键盘/鼠标输入
 
 static inline bool IsRealInputEventType(Uint32 t)
 {
@@ -626,6 +789,10 @@ static int SDLCALL Hook_SDL_PeepEvents(SDL_Event* events, int numevents, SDL_Eve
     {
         ULONGLONG currentTime = GetTickCount64();
 
+        // 学习 windowID/which/mod，提高注入事件兼容性（即使之后会屏蔽真实输入也没关系）
+        for (int i = 0; i < ret; i++)
+            UpdateInjectContextFromEvent(events[i]);
+
         // 先拦截“真实输入”（只在 SDL 事件队列层面生效）
         // 逻辑：把真实键盘/鼠标/文本输入事件从 events[] 中移除；我们自己注入的事件会打 magic，不会被误删
         if (g_blockRealInput && ret > 0)
@@ -649,19 +816,11 @@ static int SDLCALL Hook_SDL_PeepEvents(SDL_Event* events, int numevents, SDL_Eve
         // 注入：把管道线程塞进来的事件追加到 events[] 末尾
         ret = DrainInjectedEvents(events, numevents, ret);
 
-        // 只在每个 2 秒窗口里 dump 一次“收到的第一个输入事件”
-        for (int i = 0; i < ret; i++)
-        {
-            DumpFirstInputEventRateLimited(events[i], currentTime);
-            if (g_inputDumpedInWindow)
-                break;
-        }
-        
         // 统计并只打印键盘事件（避免日志刷屏）
         bool hasKeyboardEvent = false;
         for (int i = 0; i < ret; i++)
         {
-            if (events[i].type == SDL_EVENT_KEY_DOWN || events[i].type == SDL_EVENT_KEY_UP)
+            if ((events[i].type == SDL_EVENT_KEY_DOWN || events[i].type == SDL_EVENT_KEY_UP) && !IsInjected(events[i]))
             {
                 g_stats.keyboardEvents++;
                 hasKeyboardEvent = true;
@@ -677,6 +836,37 @@ static int SDLCALL Hook_SDL_PeepEvents(SDL_Event* events, int numevents, SDL_Eve
                                   events[i].key.key);
                 }
             }
+            else if ((events[i].type == SDL_EVENT_MOUSE_BUTTON_DOWN || events[i].type == SDL_EVENT_MOUSE_BUTTON_UP) && !IsInjected(events[i]))
+            {
+                g_stats.mouseEvents++;
+                
+                // 只记录真实的鼠标点击事件（不记录注入的事件）
+                if (g_logger)
+                {
+                    const char* buttonName = "UNKNOWN";
+                    if (events[i].button.button == SDL_BUTTON_LEFT)
+                        buttonName = "LEFT";
+                    else if (events[i].button.button == SDL_BUTTON_RIGHT)
+                        buttonName = "RIGHT";
+                    else if (events[i].button.button == SDL_BUTTON_MIDDLE)
+                        buttonName = "MIDDLE";
+                    else if (events[i].button.button == SDL_BUTTON_X1)
+                        buttonName = "X1";
+                    else if (events[i].button.button == SDL_BUTTON_X2)
+                        buttonName = "X2";
+                    
+                    g_logger->info("[MOUSE {}] button={} ({}) clicks={} x={:.2f} y={:.2f} win={} which={} ts={}", 
+                                  (events[i].type == SDL_EVENT_MOUSE_BUTTON_DOWN) ? "DOWN" : "UP  ",
+                                  (unsigned int)events[i].button.button,
+                                  buttonName,
+                                  (unsigned int)events[i].button.clicks,
+                                  events[i].button.x,
+                                  events[i].button.y,
+                                  (unsigned int)events[i].button.windowID,
+                                  (unsigned int)events[i].button.which,
+                                  (unsigned long long)events[i].button.timestamp);
+                }
+            }
             else if (events[i].type >= 0x400 && events[i].type <= 0x404)
             {
                 g_stats.mouseEvents++;
@@ -685,14 +875,6 @@ static int SDLCALL Hook_SDL_PeepEvents(SDL_Event* events, int numevents, SDL_Eve
             {
                 g_stats.otherEvents++;
             }
-        }
-        
-        // 每 5 秒打印一次统计摘要（如果没有键盘事件）
-        if (!hasKeyboardEvent && g_logger && (currentTime - g_stats.lastReportTime >= 5000))
-        {
-            g_logger->info("[STATS] Calls={}, KB={}, Mouse={}, Other={}", 
-                          g_stats.totalCalls, g_stats.keyboardEvents, g_stats.mouseEvents, g_stats.otherEvents);
-            g_stats.lastReportTime = currentTime;
         }
         
     }
@@ -732,7 +914,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             {
                 if (g_logger)
                     g_logger->error("SDL3.dll not found in process!");
-                MessageBoxW(nullptr, L"SDL3.dll not found!", L"sdl3_hook_dll", MB_OK | MB_ICONERROR);
                 break;
             }
             
@@ -749,50 +930,76 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             {
                 if (g_logger)
                     g_logger->error("SDL_PeepEvents not found!");
-                MessageBoxW(nullptr, L"SDL_PeepEvents not found!", L"sdl3_hook_dll", MB_OK | MB_ICONERROR);
                 break;
             }
 
             // 安装 Hook
+            if (g_logger) g_logger->info("Installing Detours hook...");
             DetourRestoreAfterWith();
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
             
+            if (g_logger) g_logger->debug("Calling DetourAttach for SDL_PeepEvents...");
             LONG err = DetourAttach(reinterpret_cast<PVOID*>(&Real_SDL_PeepEvents),
                          reinterpret_cast<PVOID>(Hook_SDL_PeepEvents));
+            if (g_logger) g_logger->debug("DetourAttach returned: {}", err);
             
+            if (g_logger) g_logger->debug("Committing detour transaction...");
             LONG commitResult = DetourTransactionCommit();
+            if (g_logger) g_logger->debug("DetourTransactionCommit returned: {}", commitResult);
+            
             if (commitResult == NO_ERROR && err == NO_ERROR)
             {
                 if (g_logger)
                 {
                     g_logger->info("SDL_PeepEvents hook installed successfully!");
-                    g_logger->info("[PIPE] listening on \\\\.\\pipe\\redpass_sdl3_hook_input (binary protocol, magic 'RPS1')");
+                    g_logger->info("[PIPE] Will listen on \\\\.\\pipe\\redpass_sdl3_hook_input (binary protocol, magic 'RPS1')");
                     g_logger->info("[INPUT-BLOCK] Real SDL input is BLOCKED by default. Press F8 to toggle.");
                 }
 
                 // 启动命名管道线程：接收外部命令 -> 注入 SDL 事件队列
+                if (g_logger) g_logger->info("Starting pipe server thread...");
                 g_pipeThread = CreateThread(nullptr, 0, PipeServerThread, nullptr, 0, nullptr);
+                if (g_pipeThread)
+                {
+                    if (g_logger) g_logger->info("Pipe server thread created with handle 0x{:X}", (uintptr_t)g_pipeThread);
+                }
+                else
+                {
+                    if (g_logger) g_logger->error("Failed to create pipe server thread: {}", GetLastError());
+                }
 
                 // 启动 Insert/F8 监控线程（Insert 卸载，F8 切换输入屏蔽）
-                CreateThread(nullptr, 0, KeyMonitorThread, g_hModule, 0, nullptr);
+                if (g_logger) g_logger->info("Starting key monitor thread...");
+                HANDLE hKeyThread = CreateThread(nullptr, 0, KeyMonitorThread, g_hModule, 0, nullptr);
+                if (hKeyThread)
+                {
+                    if (g_logger) g_logger->info("Key monitor thread created with handle 0x{:X}", (uintptr_t)hKeyThread);
+                }
+                else
+                {
+                    if (g_logger) g_logger->error("Failed to create key monitor thread: {}", GetLastError());
+                }
                 
-                wchar_t msg[512];
-                DWORD pid = GetCurrentProcessId();
-                wchar_t procName[MAX_PATH]{};
-                GetModuleFileNameW(nullptr, procName, MAX_PATH);
-                wchar_t* baseName = wcsrchr(procName, L'\\');
-                if (baseName) baseName++; else baseName = procName;
-                
-                swprintf_s(msg, L"SDL3 Hook Injected!\n\nProcess: %s (PID: %lu)\n\nFeatures:\n- NamedPipe: \\\\.\\pipe\\redpass_sdl3_hook_input\n- Block real SDL input by default (press F8 to toggle)\n\nPress INSERT to unload", 
-                          baseName, pid);
-                MessageBoxW(nullptr, msg, L"sdl3_hook_dll", MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
+                // no MessageBox: keep the injected process non-interactive; use logs instead.
+                if (g_logger)
+                {
+                    DWORD pid = GetCurrentProcessId();
+                    wchar_t procName[MAX_PATH]{};
+                    GetModuleFileNameW(nullptr, procName, MAX_PATH);
+                    wchar_t* baseName = wcsrchr(procName, L'\\');
+                    if (baseName) baseName++; else baseName = procName;
+
+                    // Convert wide process name to UTF-8 for logging
+                    char baseNameUtf8[MAX_PATH * 4]{};
+                    WideCharToMultiByte(CP_UTF8, 0, baseName, -1, baseNameUtf8, (int)sizeof(baseNameUtf8), nullptr, nullptr);
+                    g_logger->info("SDL3 Hook Injected! Process: {} (PID: {})", baseNameUtf8, pid);
+                }
             }
             else
             {
                 if (g_logger)
                     g_logger->error("SDL_PeepEvents hook FAILED! err={}, commit={}", err, commitResult);
-                MessageBoxW(nullptr, L"SDL hook FAILED!", L"sdl3_hook_dll", MB_OK | MB_ICONERROR | MB_TOPMOST);
             }
         }
         break;
