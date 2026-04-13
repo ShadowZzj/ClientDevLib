@@ -4,6 +4,7 @@
 #include <UserEnv.h>
 #include <sddl.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/fmt/fmt.h>
 #include <string>
 #include <strsafe.h>
 #include <vector>
@@ -805,6 +806,11 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     HANDLE hCreateProcessToken = NULL;
     LPVOID lpEnvironment = NULL;
 
+    if (!AdjustPrivilege(SE_INCREASE_QUOTA_NAME, true))
+        throw std::runtime_error("AdjustPrivilege SE_INCREASE_QUOTA_NAME failed");
+    if (!AdjustPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME, true))
+        throw std::runtime_error("AdjustPrivilege SE_ASSIGNPRIMARYTOKEN_NAME failed");
+
     HANDLE hStdOutRead = NULL;
     HANDLE hStdOutWrite = NULL;
     HANDLE hStdErrRead = NULL;
@@ -818,6 +824,8 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     
     DEFER
     {
+        AdjustPrivilege(SE_ASSIGNPRIMARYTOKEN_NAME, false);
+        AdjustPrivilege(SE_INCREASE_QUOTA_NAME, false);
         if (hStdOutRead) CloseHandle(hStdOutRead);
         if (hStdOutWrite) CloseHandle(hStdOutWrite);
         if (hStdErrRead) CloseHandle(hStdErrRead);
@@ -829,23 +837,28 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     };
 
     
-    if (!CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0)) throw std::runtime_error("CreatePipe failed");
+    if (!CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0))
+        throw std::runtime_error(fmt::format("CreatePipe(stdout) failed, err={}", GetLastError()));
 
-    if (!CreatePipe(&hStdErrRead, &hStdErrWrite, &sa, 0)) throw std::runtime_error("CreatePipe failed");
+    if (!CreatePipe(&hStdErrRead, &hStdErrWrite, &sa, 0))
+        throw std::runtime_error(fmt::format("CreatePipe(stderr) failed, err={}", GetLastError()));
 
-    if (!SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0)) throw std::runtime_error("SetHandleInformation failed");
+    if (!SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0))
+        throw std::runtime_error(fmt::format("SetHandleInformation(stdout) failed, err={}", GetLastError()));
 
-    if (!SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0)) throw std::runtime_error("SetHandleInformation failed");
+    if (!SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0))
+        throw std::runtime_error(fmt::format("SetHandleInformation(stderr) failed, err={}", GetLastError()));
 
-    
     ActiveExplorerInfo aei;
-    if (!GetActiveExplorerInfo(&aei)) throw std::runtime_error("GetActiveExplorerInfo failed");
+    if (!GetActiveExplorerInfo(&aei))
+        throw std::runtime_error(fmt::format("GetActiveExplorerInfo failed, err={}", GetLastError()));
 
     hActiveUserProcess = ::OpenProcess(PROCESS_ALL_ACCESS, false, aei.ProcessId);
-    if (NULL == hActiveUserProcess) throw std::runtime_error("OpenProcess failed");
+    if (NULL == hActiveUserProcess)
+        throw std::runtime_error(fmt::format("OpenProcess(pid={}) failed, err={}", aei.ProcessId, GetLastError()));
 
     if (!::OpenProcessToken(hActiveUserProcess, TOKEN_ALL_ACCESS, &hActiveUserProcessToken))
-        throw std::runtime_error("OpenProcessToken failed");
+        throw std::runtime_error(fmt::format("OpenProcessToken failed, err={}", GetLastError()));
 
     
     bool bTokenTempNeedClose = false;
@@ -877,9 +890,9 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
         hTokenTemp = hActiveUserProcessToken;
     }
 
-    if (NULL == hTokenTemp) throw std::runtime_error("DuplicateTokenEx failed");
+    if (NULL == hTokenTemp)
+        throw std::runtime_error("hTokenTemp is NULL after token selection");
 
-    
     DEFER
     {
         if (bTokenTempNeedClose && NULL != hTokenTemp)
@@ -890,9 +903,10 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
 
     BOOL bDup = ::DuplicateTokenEx(hTokenTemp, TOKEN_ALL_ACCESS, NULL, SecurityIdentification,
                                    TokenPrimary, &hCreateProcessToken);
-    if (!bDup) throw std::runtime_error("DuplicateTokenEx failed");
+    if (!bDup)
+        throw std::runtime_error(fmt::format("DuplicateTokenEx failed, err={}", GetLastError()));
 
-    DWORD dwCreationFlags = NORMAL_PRIORITY_CLASS |  CREATE_UNICODE_ENVIRONMENT;
+    DWORD dwCreationFlags = NORMAL_PRIORITY_CLASS | CREATE_UNICODE_ENVIRONMENT;
     dwCreationFlags |= CREATE_NO_WINDOW;
 
     STARTUPINFOA siw = {0};
@@ -903,17 +917,16 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     siw.lpDesktop = (LPSTR) "winsta0\\default";
     siw.wShowWindow = SW_HIDE;
 
-    
-    if (!::CreateEnvironmentBlock(&lpEnvironment, hActiveUserProcessToken, FALSE)) throw std::runtime_error("CreateEnvironmentBlock failed");
+    if (!::CreateEnvironmentBlock(&lpEnvironment, hActiveUserProcessToken, FALSE))
+        throw std::runtime_error(fmt::format("CreateEnvironmentBlock failed, err={}", GetLastError()));
 
     PROCESS_INFORMATION pi = {0};
     std::string cmd = zzj::str::w2ansi(commandLine);
 
-    
     if (!::CreateProcessAsUserA(hCreateProcessToken, NULL, (LPSTR)cmd.c_str(), NULL, NULL, TRUE,
                                 dwCreationFlags, lpEnvironment, NULL, &siw, &pi))
     {
-        throw std::runtime_error("CreateProcessAsUserA failed");
+        throw std::runtime_error(fmt::format("CreateProcessAsUserA failed, cmd={}, err={}", cmd, GetLastError()));
     }
 
     DEFER
@@ -934,7 +947,7 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     DWORD exitCode = -1;
     if (!GetExitCodeProcess(pi.hProcess, &exitCode))
     {
-        throw std::runtime_error("GetExitCodeProcess failed");
+        throw std::runtime_error(fmt::format("GetExitCodeProcess failed, err={}", GetLastError()));
     }
     
     auto readFromPipe = [](HANDLE hPipe)
@@ -958,8 +971,11 @@ Process::ExitCode Process::SystemCreateProcess(const std::wstring &commandLine, 
     outResult = readFromPipe(hStdOutRead);
     errResult = readFromPipe(hStdErrRead);
 
-    stdOutput = zzj::str::ansi2w(outResult);
-    stdError = zzj::str::ansi2w(errResult);
+    try { stdOutput = zzj::str::ansi2w(outResult); }
+    catch (...) { stdOutput = zzj::str::utf82w(outResult); }
+
+    try { stdError = zzj::str::ansi2w(errResult); }
+    catch (...) { stdError = zzj::str::utf82w(errResult); }
 
     dwPid = pi.dwProcessId;
 
