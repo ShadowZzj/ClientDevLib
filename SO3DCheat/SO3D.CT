@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="46">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>3</ID>
+      <Description>"无描述"</Description>
+      <ShowAsHex>1</ShowAsHex>
+      <VariableType>4 Bytes</VariableType>
+      <Address>SO3D.exe+D6E3E0</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>4</ID>
+      <Description>"移动速度"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>Float</VariableType>
+      <Address>SO3D.exe+D6E3E0</Address>
+      <Offsets>
+        <Offset>1A4</Offset>
+      </Offsets>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>5</ID>
+      <Description>"无描述"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>233CD7D8</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>6</ID>
+      <Description>"无描述"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>233CD7E0</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>7</ID>
+      <Description>"修改移动速度"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+alloc(newmem,2048)
+label(returnhere)
+label(originalcode1)
+label(originalcode2)
+label(exit)
+
+newmem:
+// 两个地址都 NOP，直接跳过原指令
+jmp exit
+
+originalcode1:
+movss [ebx+000001A4],xmm0
+
+originalcode2:
+movss [ebx+000001A4],xmm0
+
+exit:
+jmp returnhere
+
+// 第一个地址 NOP
+"SO3D.exe"+473426:
+jmp newmem
+nop 3
+
+// 第二个地址 NOP
+"SO3D.exe"+4733B0:
+jmp newmem
+nop 3
+
+returnhere:
+
+[DISABLE]
+// 禁用时恢复原始指令
+"SO3D.exe"+473426:
+movss [ebx+000001A4],xmm0
+
+"SO3D.exe"+4733B0:
+movss [ebx+000001A4],xmm0
+
+dealloc(newmem)
+
+</AssemblerScript>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols>
+    <SymbolEntry>
+      <Name>speedhack_wantedspeed</Name>
+      <Address>04680000</Address>
+    </SymbolEntry>
+  </UserdefinedSymbols>
+  <Comments>关于表格信息:
+</Comments>
+</CheatTable>
