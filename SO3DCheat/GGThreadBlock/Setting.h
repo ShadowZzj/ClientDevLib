@@ -1,5 +1,7 @@
 #pragma once
 #include <Windows/util/DirectX/D3D9Hook.h>
+#include <atomic>
+#include <json.hpp>
 #include <memory>
 #include <vector>
 #include "IModule.h"
@@ -19,8 +21,14 @@ class Setting : public zzj::D3D::Setting
 
     const std::vector<std::shared_ptr<IModule>> &GetModules() const { return modules_; }
 
+    // True after Init() has run (D3D9Hook calls Init lazily on first EndScene).
+    // UserConfig::Tick gates on this — modules' OnInit must run before LoadState.
+    bool IsInitialized() const { return initialized_.load(); }
+
   private:
     std::vector<std::shared_ptr<IModule>> modules_;
+    std::atomic<bool>                     initialized_{false};
+    nlohmann::json                        lastSnapshot_;
 };
 
 } // namespace GGTB

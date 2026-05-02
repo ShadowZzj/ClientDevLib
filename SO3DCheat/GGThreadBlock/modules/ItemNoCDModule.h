@@ -69,6 +69,18 @@ class ItemNoCDModule : public IModule
             PatchItemShortCD(cdSeconds_);
     }
 
+    std::string ConfigKey() const override { return "ItemNoCD"; }
+    void SaveState(nlohmann::json &j) const override
+    {
+        IModule::SaveState(j);
+        j["cdSeconds"] = cdSeconds_;
+    }
+    void LoadState(const nlohmann::json &j) override
+    {
+        cdSeconds_ = j.value("cdSeconds", cdSeconds_);
+        IModule::LoadState(j);
+    }
+
   private:
     float cdSeconds_ = 0.3f;
 };

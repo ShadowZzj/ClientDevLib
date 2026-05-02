@@ -91,6 +91,8 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/util/PatternResolver.cpp
     GGThreadBlock/util/SpeedHack.h
     GGThreadBlock/util/SpeedHack.cpp
+    GGThreadBlock/util/UserConfig.h
+    GGThreadBlock/util/UserConfig.cpp
     GGThreadBlock/modules/StatusModule.h
     GGThreadBlock/modules/MoveSpeedModule.h
     GGThreadBlock/modules/AttackSpeedModule.h
@@ -98,6 +100,8 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/modules/SpeedHackModule.h
     GGThreadBlock/modules/ItemNoCDModule.h
     GGThreadBlock/modules/AttackRangeModule.h
+    GGThreadBlock/modules/ActionMoveModule.h
+    GGThreadBlock/modules/AutoPickupModule.h
     GGThreadBlock/modules/NearbyPlayerGuardModule.h)
 target_link_libraries(GGThreadBlock ClientDevLib ${WINDOWS_UTIL_LIB_FILES} d3d9.lib)
 target_include_directories(GGThreadBlock PRIVATE

@@ -88,6 +88,29 @@ bool RestoreAttackRange();
 bool PatchAttackRangeCap(uint32_t newCap);
 bool RestoreAttackRangeCap();
 
+// ---------- Action-time movement bypass ----------
+//
+// Removes the "can't move while attacking / casting" lock by patching 4 sites:
+//
+//   SetAfterActionGate  @ 0x7539FE: 5-byte `E9 C1 02 00 00` overwrites the first
+//                                   `jle short loc_753A22` and unconditionally
+//                                   jumps to the success path at 0x753CC4. Skips
+//                                   every reject gate inside SetAfterAction.
+//   TraceMoveGate1      @ 0x756FAA: flip `76 -> EB` so the per-frame stunTime
+//                                   check (+0x3468) is always skipped.
+//   TraceMoveOrChain    @ 0x756FCD: 5-byte `E9 19 01 00 00` jumps to
+//                                   TraceMove_PostGateChain (0x7570EB), skipping
+//                                   the long animation/skill ID OR-chain.
+//   TraceMoveGate2      @ 0x7570FD: flip `76 -> EB` so the +0x2BCC per-frame
+//                                   timer check is always skipped.
+inline constexpr size_t kActionMoveSetAfterActionGateSize = 5; // jle short -> jmp near
+inline constexpr size_t kActionMoveTraceMoveGate1Size     = 1; // jbe short -> jmp short
+inline constexpr size_t kActionMoveTraceMoveOrChainSize   = 5; // cmp imm32 -> jmp near
+inline constexpr size_t kActionMoveTraceMoveGate2Size     = 1; // jbe short -> jmp short
+
+bool PatchActionMove();
+bool RestoreActionMove();
+
 // ---------- Entity iteration (remote players nearby) ----------
 //
 // EntityManager exposes two views of the same player set:
@@ -120,5 +143,46 @@ std::string GetLocalPlayerName();
 // survive races with list mutation.
 std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
                                            float              maxDistance);
+
+// ---------- Drop-item iteration (auto-pickup) ----------
+//
+// Layout verified across LookupDropItemById, the DropItem allocator
+// (sub_7978A0), and the engine's own auto-hunt loot handler (sub_6093E0).
+//   ItemContainer + 0x6C = head of singly-linked DropItem list (CItemContainer)
+//   DropItem layout (alloc size 0x118):
+//     +0x00 dropId (uint32, primary key for SendPickItemPacket)
+//     +0x04 itemId (uint32, item table id)
+//     +0x14/0x18/0x1C worldX/Y/Z (float)
+//     +0x2E canPick (uint8 — 1 if free to grab, 0 if owned by another player)
+//     +0x88 next (DropItem*)
+inline constexpr uintptr_t kDropContainerHeadOffset = 0x6C;
+inline constexpr uintptr_t kDropIdOffset            = 0x00;
+inline constexpr uintptr_t kDropItemIdOffset        = 0x04;
+inline constexpr uintptr_t kDropPosXOffset          = 0x14;
+inline constexpr uintptr_t kDropPosYOffset          = 0x18;
+inline constexpr uintptr_t kDropPosZOffset          = 0x1C;
+inline constexpr uintptr_t kDropCanPickOffset       = 0x2E;
+inline constexpr uintptr_t kDropNextOffset          = 0x88;
+
+struct DropItemInfo
+{
+    uint32_t dropId;
+    uint32_t itemId;
+    float    distance;
+    float    x, y, z;
+    bool     canPick;
+};
+
+// SEH-safe walk of CItemContainer's drop list. Returns drops within
+// `maxDistance` of the local player (or all drops if maxDistance <= 0),
+// sorted ascending by distance. Filters out canPick==0 entries by default
+// (controlled by includeUnpickable).
+std::vector<DropItemInfo> GetNearbyDropItems(float maxDistance,
+                                             bool  includeUnpickable = false);
+
+// Fires SendPickItemPacket(dropId) on the engine helper. SEH-wrapped because
+// engine state may transiently invalidate the container or the drop. Returns
+// the engine's own return value (1 = packet sent, 0 = rejected upstream).
+int SendPickItem(uint32_t dropId);
 
 } // namespace GGTB

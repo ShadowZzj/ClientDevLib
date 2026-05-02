@@ -2,11 +2,13 @@
 #include "../IModule.h"
 #include "../Setting.h"
 #include "../entity/CLocalPlayer.h"
+#include "../util/UserConfig.h"
 #include <imgui/imgui.h>
 #include <spdlog/spdlog.h>
 #include <Windows.h>
 #include <algorithm>
 #include <atomic>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -103,6 +105,24 @@ class NearbyPlayerGuardModule : public IModule
 
         if (showList_)
             RenderListSnapshot();
+
+        RenderWhitelistEditor();
+    }
+
+    std::string ConfigKey() const override { return "NPG"; }
+    void SaveState(nlohmann::json &j) const override
+    {
+        IModule::SaveState(j);
+        j["distanceThreshold"] = distanceThreshold_;
+        j["pollIntervalMs"]    = pollIntervalMs_;
+        j["showList"]          = showList_;
+    }
+    void LoadState(const nlohmann::json &j) override
+    {
+        distanceThreshold_ = j.value("distanceThreshold", distanceThreshold_);
+        pollIntervalMs_    = j.value("pollIntervalMs",    pollIntervalMs_);
+        showList_          = j.value("showList",          showList_);
+        IModule::LoadState(j);
     }
 
     void OnShutdown() override
@@ -133,13 +153,14 @@ class NearbyPlayerGuardModule : public IModule
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
             ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_ScrollY;
 
-        if (ImGui::BeginTable("##NPGList", 5, kFlags, ImVec2(0, 160)))
+        if (ImGui::BeginTable("##NPGList", 6, kFlags, ImVec2(0, 160)))
         {
             ImGui::TableSetupColumn(u8"名字");
             ImGui::TableSetupColumn(u8"距离");
             ImGui::TableSetupColumn("X");
             ImGui::TableSetupColumn("Y");
             ImGui::TableSetupColumn("Z");
+            ImGui::TableSetupColumn(u8"操作");
             ImGui::TableHeadersRow();
 
             for (auto &p : snapshot)
@@ -155,8 +176,43 @@ class NearbyPlayerGuardModule : public IModule
                 ImGui::Text("%.1f", p.y);
                 ImGui::TableNextColumn();
                 ImGui::Text("%.1f", p.z);
+                ImGui::TableNextColumn();
+                ImGui::PushID(p.name.c_str());
+                if (ImGui::SmallButton(u8"+白名单"))
+                    UserConfig::AddWhitelist(p.name);
+                ImGui::PopID();
             }
             ImGui::EndTable();
+        }
+    }
+
+    void RenderWhitelistEditor()
+    {
+        if (!ImGui::CollapsingHeader(u8"白名单管理##NPG"))
+            return;
+
+        ImGui::TextDisabled(u8"白名单中的角色不会被视为附近玩家 (用于自己多开)");
+
+        static char inputBuf[64] = {};
+        ImGui::SetNextItemWidth(220);
+        ImGui::InputText(u8"角色名##NPGwlInput", inputBuf, sizeof(inputBuf));
+        ImGui::SameLine();
+        if (ImGui::Button(u8"添加##NPGwlAdd") && inputBuf[0])
+        {
+            UserConfig::AddWhitelist(inputBuf);
+            inputBuf[0] = 0;
+        }
+
+        auto wl = UserConfig::GetWhitelist();
+        ImGui::Text(u8"当前白名单 (%d):", static_cast<int>(wl.size()));
+        for (auto &n : wl)
+        {
+            ImGui::PushID(n.c_str());
+            ImGui::BulletText("%s", n.c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton(u8"删除"))
+                UserConfig::RemoveWhitelist(n);
+            ImGui::PopID();
         }
     }
 

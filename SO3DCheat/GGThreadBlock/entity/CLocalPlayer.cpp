@@ -1,6 +1,8 @@
 #include "CLocalPlayer.h"
 #include "../util/PatternResolver.h"
+#include "../util/UserConfig.h"
 #include <spdlog/spdlog.h>
+#include <algorithm>
 #include <cstring>
 #include <cmath>
 
@@ -485,6 +487,128 @@ bool RestoreItemShortCD()
 }
 
 // ============================================================
+//  Action-time movement bypass
+//
+//  4 in-place rewrites inside CLocalUser::SetAfterAction (0x7539E0) and
+//  CLocalUser::TraceMove (0x756F10). See CLocalPlayer.h header for the full
+//  rationale; in short:
+//
+//    1. SetAfterActionGate @ 0x7539FE — overwrite `7E 22` (jle short) with
+//       `E9 C1 02 00 00` (jmp 0x753CC4 success path). One patch bypasses every
+//       reject inside SetAfterAction (skill mode, stun, m_bCanMove, animation
+//       whitelist, etc.) so any move-while-acting request is queued.
+//
+//    2. TraceMoveGate1 @ 0x756FAA — flip `76 -> EB` so the per-frame stun-time
+//       check (xmm vs g_kReadyFactorZero, +0x3468) is always taken as "no stun".
+//
+//    3. TraceMoveOrChain @ 0x756FCD — overwrite the start of the long
+//       `cmp [eax+194h], <id>` OR-chain with `E9 19 01 00 00` (jmp 0x7570EB).
+//       Skips every animation/skill ID equality test; falls through to the
+//       second per-frame timer gate.
+//
+//    4. TraceMoveGate2 @ 0x7570FD — flip `76 -> EB` so the +0x2BCC per-frame
+//       timer gate is always skipped. After this, TraceMove always advances the
+//       position toward the queued target.
+// ============================================================
+
+static BYTE s_actionMoveSetAfterActionGateOrig[kActionMoveSetAfterActionGateSize] = {};
+static BYTE s_actionMoveTraceMoveGate1Orig    [kActionMoveTraceMoveGate1Size]     = {};
+static BYTE s_actionMoveTraceMoveOrChainOrig  [kActionMoveTraceMoveOrChainSize]   = {};
+static BYTE s_actionMoveTraceMoveGate2Orig    [kActionMoveTraceMoveGate2Size]     = {};
+static bool s_actionMoveSetAfterActionGateOrigCaptured = false;
+static bool s_actionMoveTraceMoveGate1OrigCaptured     = false;
+static bool s_actionMoveTraceMoveOrChainOrigCaptured   = false;
+static bool s_actionMoveTraceMoveGate2OrigCaptured     = false;
+static bool s_actionMovePatched = false;
+
+bool PatchActionMove()
+{
+    if (s_actionMovePatched)
+        return true;
+
+    auto addrSetAfter   = PatternResolver::Get("ActionMoveSetAfterActionGate");
+    auto addrTraceGate1 = PatternResolver::Get("ActionMoveTraceMoveGate1");
+    auto addrTraceOr    = PatternResolver::Get("ActionMoveTraceMoveOrChain");
+    auto addrTraceGate2 = PatternResolver::Get("ActionMoveTraceMoveGate2");
+    if (!addrSetAfter || !addrTraceGate1 || !addrTraceOr || !addrTraceGate2)
+    {
+        spdlog::error("GGTB: ActionMove pattern(s) unresolved (sa={:x} g1={:x} or={:x} g2={:x})",
+                      addrSetAfter, addrTraceGate1, addrTraceOr, addrTraceGate2);
+        return false;
+    }
+
+    // E9 C1 02 00 00 = jmp +0x2C1 (0x7539FE -> 0x753CC4).
+    BYTE patchSetAfter[kActionMoveSetAfterActionGateSize] = {0xE9, 0xC1, 0x02, 0x00, 0x00};
+    // EB = jmp short (preserves the 0x1E displacement of the original jbe).
+    BYTE patchTraceGate1[kActionMoveTraceMoveGate1Size]   = {0xEB};
+    // E9 19 01 00 00 = jmp +0x119 (0x756FCD -> 0x7570EB).
+    BYTE patchTraceOr[kActionMoveTraceMoveOrChainSize]    = {0xE9, 0x19, 0x01, 0x00, 0x00};
+    BYTE patchTraceGate2[kActionMoveTraceMoveGate2Size]   = {0xEB};
+
+    bool allOk = true;
+    if (!WriteBytes(addrSetAfter, patchSetAfter, kActionMoveSetAfterActionGateSize,
+                    s_actionMoveSetAfterActionGateOrig,
+                    s_actionMoveSetAfterActionGateOrigCaptured))
+        allOk = false;
+    if (!WriteBytes(addrTraceGate1, patchTraceGate1, kActionMoveTraceMoveGate1Size,
+                    s_actionMoveTraceMoveGate1Orig,
+                    s_actionMoveTraceMoveGate1OrigCaptured))
+        allOk = false;
+    if (!WriteBytes(addrTraceOr, patchTraceOr, kActionMoveTraceMoveOrChainSize,
+                    s_actionMoveTraceMoveOrChainOrig,
+                    s_actionMoveTraceMoveOrChainOrigCaptured))
+        allOk = false;
+    if (!WriteBytes(addrTraceGate2, patchTraceGate2, kActionMoveTraceMoveGate2Size,
+                    s_actionMoveTraceMoveGate2Orig,
+                    s_actionMoveTraceMoveGate2OrigCaptured))
+        allOk = false;
+
+    if (allOk)
+    {
+        s_actionMovePatched = true;
+        spdlog::info("GGTB: ActionMove patched (sa={:x} g1={:x} or={:x} g2={:x})",
+                     addrSetAfter, addrTraceGate1, addrTraceOr, addrTraceGate2);
+    }
+    return allOk;
+}
+
+bool RestoreActionMove()
+{
+    if (!s_actionMovePatched)
+        return true;
+
+    auto addrSetAfter   = PatternResolver::Get("ActionMoveSetAfterActionGate");
+    auto addrTraceGate1 = PatternResolver::Get("ActionMoveTraceMoveGate1");
+    auto addrTraceOr    = PatternResolver::Get("ActionMoveTraceMoveOrChain");
+    auto addrTraceGate2 = PatternResolver::Get("ActionMoveTraceMoveGate2");
+
+    bool allOk = true;
+    if (!RestoreBytes(addrSetAfter, kActionMoveSetAfterActionGateSize,
+                      s_actionMoveSetAfterActionGateOrig,
+                      s_actionMoveSetAfterActionGateOrigCaptured))
+        allOk = false;
+    if (!RestoreBytes(addrTraceGate1, kActionMoveTraceMoveGate1Size,
+                      s_actionMoveTraceMoveGate1Orig,
+                      s_actionMoveTraceMoveGate1OrigCaptured))
+        allOk = false;
+    if (!RestoreBytes(addrTraceOr, kActionMoveTraceMoveOrChainSize,
+                      s_actionMoveTraceMoveOrChainOrig,
+                      s_actionMoveTraceMoveOrChainOrigCaptured))
+        allOk = false;
+    if (!RestoreBytes(addrTraceGate2, kActionMoveTraceMoveGate2Size,
+                      s_actionMoveTraceMoveGate2Orig,
+                      s_actionMoveTraceMoveGate2OrigCaptured))
+        allOk = false;
+
+    if (allOk)
+    {
+        s_actionMovePatched = false;
+        spdlog::info("GGTB: ActionMove restored");
+    }
+    return allOk;
+}
+
+// ============================================================
 //  Entity iteration — EntityManager around-player linked list
 // ============================================================
 
@@ -496,6 +620,19 @@ bool SafeReadDword(uintptr_t addr, uint32_t &out)
     __try
     {
         out = *reinterpret_cast<volatile uint32_t *>(addr);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+bool SafeReadByte(uintptr_t addr, uint8_t &out)
+{
+    __try
+    {
+        out = *reinterpret_cast<volatile uint8_t *>(addr);
         return true;
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
@@ -567,6 +704,7 @@ std::string Big5ToUtf8(const char *src)
 //   4 = local user (skipped by pointer match)
 //   5 = read position failed
 //   6 = out of range
+//   7 = whitelisted (multi-boxed alt account)
 int VisitUser(uintptr_t user, uintptr_t localUser,
               float lx, float ly, float lz, float maxDist,
               std::vector<NearbyPlayer> &out, uint32_t &outKind)
@@ -593,6 +731,10 @@ int VisitUser(uintptr_t user, uintptr_t localUser,
     if (!nameBuf[0])
         return 3;
 
+    auto utf8 = Big5ToUtf8(nameBuf);
+    if (UserConfig::IsWhitelisted(utf8))
+        return 7;
+
     float x = 0, y = 0, z = 0;
     if (!SafeReadFloat(user + kPositionXOffset, x) ||
         !SafeReadFloat(user + kPositionYOffset, y) ||
@@ -604,7 +746,7 @@ int VisitUser(uintptr_t user, uintptr_t localUser,
     if (maxDist > 0 && d > maxDist)
         return 6;
 
-    out.push_back({Big5ToUtf8(nameBuf), d, x, y, z});
+    out.push_back({std::move(utf8), d, x, y, z});
     return 0;
 }
 
@@ -669,7 +811,8 @@ std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
     {
         uint32_t kind = 0;
         int      r    = VisitUser(node, localUser, lx, ly, lz, maxDistance, result, kind);
-        rejected[r & 7]++;
+        if (r >= 0 && r < 8)
+            rejected[r]++;
         if (kind && !firstNonzeroKind)
             firstNonzeroKind = kind;
         if (!SafeReadDword(node + kUserNextOffset, node))
@@ -683,12 +826,114 @@ std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
         spdlog::info(
             "GGTB::AroundPlayers: mgr={:x} head_node_first_kind={} visited={} "
             "accepted={} rej_kind={} rej_name={} rej_empty={} rej_self={} "
-            "rej_pos={} rej_range={}",
+            "rej_pos={} rej_range={} rej_white={}",
             static_cast<uintptr_t>(mgr), firstNonzeroKind, visited,
             rejected[0], rejected[1], rejected[2], rejected[3], rejected[4],
-            rejected[5], rejected[6]);
+            rejected[5], rejected[6], rejected[7]);
     }
     return result;
+}
+
+// ============================================================
+//  Drop-item iteration + auto-pickup helper
+// ============================================================
+
+std::vector<DropItemInfo> GetNearbyDropItems(float maxDistance,
+                                             bool  includeUnpickable)
+{
+    std::vector<DropItemInfo> result;
+
+    auto containerPtrAddr = PatternResolver::Get("ItemContainerPtr");
+    if (!containerPtrAddr)
+        return result;
+
+    uint32_t container = 0;
+    if (!SafeReadDword(containerPtrAddr, container) || !container)
+        return result;
+
+    float lx = 0, ly = 0, lz = 0;
+    bool  haveLocal = GetLocalPosition(lx, ly, lz);
+
+    uint32_t node = 0;
+    if (!SafeReadDword(container + kDropContainerHeadOffset, node))
+        return result;
+
+    constexpr int kMaxNodes = 2048;
+    int           visited   = 0;
+    for (; visited < kMaxNodes && node; ++visited)
+    {
+        uint32_t dropId = 0, itemId = 0;
+        float    x = 0, y = 0, z = 0;
+        uint8_t  canPickByte = 0;
+
+        bool ok = SafeReadDword(node + kDropIdOffset, dropId) &&
+                  SafeReadDword(node + kDropItemIdOffset, itemId) &&
+                  SafeReadFloat(node + kDropPosXOffset, x) &&
+                  SafeReadFloat(node + kDropPosYOffset, y) &&
+                  SafeReadFloat(node + kDropPosZOffset, z) &&
+                  SafeReadByte (node + kDropCanPickOffset, canPickByte);
+
+        if (ok)
+        {
+            bool canPick = canPickByte != 0;
+            if (includeUnpickable || canPick)
+            {
+                float d = 0.0f;
+                if (haveLocal)
+                {
+                    float dx = x - lx, dy = y - ly, dz = z - lz;
+                    d = std::sqrt(dx * dx + dy * dy + dz * dz);
+                }
+                if (maxDistance <= 0.0f || !haveLocal || d <= maxDistance)
+                    result.push_back({dropId, itemId, d, x, y, z, canPick});
+            }
+        }
+
+        if (!SafeReadDword(node + kDropNextOffset, node))
+            break;
+    }
+
+    std::sort(result.begin(), result.end(),
+              [](const DropItemInfo &a, const DropItemInfo &b) {
+                  return a.distance < b.distance;
+              });
+    return result;
+}
+
+namespace
+{
+// SEH-only helper. Must contain no C++ objects requiring unwinding —
+// MSVC's C2712 forbids __try inside functions whose stack frame holds
+// destructible objects.
+using PickItemFn = int(__stdcall *)(int);
+
+static int CallPickItemSEH(PickItemFn fn, int dropId)
+{
+    __try
+    {
+        return fn(dropId);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return -1;
+    }
+}
+} // namespace
+
+int SendPickItem(uint32_t dropId)
+{
+    auto fnAddr = PatternResolver::Get("SendPickItemPacketFn");
+    if (!fnAddr)
+        return 0;
+
+    auto fn = reinterpret_cast<PickItemFn>(fnAddr);
+    int  rv = CallPickItemSEH(fn, static_cast<int>(dropId));
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::SendPickItem: SEH caught for dropId={}", dropId);
+        return 0;
+    }
+    return rv;
 }
 
 } // namespace GGTB

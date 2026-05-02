@@ -193,6 +193,49 @@ void PatternResolver::RegisterAll()
     // Effect: cd MECHANISM stays intact (UI shows brief cd, server-side throttle still
     // applies) but the wait shrinks to the configured number of seconds (~0.3s default).
     Register("ItemCdSetter", "", 0x39AACE);
+
+    // ---------- Auto-pickup ----------
+    // SendPickItemPacket(int dropId) — engine wrapper, __stdcall, retn 4.
+    // Linear 0x5FEC90 in unpackd_so3d.exe. Internally:
+    //   v3 = LookupDropItemById(g_pItemContainer, dropId);
+    //   if (!v3) return 0;
+    //   if (!*(BYTE*)(v3 + 0x2E)) return 0;          // canPick gate
+    //   v2 = sub_798DA0(*(DWORD*)(v3 + 4), 0,0,0);   // itemId validator
+    //   if (v2 <= 0) return 0;
+    //   Net__BeginSend();
+    //   sub_B2C930(411011, dropId, v2, 0);           // packet 0x64583
+    //   return 1;
+    // Saved ECX at entry is dead — safe to call as plain stdcall regardless of ECX.
+    Register("SendPickItemPacketFn", "", 0x1FEC90);
+    // g_pItemContainer — *(CItemContainer**). Drop list head at container+0x6C
+    // (DropItem next at +0x88, dropId@+0x0, itemId@+0x4, x/y/z@+0x14/+0x18/+0x1C,
+    // canPick@+0x2E byte).
+    Register("ItemContainerPtr",     "", 0xA0DDF0);
+
+    // ---------- Action-time movement bypass ----------
+    // CLocalUser::SetAfterAction (0x7539E0) queues the "move-after-action" target
+    // (writes [this+32F0/F4/F8/FC] + sets [this+2BC8]=1). It runs through 7 reject
+    // gates first: external validator (sub_7494A0), global lock (dword_ED5BD0),
+    // skill mode (+0x370C in {3,5,8}), stunTime (+0x2E24>0), m_bCanMove (+0x304),
+    // buffer flag (+0x4B24 query 0x0D/0x0F), animation/skill ID whitelist (+0x194).
+    // CLocalUser::TraceMove (0x756F10) is the per-frame consumer of that queue and
+    // re-applies most of the same gates. Two patches inside SetAfterAction +
+    // TraceMove are enough to let movement proceed at any time.
+    //
+    //   0x7539FE: jle short loc_753A22 (2B `7E 22`) — first reject gate. Overwrite
+    //             5 bytes with `E9 C1 02 00 00` = jmp loc_753CC4 (success path).
+    //             Skips ALL SetAfterAction rejects in one shot.
+    //   0x756FAA: jbe short loc_756FCA (2B `76 1E`) — TraceMove stunTime gate
+    //             (+0x3468). Flip `76 -> EB` so it always jumps past the reject.
+    //   0x756FCD: cmp [eax+194h], 0 (5B start of OR-chain). Overwrite with
+    //             `E9 19 01 00 00` = jmp TraceMove_PostGateChain (0x7570EB),
+    //             skipping every animation/skill ID equality test.
+    //   0x7570FD: jbe short loc_75711D (2B `76 1E`) — TraceMove second timer gate
+    //             (+0x2BCC). Flip `76 -> EB`.
+    Register("ActionMoveSetAfterActionGate", "", 0x3539FE);
+    Register("ActionMoveTraceMoveGate1",     "", 0x356FAA);
+    Register("ActionMoveTraceMoveOrChain",   "", 0x356FCD);
+    Register("ActionMoveTraceMoveGate2",     "", 0x3570FD);
 }
 
 void PatternResolver::ScanAll()

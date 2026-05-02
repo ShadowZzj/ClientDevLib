@@ -65,6 +65,8 @@ class SkillSpeedModule : public IModule
         }
     }
 
+    std::string ConfigKey() const override { return "SkillSpeed"; }
+
   private:
     // 用户要求一开就到底，不再暴露滑块。与 SO3DCheat::SkillModule 保持一致。
     static constexpr float kSkillSpeedConst = 0.0001f;

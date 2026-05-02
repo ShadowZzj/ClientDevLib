@@ -1,4 +1,5 @@
 #include "Setting.h"
+#include "util/UserConfig.h"
 #include <imgui/imgui.h>
 #include <spdlog/spdlog.h>
 #include <Windows.h>
@@ -59,6 +60,7 @@ void Setting::Init()
         mod->OnInit();
 
     spdlog::info("GGTB::Setting::Init done, {} modules", modules_.size());
+    initialized_.store(true);
 }
 
 void Setting::Render(bool &open)
@@ -78,6 +80,24 @@ void Setting::Render(bool &open)
     }
 
     ImGui::End();
+
+    // Detect any module-state change since last frame and ask UserConfig to
+    // schedule a debounced save. Cheap — 8 modules, a few floats each.
+    nlohmann::json snap = nlohmann::json::object();
+    for (auto &mod : modules_)
+    {
+        if (!mod) continue;
+        auto k = mod->ConfigKey();
+        if (k.empty()) continue;
+        nlohmann::json mj;
+        mod->SaveState(mj);
+        snap[k] = std::move(mj);
+    }
+    if (snap != lastSnapshot_)
+    {
+        lastSnapshot_ = std::move(snap);
+        UserConfig::MarkDirty();
+    }
 }
 
 void Setting::End()

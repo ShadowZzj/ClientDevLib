@@ -90,6 +90,18 @@ class AttackRangeModule : public IModule
         }
     }
 
+    std::string ConfigKey() const override { return "AttackRange"; }
+    void SaveState(nlohmann::json &j) const override
+    {
+        IModule::SaveState(j);
+        j["tiles"] = tiles_;
+    }
+    void LoadState(const nlohmann::json &j) override
+    {
+        tiles_ = j.value("tiles", tiles_);
+        IModule::LoadState(j);
+    }
+
   private:
     int tiles_ = 10;
 };

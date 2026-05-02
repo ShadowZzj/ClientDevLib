@@ -72,6 +72,18 @@ class AttackSpeedModule : public IModule
         }
     }
 
+    std::string ConfigKey() const override { return "AttackSpeed"; }
+    void SaveState(nlohmann::json &j) const override
+    {
+        IModule::SaveState(j);
+        j["speed"] = speed_;
+    }
+    void LoadState(const nlohmann::json &j) override
+    {
+        speed_ = j.value("speed", speed_);
+        IModule::LoadState(j);
+    }
+
   private:
     float speed_ = 0.5f;
 };
