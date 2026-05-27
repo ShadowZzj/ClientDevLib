@@ -1,0 +1,58 @@
+[
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 6,
+    "itemName": "咕咕-力量藥水",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025715726
+  },
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 12,
+    "itemName": "受祝福的金福袋(1天)",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025735751
+  },
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 11,
+    "itemName": "咕咕-攻速藥水",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025745757
+  },
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 10,
+    "itemName": "咕咕-閃避藥水",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025745757
+  },
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 9,
+    "itemName": "咕咕-命中藥水",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025745757
+  },
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 8,
+    "itemName": "咕咕-防禦力藥水",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025755765
+  },
+  {
+    "pid": 29156,
+    "characterName": "shadowpope",
+    "slotIndex": 14,
+    "itemName": "天使的祝福(1天)",
+    "intervalMs": 86400000,
+    "lastUsed": 1779025765772
+  }
+]

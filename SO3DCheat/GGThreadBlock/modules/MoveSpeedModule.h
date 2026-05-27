@@ -18,7 +18,11 @@ class MoveSpeedModule : public IModule
         {
             if (enabled_)
             {
-                if (!PatchMoveSpeed())
+                if (IsPausedByGuard())
+                {
+                    spdlog::info("GGTB: MoveSpeed enable deferred (NPG paused)");
+                }
+                else if (!PatchMoveSpeed())
                 {
                     enabled_ = false;
                     spdlog::error("GGTB: MoveSpeed patch failed");
@@ -36,10 +40,18 @@ class MoveSpeedModule : public IModule
 
         if (enabled_)
         {
+            if (IsPausedByGuard())
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                                   u8"已被 NPG 暂停 (附近有玩家)");
+            }
             if (ImGui::SliderFloat(u8"速度##MoveSpeed", &speed_, 1.0f, 14.0f, "%.1f"))
             {
-                if (auto *p = GetMoveSpeedPtr())
-                    *p = speed_;
+                if (!IsPausedByGuard())
+                {
+                    if (auto *p = GetMoveSpeedPtr())
+                        *p = speed_;
+                }
             }
             if (auto *p = GetMoveSpeedPtr())
             {

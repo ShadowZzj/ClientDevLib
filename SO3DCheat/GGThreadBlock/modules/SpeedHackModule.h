@@ -17,8 +17,15 @@ class SpeedHackModule : public IModule
         {
             if (enabled_)
             {
-                SpeedHack::Setup();
-                SpeedHack::SetSpeed(speed_);
+                if (IsPausedByGuard())
+                {
+                    spdlog::info("GGTB: SpeedHack enable deferred (NPG paused)");
+                }
+                else
+                {
+                    SpeedHack::Setup();
+                    SpeedHack::SetSpeed(speed_);
+                }
             }
             else
             {
@@ -28,8 +35,16 @@ class SpeedHackModule : public IModule
 
         if (enabled_)
         {
+            if (IsPausedByGuard())
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                                   u8"已被 NPG 暂停 (附近有玩家)");
+            }
             if (ImGui::SliderFloat(u8"倍率##SpeedHack", &speed_, 0.1f, 10.0f, "%.1fx"))
-                SpeedHack::SetSpeed(speed_);
+            {
+                if (!IsPausedByGuard())
+                    SpeedHack::SetSpeed(speed_);
+            }
         }
     }
 

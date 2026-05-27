@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <title>GGThreadBlock Web Console</title>
+    <style>
+        body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0; background: #1d1f23; color: #ddd; }
+        header { padding: 12px 20px; background: #15171a; border-bottom: 1px solid #2a2d33; display: flex; gap: 16px; align-items: center; }
+        header h1 { font-size: 16px; margin: 0; font-weight: 500; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #f55; }
+        .status-dot.ok { background: #4caf50; }
+        main { max-width: 720px; margin: 24px auto; padding: 0 20px; }
+        section { background: #25282d; border: 1px solid #34373d; border-radius: 6px; padding: 16px 20px; margin-bottom: 18px; }
+        section h2 { margin-top: 0; font-size: 14px; color: #aac; font-weight: 500; }
+        label { display: block; font-size: 12px; color: #aaa; margin: 8px 0 4px; }
+        input, select { width: 100%; padding: 8px 10px; background: #1a1c20; border: 1px solid #383b41; color: #ddd; border-radius: 4px; box-sizing: border-box; }
+        input:focus, select:focus { outline: none; border-color: #5d8fde; }
+        button { padding: 8px 18px; background: #3a6dba; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        button:hover:not(:disabled) { background: #4d80cd; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .meta { color: #888; font-size: 12px; margin-top: 4px; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 16px; border-radius: 4px; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
+        .toast.show { opacity: 1; }
+        .toast.ok { background: #2e6f3b; }
+        .toast.fail { background: #8e2c2c; }
+        .row { display: flex; gap: 12px; }
+        .row > * { flex: 1; }
+        datalist { color: #000; }
+        small.hint { color: #777; font-size: 11px; display: block; margin-top: 4px; }
+        .bag-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+        .bag-table th, .bag-table td { padding: 4px 8px; text-align: left; border-bottom: 1px solid #34373d; }
+        .bag-table th { color: #aac; font-weight: 500; position: sticky; top: 0; background: #25282d; }
+        .bag-table tr:hover { background: #2e3138; }
+        .bag-table tr.selected { background: #2a4060; }
+        .bag-table tr.selected:hover { background: #345070; }
+        .bag-scroll { max-height: 300px; overflow-y: auto; border: 1px solid #34373d; border-radius: 4px; }
+        .bag-toolbar { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+        .bag-toolbar button { font-size: 12px; padding: 5px 12px; }
+        .ctx-menu { position: fixed; background: #2a2d33; border: 1px solid #444; border-radius: 4px; padding: 4px 0; z-index: 999; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .ctx-menu div { padding: 6px 14px; font-size: 12px; cursor: pointer; }
+        .ctx-menu div:hover { background: #3a6dba; }
+    </style>
+</head>
+<body>
+    <header>
+        <span class="status-dot" id="ws-dot"></span>
+        <h1>GGThreadBlock Web Console</h1>
+        <span id="ws-text" class="meta">connecting...</span>
+    </header>
+    <main>
+        <section>
+            <h2>实例</h2>
+            <label for="instance">在线游戏进程</label>
+            <select id="instance"></select>
+            <div class="meta" id="instance-meta">—</div>
+        </section>
+
+        <section>
+            <h2>发送按键</h2>
+            <label for="keys">按键组合（逗号分隔；支持 alt/ctrl/shift/tab/enter/esc/space/up/down/left/right/f1..f24/单字母数字，或直接 VK 数字）</label>
+            <input id="keys" autocomplete="off" placeholder="例: alt, w" />
+            <datalist id="keys-history"></datalist>
+            <div class="row">
+                <div>
+                    <label for="hold-ms">按住时长 (ms)</label>
+                    <input id="hold-ms" type="number" min="10" max="5000" step="10" value="80" />
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button id="send-keys-btn">发送按键</button>
+                </div>
+            </div>
+            <small class="hint">底层 hook GetAsyncKeyState 注入"已按下"，游戏每帧轮询会自然 diff 出按下边沿。
+                Alt+W 写 <code>alt, w</code> 即可。<code>insert</code>/<code>end</code>/<code>n</code> 是宿主热键，会被黑名单挡掉。</small>
+            <div style="margin-top: 8px;">
+                <span id="send-keys-status" class="meta"></span>
+            </div>
+        </section>
+
+        <section>
+            <h2>邮寄</h2>
+            <label for="recipient">收件人 (1..15 ASCII)</label>
+            <input id="recipient" list="recipient-history" autocomplete="off" maxlength="15" />
+            <datalist id="recipient-history"></datalist>
+
+            <div class="row">
+                <div>
+                    <label for="amount">金额</label>
+                    <input id="amount" type="number" min="1" step="1" />
+                </div>
+                <div>
+                    <label for="body">附言（可空）</label>
+                    <input id="body" />
+                </div>
+            </div>
+            <small class="hint">引擎限制收件人 ≤15 ASCII 字符；金额必须 &gt; 0 且 ≤ 当前钱包。</small>
+            <div style="margin-top: 12px; display: flex; gap: 12px; align-items: center;">
+                <button id="send-btn">发送邮件</button>
+                <span id="send-status" class="meta"></span>
+            </div>
+        </section>
+
+        <section>
+            <h2>背包物品</h2>
+            <div class="bag-toolbar">
+                <button id="refresh-bag-btn">刷新背包</button>
+                <span class="meta" id="bag-status">未加载</span>
+            </div>
+            <div class="bag-scroll" id="bag-scroll">
+                <table class="bag-table" id="bag-table">
+                    <thead><tr><th><input type="checkbox" id="bag-select-all" /></th><th>Slot</th><th>BagId</th><th>名称</th><th>ItemId</th><th>数量</th></tr></thead>
+                    <tbody id="bag-tbody"></tbody>
+                </table>
+            </div>
+            <div class="bag-toolbar">
+                <label style="margin: 0; font-size: 12px;">收件人:</label>
+                <input id="bag-recipient" style="width: 120px;" maxlength="15" placeholder="角色名" />
+                <button id="bag-send-btn" disabled>邮寄选中物品</button>
+                <span class="meta" id="bag-send-status"></span>
+            </div>
+            <small class="hint">勾选要邮寄的物品，点击"邮寄选中物品"或右键选中行发送。每件物品发一封邮件（引擎限制每封只能附一件）。</small>
+        </section>
+    </main>
+    <div id="toast" class="toast"></div>
+    <script src="/app.js"></script>
+</body>
+</html>

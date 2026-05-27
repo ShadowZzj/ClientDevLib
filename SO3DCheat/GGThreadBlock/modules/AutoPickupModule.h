@@ -55,9 +55,18 @@ class AutoPickupModule : public IModule
         ImGui::SameLine();
         ImGui::Checkbox(u8"显示掉落列表##AutoPickup", &showList_);
 
-        ImGui::SliderFloat(u8"拾取距离##AutoPickup", &distance_,    50.0f, 1500.0f, "%.0f");
+        ImGui::Checkbox(u8"按Z拾取##AutoPickup", &pickOnZ_);
+        if (pickOnZ_)
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f),
+                               u8"<- 不自动扫描,按住 Z 持续拾取");
+        }
+
+        ImGui::SliderFloat(u8"拾取距离(格)##AutoPickup", &distance_,       2.0f, 50.0f, "%.0f");
         ImGui::SliderInt  (u8"轮询间隔(ms)##AutoPickup", &pollIntervalMs_, 100, 3000);
-        ImGui::SliderInt  (u8"每轮上限##AutoPickup",   &maxPicksPerTick_, 1, 20);
+        ImGui::SliderInt  (u8"每轮上限##AutoPickup",     &maxPicksPerTick_, 1, 20);
+        ImGui::SliderInt  (u8"包间延时(ms)##AutoPickup", &perPickDelayMs_,  0, 500);
 
         // Snapshot for UI under lock.
         size_t      dropCount    = 0;
@@ -76,9 +85,15 @@ class AutoPickupModule : public IModule
         ImGui::Separator();
         if (!enabled_)
             ImGui::TextDisabled(u8"未启用 (worker 仍在运行,但不拾取)");
-        else if (paused_by_guard_.load())
+        else if (IsPausedByGuard())
             ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
                                u8"已被 NPG 暂停 (附近有玩家)");
+        else if (pickOnZ_)
+            ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f),
+                               u8"按Z模式: 周围 %d 件可拾取(被动扫描), 上次按Z拾取 %d, 距上次%lums",
+                               static_cast<int>(dropCount),
+                               static_cast<int>(picksLastTick),
+                               static_cast<unsigned long>(lastTickAge));
         else
             ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f),
                                u8"运行中: 周围 %d 件可拾取, 上轮拾取 %d, 距上轮 %lums",
@@ -90,9 +105,12 @@ class AutoPickupModule : public IModule
             RenderListSnapshot(snapshot);
     }
 
-    // NPG pause/resume — only flips paused_by_guard_, never enabled_.
-    void OnShutdown() override { paused_by_guard_.store(true); }
-    void OnResume()   override { paused_by_guard_.store(false); }
+    // NPG integration: pauses via the IModule::pausedByGuard_ flag that NPG
+    // flips on entry/exit. Worker checks IsPausedByGuard() each tick and
+    // silently skips picking while a remote player is nearby. `enabled_`
+    // stays untouched (user intent).
+    void OnShutdown() override {}
+    void OnResume()   override {}
 
     // Persistence
     std::string ConfigKey() const override { return "AutoPickup"; }
@@ -103,6 +121,8 @@ class AutoPickupModule : public IModule
         j["pollIntervalMs"]   = pollIntervalMs_;
         j["maxPicksPerTick"]  = maxPicksPerTick_;
         j["showList"]         = showList_;
+        j["pickOnZ"]          = pickOnZ_;
+        j["perPickDelayMs"]   = perPickDelayMs_;
     }
     void LoadState(const nlohmann::json &j) override
     {
@@ -110,6 +130,14 @@ class AutoPickupModule : public IModule
         pollIntervalMs_  = j.value("pollIntervalMs",  pollIntervalMs_);
         maxPicksPerTick_ = j.value("maxPicksPerTick", maxPicksPerTick_);
         showList_        = j.value("showList",        showList_);
+        pickOnZ_         = j.value("pickOnZ",         pickOnZ_);
+        perPickDelayMs_  = j.value("perPickDelayMs",  perPickDelayMs_);
+        // Migrate from the old world-unit default (600) / legacy 50~1500 slider —
+        // the engine's own AutoHunt__FindNearestPickableDrop caps at 50 tiles
+        // (see g_AutoHuntSearchRadiusTiles), so anything above that is an
+        // instant anti-cheat tell. Clamp silently on load.
+        if (distance_ < 2.0f)   distance_ = 2.0f;
+        if (distance_ > 50.0f)  distance_ = 15.0f;
         IModule::LoadState(j);
     }
 
@@ -155,8 +183,40 @@ class AutoPickupModule : public IModule
         DWORD lastHeartbeat = 0;
         while (!stop_.load())
         {
-            if (enabled_ && !paused_by_guard_.load())
-                Tick();
+            if (enabled_ && !IsPausedByGuard())
+            {
+                if (pickOnZ_)
+                {
+                    // Z 模式:电平触发发包,按住 Z 就按 pollIntervalMs_ 节流持续拾取。
+                    // 空闲时(Z 未按下)也按 pollIntervalMs_ 节流的刷一下 drop snapshot,
+                    // 让 UI 列表不会卡在上次按 Z 的瞬间。
+                    //
+                    // 用 GetAsyncKeyState 高位读"当前是否按下" — 不用低位 &1 那种
+                    // "自上次调用以来按过没"的语义,因为游戏的 Input_PollKeyboard
+                    // 每帧也在调 GetAsyncKeyState('Z'),低位会被它清掉,边沿丢失。
+                    //
+                    // 注意:GetAsyncKeyState 的虚拟注入(util/InputInjector)也会把
+                    // 'Z' 显示成按下 — 想从 web 触发拾取直接 sendInput vks=[Z]
+                    // 就可以,不用单独走命令。
+                    bool currZ = (GetAsyncKeyState('Z') & 0x8000) != 0;
+                    if (currZ)
+                    {
+                        // Z 按下:按节流间隔持续拾取
+                        if (GetTickCount() - lastTickMs_ >= static_cast<DWORD>(pollIntervalMs_))
+                            RunPickPass();
+                    }
+                    else
+                    {
+                        // Z 未按下:只刷新 UI 列表
+                        if (GetTickCount() - lastTickMs_ >= static_cast<DWORD>(pollIntervalMs_))
+                            RefreshSnapshotOnly();
+                    }
+                }
+                else
+                {
+                    Tick();
+                }
+            }
 
             DWORD now = GetTickCount();
             if (enabled_ && now - lastHeartbeat > 10000)
@@ -166,8 +226,8 @@ class AutoPickupModule : public IModule
                     std::lock_guard<std::mutex> lk(mutex_);
                     cnt = lastDrops_.size();
                 }
-                spdlog::info("GGTB::AutoPickup: heartbeat — drops={}, paused={}",
-                             cnt, paused_by_guard_.load());
+                spdlog::info("GGTB::AutoPickup: heartbeat — drops={}, paused={}, pickOnZ={}",
+                             cnt, IsPausedByGuard(), pickOnZ_);
                 lastHeartbeat = now;
             }
 
@@ -178,13 +238,20 @@ class AutoPickupModule : public IModule
         spdlog::info("GGTB::AutoPickup: worker thread exited");
     }
 
+    // 自动模式入口:沿用原逻辑(节流 + 发包)。
     void Tick()
     {
         DWORD now = GetTickCount();
         if (now - lastTickMs_ < static_cast<DWORD>(pollIntervalMs_))
             return;
         lastTickMs_ = now;
+        RunPickPass();
+    }
 
+    // 真正的"扫描 + 发拾取包"一轮。Z 模式按下 Z 时走这条,自动模式经 Tick 节流后
+    // 走这条。不做节流判断 — 调用方负责。
+    void RunPickPass()
+    {
         auto drops = GetNearbyDropItems(distance_, /*includeUnpickable=*/false);
 
         size_t picked = 0;
@@ -199,21 +266,34 @@ class AutoPickupModule : public IModule
                 spdlog::info("GGTB::AutoPickup: picked dropId={} itemId={} d={:.1f}",
                              d.dropId, d.itemId, d.distance);
             }
-            // Small gap between packets — engine's Net__BeginSend / sub_B2C930
-            // path isn't strictly thread-safe vs the main render thread, and
-            // bursty CG_PICK_ITEM is exactly what server throttles flag.
-            Sleep(15);
+            // 包间延时 — 可配置,默认 50ms。引擎的 Net__BeginSend / sub_B2C930
+            // 路径对主渲染线程不是严格线程安全,且突发的 CG_PICK_ITEM 正是服务端
+            // 节流标记的目标。
+            if (perPickDelayMs_ > 0)
+                Sleep(static_cast<DWORD>(perPickDelayMs_));
         }
 
         std::lock_guard<std::mutex> lk(mutex_);
         lastDrops_     = std::move(drops);
         picksLastTick_ = picked;
+        lastTickMs_    = GetTickCount(); // Z 模式下让被动刷新继续按节流走
     }
 
-    float             distance_         = 600.0f;
+    // Z 模式空闲期用 — 只刷新 UI 列表,不发任何包,不动 picksLastTick_。
+    void RefreshSnapshotOnly()
+    {
+        auto drops = GetNearbyDropItems(distance_, /*includeUnpickable=*/false);
+        std::lock_guard<std::mutex> lk(mutex_);
+        lastDrops_  = std::move(drops);
+        lastTickMs_ = GetTickCount();
+    }
+
+    float             distance_         = 15.0f;
     int               pollIntervalMs_   = 500;
     int               maxPicksPerTick_  = 5;
     bool              showList_         = false;
+    bool              pickOnZ_          = false; // true = 关自动扫描,按住 Z 持续拾取
+    int               perPickDelayMs_   = 50;    // 每个拾取包之间的延时,默认 50ms
 
     DWORD             lastTickMs_       = 0;
     size_t            picksLastTick_    = 0;
@@ -221,7 +301,6 @@ class AutoPickupModule : public IModule
     std::mutex                  mutex_;
     std::vector<DropItemInfo>   lastDrops_;
 
-    std::atomic<bool> paused_by_guard_{false};
     std::atomic<bool> stop_{false};
     std::thread       worker_;
 };

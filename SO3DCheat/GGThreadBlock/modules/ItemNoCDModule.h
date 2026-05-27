@@ -31,7 +31,11 @@ class ItemNoCDModule : public IModule
         {
             if (enabled_)
             {
-                if (!PatchItemShortCD(cdSeconds_))
+                if (IsPausedByGuard())
+                {
+                    spdlog::info("GGTB: ItemShortCD enable deferred (NPG paused)");
+                }
+                else if (!PatchItemShortCD(cdSeconds_))
                 {
                     enabled_ = false;
                     spdlog::error("GGTB: ItemShortCD patch failed");
@@ -47,9 +51,15 @@ class ItemNoCDModule : public IModule
             }
         }
 
+        if (enabled_ && IsPausedByGuard())
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                               u8"已被 NPG 暂停 (附近有玩家)");
+        }
+
         if (ImGui::SliderFloat(u8"CD 秒数##ItemShortCD", &cdSeconds_, 0.05f, 2.0f, "%.2fs"))
         {
-            if (enabled_)
+            if (enabled_ && !IsPausedByGuard())
                 PatchItemShortCD(cdSeconds_);
         }
 

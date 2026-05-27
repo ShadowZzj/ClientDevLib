@@ -1,0 +1,14 @@
+{
+  "phone": "15027672761",
+  "enabledCharacters": [
+    "sharen03",
+    "sharen01",
+    "sharen2",
+    "shadowpope",
+    "shadowsing"
+  ],
+  "smsEnabled": false,
+  "discordEnabled": true,
+  "discordWebhook": "",
+  "discordProxy": "http://127.0.0.1:17891"
+}

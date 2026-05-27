@@ -1,0 +1,173 @@
+import express, { Request, Response } from "express";
+import path from "path";
+import fs from "fs";
+import { InstanceRegistry } from "./instances";
+import { CashScheduler } from "./cashScheduler";
+import { DeathNotifier } from "./deathNotifier";
+import { AutoReviver } from "./autoReviver";
+import { GmReplier } from "./gmReplier";
+
+export function createHttpApp(
+    registry: InstanceRegistry,
+    cashScheduler: CashScheduler,
+    deathNotifier: DeathNotifier,
+    autoReviver: AutoReviver,
+    gmReplier: GmReplier
+) {
+    const app = express();
+    app.use(express.json());
+
+    app.get("/api/instances", (_req: Request, res: Response) => {
+        res.json(
+            registry.list().map((i) => ({
+                pid: i.pid,
+                characterName: i.characterName,
+                hostExe: i.hostExe,
+                dllVersion: i.dllVersion,
+                money: i.status.money,
+                hp: i.status.hp,
+                lastSeen: i.lastSeen,
+            }))
+        );
+    });
+
+    app.post("/api/command/:pid", async (req: Request, res: Response) => {
+        const pid = Number(req.params.pid);
+        if (!pid) return res.status(400).json({ error: "bad pid" });
+        const { action, args } = req.body || {};
+        if (!action) return res.status(400).json({ error: "missing action" });
+        try {
+            const r = await registry.sendCommand(pid, action, args || {}, 5000);
+            return res.json(r);
+        } catch (e: any) {
+            return res.status(502).json({ ok: false, error: e.message });
+        }
+    });
+
+    // --- Cash schedule API ---
+    app.get("/api/cash-schedule", (_req: Request, res: Response) => {
+        res.json(cashScheduler.getEntries());
+    });
+
+    app.post("/api/cash-schedule", (req: Request, res: Response) => {
+        const { characterName, itemName, intervalMs } = req.body || {};
+        if (!characterName || !itemName || !intervalMs)
+            return res.status(400).json({ error: "missing characterName, itemName or intervalMs" });
+        const inst = registry.list().find((i) => i.characterName === characterName);
+        cashScheduler.addOrUpdate({
+            pid: inst?.pid || 0,
+            characterName,
+            itemName,
+            intervalMs: Number(intervalMs),
+        });
+        res.json({ ok: true });
+    });
+
+    app.delete("/api/cash-schedule", (req: Request, res: Response) => {
+        const { characterName, itemName } = req.body || {};
+        if (!characterName || !itemName)
+            return res.status(400).json({ error: "missing characterName or itemName" });
+        const removed = cashScheduler.remove(characterName, itemName);
+        res.json({ ok: removed });
+    });
+
+    // --- Death notify API ---
+    app.get("/api/death-notify", (_req: Request, res: Response) => {
+        res.json(deathNotifier.getConfig());
+    });
+
+    app.post("/api/death-notify", (req: Request, res: Response) => {
+        const { phone, enabledCharacters, smsEnabled, discordEnabled, discordWebhook, discordProxy } = req.body || {};
+        deathNotifier.setConfig({ phone, enabledCharacters, smsEnabled, discordEnabled, discordWebhook, discordProxy });
+        res.json({ ok: true });
+    });
+
+    // --- Auto revive API ---
+    // configs:每个角色一份脚本 + autoRun + delayMin。前端 GET/PUT/DELETE。
+    // state: idle / pending / running 状态机的当前快照(broker 侧权威)。
+    // log:   每角色最近 200 行运行日志,WS 也会增量推。
+    app.get("/api/auto-revive/configs", (_req: Request, res: Response) => {
+        res.json(autoReviver.listConfigs());
+    });
+    app.get("/api/auto-revive/configs/:name", (req: Request, res: Response) => {
+        const c = autoReviver.getConfig(req.params.name);
+        if (!c) return res.status(404).json({ error: "not found" });
+        res.json(c);
+    });
+    app.put("/api/auto-revive/configs/:name", (req: Request, res: Response) => {
+        const body = req.body || {};
+        const cfg = autoReviver.setConfig(req.params.name, { ...body, characterName: req.params.name });
+        res.json(cfg);
+    });
+    app.delete("/api/auto-revive/configs/:name", (req: Request, res: Response) => {
+        const ok = autoReviver.deleteConfig(req.params.name);
+        res.json({ ok });
+    });
+    app.get("/api/auto-revive/states", (_req: Request, res: Response) => {
+        res.json(autoReviver.listStates());
+    });
+    app.get("/api/auto-revive/states/:name", (req: Request, res: Response) => {
+        res.json(autoReviver.getState(req.params.name));
+    });
+    app.get("/api/auto-revive/logs/:name", (req: Request, res: Response) => {
+        res.json(autoReviver.getLog(req.params.name));
+    });
+    // 控制端点:取消 pending / 中止 running / 立刻 run。
+    app.post("/api/auto-revive/cancel/:name", (req: Request, res: Response) => {
+        res.json({ ok: autoReviver.cancelPending(req.params.name) });
+    });
+    app.post("/api/auto-revive/abort/:name", (req: Request, res: Response) => {
+        res.json({ ok: autoReviver.abortRunning(req.params.name) });
+    });
+    app.post("/api/auto-revive/run-now/:name", async (req: Request, res: Response) => {
+        const r = await autoReviver.runNow(req.params.name);
+        res.json(r);
+    });
+
+    // --- GM 回复 API ---
+    app.get("/api/gm-replier/config", (_req: Request, res: Response) => {
+        res.json(gmReplier.getConfig());
+    });
+    app.put("/api/gm-replier/config", (req: Request, res: Response) => {
+        gmReplier.setConfig(req.body || {});
+        res.json(gmReplier.getConfig());
+    });
+    app.get("/api/gm-replier/logs", (_req: Request, res: Response) => {
+        res.json(gmReplier.getLogs());
+    });
+    app.post("/api/gm-replier/logs/clear", (_req: Request, res: Response) => {
+        gmReplier.clearLogs();
+        res.json({ ok: true });
+    });
+
+    // Embedded mode: serve from in-memory assets; otherwise use filesystem
+    if (process.env.EMBEDDED === "1") {
+        let assets: Record<string, string> = {};
+        try { assets = require("./_embedded_assets").default; } catch {}
+        const mimeTypes: Record<string, string> = {
+            ".html": "text/html",
+            ".js": "application/javascript",
+            ".css": "text/css",
+            ".json": "application/json",
+            ".svg": "image/svg+xml",
+            ".png": "image/png",
+            ".ico": "image/x-icon",
+            ".woff": "font/woff",
+            ".woff2": "font/woff2",
+        };
+        app.use("/", (req: Request, res: Response, next) => {
+            let filePath = req.path === "/" ? "index.html" : req.path.replace(/^\//, "");
+            const data = assets[filePath];
+            if (!data) return next();
+            const ext = path.extname(filePath);
+            res.setHeader("Content-Type", mimeTypes[ext] || "application/octet-stream");
+            res.send(Buffer.from(data, "base64"));
+        });
+    } else {
+        const webDistDir = path.resolve(__dirname, "..", "web-dist");
+        const webDir = fs.existsSync(webDistDir) ? webDistDir : path.resolve(__dirname, "..", "web");
+        app.use("/", express.static(webDir));
+    }
+
+    return app;
+}

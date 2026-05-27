@@ -1,0 +1,26 @@
+{
+  "name": "sync-cslb",
+  "version": "1.0.0",
+  "bin": {
+    "sync-cslb": "index.js"
+  },
+  "pkg": {
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  },
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "esbuild": "^0.28.0",
+    "iconv-lite": "^0.7.2"
+  }
+}

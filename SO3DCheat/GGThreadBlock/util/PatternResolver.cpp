@@ -176,6 +176,15 @@ void PatternResolver::RegisterAll()
     Register("AttackRangeCapImm1", "", 0x3493C4); // 4B imm32 inside cmp at 0x7493C1
     Register("AttackRangeCapImm2", "", 0x34940F); // 4B imm32 inside cmp at 0x74940C
 
+    // SkillTable__GetSkillRange (linear 0x939890). Returns SkillTable+0x170 —
+    // the per-skill cast distance (tiles). 13 callers total: 9 in
+    // Net__SendSkillPacket's distance gates, 2 in SkillTable__GetSkillRangeSq
+    // (OutputDebugString "Skill GetRangeSq : %d"), 1 in sub_A89AD0 (walk
+    // animation normaliser). Patching the prologue to `mov eax, imm32; ret`
+    // (6B) covers all callers with a single write; slider updates just
+    // rewrite imm32 at +1.
+    Register("SkillRangeGetterEntry", "", 0x539890);
+
     // Item short-cd: rewrite the per-use cd setter inside StatTable__SetItemCdRemaining
     // (linear 0x79AACE). InventoryItem__Use's cd gate calls ItemTblEntry__GetCooldownRatio,
     // whose path-3 dividend is *itemEntry+0x28 — and itemEntry+0x28 IS the same field as
@@ -211,6 +220,8 @@ void PatternResolver::RegisterAll()
     // (DropItem next at +0x88, dropId@+0x0, itemId@+0x4, x/y/z@+0x14/+0x18/+0x1C,
     // canPick@+0x2E byte).
     Register("ItemContainerPtr",     "", 0xA0DDF0);
+    // g_pCashItemContainer — same struct, different instance for cash bag
+    Register("CashContainerPtr",    "", 0xA08160);
 
     // ---------- Action-time movement bypass ----------
     // CLocalUser::SetAfterAction (0x7539E0) queues the "move-after-action" target
@@ -236,6 +247,295 @@ void PatternResolver::RegisterAll()
     Register("ActionMoveTraceMoveGate1",     "", 0x356FAA);
     Register("ActionMoveTraceMoveOrChain",   "", 0x356FCD);
     Register("ActionMoveTraceMoveGate2",     "", 0x3570FD);
+
+    // ---------- Fire-full-power ----------
+    // SkillManager singleton — *(SkillManager**)0xED2F3C (g_pSkillManager).
+    // Verified via SkillManager__GetSkillByIndex which does `*(array + 0x28*i)`
+    // after a `i < count` gate (array@+0x440, count@+0x444).
+    Register("SkillManagerPtr",    "", 0xAD2F3C);
+    // CreatureMgr singleton — *(CreatureMgr**)0xECF658 (g_pCreatureMgr).
+    // AutoTarget walks the singly-linked list head at +0x0C (next pointer at
+    // creature+0x370). Same shape as EntityManager's around-player list.
+    Register("CreatureMgrPtr",     "", 0xACF658);
+    // Net__BeginSend — __cdecl, no args, returns the global packet buffer.
+    // Linear 0xB2B580 in unpackd_so3d.exe (RVA 0x72B580 with imagebase 0x400000).
+    Register("NetBeginSend",       "", 0x72B580);
+    // Net__SendDword — __thiscall(buf, proto, dwordValue). Linear 0xB2D240
+    // (RVA 0x72D240). Used for short single-DWORD packets like 412017
+    // (CG_PLAYER_REVIVE) and 411015 (CG_ITEM_USE).
+    Register("NetSendDword",       "", 0x72D240);
+    // Net__SendSkillPacket — __thiscall(this=netBuf, skillId, targetId).
+    // Linear 0xB2F5D0 (RVA 0x72F5D0). See CLocalUser__SendSkillCast @ 0x7565E0
+    // for the canonical call sequence.
+    Register("NetSendSkillPacket", "", 0x72F5D0);
+
+    // Net__SkillSendPackage — __thiscall(this=netBuf, routingTag=0x6458E, buf, size).
+    // Linear 0xB2EA90 (RVA 0x72EA90). The lowest-level skill packet dispatcher;
+    // every variant branch inside Net__SendSkillPacket finishes by calling
+    // sub_B2EA90(411022, Src, len). Old so3dFullCheat's ThrowBomb did
+    // `mov ecx,gameClient; push len; push buf; push 0x6458E; call <skillSendPackageOffset>`
+    // which is exactly this function. Bomber raw-packet mode skips the variant
+    // dispatch and feeds a hand-built buffer (skillId + level + bombItemId +
+    // isLocalInRange + count + targetIds) straight into here.
+    Register("NetSkillSendPackage", "", 0x72EA90);
+
+    // Net__SendChatStr — __thiscall(this=netBuf, protoId, message). Linear 0xB2E920
+    // (RVA 0x72E920). Builds {u32 totalLen, u32 protoId, char[] message} with 4-byte
+    // alignment padding, then dispatches via Net__SendPacket_Plaintext. Used for
+    // CG_PUBLIC_CHAT (411001) and other string-body protos.
+    Register("NetSendChatStr", "", 0x72E920);
+
+    // Item__GetItemClass(int itemId) — __stdcall, 1 arg. Returns:
+    //   3 = throwable bomb (backs skill 83 投掷炸弹)
+    //   1 = consumable class A
+    //   2 = consumable class B
+    //   0 = other / not-consumable
+    // Linear 0x9FCD70 (RVA 0x5FCD70). Used by the bomber-class 火力全开 branch
+    // to find the bomb item in the bag without matching encrypted name strings.
+    // Internally dispatches to three category-table probes (sub_9365C0 for bombs,
+    // sub_9365E0 for class B, sub_936600 for class A) against ranges loaded at
+    // init — safe to call from any thread; SEH-wrap at the caller just in case
+    // the item-table pointer is torn during scene transitions.
+    Register("ItemGetItemClass",   "", 0x1FCD70);
+
+    // ---------- Hardware-fingerprint spoof ----------
+    // HwFp_FillBuffer — __thiscall(this=SYSTEMTIME*, outPkt). Linear 0xBCCBF0
+    // (RVA 0x7CCBF0). Writes hardware fingerprint into fixed offsets of the
+    // login packet buffer: OS/CPU/GPU, ComputerName, UserName, locale, MAC,
+    // disk hash. Three callers (0xBC8980 / 0xBC9A70 / 0xBCA900) feed it the
+    // outgoing login packet buffer. Hooking here covers all three.
+    Register("HwFpFillBuffer", "", 0x7CCBF0);
+
+    // ---------- Auto-confirm dialog ----------
+    // UI_ShowMessageBox_Modal — char __thiscall(this=CUIMgr, text, dialogType,
+    // ctx, timeout). Linear 0x97F7D0 (RVA 0x57F7D0). The entire game routes
+    // every confirmation box through here: fills "messagetext" field, enables
+    // message_ok (a3==1) / message_yes+message_no (a3==2) / silent (a3==100),
+    // then runs its OWN PeekMessage loop until a button flips *(this+11274)
+    // back to 0. Return value: 0 = user cancelled, non-zero = user confirmed.
+    // Hooking here to short-circuit return 1 auto-picks YES for every modal
+    // confirm in one shot (sell, drop, expensive purchase, guild kick, ...).
+    Register("UIMessageBoxModal", "", 0x57F7D0);
+
+    // UI_CountDialog —— i64 __thiscall(this=CUIMgr, labelFmt, initialCount,
+    // maxCount, unitPrice, mode) -> chosenCount. Linear 0x96FCD0 (RVA 0x56FCD0).
+    // 数量选择弹窗（购买/扔物品/卖物/邮件附件等）。游戏会跑自己的 PeekMessage
+    // 循环，等用户在 +1/+10/Max/OK/Cancel 之间选完才返回。直接 short-circuit
+    // 返回 a4(maxCount) ≈ 用户点了 Max 再 OK，配合 AutoConfirm 的 YesNo 跳过，
+    // 就实现"扔/卖/买，全堆/全栈一键执行"。
+    Register("UICountDialog", "", 0x56FCD0);
+
+    // ---------- Packet logger ----------
+    // Net__SendPacket_Plaintext — __thiscall(this=CGameClient, pktObj, length).
+    // Linear 0xB1CA60 (RVA 0x71CA60). This is the LOWEST plaintext send: pktObj
+    // points to {u32 totalLen; u32 protocolId; ...body}, and the optional XOR
+    // obfuscation (sub_5CA910) happens INSIDE this function after we've already
+    // observed the unobfuscated body. Hook here for readable send logs.
+    Register("NetSendPacketPlaintext", "", 0x71CA60);
+    // Net__RawRecv — __thiscall(this=CGameClient, timeoutSec, timeoutUsec).
+    // Linear 0xB1C750 (RVA 0x71C750). Engine recv path is ALREADY plaintext on
+    // the wire (no decryption layer — verified against every dispatcher at
+    // 0x68AEA0, 0xB333C0, 0xB35810, …). Each call does one j_recv() into the
+    // rolling buffer at [this+0x18] with fill level at [this+0x24]; we diff
+    // fill-level pre/post to capture the exact bytes that just arrived.
+    Register("NetRawRecv",            "", 0x71C750);
+
+    // ---------- Drop-item packet ----------
+    // Net__SendTriple — __thiscall(this=netBuf, protocolId, arg1, arg2). Linear
+    // 0xB2C790 (RVA 0x72C790). Generic 3-arg packet builder; observed in
+    // sub_8FCC00 as the dispatcher for CG_ITEM_DROP (411012) with arg1=bagId+13
+    // and arg2=stackCount. Also used for other fixed-shape packets (411026,
+    // 412048, 412175) that add an extra guild-system hook before sending.
+    // For CG_ITEM_DROP the pre-dispatch is a no-op.
+    Register("NetSendTriple", "", 0x72C790);
+
+    // ---------- Dialog-select / pickup packet ----------
+    // Net__SendDialogSelect — __thiscall(this=netBuf, protocolId, a3, a4, a5).
+    // Linear 0xB2C930 (RVA 0x72C930). Builds a 20-byte 3-DWORD-body packet:
+    //   {u32 totalLen=20, u32 protocolId, u32 a3, u32 a4, u32 a5}
+    // Confirmed shapes (411026 verified 2026-05-09 via repeated same-NPC selection;
+    // see OnNpcDialogConfirm @ 0x8BBEF0 — a3 = packet-derived dialogOptionIndex,
+    // a4 = cached global g_NpcInteractTargetId at *(dword_ED347C+1016)):
+    //   CG_NPC_DIALOG_SELECT (411026): a3=dialogOptionIndex, a4=npcInteractTargetId, a5=1
+    //   CG_PICK_ITEM         (411011): a3=dropId,            a4=validatedItemId,      a5=0
+    // Sister of NetSendTriple — same caller pattern (BeginSend → mov ecx,eax →
+    // call sub_B2C930) but emits one extra DWORD on the wire.
+    Register("NetSendDialogSelect", "", 0x72C930);
+
+    // ---------- MailBox::SendMoneyMail (proto 411524, op=0) ----------
+    // Linear 0x7F51E0 (RVA 0x3F51E0). __stdcall(int op, const char *recipient,
+    // int64 money, const char *body). Self-contained: calls Net__BeginSend +
+    // Net__SkillSendPackage(buf, 411524, payload, 77) internally. Verified by
+    // capturing a live "give 123456 gold to shadowpope" mail packet and matching
+    // body bytes against this layout. See CLocalPlayer.h doc.
+    //
+    Register("MailSendMoney", "", 0x3F51E0);
+
+    // MailBox::SendItemMail (proto 411524, op=1). Linear 0x7F4F80 (RVA 0x3F4F80).
+    // __stdcall(int op, const char *recipient, int itemBagId, int itemCount,
+    // const char *body). Same self-contained pattern as SendMoneyMail.
+    Register("MailSendItem", "", 0x3F4F80);
+
+    // ---------- Block level-up gate ----------
+    // CLocalPlayer::UpdateExp's level-up trigger. The function ends with:
+    //   if (currentExp >= maxExp && isAlive && level < cap) {
+    //       Net__BeginSend(); Net__SendDword(412016);  // CG_LEVEL_UP_CHECK
+    //   }
+    // The condition compiles to a `jge short loc_878BE2` (2 bytes: 7D 23) at
+    // 0x878BBD that SKIPS the send block when currentExp < maxExp. Flipping
+    // the opcode byte 7D -> EB makes it an unconditional `jmp short +0x23`,
+    // i.e. the send block is NEVER entered regardless of EXP. The displacement
+    // byte 0x23 is reused — patch is a single byte.
+    //
+    // Linear 0x878BBD, RVA 0x478BBD. See entity/CLocalPlayer.h doc block.
+    Register("BlockLevelUpGate", "", 0x478BBD);
+
+    // ---------- Walk-to-world-position ----------
+    // CLocalUser::SetAfterAction — __thiscall(this=*g_pLocalUser, x, y, action, target).
+    // Linear 0x7539E0 (RVA 0x3539E0). Queues "move-after-action" by writing target
+    // XY/action/target into this+0x32F0/+0x32F4/+0x32FC/+0x32F8 and setting flag
+    // this+0x2BC8 = 1; the engine's per-frame TraceMove + A* mover then walks the
+    // avatar there.
+    //
+    // x/y are **truncated-integer world coords** (NOT bit-cast floats). Verified
+    // against OnPlayerMoveClick @ 0x871D10 (`cvttss2si` before push) and
+    // AutoHunt__TickBattle (`(int)*(float *)`).  The MoveTo() implementation does
+    // the truncation at the call site.
+    //
+    // Note: SetAfterAction internally runs gates (m_bCanMove, stunTime, anim/skill ID
+    // whitelist, …). The ActionMove patch @ 0x7539FE skips them in one shot, so
+    // MoveTo() works in any state when ActionMove is enabled. Without it the engine
+    // still accepts most idle/walk states.
+    Register("SetAfterAction", "", 0x3539E0);
+
+    // dword_DFD518 — global "after-action intent" (1 = walk-click, 3 = walk+attack).
+    // OnPlayerMoveClick sets it to 1 before SetAfterAction and back to 0 after.
+    // Linear 0xDFD518, RVA 0x9FD518.
+    Register("AfterActionIntent", "", 0x9FD518);
+    // byte_DFD4E6 — secondary flag also cleared by OnPlayerMoveClick after the
+    // SetAfterAction call. Linear 0xDFD4E6, RVA 0x9FD4E6.
+    Register("AfterActionFlag2", "", 0x9FD4E6);
+
+    // ---------- Walk-and-talk-to-NPC ----------
+    // EntityManager::FindCreatureById — __thiscall(this=*g_pCreatureMgr, id) -> CCreature*.
+    // Linear 0x863F60 (RVA 0x463F60). Used to resolve an NPC/monster id to its live
+    // CCreature pointer so we can read its world position before walking to it.
+    Register("FindCreatureById", "", 0x463F60);
+
+    // g_TargetCreatureId — global int "currently-targeted CCreature id". UI hit-tests
+    // fill it when the user clicks an NPC/monster; OnTargetCreatureClick_TalkOrAttack
+    // @ 0x9584A0 reads it to find the creature, then sets g_AfterActionIntent=3 and
+    // calls SetAfterAction(... action=3, target=0). The action-3 success path inside
+    // TraceMove later reads THIS global (NOT SetAfterAction's target arg) to dispatch
+    // the right packet: NPC -> dialog open, monster -> attack. -1 means "no target".
+    // Linear 0x18B2A08, RVA 0x14B2A08.
+    Register("TargetCreatureId", "", 0x14B2A08);
+
+    // ---------- NPC dialog ----------
+    // Npc__LoadDialogScript(state, monsterTblId) -> bool. Linear 0x8F7FA0, RVA 0x4F7FA0.
+    // The engine's CANONICAL NPC discriminator: returns nonzero iff `monsterTblId` has
+    // a dialog script in npctalk.dat / quest.txt. Used by every NPC-click path to
+    // distinguish NPCs from monsters. Much more reliable than heuristics on monsterTblId
+    // ranges (which differ across maps).
+    //
+    // CALLING CONVENTION — __thiscall(state*, int monsterTblId). The `state*` MUST be
+    // the dereferenced VALUE at g_NpcDialogState (RVA 0xAD347C / linear 0xED347C), NOT
+    // the address of the global. IDA shows `mov ecx, ds:g_NpcDialogState; push ecx` at
+    // every call site — i.e. the global at 0xED347C HOLDS a pointer to the actual state
+    // object. Passing the address of the global as `this` makes the function walk the
+    // dword sitting at 0xED347C+0x404 (=g_NpcDialogState's 257th DWORD) as the head of
+    // the dialog-script linked list — guaranteed garbage, always returns 0, every
+    // creature ends up classified as monster. See CLocalPlayer.cpp CreatureIsNpc for
+    // the correct deref pattern.
+    Register("NpcLoadDialogScript", "", 0x4F7FA0);
+
+    // Npc__OpenDialogByCreatureRef(creatureMgr, &creatureIdRef, dialogState, dialogUI,
+    //                              p1, p2) -> bool. Linear 0xB3A3F0, RVA 0x73A3F0.
+    // Opens the NPC dialog UI immediately given a creatureId in g_TargetCreatureId. No
+    // distance check — pure local UI bootstrap. Used by the engine's per-frame click
+    // handler at sub_9EA090.
+    Register("NpcOpenDialogByCreatureRef", "", 0x73A3F0);
+
+    // g_NpcDialogState — dialog state object. Linear 0xED347C, RVA 0xAD347C.
+    // NpcOpenDialogByCreatureRef writes [state+1016] = creature+112, then calls
+    // NpcLoadDialogScript(state, monsterTblId).
+    Register("NpcDialogState", "", 0xAD347C);
+
+    // dword_ED3D10 — dialog UI controller table (npctalk.dat-derived). Linear 0xED3D10,
+    // RVA 0xAD3D10. Passed as a4 to NpcOpenDialogByCreatureRef.
+    Register("NpcDialogUITable", "", 0xAD3D10);
+
+    // dword_189DEE8 — game world state pointer. Linear 0x189DEE8, RVA 0x149DEE8.
+    // Passed as a5 (int, plain value) to NpcOpenDialogByCreatureRef.
+    Register("NpcDialogParam1Ptr", "", 0x149DEE8);
+
+    // byte_ED40F0 — global UI parent handle. Linear 0xED40F0, RVA 0xAD40F0.
+    // Passed as a6 (pointer to byte) to NpcOpenDialogByCreatureRef.
+    Register("NpcDialogParam2Ptr", "", 0xAD40F0);
+
+    // ---------- NPC dialog option click chain ----------
+    // 这两个搭配 OnNpcDialogOption_Quest 实现「真的像玩家点了选项一样」效果:
+    // 直接发 411026 包的话 UI 状态不会更新(state+1044 仍指向旧选项,server 推
+    // 下一菜单时引擎自己 build 不出来)。正确做法是先把选中的选项节点写到
+    // state+1044,然后调 Npc__ConfirmDialogOptionLocal 让引擎自己:
+    //   1) 播 SFX
+    //   2) 把 dialogResult 写到 g_DialogOptionPendingResult (dword_ED3DC4)
+    //   3) 在本地 build 出下一屏菜单(如果有 sub-script)
+    // 最后调 OnNpcDialogOption_Quest 发包并清理 g_NpcDialogState UI 状态。
+
+    // Npc__ConfirmDialogOptionLocal @ 0x8F9EE0. __thiscall(state, &resultOut).
+    // 等于「在 UI 上点一下当前 state+1044 指向的选项」: 内部根据 state[1044]
+    // 走完所有本地 state-machine 转换,然后(如果选项有 quest tag)把数值写进
+    // 调用者传入的 result 指针 —— 即 dword_ED3DC4。返回 1=对话框继续打开
+    // (下一菜单已构建),0=对话结束(本地关闭)。
+    Register("NpcConfirmDialogOption", "", 0x4F9EE0);
+
+    // OnNpcDialogOption_Quest @ 0x992160. __thiscall(uiThis, dialogResult, mode).
+    // 这才是真正发 411026 包的入口。mode=0 = 用户点选项,mode=1 = 一些特殊
+    // 快捷路径(来自 sub_967280)。
+    Register("NpcSendDialogOption", "", 0x592160);
+
+    // g_DialogOptionPendingResult — dword_ED3DC4. Npc__ConfirmDialogOptionLocal
+    // 写,OnNpcDialogOption_Quest 读。我们手动模拟点击时,在写 state+1044
+    // 之后先把这个清零(防上一次残留),Confirm 之后再 take 出来交给 send.
+    Register("NpcDialogPendingResult", "", 0xAD3DC4);
+
+    // ---------- Net__SendPacket16B_2DW_Tracked (revive / generic 2-DWORD packet) ----------
+    // Linear 0xB2C790 / RVA 0x72C790. __thiscall(buf, proto, arg1, arg2). Same
+    // packet shape as NetSendTriple but with the tracking pre-hook (logs into
+    // Net__OnSendDialogStateTrack for protos 411026 / 412048 / 412175). Used by
+    // many UI buttons including the revive dialog's "rebirth_ok" handler:
+    //   Net__SendPacket16B_2DW_Tracked(buf, 411170, deadUserId, flag=1)
+    // 411170 = CG_REBIRTH_OK: server warps player back to town. arg1 is the
+    // dead user's id (we read g_pLocalUser+112 since AutoRevive fires on our
+    // own death), arg2=1 means "yes revive" / 0 means "cancel".
+    Register("NetSendPacket16B2DwTracked", "", 0x72C790);
+
+    // ---------- Current map id ----------
+    // g_CurMapSlot — int (NOT int*). RVA 0x967CB4 (linear 0xD67CB4).
+    // Engine ref sites verified across 18+ functions (AutoMover_Update,
+    // sub_5FED10, sub_658FF0, sub_65BD10, CLocalUser__SendSkillCast, ...):
+    //   mov eax, ds:dword_D67CB4         ; eax = slot index VALUE
+    //   mov edx, ds:dword_D6AE78[eax*4]  ; edx = g_MapIdTable[slot]
+    // Helper sub_978670 also confirms: `return g_MapIdTable[slot] == 125;`
+    // with `slot` passed as a plain int arg. So GetCurrentMapId() must do a
+    // SINGLE deref of CurMapSlot, NOT a double-deref like an int* would need.
+    Register("CurMapSlot", "", 0x967CB4);
+
+    // g_MapIdTable — int[]. RVA 0x96AE78 (linear 0xD6AE78). Indexed by
+    // g_CurMapSlot to retrieve the current map id (e.g. 7=新手村, 400=Square/主城).
+    Register("MapIdTable",  "", 0x96AE78);
+
+    // ---------- Map collision grid (用来判定 tile 是否可走) ----------
+    // g_pCurMap — pointer to current map object (CMap*). RVA 0x149E070 (linear
+    // 0x189E070). NULL or torn-on-scene-transition. Layout:
+    //   +0x10 collisionGrid (int[width*height], 0=walkable nonzero=blocked)
+    //   +0x14 width  (int)
+    //   +0x18 height (int)
+    // 网格按 row-major 排列：grid[x + width*y]。世界坐标转 tile 用 floor 取整
+    // (引擎用 sub_AA2050)。Map__IsBlocked @ 0xA97080 是引擎的可达性查询入口,
+    // A* 寻路、target-spec 检查全都funnel through 它。
+    Register("CurMapPtr", "", 0x149E070);
 }
 
 void PatternResolver::ScanAll()
@@ -309,6 +609,12 @@ bool PatternResolver::LoadCache()
         int loaded  = 0;
         for (auto &entry : entries_)
         {
+            if (entry.pattern.empty())
+            {
+                entry.resolved = moduleBase_ + entry.fallbackRVA;
+                ++loaded;
+                continue;
+            }
             if (addrs.contains(entry.name))
             {
                 entry.resolved = std::stoull(addrs[entry.name].get<std::string>(),

@@ -93,6 +93,18 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/util/SpeedHack.cpp
     GGThreadBlock/util/UserConfig.h
     GGThreadBlock/util/UserConfig.cpp
+    GGThreadBlock/util/NetLog.h
+    GGThreadBlock/util/NetLog.cpp
+    GGThreadBlock/util/HwFpSpoof.h
+    GGThreadBlock/util/HwFpSpoof.cpp
+    GGThreadBlock/util/Stage1Trigger.h
+    GGThreadBlock/util/Stage1Trigger.cpp
+    GGThreadBlock/util/DisconnectWatchdog.h
+    GGThreadBlock/util/DisconnectWatchdog.cpp
+    GGThreadBlock/util/RemoteControl.h
+    GGThreadBlock/util/RemoteControl.cpp
+    GGThreadBlock/util/InputInjector.h
+    GGThreadBlock/util/InputInjector.cpp
     GGThreadBlock/modules/StatusModule.h
     GGThreadBlock/modules/MoveSpeedModule.h
     GGThreadBlock/modules/AttackSpeedModule.h
@@ -102,7 +114,14 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/modules/AttackRangeModule.h
     GGThreadBlock/modules/ActionMoveModule.h
     GGThreadBlock/modules/AutoPickupModule.h
-    GGThreadBlock/modules/NearbyPlayerGuardModule.h)
+    GGThreadBlock/modules/FireFullPowerModule.h
+    GGThreadBlock/modules/AutoConfirmModule.h
+    GGThreadBlock/modules/AutoDelegationModule.h
+    GGThreadBlock/modules/AutoMailModule.h
+    GGThreadBlock/modules/StationaryFarmModule.h
+    GGThreadBlock/modules/BlockLevelUpModule.h
+    GGThreadBlock/modules/NearbyPlayerGuardModule.h
+    GGThreadBlock/modules/PlayerESPModule.h)
 target_link_libraries(GGThreadBlock ClientDevLib ${WINDOWS_UTIL_LIB_FILES} d3d9.lib)
 target_include_directories(GGThreadBlock PRIVATE
     ${WINDOWS_UTIL_INCLUDE_DIRS}
@@ -110,8 +129,16 @@ target_include_directories(GGThreadBlock PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/GGThreadBlock)
 target_link_options(GGThreadBlock PRIVATE "/SAFESEH:NO")
 
+add_executable(GGThreadBlockStarter
+    GGThreadBlock/Starter.cpp)
+target_link_libraries(GGThreadBlockStarter ClientDevLib ${WINDOWS_UTIL_LIB_FILES})
+target_include_directories(GGThreadBlockStarter PRIVATE
+    ${WINDOWS_UTIL_INCLUDE_DIRS}
+    ${PRO_SUP}/General/ThirdParty)
+target_link_options(GGThreadBlockStarter PRIVATE "/SAFESEH:NO")
+
 set_property(
-  TARGET ClientDevLib ${PROJECT_NAME} GGThreadBlock
+  TARGET ClientDevLib ${PROJECT_NAME} GGThreadBlock GGThreadBlockStarter
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 ClientDevLibFinalize()

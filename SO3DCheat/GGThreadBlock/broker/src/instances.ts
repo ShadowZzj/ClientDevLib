@@ -1,0 +1,243 @@
+import { Socket } from "net";
+import { v4 as uuid } from "uuid";
+import { EventEmitter } from "events";
+
+export interface InstanceStatus {
+    money?: number;
+    hp?: number;
+    posX?: number;
+    posY?: number;
+    posZ?: number;
+}
+
+export interface Instance {
+    connId: string;
+    pid: number;
+    characterName?: string;
+    hostExe?: string;
+    dllVersion?: string;
+    status: InstanceStatus;
+    lastSeen: number;
+}
+
+interface PendingAck {
+    resolve: (v: { ok: boolean; detail?: string }) => void;
+    reject: (e: Error) => void;
+    timer: NodeJS.Timeout;
+}
+
+interface ConnState {
+    connId: string;
+    socket: Socket;
+    buffer: string;
+    pid?: number;
+    pending: Map<string, PendingAck>;
+}
+
+export class InstanceRegistry extends EventEmitter {
+    private byConnId = new Map<string, ConnState>();
+    private byPid = new Map<number, string>(); // pid -> connId
+    private instances = new Map<string, Instance>();
+
+    handleConnection(socket: Socket): void {
+        const connId = uuid();
+        const state: ConnState = {
+            connId,
+            socket,
+            buffer: "",
+            pending: new Map(),
+        };
+        this.byConnId.set(connId, state);
+
+        socket.setEncoding("utf8");
+        socket.on("data", (chunk: string) => this.onData(state, chunk));
+        socket.on("error", (e) => {
+            console.warn(`[broker] socket error connId=${connId}: ${e.message}`);
+        });
+        socket.on("close", () => this.onClose(state));
+
+        console.log(`[broker] connection opened connId=${connId}`);
+    }
+
+    private onData(state: ConnState, chunk: string): void {
+        state.buffer += chunk;
+        for (;;) {
+            const i = state.buffer.indexOf("\n");
+            if (i < 0) break;
+            const line = state.buffer.slice(0, i).trim();
+            state.buffer = state.buffer.slice(i + 1);
+            if (!line) continue;
+            this.handleFrame(state, line);
+        }
+    }
+
+    private handleFrame(state: ConnState, line: string): void {
+        let frame: any;
+        try {
+            frame = JSON.parse(line);
+        } catch (e) {
+            console.warn(`[broker] bad json from connId=${state.connId}: ${line}`);
+            return;
+        }
+        const type = frame.type as string;
+        if (type !== "status" && type !== "ack" && type !== "pong") {
+            console.log(`[broker] frame type=${type} pid=${frame.pid ?? state.pid}`);
+        }
+        switch (type) {
+            case "hello":
+                this.onHello(state, frame);
+                break;
+            case "identity":
+                this.onIdentity(state, frame);
+                break;
+            case "status":
+                this.onStatus(state, frame);
+                break;
+            case "ack":
+                this.onAck(state, frame);
+                break;
+            case "pong":
+                // 心跳回复 — 当前 broker 没主动发 ping,先留 case 防 unknown frame 警告
+                break;
+            case "chat":
+                this.onChat(state, frame);
+                break;
+            case "bye":
+                console.log(`[broker] bye pid=${frame.pid}`);
+                break;
+            default:
+                console.warn(`[broker] unknown frame type=${type}`);
+        }
+    }
+
+    private onHello(state: ConnState, f: any): void {
+        const pid = Number(f.pid);
+        if (!pid) {
+            console.warn(`[broker] hello without pid, dropping`);
+            state.socket.destroy();
+            return;
+        }
+        // 同 pid 复连:旧实例先下线。常见于游戏没正常退就被强杀,然后 broker 端
+        // 还没收到 close,这时新连过来就把残留挤掉。
+        const existing = this.byPid.get(pid);
+        if (existing && existing !== state.connId) {
+            console.log(`[broker] superseding stale conn for pid=${pid}`);
+            this.byConnId.get(existing)?.socket.destroy();
+        }
+
+        state.pid = pid;
+        this.byPid.set(pid, state.connId);
+        const inst: Instance = {
+            connId: state.connId,
+            pid,
+            hostExe: f.hostExe,
+            dllVersion: f.dllVersion,
+            status: {},
+            lastSeen: Date.now(),
+        };
+        this.instances.set(state.connId, inst);
+        console.log(`[broker] hello pid=${pid} dll=${f.dllVersion}`);
+        this.emit("change");
+    }
+
+    private onIdentity(state: ConnState, f: any): void {
+        const inst = this.instances.get(state.connId);
+        if (!inst) return;
+        inst.characterName = f.characterName;
+        inst.lastSeen = Date.now();
+        console.log(`[broker] identity pid=${inst.pid} name=${inst.characterName}`);
+        this.emit("change");
+    }
+
+    private onStatus(state: ConnState, f: any): void {
+        const inst = this.instances.get(state.connId);
+        if (!inst) return;
+        if (inst.status.money === undefined) {
+            console.log(`[broker] first status pid=${inst.pid} money=${f.money} name=${f.characterName ?? "(none)"}`);
+        }
+        inst.status = {
+            money: typeof f.money === "number" ? f.money : Number(f.money) || 0,
+            hp: typeof f.hp === "number" ? f.hp : undefined,
+            posX: f.posX,
+            posY: f.posY,
+            posZ: f.posZ,
+        };
+        // status 也带 characterName,免得 identity-diff 漏一帧 UI 就一直显示 connecting…
+        if (typeof f.characterName === "string" && f.characterName && !inst.characterName) {
+            inst.characterName = f.characterName;
+            console.log(`[broker] character via status pid=${inst.pid} name=${f.characterName}`);
+        }
+        inst.lastSeen = Date.now();
+        this.emit("change");
+    }
+
+    private onAck(state: ConnState, f: any): void {
+        const id = String(f.id || "");
+        const p = state.pending.get(id);
+        if (!p) {
+            console.warn(`[broker] orphan ack id=${id}`);
+            return;
+        }
+        clearTimeout(p.timer);
+        state.pending.delete(id);
+        p.resolve({ ok: !!f.ok, detail: f.detail });
+    }
+
+    private onChat(state: ConnState, f: any): void {
+        const inst = this.instances.get(state.connId);
+        this.emit("chat", {
+            pid: f.pid ?? state.pid,
+            characterName: inst?.characterName,
+            sender: f.sender,
+            message: f.message,
+            timestamp: Date.now(),
+        });
+    }
+
+    private onClose(state: ConnState): void {
+        console.log(`[broker] close connId=${state.connId} pid=${state.pid}`);
+        for (const p of state.pending.values()) {
+            clearTimeout(p.timer);
+            p.reject(new Error("connection closed"));
+        }
+        state.pending.clear();
+        this.byConnId.delete(state.connId);
+        if (state.pid && this.byPid.get(state.pid) === state.connId)
+            this.byPid.delete(state.pid);
+        this.instances.delete(state.connId);
+        this.emit("change");
+    }
+
+    list(): Instance[] {
+        return Array.from(this.instances.values());
+    }
+
+    sendCommand(
+        pid: number,
+        action: string,
+        args: any,
+        timeoutMs = 5000
+    ): Promise<{ ok: boolean; detail?: string }> {
+        const connId = this.byPid.get(pid);
+        if (!connId) return Promise.reject(new Error(`unknown pid ${pid}`));
+        const state = this.byConnId.get(connId);
+        if (!state) return Promise.reject(new Error(`stale connId for pid ${pid}`));
+
+        const id = uuid();
+        const frame = JSON.stringify({ type: "command", id, action, args }) + "\n";
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                state.pending.delete(id);
+                reject(new Error("command timed out"));
+            }, timeoutMs);
+            state.pending.set(id, { resolve, reject, timer });
+            state.socket.write(frame, (err) => {
+                if (err) {
+                    state.pending.delete(id);
+                    clearTimeout(timer);
+                    reject(err);
+                }
+            });
+        });
+    }
+}

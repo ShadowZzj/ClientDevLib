@@ -10,10 +10,33 @@
 using namespace zzj::D3D;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+namespace
+{
+// Only act on a hotkey when the host window is the foreground window. Keeps
+// Insert (and any other cheat hotkey) from toggling while the user is typing
+// in another app. We still call GetAsyncKeyState every tick when unfocused so
+// the `& 1` "pressed since last call" bit is drained and does not fire once
+// focus returns.
+bool HostWindowHasFocus(HWND ourWindow)
+{
+    HWND fg = ::GetForegroundWindow();
+    if (!fg)
+        return false;
+    if (ourWindow && fg == ourWindow)
+        return true;
+    DWORD fgPid = 0;
+    ::GetWindowThreadProcessId(fg, &fgPid);
+    return fgPid == ::GetCurrentProcessId();
+}
+} // namespace
+
 LRESULT CALLBACK D3D9Hook::WindowProcess(HWND window, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
-    // toogle menu
-    if (GetAsyncKeyState(D3D9Hook::setting->GetToggleMenuKey()) & 1)
+    // Toggle menu — always drain the `& 1` bit so a stale press in another
+    // window does not leak through when focus returns. Only honour the press
+    // when our host window currently has focus.
+    const bool togglePressed = (GetAsyncKeyState(D3D9Hook::setting->GetToggleMenuKey()) & 1) != 0;
+    if (togglePressed && HostWindowHasFocus(window))
     {
         D3D9Hook::open = !D3D9Hook::open;
         spdlog::info("D3D9Hook::open {}", D3D9Hook::open);

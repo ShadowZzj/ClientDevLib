@@ -74,7 +74,16 @@ void Setting::Render(bool &open)
         if (ImGui::CollapsingHeader(mod->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::PushID(mod->GetName().c_str());
+            // NPG lockout: while the guard is active the module's OnRender
+            // still draws (user needs to see state), but every widget is
+            // unclickable so re-ticking a checkbox can't re-apply the patch
+            // and leak the cheat effect to a nearby player.
+            const bool guarded = mod->IsPausedByGuard();
+            if (guarded)
+                ImGui::BeginDisabled();
             mod->OnRender();
+            if (guarded)
+                ImGui::EndDisabled();
             ImGui::PopID();
         }
     }

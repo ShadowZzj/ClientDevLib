@@ -1,0 +1,233 @@
+{
+  "configs": [
+    {
+      "characterName": "shadowpope",
+      "autoRun": false,
+      "delayMinMin": 5,
+      "delayMinMax": 5,
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 0
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "delayMs": 5000,
+          "npcId": 19811,
+          "destMapId": 10245,
+          "option": 10245
+        },
+        {
+          "type": "pressHookedKey",
+          "delayMs": 1000,
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false
+        }
+      ]
+    },
+    {
+      "characterName": "shadowsing",
+      "autoRun": true,
+      "delayMinMin": 5,
+      "delayMinMax": 5,
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10282,
+          "delayMs": 5000
+        },
+        {
+          "type": "pressHookedKey",
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false,
+          "delayMs": 1000
+        }
+      ]
+    },
+    {
+      "characterName": "sharen2",
+      "autoRun": true,
+      "delayMinMin": 5,
+      "delayMinMax": 5,
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10228,
+          "delayMs": 5000
+        },
+        {
+          "type": "pressHookedKey",
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false,
+          "delayMs": 1000
+        }
+      ]
+    },
+    {
+      "characterName": "sharen01",
+      "autoRun": true,
+      "delayMinMin": 5,
+      "delayMinMax": 5,
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10228,
+          "delayMs": 5000
+        },
+        {
+          "type": "pressHookedKey",
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false,
+          "delayMs": 1000
+        }
+      ]
+    },
+    {
+      "characterName": "sharen03",
+      "autoRun": true,
+      "delayMinMin": 1,
+      "delayMinMax": 1,
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10228,
+          "delayMs": 5000
+        },
+        {
+          "type": "pressHookedKey",
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false,
+          "delayMs": 1000
+        }
+      ]
+    },
+    {
+      "characterName": "shadowdance",
+      "autoRun": true,
+      "delayMinMin": 5,
+      "delayMinMax": 5,
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10282,
+          "delayMs": 5000
+        }
+      ]
+    }
+  ],
+  "deadAt": {},
+  "scheduledAt": {}
+}

@@ -23,7 +23,11 @@ class ActionMoveModule : public IModule
         {
             if (enabled_)
             {
-                if (!PatchActionMove())
+                if (IsPausedByGuard())
+                {
+                    spdlog::info("GGTB: ActionMove enable deferred (NPG paused)");
+                }
+                else if (!PatchActionMove())
                 {
                     enabled_ = false;
                     RestoreActionMove();
@@ -38,6 +42,12 @@ class ActionMoveModule : public IModule
             {
                 RestoreActionMove();
             }
+        }
+
+        if (enabled_ && IsPausedByGuard())
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                               u8"已被 NPG 暂停 (附近有玩家)");
         }
     }
 

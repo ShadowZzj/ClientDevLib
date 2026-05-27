@@ -3,6 +3,7 @@
 #include "../Setting.h"
 #include "../entity/CLocalPlayer.h"
 #include "../util/UserConfig.h"
+#include "PlayerESPModule.h"
 #include <imgui/imgui.h>
 #include <spdlog/spdlog.h>
 #include <Windows.h>
@@ -29,8 +30,8 @@ namespace GGTB
 class NearbyPlayerGuardModule : public IModule
 {
   public:
-    explicit NearbyPlayerGuardModule(Setting *setting)
-        : IModule(u8"附近玩家自动停手"), setting_(setting)
+    explicit NearbyPlayerGuardModule(Setting *setting, PlayerESPModule *esp = nullptr)
+        : IModule(u8"附近玩家自动停手"), setting_(setting), esp_(esp)
     {
         worker_ = std::thread([this] { WorkerLoop(); });
     }
@@ -67,18 +68,19 @@ class NearbyPlayerGuardModule : public IModule
 
         // Snapshot for UI under lock.
         size_t      playerCount = 0;
-        size_t      pausedCount = 0;
         bool        nearbyNow   = false;
         std::string nearestName;
         float       nearestDist = 0.0f;
         {
             std::lock_guard<std::mutex> lk(mutex_);
             playerCount = lastPlayers_.size();
-            pausedCount = autoPaused_.size();
             nearbyNow   = nearby_;
             nearestName = lastNearestName_;
             nearestDist = lastNearestDist_;
         }
+        // Count actively-held modules outside the lock — touches setting_ but
+        // not our protected state. Each module's pausedByGuard_ is atomic.
+        size_t pausedCount = CountGuardedModules();
 
         ImGui::Separator();
         if (!enabled_)
@@ -105,6 +107,8 @@ class NearbyPlayerGuardModule : public IModule
 
         if (showList_)
             RenderListSnapshot();
+        else
+            FeedESP();
 
         RenderWhitelistEditor();
     }
@@ -138,6 +142,19 @@ class NearbyPlayerGuardModule : public IModule
     void OnResume() override {}
 
   private:
+    // Feed ESP without rendering the list (called when showList_ is false).
+    void FeedESP()
+    {
+        if (!esp_)
+            return;
+        std::vector<NearbyPlayer> snapshot;
+        {
+            std::lock_guard<std::mutex> lk(mutex_);
+            snapshot = lastPlayers_;
+        }
+        esp_->UpdateActiveEntries(snapshot);
+    }
+
     void RenderListSnapshot()
     {
         std::vector<NearbyPlayer> snapshot;
@@ -146,6 +163,10 @@ class NearbyPlayerGuardModule : public IModule
             snapshot = lastPlayers_;
         }
 
+        // Feed ESP module with current visible players every frame.
+        if (esp_)
+            esp_->UpdateActiveEntries(snapshot);
+
         ImGui::Separator();
         ImGui::Text(u8"周围玩家 (%d):", static_cast<int>(snapshot.size()));
 
@@ -153,7 +174,7 @@ class NearbyPlayerGuardModule : public IModule
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
             ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_ScrollY;
 
-        if (ImGui::BeginTable("##NPGList", 6, kFlags, ImVec2(0, 160)))
+        if (ImGui::BeginTable("##NPGList", 7, kFlags, ImVec2(0, 160)))
         {
             ImGui::TableSetupColumn(u8"名字");
             ImGui::TableSetupColumn(u8"距离");
@@ -161,6 +182,7 @@ class NearbyPlayerGuardModule : public IModule
             ImGui::TableSetupColumn("Y");
             ImGui::TableSetupColumn("Z");
             ImGui::TableSetupColumn(u8"操作");
+            ImGui::TableSetupColumn(u8"标记");
             ImGui::TableHeadersRow();
 
             for (auto &p : snapshot)
@@ -180,6 +202,12 @@ class NearbyPlayerGuardModule : public IModule
                 ImGui::PushID(p.name.c_str());
                 if (ImGui::SmallButton(u8"+白名单"))
                     UserConfig::AddWhitelist(p.name);
+                ImGui::TableNextColumn();
+                {
+                    bool marked = esp_ && esp_->IsMarked(p.name);
+                    if (ImGui::Checkbox("##esp", &marked) && esp_)
+                        esp_->SetMarked(p.name, marked);
+                }
                 ImGui::PopID();
             }
             ImGui::EndTable();
@@ -288,8 +316,8 @@ class NearbyPlayerGuardModule : public IModule
             {
                 PauseAllLocked();
                 nearby_ = true;
-                spdlog::info("GGTB::NPG: nearby player detected ({} @ {:.1f}), paused {} modules",
-                             lastNearestName_, lastNearestDist_, autoPaused_.size());
+                spdlog::info("GGTB::NPG: nearby player detected ({} @ {:.1f})",
+                             lastNearestName_, lastNearestDist_);
             }
         }
         else
@@ -316,39 +344,73 @@ class NearbyPlayerGuardModule : public IModule
     {
         if (!setting_)
             return;
+        // Mark every CanAutoPause module (enabled or not) so anything the user
+        // turns on while we're holding the guard up defers the patch instead
+        // of showing the cheat effect to the nearby player. OnShutdown is only
+        // called on currently-enabled modules — the rest have nothing to undo
+        // but still need the guard flag set so their checkbox/slider handlers
+        // read !IsPausedByGuard() as false.
         for (auto &mod : setting_->GetModules())
         {
             if (!mod || mod.get() == this)
                 continue;
             if (!mod->CanAutoPause())
                 continue;
-            if (!mod->IsEnabled())
-                continue;
-            mod->OnShutdown();
-            autoPaused_.push_back(mod);
-            spdlog::info("GGTB::NPG:   paused '{}'", mod->GetName());
+            mod->SetPausedByGuard(true);
+            if (mod->IsEnabled())
+            {
+                mod->OnShutdown();
+                spdlog::info("GGTB::NPG:   paused '{}'", mod->GetName());
+            }
         }
     }
 
     void ResumeAllLocked()
     {
-        for (auto &weak : autoPaused_)
+        if (!setting_)
+            return;
+        // Symmetric to PauseAllLocked: clear the guard flag on every tracked
+        // module, and call OnResume only on those currently enabled. This
+        // covers modules the user enabled DURING the guard window (which
+        // deferred their patch) — OnResume will now actually apply them.
+        for (auto &mod : setting_->GetModules())
         {
-            if (auto mod = weak.lock())
+            if (!mod || mod.get() == this)
+                continue;
+            if (!mod->CanAutoPause())
+                continue;
+            mod->SetPausedByGuard(false);
+            if (mod->IsEnabled())
             {
-                if (mod->IsEnabled())
-                {
-                    mod->OnResume();
-                    spdlog::info("GGTB::NPG:   resumed '{}'", mod->GetName());
-                }
+                mod->OnResume();
+                spdlog::info("GGTB::NPG:   resumed '{}'", mod->GetName());
             }
         }
-        autoPaused_.clear();
+    }
+
+    // UI helper: count how many guarded, enabled modules are currently held
+    // down. Walks the setting's module list (each pausedByGuard_ is atomic).
+    size_t CountGuardedModules() const
+    {
+        if (!setting_)
+            return 0;
+        size_t n = 0;
+        for (auto &mod : setting_->GetModules())
+        {
+            if (!mod || mod.get() == this)
+                continue;
+            if (!mod->CanAutoPause())
+                continue;
+            if (mod->IsEnabled() && mod->IsPausedByGuard())
+                ++n;
+        }
+        return n;
     }
 
     static constexpr int kClearAfterEmptyPolls = 3;
 
     Setting                            *setting_           = nullptr;
+    PlayerESPModule                    *esp_               = nullptr;
     float                               distanceThreshold_ = 600.0f;
     int                                 pollIntervalMs_    = 500;
     DWORD                               lastCheckMs_       = 0;
@@ -360,7 +422,6 @@ class NearbyPlayerGuardModule : public IModule
     std::vector<NearbyPlayer>           lastPlayers_;
     std::string                         lastNearestName_;
     float                               lastNearestDist_   = 0.0f;
-    std::vector<std::weak_ptr<IModule>> autoPaused_;
 
     std::atomic<bool>                   stop_{false};
     std::thread                         worker_;

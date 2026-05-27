@@ -7,18 +7,27 @@
 namespace GGTB
 {
 
-// Attack range (CUser+0x35AC, int "attackRangeTiles").
+// Attack range (CUser+0x35AC, int "attackRangeTiles") + skill cast range
+// (SkillTable+0x170, tiles).
 //
-// Same shape as MoveSpeed:
+// AttackRange (CUser field) — same shape as MoveSpeed:
 //   - CalcStatus rewrites the field every frame in 3 sites (baseline -> weapon
 //     clamp -> buff accumulate). NOP all 3 so the field can be poked freely.
 //   - Combat__GetAttackRangeSquared then squares the field with a hard cap of
 //     225 (=15^2). Raise the cap imm32 in both branches so values > 15 tiles
 //     actually take effect.
 //
+// SkillRange (per-skill table field) — rewrites the SkillTable__GetSkillRange
+// prologue (0x939890) to `mov eax, imm32; ret` (6B). That one patch covers
+// the 13 callers: Net__SendSkillPacket's 9 distance gates, the 2 GetRangeSq
+// wrappers, and sub_A89AD0 (walk animation). Updating the slider just
+// rewrites the imm32.
+//
 // Per-frame re-poke: constructor / respawn init paths still fire occasionally
-// (CUser ctor at 0x73F297 sets the field to 1), so we re-write it from
-// OnRender every UI tick — same defensive pattern MoveSpeed uses.
+// (CUser ctor at 0x73F297 sets the field to 1), so we re-write the attack
+// range field from OnRender every UI tick — same defensive pattern MoveSpeed
+// uses. SkillRange patch is stable (function prologue isn't rewritten by
+// per-frame paths) so it only needs a re-patch when the slider moves.
 class AttackRangeModule : public IModule
 {
   public:
@@ -30,35 +39,60 @@ class AttackRangeModule : public IModule
         {
             if (enabled_)
             {
-                if (!PatchAttackRange() || !PatchAttackRangeCap(kAttackRangeCapDefault))
+                // NPG held us down: keep user intent, let OnResume apply the
+                // patch when the area clears. Applying it now would make a
+                // nearby player see the cheat effect.
+                if (IsPausedByGuard())
                 {
-                    enabled_ = false;
-                    RestoreAttackRange();
-                    RestoreAttackRangeCap();
-                    spdlog::error("GGTB: AttackRange patch failed");
+                    spdlog::info("GGTB: AttackRange enable deferred (NPG paused)");
                 }
                 else
                 {
-                    spdlog::info("GGTB: AttackRange enabled, value={} tiles", tiles_);
+                    bool ok = PatchAttackRange()
+                              && PatchAttackRangeCap(kAttackRangeCapDefault)
+                              && PatchSkillRange(static_cast<uint32_t>(skillTiles_));
+                    if (!ok)
+                    {
+                        enabled_ = false;
+                        RestoreAttackRange();
+                        RestoreAttackRangeCap();
+                        RestoreSkillRange();
+                        spdlog::error("GGTB: AttackRange/SkillRange patch failed");
+                    }
+                    else
+                    {
+                        spdlog::info("GGTB: AttackRange={} tiles, SkillRange={} tiles",
+                                     tiles_, skillTiles_);
+                    }
                 }
             }
             else
             {
                 RestoreAttackRange();
                 RestoreAttackRangeCap();
+                RestoreSkillRange();
             }
         }
 
         if (enabled_)
         {
-            if (ImGui::SliderInt(u8"距离(格)##AttackRange", &tiles_, 1, 30))
+            if (IsPausedByGuard())
             {
-                if (auto *p = GetAttackRangePtr())
-                    *p = tiles_;
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
+                                   u8"已被 NPG 暂停 (附近有玩家)");
+            }
+            if (ImGui::SliderInt(u8"攻击距离(格)##AttackRange", &tiles_, 1, 15))
+            {
+                if (!IsPausedByGuard())
+                {
+                    if (auto *p = GetAttackRangePtr())
+                        *p = tiles_;
+                }
             }
             if (auto *p = GetAttackRangePtr())
             {
-                *p = tiles_; // re-poke each frame in case ctor/respawn reset it
+                if (!IsPausedByGuard())
+                    *p = tiles_; // re-poke each frame in case ctor/respawn reset it
                 ImGui::SameLine();
                 ImGui::TextDisabled(u8"当前=%d", *p);
             }
@@ -66,6 +100,12 @@ class AttackRangeModule : public IModule
             {
                 ImGui::SameLine();
                 ImGui::TextDisabled(u8"(本地玩家未加载)");
+            }
+
+            if (ImGui::SliderInt(u8"技能距离(格)##SkillRange", &skillTiles_, 1, 15))
+            {
+                if (!IsPausedByGuard())
+                    PatchSkillRange(static_cast<uint32_t>(skillTiles_));
             }
         }
     }
@@ -76,6 +116,7 @@ class AttackRangeModule : public IModule
         {
             RestoreAttackRange();
             RestoreAttackRangeCap();
+            RestoreSkillRange();
         }
     }
 
@@ -85,6 +126,7 @@ class AttackRangeModule : public IModule
         {
             PatchAttackRange();
             PatchAttackRangeCap(kAttackRangeCapDefault);
+            PatchSkillRange(static_cast<uint32_t>(skillTiles_));
             if (auto *p = GetAttackRangePtr())
                 *p = tiles_;
         }
@@ -94,16 +136,19 @@ class AttackRangeModule : public IModule
     void SaveState(nlohmann::json &j) const override
     {
         IModule::SaveState(j);
-        j["tiles"] = tiles_;
+        j["tiles"]       = tiles_;
+        j["skill_tiles"] = skillTiles_;
     }
     void LoadState(const nlohmann::json &j) override
     {
-        tiles_ = j.value("tiles", tiles_);
+        tiles_      = j.value("tiles", tiles_);
+        skillTiles_ = j.value("skill_tiles", skillTiles_);
         IModule::LoadState(j);
     }
 
   private:
-    int tiles_ = 10;
+    int tiles_      = 10;
+    int skillTiles_ = 10;
 };
 
 } // namespace GGTB
