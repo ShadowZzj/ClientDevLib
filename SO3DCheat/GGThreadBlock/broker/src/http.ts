@@ -6,13 +6,19 @@ import { CashScheduler } from "./cashScheduler";
 import { DeathNotifier } from "./deathNotifier";
 import { AutoReviver } from "./autoReviver";
 import { GmReplier } from "./gmReplier";
+import { PaodianMonitor } from "./paodianMonitor";
+import { MoneyStats } from "./moneyStats";
+import { AutoReviveStats } from "./autoReviveStats";
 
 export function createHttpApp(
     registry: InstanceRegistry,
     cashScheduler: CashScheduler,
     deathNotifier: DeathNotifier,
     autoReviver: AutoReviver,
-    gmReplier: GmReplier
+    gmReplier: GmReplier,
+    paodianMonitor: PaodianMonitor,
+    moneyStats: MoneyStats,
+    autoReviveStats: AutoReviveStats
 ) {
     const app = express();
     app.use(express.json());
@@ -22,6 +28,8 @@ export function createHttpApp(
             registry.list().map((i) => ({
                 pid: i.pid,
                 characterName: i.characterName,
+                accountName: i.accountName,
+                windowTitle: i.windowTitle,
                 hostExe: i.hostExe,
                 dllVersion: i.dllVersion,
                 money: i.status.money,
@@ -42,6 +50,34 @@ export function createHttpApp(
         } catch (e: any) {
             return res.status(502).json({ ok: false, error: e.message });
         }
+    });
+
+    // --- Money stats API ---
+    app.get("/api/money-stats/characters", (_req: Request, res: Response) => {
+        res.json(moneyStats.listCharacters());
+    });
+
+    app.get("/api/money-stats/daily-gain", (_req: Request, res: Response) => {
+        res.json(moneyStats.allDailyGain());
+    });
+
+    app.get("/api/money-stats/:name", (req: Request, res: Response) => {
+        const unit = req.query.unit === "day" ? "day" : "hour";
+        res.json(moneyStats.snapshot(req.params.name, unit));
+    });
+
+    // --- Auto revive stats API ---
+    app.get("/api/auto-revive-stats/characters", (_req: Request, res: Response) => {
+        res.json(autoReviveStats.listCharacters());
+    });
+
+    app.get("/api/auto-revive-stats/daily", (_req: Request, res: Response) => {
+        res.json(autoReviveStats.allDaily());
+    });
+
+    app.get("/api/auto-revive-stats/:name", (req: Request, res: Response) => {
+        const unit = req.query.unit === "day" ? "day" : "hour";
+        res.json(autoReviveStats.snapshot(req.params.name, unit));
     });
 
     // --- Cash schedule API ---
@@ -138,6 +174,57 @@ export function createHttpApp(
     app.post("/api/gm-replier/logs/clear", (_req: Request, res: Response) => {
         gmReplier.clearLogs();
         res.json({ ok: true });
+    });
+
+    // --- Paodian API ---
+    app.get("/api/paodian/config", (_req: Request, res: Response) => {
+        res.json(paodianMonitor.getConfig());
+    });
+    app.put("/api/paodian/config", (req: Request, res: Response) => {
+        try {
+            res.json(paodianMonitor.setConfig(req.body || {}));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.get("/api/paodian/accounts", (_req: Request, res: Response) => {
+        res.json(paodianMonitor.list());
+    });
+    app.post("/api/paodian/accounts", (req: Request, res: Response) => {
+        const { username, password } = req.body || {};
+        try {
+            res.json(paodianMonitor.addOrUpdate(username, password));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.delete("/api/paodian/accounts/:username", (req: Request, res: Response) => {
+        res.json({ ok: paodianMonitor.remove(req.params.username) });
+    });
+    app.get("/api/paodian/shop-items", async (req: Request, res: Response) => {
+        try {
+            res.json(await paodianMonitor.getShopItems(req.query.force === "1"));
+        } catch (e: any) {
+            res.status(502).json({ error: e.message || String(e) });
+        }
+    });
+    app.post("/api/paodian/purchase/:username", async (req: Request, res: Response) => {
+        const { itemID, itemCount } = req.body || {};
+        try {
+            res.json(await paodianMonitor.purchase(req.params.username, Number(itemID), Number(itemCount)));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.post("/api/paodian/refresh", async (_req: Request, res: Response) => {
+        res.json(await paodianMonitor.refreshAll());
+    });
+    app.post("/api/paodian/refresh/:username", async (req: Request, res: Response) => {
+        try {
+            res.json(await paodianMonitor.refresh(req.params.username));
+        } catch (e: any) {
+            res.status(404).json({ error: e.message || String(e) });
+        }
     });
 
     // Embedded mode: serve from in-memory assets; otherwise use filesystem

@@ -9,6 +9,8 @@ import { InstanceRegistry } from "./instances";
 
 export interface StepBase {
     delayMs: number;
+    repeatCount?: number;
+    repeatDelayMs?: number;
 }
 export interface StepReviveToTown extends StepBase {
     type: "reviveToTown";
@@ -52,6 +54,18 @@ export type Step =
     | StepSendDialogSelectRaw
     | StepPressHookedKey
     | StepSleep;
+
+interface RunScriptOptions {
+    ignoreReviveSafetyCheck?: boolean;
+    countAsAutoRevive?: boolean;
+}
+
+export interface AutoReviveCompletedEvent {
+    characterName: string;
+    pid: number;
+    at: number;
+    steps: number;
+}
 
 export interface AutoReviveConfig {
     characterName: string;
@@ -107,6 +121,19 @@ function rollDelayMs(cfg: AutoReviveConfig): number {
     const hi = Math.max(0, Math.max(cfg.delayMinMin, cfg.delayMinMax));
     const minutes = lo + Math.random() * (hi - lo);
     return Math.round(minutes * 60_000);
+}
+
+function normalizeStep(step: any): Step | null {
+    if (!step || typeof step.type !== "string") return null;
+    const out: any = { ...step };
+    out.delayMs = Number.isFinite(out.delayMs) ? Math.max(0, Math.round(out.delayMs)) : 0;
+    out.repeatCount = Number.isFinite(out.repeatCount)
+        ? Math.max(1, Math.min(999, Math.round(out.repeatCount)))
+        : 1;
+    out.repeatDelayMs = Number.isFinite(out.repeatDelayMs)
+        ? Math.max(0, Math.round(out.repeatDelayMs))
+        : 0;
+    return out as Step;
 }
 
 export class AutoReviver extends EventEmitter {
@@ -196,7 +223,9 @@ export class AutoReviver extends EventEmitter {
             autoRun: !!c.autoRun,
             delayMinMin: Math.max(0, lo),
             delayMinMax: Math.max(0, hi),
-            steps: Array.isArray(c.steps) ? c.steps : [],
+            steps: Array.isArray(c.steps)
+                ? c.steps.map(normalizeStep).filter((s: Step | null): s is Step => !!s)
+                : [],
         };
     }
 
@@ -284,7 +313,7 @@ export class AutoReviver extends EventEmitter {
         if (!inst) return { ok: false, detail: "instance offline" };
         const st = this.ensureState(name);
         if (st.phase === "running") return { ok: false, detail: "already running" };
-        this.runScript(name, inst.pid).catch((e) =>
+        this.runScript(name, inst.pid, { ignoreReviveSafetyCheck: true }).catch((e) =>
             console.warn(`[autoReviver] runScript ${name} failed: ${e.message}`)
         );
         return { ok: true };
@@ -403,14 +432,14 @@ export class AutoReviver extends EventEmitter {
                 st.deadAt = 0;
                 st.scheduledAt = 0;
                 this.save();
-                this.runScript(cfg.characterName, pid).catch((e) =>
+                this.runScript(cfg.characterName, pid, { countAsAutoRevive: true }).catch((e) =>
                     console.warn(`[autoReviver] runScript ${cfg.characterName} failed: ${e.message}`)
                 );
             }
         }
     }
 
-    private async runScript(name: string, pid: number): Promise<void> {
+    private async runScript(name: string, pid: number, options: RunScriptOptions = {}): Promise<void> {
         const cfg = this.configs.get(name);
         if (!cfg) return;
         const st = this.ensureState(name);
@@ -420,9 +449,10 @@ export class AutoReviver extends EventEmitter {
         this.aborts.set(name, false);
         this.emit("state", name, this.snapshotState(name));
         this.appendLog(name, `开始执行复活脚本: ${cfg.steps.length} 步`);
+        let failed = false;
 
         try {
-            for (let i = 0; i < cfg.steps.length; ++i) {
+            for (let i = 0; i < cfg.steps.length && !failed; ++i) {
                 if (this.aborts.get(name)) {
                     this.appendLog(name, `已中止`);
                     break;
@@ -431,11 +461,23 @@ export class AutoReviver extends EventEmitter {
                 this.emit("state", name, this.snapshotState(name));
                 const s = cfg.steps[i];
                 this.appendLog(name, `步骤 ${i + 1}/${cfg.steps.length}: ${s.type}`);
-                const ok = await this.runStep(name, pid, s);
-                if (!ok) {
-                    st.lastError = `step ${i + 1} (${s.type}) failed`;
-                    this.appendLog(name, `步骤失败,中止剩余步骤`);
-                    break;
+                const repeatCount = Math.max(1, Math.round(s.repeatCount ?? 1));
+                for (let n = 0; n < repeatCount; ++n) {
+                    if (this.aborts.get(name)) break;
+                    if (repeatCount > 1) {
+                        this.appendLog(name, `  循环 ${n + 1}/${repeatCount}`);
+                    }
+                    const ok = await this.runStep(name, pid, s, options);
+                    if (!ok) {
+                        st.lastError = `step ${i + 1} (${s.type}) failed`;
+                        this.appendLog(name, `步骤失败,中止剩余步骤`);
+                        failed = true;
+                        break;
+                    }
+                    if (n + 1 < repeatCount && (s.repeatDelayMs ?? 0) > 0) {
+                        this.appendLog(name, `  循环等待 ${s.repeatDelayMs}ms`);
+                        await this.sleep(name, s.repeatDelayMs ?? 0);
+                    }
                 }
                 if (s.delayMs > 0) {
                     this.appendLog(name, `  等待 ${s.delayMs}ms`);
@@ -443,6 +485,15 @@ export class AutoReviver extends EventEmitter {
                 }
             }
             this.appendLog(name, `脚本执行完毕`);
+            const completed = cfg.steps.length > 0 && !failed && this.aborts.get(name) !== true;
+            if (completed && options.countAsAutoRevive) {
+                this.emit("autoRunComplete", {
+                    characterName: name,
+                    pid,
+                    at: Date.now(),
+                    steps: cfg.steps.length,
+                } satisfies AutoReviveCompletedEvent);
+            }
         } finally {
             st.phase = "idle";
             st.currentStepIdx = -1;
@@ -460,11 +511,16 @@ export class AutoReviver extends EventEmitter {
         }
     }
 
-    private async runStep(name: string, pid: number, s: Step): Promise<boolean> {
+    private async runStep(name: string, pid: number, s: Step, options: RunScriptOptions): Promise<boolean> {
         try {
             switch (s.type) {
                 case "reviveToTown": {
-                    const r = await this.registry.sendCommand(pid, "reviveToTown", {}, 5000);
+                    const r = await this.registry.sendCommand(
+                        pid,
+                        "reviveToTown",
+                        { safetyCheck: !options.ignoreReviveSafetyCheck },
+                        5000
+                    );
                     this.appendLog(name, `  reviveToTown -> ${r.ok ? "ok" : "FAIL: " + r.detail}`);
                     return !!r.ok;
                 }

@@ -8,27 +8,41 @@
       "steps": [
         {
           "type": "reviveToTown",
-          "delayMs": 0
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 100
+        },
+        {
+          "type": "reviveToTown",
+          "delayMs": 1000,
+          "repeatCount": 60,
+          "repeatDelayMs": 100
         },
         {
           "type": "waitInTown",
           "mapId": 11,
           "timeoutMs": 5000,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "moveTo",
           "x": 252,
           "y": 286,
           "action": 1,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "sendDialogSelectRaw",
           "delayMs": 5000,
           "npcId": 19811,
           "destMapId": 10245,
-          "option": 10245
+          "option": 10245,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "pressHookedKey",
@@ -36,7 +50,9 @@
           "vkey": 87,
           "alt": true,
           "ctrl": false,
-          "shift": false
+          "shift": false,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         }
       ]
     },
@@ -48,26 +64,34 @@
       "steps": [
         {
           "type": "reviveToTown",
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "waitInTown",
           "mapId": 11,
           "timeoutMs": 5000,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "moveTo",
           "x": 252,
           "y": 286,
           "action": 1,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "sendDialogSelectRaw",
           "npcId": 19811,
           "option": 10282,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "pressHookedKey",
@@ -75,7 +99,9 @@
           "alt": true,
           "ctrl": false,
           "shift": false,
-          "delayMs": 1000
+          "delayMs": 1000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         }
       ]
     },
@@ -87,26 +113,34 @@
       "steps": [
         {
           "type": "reviveToTown",
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "waitInTown",
           "mapId": 11,
           "timeoutMs": 5000,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "moveTo",
           "x": 252,
           "y": 286,
           "action": 1,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "sendDialogSelectRaw",
           "npcId": 19811,
           "option": 10228,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "pressHookedKey",
@@ -114,7 +148,9 @@
           "alt": true,
           "ctrl": false,
           "shift": false,
-          "delayMs": 1000
+          "delayMs": 1000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         }
       ]
     },
@@ -126,26 +162,34 @@
       "steps": [
         {
           "type": "reviveToTown",
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "waitInTown",
           "mapId": 11,
           "timeoutMs": 5000,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "moveTo",
           "x": 252,
           "y": 286,
           "action": 1,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "sendDialogSelectRaw",
           "npcId": 19811,
           "option": 10228,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "pressHookedKey",
@@ -153,7 +197,9 @@
           "alt": true,
           "ctrl": false,
           "shift": false,
-          "delayMs": 1000
+          "delayMs": 1000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         }
       ]
     },
@@ -165,26 +211,34 @@
       "steps": [
         {
           "type": "reviveToTown",
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "waitInTown",
           "mapId": 11,
           "timeoutMs": 5000,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "moveTo",
           "x": 252,
           "y": 286,
           "action": 1,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "sendDialogSelectRaw",
           "npcId": 19811,
           "option": 10228,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "pressHookedKey",
@@ -192,7 +246,9 @@
           "alt": true,
           "ctrl": false,
           "shift": false,
-          "delayMs": 1000
+          "delayMs": 1000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         }
       ]
     },
@@ -204,26 +260,34 @@
       "steps": [
         {
           "type": "reviveToTown",
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "waitInTown",
           "mapId": 11,
           "timeoutMs": 5000,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "moveTo",
           "x": 252,
           "y": 286,
           "action": 1,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         },
         {
           "type": "sendDialogSelectRaw",
           "npcId": 19811,
           "option": 10282,
-          "delayMs": 5000
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
         }
       ]
     }

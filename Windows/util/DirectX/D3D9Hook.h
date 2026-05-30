@@ -35,7 +35,7 @@ namespace zzj
                 return vtable[index]; 
             }
             
-            inline static bool open = true;
+            inline static bool open = false;
             inline static bool setup = false;
 
             inline static HWND window = nullptr;

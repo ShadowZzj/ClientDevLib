@@ -8,6 +8,9 @@ import { CashScheduler } from "./cashScheduler";
 import { DeathNotifier } from "./deathNotifier";
 import { AutoReviver } from "./autoReviver";
 import { GmReplier } from "./gmReplier";
+import { PaodianMonitor } from "./paodianMonitor";
+import { MoneyStats } from "./moneyStats";
+import { AutoReviveStats } from "./autoReviveStats";
 
 const PIPE_NAME = process.env.GGTB_BROKER_PIPE || "GGTB_BROKER";
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
@@ -24,6 +27,9 @@ function main() {
     const deathNotifier = new DeathNotifier(registry);
     const autoReviver = new AutoReviver(registry);
     const gmReplier = new GmReplier(registry);
+    const paodianMonitor = new PaodianMonitor();
+    const moneyStats = new MoneyStats(registry);
+    const autoReviveStats = new AutoReviveStats(autoReviver);
 
     // 命名管道 server。Node 的 net.createServer 直接接受 \\.\pipe\X 作为 listen
     // path,内部走 ConnectNamedPipe 等价路径。DLL 客户端 CreateFileA 上来就能连。
@@ -38,9 +44,9 @@ function main() {
     });
 
     // HTTP / WS server
-    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier);
+    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats);
     const httpServer = http.createServer(app);
-    attachWs(httpServer, registry, autoReviver, gmReplier);
+    attachWs(httpServer, registry, autoReviver, gmReplier, moneyStats, autoReviveStats);
     httpServer.listen(HTTP_PORT, HTTP_HOST, () => {
         console.log(`[broker] http listening on http://${HTTP_HOST}:${HTTP_PORT}`);
     });
@@ -51,6 +57,9 @@ function main() {
         deathNotifier.destroy();
         cashScheduler.destroy();
         gmReplier.destroy();
+        paodianMonitor.destroy();
+        moneyStats.destroy();
+        autoReviveStats.destroy();
         pipeServer.close();
         httpServer.close();
         process.exit(0);

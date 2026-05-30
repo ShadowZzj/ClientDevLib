@@ -1,8 +1,11 @@
 export interface Instance {
   pid: number
   characterName: string
+  accountName?: string
+  windowTitle?: string
   hostExe: string
   money: number
+  hp?: number
   lastSeen: number
 }
 

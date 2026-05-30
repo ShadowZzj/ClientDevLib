@@ -36,6 +36,10 @@
         <el-icon><Loading /></el-icon>
         <span>自动委托</span>
       </el-menu-item>
+      <el-menu-item index="paodian">
+        <el-icon><Coin /></el-icon>
+        <span>泡点</span>
+      </el-menu-item>
       <el-menu-item index="chat">
         <el-icon><ChatDotRound /></el-icon>
         <span>公屏聊天</span>
@@ -49,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, ChatDotRound, MagicStick } from '@element-plus/icons-vue'
+import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, Coin, ChatDotRound, MagicStick } from '@element-plus/icons-vue'
 
 defineProps<{ modelValue: string }>()
 defineEmits<{ 'update:modelValue': [value: string] }>()

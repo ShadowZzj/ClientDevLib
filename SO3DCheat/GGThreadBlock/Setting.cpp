@@ -40,6 +40,8 @@ void Setting::Init()
     colors[ImGuiCol_HeaderActive]  = ImVec4(0.28f, 0.28f, 0.38f, 1.00f);
 
     ImGuiIO &io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+
     char fontPath[MAX_PATH]{};
     if (GetWindowsDirectoryA(fontPath, MAX_PATH))
     {
@@ -65,9 +67,15 @@ void Setting::Init()
 
 void Setting::Render(bool &open)
 {
-    ImGui::SetNextWindowBgAlpha(0.9f);
-    ImGui::SetNextWindowSize(ImVec2(420, 360), ImGuiCond_FirstUseEver);
-    ImGui::Begin("GGThreadBlock", &open, ImGuiWindowFlags_NoCollapse);
+    ImGuiIO &io = ImGui::GetIO();
+    ImGui::SetNextWindowBgAlpha(0.96f);
+    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
+    ImGui::Begin("GGThreadBlock", &open,
+                 ImGuiWindowFlags_NoDecoration |
+                 ImGuiWindowFlags_NoMove |
+                 ImGuiWindowFlags_NoResize |
+                 ImGuiWindowFlags_NoSavedSettings);
 
     for (auto &mod : modules_)
     {

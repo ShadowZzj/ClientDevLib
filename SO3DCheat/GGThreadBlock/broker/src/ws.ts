@@ -3,8 +3,17 @@ import { WebSocketServer, WebSocket } from "ws";
 import { InstanceRegistry } from "./instances";
 import { AutoReviver } from "./autoReviver";
 import { GmReplier } from "./gmReplier";
+import { MoneyStats } from "./moneyStats";
+import { AutoReviveStats } from "./autoReviveStats";
 
-export function attachWs(httpServer: HttpServer, registry: InstanceRegistry, autoReviver: AutoReviver, gmReplier: GmReplier) {
+export function attachWs(
+    httpServer: HttpServer,
+    registry: InstanceRegistry,
+    autoReviver: AutoReviver,
+    gmReplier: GmReplier,
+    moneyStats: MoneyStats,
+    autoReviveStats: AutoReviveStats
+) {
     const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
     function snapshot() {
@@ -13,11 +22,15 @@ export function attachWs(httpServer: HttpServer, registry: InstanceRegistry, aut
             instances: registry.list().map((i) => ({
                 pid: i.pid,
                 characterName: i.characterName,
+                accountName: i.accountName,
+                windowTitle: i.windowTitle,
                 hostExe: i.hostExe,
                 dllVersion: i.dllVersion,
                 money: i.status.money,
                 lastSeen: i.lastSeen,
             })),
+            moneyCharacters: moneyStats.listCharacters(),
+            autoReviveCharacters: autoReviveStats.listCharacters(),
         };
     }
 

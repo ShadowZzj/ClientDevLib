@@ -2865,6 +2865,8 @@ std::vector<BagItemInfo> GetCashBagItems()
             continue;
         if (!raw.itemTable || raw.itemId == 0)
             continue;
+        if (raw.count == 0)
+            raw.count = 1;
 
         BagItemInfo info{raw.bagId, static_cast<uint32_t>(i), raw.itemId, raw.count, {}};
         char nameBuf[64] = {};

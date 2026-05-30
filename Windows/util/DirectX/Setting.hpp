@@ -26,7 +26,7 @@ class Setting
     }
     virtual DWORD GetToggleMenuKey()
     {
-        return VK_INSERT;
+        return VK_OEM_4; // '['
     }
 
     virtual void End()

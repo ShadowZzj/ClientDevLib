@@ -33,6 +33,7 @@ class NearbyPlayerGuardModule : public IModule
     explicit NearbyPlayerGuardModule(Setting *setting, PlayerESPModule *esp = nullptr)
         : IModule(u8"附近玩家自动停手"), setting_(setting), esp_(esp)
     {
+        enabled_ = true;
         worker_ = std::thread([this] { WorkerLoop(); });
     }
 
@@ -47,24 +48,15 @@ class NearbyPlayerGuardModule : public IModule
 
     void OnRender() override
     {
-        bool wasEnabled = enabled_;
+        ImGui::BeginDisabled();
         ImGui::Checkbox(u8"启用##NPG", &enabled_);
+        ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip(u8"只能通过 config.json 的 modules.NPG.enabled 修改");
         ImGui::SameLine();
         ImGui::Checkbox(u8"显示玩家列表##NPG", &showList_);
         ImGui::SliderFloat(u8"距离阈值##NPG", &distanceThreshold_, 50.0f, 2000.0f, "%.0f");
         ImGui::SliderInt(u8"轮询间隔(ms)##NPG", &pollIntervalMs_, 100, 5000);
-
-        // Disabling mid-pause: resume immediately so user isn't stuck.
-        if (wasEnabled && !enabled_)
-        {
-            std::lock_guard<std::mutex> lk(mutex_);
-            if (nearby_)
-            {
-                ResumeAllLocked();
-                nearby_ = false;
-                spdlog::info("GGTB::NPG: disabled, force-resumed paused modules");
-            }
-        }
 
         // Snapshot for UI under lock.
         size_t      playerCount = 0;
@@ -126,7 +118,11 @@ class NearbyPlayerGuardModule : public IModule
         distanceThreshold_ = j.value("distanceThreshold", distanceThreshold_);
         pollIntervalMs_    = j.value("pollIntervalMs",    pollIntervalMs_);
         showList_          = j.value("showList",          showList_);
-        IModule::LoadState(j);
+
+        bool want = j.value("enabled", true);
+        if (want && !enabled_) { enabled_ = true; OnResume(); }
+        else if (!want && enabled_) { enabled_ = false; OnShutdown(); }
+        else { enabled_ = want; }
     }
 
     void OnShutdown() override

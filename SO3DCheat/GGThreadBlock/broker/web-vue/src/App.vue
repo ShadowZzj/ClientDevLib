@@ -12,6 +12,7 @@
         <DeathNotifyView v-if="activeTab === 'deathnotify'" />
         <AutoReviveView v-if="activeTab === 'autorevive'" />
         <AutoDelegationView v-if="activeTab === 'autodelegation'" />
+        <PaodianView v-if="activeTab === 'paodian'" />
         <ChatView v-if="activeTab === 'chat'" />
         <GmReplyView v-if="activeTab === 'gmreply'" />
       </el-main>
@@ -31,6 +32,7 @@ import CashBagView from '@/views/CashBagView.vue'
 import DeathNotifyView from '@/views/DeathNotifyView.vue'
 import AutoReviveView from '@/views/AutoReviveView.vue'
 import AutoDelegationView from '@/views/AutoDelegationView.vue'
+import PaodianView from '@/views/PaodianView.vue'
 import ChatView from '@/views/ChatView.vue'
 import GmReplyView from '@/views/GmReplyView.vue'
 

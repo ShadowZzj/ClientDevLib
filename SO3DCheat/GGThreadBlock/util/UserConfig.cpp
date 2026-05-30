@@ -2,6 +2,7 @@
 #include "../Setting.h"
 #include "../IModule.h"
 #include "../entity/CLocalPlayer.h"
+#include "AutoLoginSignal.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/base_sink.h>
@@ -422,6 +423,10 @@ void Tick(Setting *setting)
 
     s_ready.store(true);
     spdlog::info("GGTB::UserConfig: ready (whitelist size={})", s_whitelist.size());
+    if (AutoLoginSignal::SignalCharacterReady())
+    {
+        spdlog::info("GGTB::UserConfig: signalled autologin character-ready event");
+    }
 }
 
 bool IsReady() { return s_ready.load(); }

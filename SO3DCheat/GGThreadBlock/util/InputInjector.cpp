@@ -24,12 +24,12 @@ std::mutex        g_installMutex; // 只挡 Install/Uninstall,hot path 不进
 
 // 不能注入的 VK — 进程内 HackThread 也用 GetAsyncKeyState 轮询热键,这里挡住
 // 防止 web 端无意中触发宿主侧动作。
-//   VK_INSERT (0x2D) — 切 ImGui 菜单
+//   VK_OEM_4  (0xDB) — 切 ImGui 菜单
 //   VK_END    (0x23) — 退出 HackThread,卸所有 hook
 //   'N'       (0x4E) — 切火力全开
 bool IsBlacklistedVk(int vk)
 {
-    return vk == VK_INSERT || vk == VK_END || vk == 'N';
+    return vk == VK_OEM_4 || vk == VK_END || vk == 'N';
 }
 
 // hook 入口 — 任何线程都可能进来。99% 调用是游戏的 Input_PollKeyboard,

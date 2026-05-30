@@ -14,10 +14,14 @@
 #include <thread>
 #include <vector>
 
+#include "util/AutoLoginSignal.h"
+
 #pragma comment(lib, "Userenv.lib") 
 
 namespace
 {
+constexpr auto kCharacterReadyTimeout = std::chrono::minutes(5);
+
 struct EnumHWndsArg
 {
     std::vector<HWND> *vecHWnds;
@@ -70,6 +74,72 @@ bool IsUserLoggedIn(const std::string &username)
     return false;
 }
 
+void StartCharacterReadyWatchdog(PROCESS_INFORMATION &pi,
+                                 const std::string &username)
+{
+    HANDLE processHandle = nullptr;
+    if (!DuplicateHandle(GetCurrentProcess(), pi.hProcess,
+                         GetCurrentProcess(), &processHandle,
+                         SYNCHRONIZE | PROCESS_TERMINATE |
+                             PROCESS_QUERY_LIMITED_INFORMATION,
+                         FALSE, 0))
+    {
+        spdlog::warn("Failed to duplicate process handle for {} pid={}: {}",
+                     username, pi.dwProcessId, GetLastError());
+        return;
+    }
+
+    std::wstring eventName =
+        GGTB::AutoLoginSignal::CharacterReadyEventName(pi.dwProcessId);
+    HANDLE readyEvent = CreateEventW(nullptr, TRUE, FALSE, eventName.c_str());
+    if (!readyEvent)
+    {
+        spdlog::warn("Failed to create character-ready event for {} pid={}: {}",
+                     username, pi.dwProcessId, GetLastError());
+        CloseHandle(processHandle);
+        return;
+    }
+
+    const DWORD pid = pi.dwProcessId;
+    std::thread([processHandle, readyEvent, pid, username]() {
+        HANDLE waits[2] = {readyEvent, processHandle};
+        DWORD waitMs = static_cast<DWORD>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                kCharacterReadyTimeout)
+                .count());
+
+        DWORD rc = WaitForMultipleObjects(2, waits, FALSE, waitMs);
+        if (rc == WAIT_OBJECT_0)
+        {
+            spdlog::info("Character appeared for {} pid={}, watchdog disarmed",
+                         username, pid);
+        }
+        else if (rc == WAIT_OBJECT_0 + 1)
+        {
+            spdlog::info("Process pid={} for {} exited before character ready",
+                         pid, username);
+        }
+        else if (rc == WAIT_TIMEOUT)
+        {
+            spdlog::warn("No character appeared within 5 minutes for {} pid={}, killing",
+                         username, pid);
+            if (!TerminateProcess(processHandle, 1))
+            {
+                spdlog::warn("TerminateProcess failed for {} pid={}: {}",
+                             username, pid, GetLastError());
+            }
+        }
+        else
+        {
+            spdlog::warn("Character-ready watchdog wait failed for {} pid={}: {}",
+                         username, pid, GetLastError());
+        }
+
+        CloseHandle(readyEvent);
+        CloseHandle(processHandle);
+    }).detach();
+}
+
 // Launches so3dplus.exe in the current dir, waits up to 30s for its window to
 // show the default "SO3D Plus" title, then renames it to "SO3D Plus|<username>".
 // groupIdx buckets accounts onto shared fake hardware identities: child
@@ -101,7 +171,8 @@ bool LaunchAndRename(const std::string &username, int groupIdx)
     PROCESS_INFORMATION pi{};
 
     if (!CreateProcessW(NULL, cmdLine.data(), NULL, NULL, FALSE,
-                        CREATE_UNICODE_ENVIRONMENT, NULL, NULL, &si, &pi))
+                        CREATE_UNICODE_ENVIRONMENT | CREATE_SUSPENDED,
+                        NULL, NULL, &si, &pi))
     {
         spdlog::error("CreateProcess failed for {}: {}", username, GetLastError());
         return false;
@@ -109,6 +180,16 @@ bool LaunchAndRename(const std::string &username, int groupIdx)
 
     spdlog::info("Launched so3dplus.exe pid={} for {} (hwfp group={})",
                  pi.dwProcessId, username, groupIdx);
+    StartCharacterReadyWatchdog(pi, username);
+    if (ResumeThread(pi.hThread) == static_cast<DWORD>(-1))
+    {
+        spdlog::error("ResumeThread failed for {} pid={}: {}",
+                      username, pi.dwProcessId, GetLastError());
+        TerminateProcess(pi.hProcess, 1);
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+        return false;
+    }
 
     const std::string target = "SO3D Plus|" + username;
     auto start               = std::chrono::steady_clock::now();

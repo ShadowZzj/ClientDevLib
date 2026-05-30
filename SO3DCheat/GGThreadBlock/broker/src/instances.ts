@@ -1,6 +1,7 @@
 import { Socket } from "net";
 import { v4 as uuid } from "uuid";
 import { EventEmitter } from "events";
+import { execFile } from "child_process";
 
 export interface InstanceStatus {
     money?: number;
@@ -14,6 +15,8 @@ export interface Instance {
     connId: string;
     pid: number;
     characterName?: string;
+    accountName?: string;
+    windowTitle?: string;
     hostExe?: string;
     dllVersion?: string;
     status: InstanceStatus;
@@ -38,6 +41,7 @@ export class InstanceRegistry extends EventEmitter {
     private byConnId = new Map<string, ConnState>();
     private byPid = new Map<number, string>(); // pid -> connId
     private instances = new Map<string, Instance>();
+    private windowRefreshTimers = new Set<NodeJS.Timeout>();
 
     handleConnection(socket: Socket): void {
         const connId = uuid();
@@ -138,6 +142,8 @@ export class InstanceRegistry extends EventEmitter {
         this.instances.set(state.connId, inst);
         console.log(`[broker] hello pid=${pid} dll=${f.dllVersion}`);
         this.emit("change");
+        this.refreshWindowIdentity(inst, 500);
+        this.refreshWindowIdentity(inst, 3000);
     }
 
     private onIdentity(state: ConnState, f: any): void {
@@ -169,6 +175,9 @@ export class InstanceRegistry extends EventEmitter {
         }
         inst.lastSeen = Date.now();
         this.emit("change");
+        if (inst.characterName && typeof inst.status.money === "number") {
+            this.emit("status", inst);
+        }
     }
 
     private onAck(state: ConnState, f: any): void {
@@ -212,6 +221,29 @@ export class InstanceRegistry extends EventEmitter {
         return Array.from(this.instances.values());
     }
 
+    private refreshWindowIdentity(inst: Instance, delayMs: number): void {
+        const timer = setTimeout(async () => {
+            this.windowRefreshTimers.delete(timer);
+            const current = this.instances.get(inst.connId);
+            if (!current) return;
+            try {
+                const title = await getMainWindowTitle(current.pid);
+                if (!title) return;
+                const account = parseAccountNameFromTitle(title);
+                const changed = current.windowTitle !== title || current.accountName !== account;
+                current.windowTitle = title;
+                if (account) current.accountName = account;
+                if (changed) {
+                    console.log(`[broker] window pid=${current.pid} title="${title}" account=${current.accountName ?? "(none)"}`);
+                    this.emit("change");
+                }
+            } catch (e: any) {
+                console.warn(`[broker] window title lookup failed pid=${current.pid}: ${e.message}`);
+            }
+        }, delayMs);
+        this.windowRefreshTimers.add(timer);
+    }
+
     sendCommand(
         pid: number,
         action: string,
@@ -240,4 +272,28 @@ export class InstanceRegistry extends EventEmitter {
             });
         });
     }
+}
+
+function parseAccountNameFromTitle(title: string): string | undefined {
+    const idx = title.indexOf("|");
+    if (idx < 0) return undefined;
+    const account = title.slice(idx + 1).trim();
+    return account || undefined;
+}
+
+function getMainWindowTitle(pid: number): Promise<string> {
+    const script = `[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; $p=Get-Process -Id ${pid} -ErrorAction SilentlyContinue; if ($p) { $p.MainWindowTitle }`;
+    return new Promise((resolve, reject) => {
+        execFile("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script], {
+            windowsHide: true,
+            timeout: 3000,
+            encoding: "utf8",
+        }, (error, stdout) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(String(stdout || "").trim());
+        });
+    });
 }

@@ -1,0 +1,49 @@
+{
+  "characters": {
+    "shadowpope": {
+      "lastMoney": 41579488,
+      "lastSeen": 1780140714013,
+      "hourly": [
+        {
+          "bucket": 1780135200000,
+          "money": 41579488
+        },
+        {
+          "bucket": 1780138800000,
+          "money": 41579488
+        }
+      ],
+      "dailyGain": {}
+    },
+    "shadowdance": {
+      "lastMoney": 8525830,
+      "lastSeen": 1780140714013,
+      "hourly": [
+        {
+          "bucket": 1780135200000,
+          "money": 8525830
+        },
+        {
+          "bucket": 1780138800000,
+          "money": 8525830
+        }
+      ],
+      "dailyGain": {}
+    },
+    "shadowsing": {
+      "lastMoney": 3559649823,
+      "lastSeen": 1780140713929,
+      "hourly": [
+        {
+          "bucket": 1780135200000,
+          "money": 3559649823
+        },
+        {
+          "bucket": 1780138800000,
+          "money": 3559649823
+        }
+      ],
+      "dailyGain": {}
+    }
+  }
+}

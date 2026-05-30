@@ -142,6 +142,18 @@
         </template>
       </el-table-column>
 
+      <el-table-column label="循环次数" width="120">
+        <template #default="{ row }">
+          <el-input-number v-model="row.repeatCount" :min="1" :max="999" :step="1" size="small" style="width:96px" />
+        </template>
+      </el-table-column>
+
+      <el-table-column label="循环延迟ms" width="130">
+        <template #default="{ row }">
+          <el-input-number v-model="row.repeatDelayMs" :min="0" :step="100" size="small" style="width:110px" />
+        </template>
+      </el-table-column>
+
       <el-table-column label="操作" width="170">
         <template #default="{ $index }">
           <el-button size="small" :disabled="$index === 0" @click="moveStep($index, -1)">↑</el-button>
@@ -227,7 +239,7 @@ import { useWebSocket } from '@/composables/useWebSocket'
 const { selectedPid, selectedInstance } = useInstances()
 const { onMessage } = useWebSocket()
 
-interface StepBase { delayMs: number }
+interface StepBase { delayMs: number; repeatCount?: number; repeatDelayMs?: number }
 interface StepReviveToTown extends StepBase { type: 'reviveToTown' }
 interface StepMoveTo extends StepBase { type: 'moveTo'; x: number; y: number; action: 1 | 3 }
 interface StepWaitInTown extends StepBase { type: 'waitInTown'; mapId: number; timeoutMs: number }
@@ -275,12 +287,21 @@ const defaultConfig = (name: string): ReviveConfig => ({
   delayMinMax: 5,
   steps: [],
 })
+function withStepDefaults<T extends Step>(step: T): T {
+  step.delayMs = Math.max(0, Math.round(Number(step.delayMs) || 0))
+  step.repeatCount = Math.max(1, Math.round(Number(step.repeatCount) || 1))
+  step.repeatDelayMs = Math.max(0, Math.round(Number(step.repeatDelayMs) || 0))
+  return step
+}
+function normalizeSteps(steps: Step[]) {
+  return steps.map((s) => withStepDefaults(s))
+}
 const defaultScript = (): Step[] => ([
-  { type: 'reviveToTown', delayMs: 5000 },
-  { type: 'waitInTown', mapId: 11, timeoutMs: 5000, delayMs: 5000 },
-  { type: 'moveTo', x: 252, y: 286, action: 1, delayMs: 5000 },
-  { type: 'sendDialogSelectRaw', npcId: 19811, option: 10245, delayMs: 5000 },
-  { type: 'pressHookedKey', vkey: 0x57, alt: true, ctrl: false, shift: false, delayMs: 1000 },
+  withStepDefaults({ type: 'reviveToTown', delayMs: 5000 }),
+  withStepDefaults({ type: 'waitInTown', mapId: 11, timeoutMs: 5000, delayMs: 5000 }),
+  withStepDefaults({ type: 'moveTo', x: 252, y: 286, action: 1, delayMs: 5000 }),
+  withStepDefaults({ type: 'sendDialogSelectRaw', npcId: 19811, option: 10245, delayMs: 5000 }),
+  withStepDefaults({ type: 'pressHookedKey', vkey: 0x57, alt: true, ctrl: false, shift: false, delayMs: 1000 }),
 ])
 
 const config = ref<ReviveConfig>(defaultConfig(''))
@@ -309,8 +330,10 @@ const mapName = computed(() =>
 const totalDurationSec = computed(() => {
   let ms = 0
   for (const s of config.value.steps) {
-    ms += s.delayMs ?? 0
-    if (s.type === 'waitInTown' || s.type === 'waitOutOfTown') ms += (s.timeoutMs ?? 0) / 4
+    const repeatCount = Math.max(1, Math.round(s.repeatCount ?? 1))
+    ms += (s.delayMs ?? 0)
+    ms += Math.max(0, repeatCount - 1) * (s.repeatDelayMs ?? 0)
+    if (s.type === 'waitInTown' || s.type === 'waitOutOfTown') ms += repeatCount * ((s.timeoutMs ?? 0) / 4)
   }
   return ms / 1000
 })
@@ -335,6 +358,7 @@ async function loadConfigFromBroker() {
     const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(characterKey.value)}`)
     if (r.ok) {
       config.value = await r.json()
+      config.value.steps = normalizeSteps(config.value.steps || [])
     } else if (r.status === 404) {
       // broker 没有 → 检查本地 localStorage 老格式做一次性迁移
       const migrated = await migrateFromLocalStorage(characterKey.value)
@@ -377,7 +401,7 @@ async function migrateFromLocalStorage(name: string): Promise<boolean> {
       autoRun: !!parsed.autoRun,
       delayMinMin: Number.isFinite(parsed.delayMinMin) ? parsed.delayMinMin : single,
       delayMinMax: Number.isFinite(parsed.delayMinMax) ? parsed.delayMinMax : single,
-      steps: Array.isArray(parsed.steps) && parsed.steps.length ? parsed.steps : defaultScript(),
+      steps: Array.isArray(parsed.steps) && parsed.steps.length ? normalizeSteps(parsed.steps) : defaultScript(),
     }
     const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(name)}`, {
       method: 'PUT',
@@ -402,6 +426,7 @@ async function saveConfig() {
     return
   }
   try {
+    config.value.steps = normalizeSteps(config.value.steps)
     const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(characterKey.value)}`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -451,12 +476,12 @@ async function abortScript() {
 
 // ---------- 步骤编辑 ----------
 function addStep() {
-  config.value.steps.push({ type: 'sleep', delayMs: 1000 } as StepSleep)
+  config.value.steps.push(withStepDefaults({ type: 'sleep', delayMs: 1000 } as StepSleep))
 }
 function addPressKeyStep() {
-  config.value.steps.push({
+  config.value.steps.push(withStepDefaults({
     type: 'pressHookedKey', vkey: 0x57, alt: true, ctrl: false, shift: false, delayMs: 200,
-  } as StepPressHookedKey)
+  } as StepPressHookedKey))
 }
 function removeStep(i: number) {
   config.value.steps.splice(i, 1)
@@ -491,6 +516,7 @@ function onStepTypeChange(idx: number) {
     if (ws.timeoutMs == null) ws.timeoutMs = 15000
   }
   if (s.delayMs == null) s.delayMs = 500
+  withStepDefaults(s)
 }
 
 // 把当前在对话的 NPC 的 interactId 灌进去 — 配 sendDialogSelectRaw 步骤的时候

@@ -91,6 +91,7 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/util/PatternResolver.cpp
     GGThreadBlock/util/SpeedHack.h
     GGThreadBlock/util/SpeedHack.cpp
+    GGThreadBlock/util/AutoLoginSignal.h
     GGThreadBlock/util/UserConfig.h
     GGThreadBlock/util/UserConfig.cpp
     GGThreadBlock/util/NetLog.h
