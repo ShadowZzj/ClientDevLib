@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 #include <atomic>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 #pragma comment(lib, "d3d9.lib")
@@ -17,57 +18,21 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 
 namespace
 {
-constexpr DWORD kMenuToggleVk = VK_OEM_4; // '['
-constexpr UINT  kToggleMenuMsg = WM_APP + 0x420;
-constexpr UINT  kQuitMenuMsg   = WM_APP + 0x421;
+constexpr UINT  kSetMenuOpenMsg = WM_APP + 0x420;
+constexpr UINT  kToggleMenuMsg  = WM_APP + 0x421;
+constexpr UINT  kQuitMenuMsg    = WM_APP + 0x422;
 
 HANDLE g_uiThread = nullptr;
 DWORD  g_uiThreadId = 0;
-HHOOK  g_menuKeyboardHook = nullptr;
-DWORD  g_menuKeyboardThreadId = 0;
 std::atomic<bool> g_stopUi{false};
 D3DPRESENT_PARAMETERS g_d3dpp{};
+D3D9Hook::SetupOptions g_options{};
 
 struct UiThreadStart
 {
     HANDLE ready = nullptr;
     bool   ok = false;
 };
-
-bool HostWindowHasFocus(HWND ourWindow)
-{
-    HWND fg = ::GetForegroundWindow();
-    if (!fg)
-        return false;
-    if (ourWindow && fg == ourWindow)
-        return true;
-
-    DWORD fgPid = 0;
-    ::GetWindowThreadProcessId(fg, &fgPid);
-    return fgPid == ::GetCurrentProcessId();
-}
-
-BOOL CALLBACK FindHostWindowProc(HWND hwnd, LPARAM lparam)
-{
-    DWORD pid = 0;
-    ::GetWindowThreadProcessId(hwnd, &pid);
-    if (pid != ::GetCurrentProcessId())
-        return TRUE;
-    if (hwnd == D3D9Hook::window)
-        return TRUE;
-    if (!::IsWindowVisible(hwnd))
-        return TRUE;
-
-    *reinterpret_cast<HWND *>(lparam) = hwnd;
-    return FALSE;
-}
-
-HWND FindHostWindow()
-{
-    HWND hwnd = nullptr;
-    ::EnumWindows(FindHostWindowProc, reinterpret_cast<LPARAM>(&hwnd));
-    return hwnd;
-}
 
 void SignalStart(UiThreadStart *start, bool ok)
 {
@@ -107,76 +72,26 @@ void ApplyMenuVisibility()
     }
 }
 
-LRESULT CALLBACK MenuKeyboardProc(int code, WPARAM wParam, LPARAM lParam)
-{
-    if (code == HC_ACTION && wParam == kMenuToggleVk)
-    {
-        const bool keyUp = (lParam & (1u << 31)) != 0;
-        const bool wasDown = (lParam & (1u << 30)) != 0;
-        if (!keyUp && !wasDown && HostWindowHasFocus(D3D9Hook::window) && g_uiThreadId)
-            ::PostThreadMessageA(g_uiThreadId, kToggleMenuMsg, 0, 0);
-    }
-
-    return ::CallNextHookEx(g_menuKeyboardHook, code, wParam, lParam);
-}
-
-bool InstallMenuKeyboardHook()
-{
-    if (g_menuKeyboardHook)
-        return true;
-
-    HWND hostWindow = FindHostWindow();
-    if (!hostWindow)
-        return false;
-
-    DWORD tid = ::GetWindowThreadProcessId(hostWindow, nullptr);
-    if (!tid)
-        return false;
-
-    HMODULE self = nullptr;
-    ::GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                         reinterpret_cast<LPCSTR>(&MenuKeyboardProc),
-                         &self);
-
-    g_menuKeyboardHook = ::SetWindowsHookExA(WH_KEYBOARD, MenuKeyboardProc, self, tid);
-    if (!g_menuKeyboardHook)
-    {
-        spdlog::warn("D3D9Hook: SetWindowsHookExA(WH_KEYBOARD) failed, tid={}, err={}",
-                     tid, ::GetLastError());
-        return false;
-    }
-
-    g_menuKeyboardThreadId = tid;
-    spdlog::info("D3D9Hook: menu keyboard hook installed, tid={}, vk=0x{:02X}",
-                 tid, static_cast<unsigned>(kMenuToggleVk));
-    return true;
-}
-
-void UninstallMenuKeyboardHook()
-{
-    if (!g_menuKeyboardHook)
-        return;
-
-    ::UnhookWindowsHookEx(g_menuKeyboardHook);
-    spdlog::info("D3D9Hook: menu keyboard hook removed, tid={}", g_menuKeyboardThreadId);
-    g_menuKeyboardHook = nullptr;
-    g_menuKeyboardThreadId = 0;
-}
-
 DWORD WINAPI MenuThreadProc(LPVOID param)
 {
     auto *start = reinterpret_cast<UiThreadStart *>(param);
 
     try
     {
-        if (!D3D9Hook::SetupWindowClass("zzj::D3D9::ExternalMenu"))
+        if (g_options.windowClassName.empty() || g_options.windowName.empty())
+        {
+            spdlog::error("D3D9Hook: SetupOptions requires windowClassName and windowName");
+            SignalStart(start, false);
+            return 1;
+        }
+
+        if (!D3D9Hook::SetupWindowClass(g_options))
         {
             SignalStart(start, false);
             return 1;
         }
 
-        if (!D3D9Hook::SetupWindow("GGThreadBlock"))
+        if (!D3D9Hook::SetupWindow(g_options))
         {
             D3D9Hook::DestroyWindowClass();
             SignalStart(start, false);
@@ -195,16 +110,23 @@ DWORD WINAPI MenuThreadProc(LPVOID param)
         SignalStart(start, true);
         start = nullptr;
 
-        DWORD lastHookRetry = 0;
         MSG msg{};
         while (!g_stopUi.load(std::memory_order_acquire))
         {
             while (::PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
             {
+                if (msg.message == kSetMenuOpenMsg)
+                {
+                    D3D9Hook::open = msg.wParam != 0;
+                    spdlog::info("D3D9Hook::open {}", D3D9Hook::open);
+                    ApplyMenuVisibility();
+                    continue;
+                }
                 if (msg.message == kToggleMenuMsg)
                 {
                     D3D9Hook::open = !D3D9Hook::open;
                     spdlog::info("D3D9Hook::open {}", D3D9Hook::open);
+                    ApplyMenuVisibility();
                     continue;
                 }
                 if (msg.message == kQuitMenuMsg)
@@ -215,13 +137,6 @@ DWORD WINAPI MenuThreadProc(LPVOID param)
 
                 ::TranslateMessage(&msg);
                 ::DispatchMessageA(&msg);
-            }
-
-            DWORD now = ::GetTickCount();
-            if (!g_menuKeyboardHook && now - lastHookRetry >= 1000)
-            {
-                lastHookRetry = now;
-                InstallMenuKeyboardHook();
             }
 
             ApplyMenuVisibility();
@@ -236,8 +151,6 @@ DWORD WINAPI MenuThreadProc(LPVOID param)
                 ::Sleep(50);
             }
         }
-
-        UninstallMenuKeyboardHook();
 
         if (D3D9Hook::setup)
         {
@@ -264,14 +177,6 @@ DWORD WINAPI MenuThreadProc(LPVOID param)
 
 LRESULT CALLBACK D3D9Hook::WindowProcess(HWND window, UINT message, WPARAM wParam, LPARAM lParam) noexcept
 {
-    if (message == WM_KEYDOWN && wParam == kMenuToggleVk)
-    {
-        D3D9Hook::open = !D3D9Hook::open;
-        spdlog::info("D3D9Hook::open {}", D3D9Hook::open);
-        ApplyMenuVisibility();
-        return 0;
-    }
-
     if (D3D9Hook::setup && ImGui_ImplWin32_WndProcHandler(window, message, wParam, lParam))
         return true;
 
@@ -302,14 +207,19 @@ LRESULT CALLBACK D3D9Hook::WindowProcess(HWND window, UINT message, WPARAM wPara
     return ::DefWindowProcA(window, message, wParam, lParam);
 }
 
-bool D3D9Hook::SetupWindowClass(const char *windowClassName) noexcept
+bool D3D9Hook::SetupWindowClass(const SetupOptions& options) noexcept
 {
+    if (!options.windowClassName.empty())
+        g_options.windowClassName = options.windowClassName;
+    if (options.instance)
+        g_options.instance = options.instance;
+
     windowClass = {sizeof(WNDCLASSEXA)};
     windowClass.style = CS_HREDRAW | CS_VREDRAW;
     windowClass.lpfnWndProc = D3D9Hook::WindowProcess;
-    windowClass.hInstance = GetModuleHandle(nullptr);
+    windowClass.hInstance = g_options.instance ? g_options.instance : GetModuleHandle(nullptr);
     windowClass.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
-    windowClass.lpszClassName = windowClassName;
+    windowClass.lpszClassName = g_options.windowClassName.c_str();
     return RegisterClassExA(&windowClass) != 0;
 }
 
@@ -319,16 +229,28 @@ void D3D9Hook::DestroyWindowClass() noexcept
         UnregisterClassA(windowClass.lpszClassName, windowClass.hInstance);
 }
 
-bool D3D9Hook::SetupWindow(const char *windowName) noexcept
+bool D3D9Hook::SetupWindow(const SetupOptions& options) noexcept
 {
-    window = CreateWindowExA(WS_EX_TOOLWINDOW, windowClass.lpszClassName, windowName,
-                             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-                             CW_USEDEFAULT, CW_USEDEFAULT, 460, 430, nullptr, nullptr,
-                             windowClass.hInstance, nullptr);
+    g_options.exStyle = options.exStyle;
+    g_options.style = options.style;
+    g_options.x = options.x;
+    g_options.y = options.y;
+    g_options.width = options.width;
+    g_options.height = options.height;
+    g_options.parent = options.parent;
+    g_options.menu = options.menu;
+    g_options.showInitially = options.showInitially;
+    if (!options.windowName.empty())
+        g_options.windowName = options.windowName;
+
+    window = CreateWindowExA(g_options.exStyle, windowClass.lpszClassName,
+                             g_options.windowName.c_str(), g_options.style,
+                             g_options.x, g_options.y, g_options.width, g_options.height,
+                             g_options.parent, g_options.menu, windowClass.hInstance, nullptr);
     if (!window)
         return false;
 
-    ShowWindow(window, SW_HIDE);
+    ShowWindow(window, options.showInitially ? SW_SHOW : SW_HIDE);
     UpdateWindow(window);
     return true;
 }
@@ -390,8 +312,9 @@ void D3D9Hook::DestroyDirectX() noexcept
     }
 }
 
-void D3D9Hook::Setup(std::shared_ptr<Setting> setting)
+void D3D9Hook::Setup(std::shared_ptr<Setting> setting, const SetupOptions& options)
 {
+    g_options = options;
     D3D9Hook::setting = std::move(setting);
     D3D9Hook::open = false;
     D3D9Hook::setup = false;
@@ -440,7 +363,6 @@ void D3D9Hook::Destroy() noexcept
     }
 
     g_uiThreadId = 0;
-    UninstallMenuKeyboardHook();
     D3D9Hook::open = false;
 }
 
@@ -474,9 +396,20 @@ void D3D9Hook::Render() noexcept
         ResetExternalDevice();
 }
 
+void D3D9Hook::SetOpen(bool value) noexcept
+{
+    if (g_uiThreadId)
+        ::PostThreadMessageA(g_uiThreadId, kSetMenuOpenMsg, value ? 1 : 0, 0);
+}
+
+void D3D9Hook::ToggleOpen() noexcept
+{
+    if (g_uiThreadId)
+        ::PostThreadMessageA(g_uiThreadId, kToggleMenuMsg, 0, 0);
+}
+
 void D3D9Hook::SetupHook()
 {
-    // The GGThreadBlock menu is rendered in an external tool window now.
 }
 
 void D3D9Hook::DestroyHook()

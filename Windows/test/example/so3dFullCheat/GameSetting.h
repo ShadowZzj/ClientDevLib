@@ -20,10 +20,6 @@ class GameSetting : public zzj::D3D::Setting
     void AutoHuntHandler();
     void AutoGear();
     boost::filesystem::path GetRoleRunningEnviromentPath(const std::string &name);
-    virtual DWORD GetToggleMenuKey()
-    {
-        return VK_INSERT;
-    }
     
     virtual void End() override;
     inline static std::mutex sellerGuarderMutex;

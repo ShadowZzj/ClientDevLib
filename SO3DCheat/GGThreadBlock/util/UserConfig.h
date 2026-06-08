@@ -27,7 +27,7 @@ void Bootstrap(HMODULE hOwnerDll);
 //     before LoadState pokes them; Setting::Init runs lazily on first EndScene)
 //   - GetLocalPlayerName() empty -> return
 //   - sanitize name, mkdir GGConfig/<name>/, swap logger to <name>/ggtb.log,
-//     read config.json (whitelist + module states), call LoadState on each
+//     read config.json (manualWhitelist + module states), call LoadState on each
 //     module, set ready (locked for the rest of the process lifetime).
 void Tick(Setting *setting);
 

@@ -4,8 +4,10 @@
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <climits>
+#include <cstdint>
 #include <cstring>
 #include <cmath>
+#include <ctime>
 
 namespace GGTB
 {
@@ -16,6 +18,11 @@ static const char *kMoveSpeedKeys[kMoveSpeedWriteCount] = {
     // TraceMove per-frame clamps — without these, NOPping CalcStatus alone lets
     // TraceMove pull moveSpeed back down to 7.0/10.0 each frame.
     "MoveSpeedClampMounted", "MoveSpeedClampNormal",
+    // Mount / state refresh paths. Mounting can otherwise rewrite +0x1A4 back
+    // to the vehicle/default speed after the slider value has been applied.
+    "MoveSpeedMountStateBoost", "MoveSpeedMountStateMax",
+    "MoveSpeedMountStateDefault", "MoveSpeedMountStatusSync",
+    "MoveSpeedMountPathRefresh",
 };
 
 static BYTE s_moveSpeedOrig[kMoveSpeedWriteCount][kMoveSpeedPatchSize] = {};
@@ -560,24 +567,30 @@ bool RestoreItemShortCD()
 //       reject inside SetAfterAction (skill mode, stun, m_bCanMove, animation
 //       whitelist, etc.) so any move-while-acting request is queued.
 //
-//    2. TraceMoveGate1 @ 0x756FAA — flip `76 -> EB` so the per-frame stun-time
+//    2. InstantCastStartup @ 0x756331 — overwrite `0F 86 C0 00 00 00`
+//       (jbe loc_7563F7) with `E9 C1 00 00 00 90`. SendSkillCast always takes
+//       the immediate-send path and skips the preTime mode=3 raise-hand branch.
+//
+//    3. TraceMoveGate1 @ 0x756FAA — flip `76 -> EB` so the per-frame stun-time
 //       check (xmm vs g_kReadyFactorZero, +0x3468) is always taken as "no stun".
 //
-//    3. TraceMoveOrChain @ 0x756FCD — overwrite the start of the long
+//    4. TraceMoveOrChain @ 0x756FCD — overwrite the start of the long
 //       `cmp [eax+194h], <id>` OR-chain with `E9 19 01 00 00` (jmp 0x7570EB).
 //       Skips every animation/skill ID equality test; falls through to the
 //       second per-frame timer gate.
 //
-//    4. TraceMoveGate2 @ 0x7570FD — flip `76 -> EB` so the +0x2BCC per-frame
+//    5. TraceMoveGate2 @ 0x7570FD — flip `76 -> EB` so the +0x2BCC per-frame
 //       timer gate is always skipped. After this, TraceMove always advances the
 //       position toward the queued target.
 // ============================================================
 
 static BYTE s_actionMoveSetAfterActionGateOrig[kActionMoveSetAfterActionGateSize] = {};
+static BYTE s_actionMoveInstantCastStartupOrig [kActionMoveInstantCastStartupSize]  = {};
 static BYTE s_actionMoveTraceMoveGate1Orig    [kActionMoveTraceMoveGate1Size]     = {};
 static BYTE s_actionMoveTraceMoveOrChainOrig  [kActionMoveTraceMoveOrChainSize]   = {};
 static BYTE s_actionMoveTraceMoveGate2Orig    [kActionMoveTraceMoveGate2Size]     = {};
 static bool s_actionMoveSetAfterActionGateOrigCaptured = false;
+static bool s_actionMoveInstantCastStartupOrigCaptured  = false;
 static bool s_actionMoveTraceMoveGate1OrigCaptured     = false;
 static bool s_actionMoveTraceMoveOrChainOrigCaptured   = false;
 static bool s_actionMoveTraceMoveGate2OrigCaptured     = false;
@@ -589,18 +602,21 @@ bool PatchActionMove()
         return true;
 
     auto addrSetAfter   = PatternResolver::Get("ActionMoveSetAfterActionGate");
+    auto addrInstant    = PatternResolver::Get("ActionMoveInstantCastStartup");
     auto addrTraceGate1 = PatternResolver::Get("ActionMoveTraceMoveGate1");
     auto addrTraceOr    = PatternResolver::Get("ActionMoveTraceMoveOrChain");
     auto addrTraceGate2 = PatternResolver::Get("ActionMoveTraceMoveGate2");
-    if (!addrSetAfter || !addrTraceGate1 || !addrTraceOr || !addrTraceGate2)
+    if (!addrSetAfter || !addrInstant || !addrTraceGate1 || !addrTraceOr || !addrTraceGate2)
     {
-        spdlog::error("GGTB: ActionMove pattern(s) unresolved (sa={:x} g1={:x} or={:x} g2={:x})",
-                      addrSetAfter, addrTraceGate1, addrTraceOr, addrTraceGate2);
+        spdlog::error("GGTB: ActionMove pattern(s) unresolved (sa={:x} inst={:x} g1={:x} or={:x} g2={:x})",
+                      addrSetAfter, addrInstant, addrTraceGate1, addrTraceOr, addrTraceGate2);
         return false;
     }
 
     // E9 C1 02 00 00 = jmp +0x2C1 (0x7539FE -> 0x753CC4).
     BYTE patchSetAfter[kActionMoveSetAfterActionGateSize] = {0xE9, 0xC1, 0x02, 0x00, 0x00};
+    // E9 C1 00 00 00 90 = jmp +0xC1 (0x756331 -> 0x7563F7) + nop.
+    BYTE patchInstant[kActionMoveInstantCastStartupSize]  = {0xE9, 0xC1, 0x00, 0x00, 0x00, 0x90};
     // EB = jmp short (preserves the 0x1E displacement of the original jbe).
     BYTE patchTraceGate1[kActionMoveTraceMoveGate1Size]   = {0xEB};
     // E9 19 01 00 00 = jmp +0x119 (0x756FCD -> 0x7570EB).
@@ -611,6 +627,10 @@ bool PatchActionMove()
     if (!WriteBytes(addrSetAfter, patchSetAfter, kActionMoveSetAfterActionGateSize,
                     s_actionMoveSetAfterActionGateOrig,
                     s_actionMoveSetAfterActionGateOrigCaptured))
+        allOk = false;
+    if (!WriteBytes(addrInstant, patchInstant, kActionMoveInstantCastStartupSize,
+                    s_actionMoveInstantCastStartupOrig,
+                    s_actionMoveInstantCastStartupOrigCaptured))
         allOk = false;
     if (!WriteBytes(addrTraceGate1, patchTraceGate1, kActionMoveTraceMoveGate1Size,
                     s_actionMoveTraceMoveGate1Orig,
@@ -628,8 +648,8 @@ bool PatchActionMove()
     if (allOk)
     {
         s_actionMovePatched = true;
-        spdlog::info("GGTB: ActionMove patched (sa={:x} g1={:x} or={:x} g2={:x})",
-                     addrSetAfter, addrTraceGate1, addrTraceOr, addrTraceGate2);
+        spdlog::info("GGTB: ActionMove patched (sa={:x} inst={:x} g1={:x} or={:x} g2={:x})",
+                     addrSetAfter, addrInstant, addrTraceGate1, addrTraceOr, addrTraceGate2);
     }
     return allOk;
 }
@@ -640,6 +660,7 @@ bool RestoreActionMove()
         return true;
 
     auto addrSetAfter   = PatternResolver::Get("ActionMoveSetAfterActionGate");
+    auto addrInstant    = PatternResolver::Get("ActionMoveInstantCastStartup");
     auto addrTraceGate1 = PatternResolver::Get("ActionMoveTraceMoveGate1");
     auto addrTraceOr    = PatternResolver::Get("ActionMoveTraceMoveOrChain");
     auto addrTraceGate2 = PatternResolver::Get("ActionMoveTraceMoveGate2");
@@ -648,6 +669,10 @@ bool RestoreActionMove()
     if (!RestoreBytes(addrSetAfter, kActionMoveSetAfterActionGateSize,
                       s_actionMoveSetAfterActionGateOrig,
                       s_actionMoveSetAfterActionGateOrigCaptured))
+        allOk = false;
+    if (!RestoreBytes(addrInstant, kActionMoveInstantCastStartupSize,
+                      s_actionMoveInstantCastStartupOrig,
+                      s_actionMoveInstantCastStartupOrigCaptured))
         allOk = false;
     if (!RestoreBytes(addrTraceGate1, kActionMoveTraceMoveGate1Size,
                       s_actionMoveTraceMoveGate1Orig,
@@ -804,6 +829,44 @@ std::string Big5ToUtf8(const char *src)
     return u;
 }
 
+uint32_t ProfessionStringIndex(uint32_t profession)
+{
+    // Mirrors client sub_978880: raw profession id -> job text/icon index.
+    if (profession <= 8)
+        return profession;
+
+    uint32_t tier = profession / 10;
+    uint32_t base = profession % 10;
+    uint32_t idx  = 0;
+    if (base <= 8)
+        idx = tier + 2 * base + 6;
+    if (base == 9)
+        idx = tier + 21;
+
+    if (profession == 31)
+        idx = 24;
+    else if (profession == 131)
+        idx = 25;
+    else if (profession == 231)
+        idx = 26;
+    return idx;
+}
+
+using StringTableCopyFn = char *(__cdecl *)(uint32_t id, char *dst, size_t cap);
+
+bool CopyStringTableSEH(StringTableCopyFn fn, uint32_t id, char *dst, size_t cap)
+{
+    __try
+    {
+        fn(id, dst, cap);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
 // Returns 0 = accepted, otherwise reason code for diagnostics.
 //   1 = read kind failed
 //   2 = read name failed
@@ -853,7 +916,12 @@ int VisitUser(uintptr_t user, uintptr_t localUser,
     if (maxDist > 0 && d > maxDist)
         return 6;
 
-    out.push_back({std::move(utf8), d, x, y, z});
+    uint32_t profession = 0;
+    SafeReadDword(user + kUserProfessionOffset, profession);
+    auto professionName = GetProfessionName(profession);
+
+    out.push_back({std::move(utf8), profession, std::move(professionName),
+                   d, x, y, z});
     return 0;
 }
 
@@ -878,6 +946,39 @@ std::string GetLocalPlayerName()
     if (!SafeReadString(p + kNameOffset, buf, sizeof(buf)))
         return {};
     return Big5ToUtf8(buf);
+}
+
+std::string GetProfessionName(uint32_t profession)
+{
+    auto stringTable = PatternResolver::Get("StringTableCopy");
+    if (stringTable)
+    {
+        char raw[128] = {};
+        auto fn = reinterpret_cast<StringTableCopyFn>(stringTable);
+        uint32_t textId = ProfessionStringIndex(profession) + 0x198;
+        if (CopyStringTableSEH(fn, textId, raw, sizeof(raw)) && raw[0])
+            return Big5ToUtf8(raw);
+    }
+
+    switch (profession)
+    {
+    case 0:  return u8"初心者";
+    case 1:  return u8"剑士";
+    case 2:  return u8"骑士";
+    case 3:  return u8"小丑";
+    case 4:  return u8"魔法师";
+    case 5:  return u8"祭司";
+    case 6:  return u8"铁匠";
+    case 7:
+    case 10: return "GM";
+    case 9:  return u8"猎人";
+    case 16: return u8"爆破";
+    case 31: return u8"食神";
+    default:
+        char buf[32] = {};
+        snprintf(buf, sizeof(buf), "职业%u", profession);
+        return buf;
+    }
 }
 
 std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
@@ -946,8 +1047,14 @@ std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
 // 玩家(野外大区)拿不到名字 — 调用方 fallback 显示 User#<id>。返回 UTF-8。
 std::string LookupAroundPlayerNameById(uint32_t userId)
 {
+    NearbyPlayer info;
+    return LookupAroundPlayerById(userId, info) ? info.name : std::string{};
+}
+
+bool LookupAroundPlayerById(uint32_t userId, NearbyPlayer &out)
+{
     if (!userId)
-        return {};
+        return false;
 
     auto p = GetLocalUserPtr();
     if (p)
@@ -956,21 +1063,32 @@ std::string LookupAroundPlayerNameById(uint32_t userId)
         if (SafeReadDword(p + kUserSelfIdOffset, selfId) && selfId == userId)
         {
             char nameBuf[kNameMaxLen + 1] = {};
-            if (SafeReadString(p + kNameOffset, nameBuf, sizeof(nameBuf)) && nameBuf[0])
-                return Big5ToUtf8(nameBuf);
+            if (!SafeReadString(p + kNameOffset, nameBuf, sizeof(nameBuf)) || !nameBuf[0])
+                return false;
+
+            uint32_t profession = 0;
+            SafeReadDword(p + kUserProfessionOffset, profession);
+            float x = 0, y = 0, z = 0;
+            GetLocalPosition(x, y, z);
+            out = {Big5ToUtf8(nameBuf), profession, GetProfessionName(profession),
+                   0.0f, x, y, z};
+            return true;
         }
     }
 
     auto mgrAddrPtr = PatternResolver::Get("EntityManagerPtr");
     if (!mgrAddrPtr)
-        return {};
+        return false;
     uint32_t mgr = 0;
     if (!SafeReadDword(mgrAddrPtr, mgr) || !mgr)
-        return {};
+        return false;
 
     uint32_t node = 0;
     if (!SafeReadDword(mgr + kUserMgrListHeadOffset, node))
-        return {};
+        return false;
+
+    float lx = 0, ly = 0, lz = 0;
+    bool haveLocalPos = GetLocalPosition(lx, ly, lz);
 
     constexpr int kMaxNodes = 1024;
     for (int visited = 0; visited < kMaxNodes && node; ++visited)
@@ -979,14 +1097,32 @@ std::string LookupAroundPlayerNameById(uint32_t userId)
         if (SafeReadDword(node + kUserSelfIdOffset, nodeId) && nodeId == userId)
         {
             char nameBuf[kNameMaxLen + 1] = {};
-            if (SafeReadString(node + kNameOffset, nameBuf, sizeof(nameBuf)) && nameBuf[0])
-                return Big5ToUtf8(nameBuf);
-            return {};
+            if (!SafeReadString(node + kNameOffset, nameBuf, sizeof(nameBuf)) || !nameBuf[0])
+                return false;
+
+            uint32_t profession = 0;
+            SafeReadDword(node + kUserProfessionOffset, profession);
+
+            float x = 0, y = 0, z = 0;
+            SafeReadFloat(node + kPositionXOffset, x);
+            SafeReadFloat(node + kPositionYOffset, y);
+            SafeReadFloat(node + kPositionZOffset, z);
+
+            float distance = 0.0f;
+            if (haveLocalPos)
+            {
+                float dx = x - lx, dy = y - ly, dz = z - lz;
+                distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+            }
+
+            out = {Big5ToUtf8(nameBuf), profession, GetProfessionName(profession),
+                   distance, x, y, z};
+            return true;
         }
         if (!SafeReadDword(node + kUserNextOffset, node))
             break;
     }
-    return {};
+    return false;
 }
 
 // ============================================================
@@ -1480,6 +1616,117 @@ bool CastSkillOnMonster(uint32_t skillId, uint32_t monsterId)
                      skillId, monsterId);
         return false;
     }
+    return true;
+}
+
+namespace
+{
+// Combat__TryUseSkill @ 0x601CA0. Declared __fastcall but ctx/edx are dead
+// (see PatternResolver note + IDA comment) — all state comes from globals, so
+// we call it as a plain stdcall-style (skillId, targetId) with two dummy regs.
+// Modeled here as __fastcall(ecx, edx, skillId, targetId): the compiler loads
+// ecx/edx with our dummies and pushes skillId/targetId; callee does `retn 8`.
+using CombatTryUseSkillFn = int(__fastcall *)(int ecxDummy, int edxDummy,
+                                              int skillId, int targetId);
+
+static int CallTryUseSkillSEH(CombatTryUseSkillFn fn, int skillId, int targetId)
+{
+    __try
+    {
+        return fn(0, 0, skillId, targetId);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return INT_MIN;
+    }
+}
+
+// Reads CSkill[skillId] out of the SkillManager sparse array and reports
+// whether the skill is learned and off cooldown. Mirrors the first two gates
+// of SkillManager__CanCastSkill (@0x938840) without calling into the engine,
+// so a web-driven poll doesn't spam TryUseSkill while a skill is on cooldown.
+// Returns: 0 = ok to cast, 1 = not learned / not found, 2 = on cooldown.
+static int CheckSkillCastable(uint32_t skillId, float &cooldownOut)
+{
+    cooldownOut = 0.0f;
+    auto mgrPtrAddr = PatternResolver::Get("SkillManagerPtr");
+    if (!mgrPtrAddr)
+        return 1;
+    uint32_t mgr = 0;
+    if (!SafeReadDword(mgrPtrAddr, mgr) || !mgr)
+        return 1;
+    uint32_t arrayBase = 0, count = 0;
+    if (!SafeReadDword(mgr + kSkillArrayOffset, arrayBase) ||
+        !SafeReadDword(mgr + kSkillCountOffset, count))
+        return 1;
+    if (!arrayBase || count == 0 || count > kSkillMaxArrayLen || skillId >= count)
+        return 1;
+
+    uintptr_t entry = arrayBase + static_cast<uintptr_t>(skillId) * kSkillStructSize;
+    uint32_t learned = 0;
+    uint32_t cdBits  = 0;
+    if (!SafeReadDword(entry + 0x1C, learned) ||
+        !SafeReadDword(entry + 0x18, cdBits))
+        return 1;
+    if (learned == 0)
+        return 1;
+    float cd;
+    std::memcpy(&cd, &cdBits, sizeof(cd));
+    cooldownOut = cd;
+    if (cd > 0.0f)
+        return 2;
+    return 0;
+}
+} // anonymous
+
+bool CastSkillById(uint32_t skillId, uint32_t targetId, bool checkCanCast)
+{
+    if (skillId == 0)
+    {
+        spdlog::debug("GGTB::CastSkillById skip skillId=0");
+        return false;
+    }
+
+    if (checkCanCast)
+    {
+        float cd = 0.0f;
+        int gate = CheckSkillCastable(skillId, cd);
+        if (gate == 1)
+        {
+            spdlog::info("GGTB::CastSkillById skillId={} reject=not_learned", skillId);
+            return false;
+        }
+        if (gate == 2)
+        {
+            spdlog::debug("GGTB::CastSkillById skillId={} reject=on_cooldown cd={:.2f}",
+                          skillId, cd);
+            return false;
+        }
+    }
+
+    auto fnAddr = PatternResolver::Get("CombatTryUseSkill");
+    if (!fnAddr)
+    {
+        spdlog::error("GGTB::CastSkillById: CombatTryUseSkill pattern unresolved");
+        return false;
+    }
+
+    auto fn = reinterpret_cast<CombatTryUseSkillFn>(fnAddr);
+    int rv = CallTryUseSkillSEH(fn, static_cast<int>(skillId),
+                                static_cast<int>(targetId));
+    if (rv == INT_MIN)
+    {
+        spdlog::warn("GGTB::CastSkillById: SEH caught skillId={} targetId={}",
+                     skillId, targetId);
+        return false;
+    }
+
+    // TryUseSkill returns 1 only on the "instant cast accepted" path; the
+    // self-buff / pretime arms fall through to `return 0` after queuing the
+    // cast. So a 0 return does NOT mean failure here — the packets still went
+    // out via SendSkillCast. Treat anything that didn't throw as accepted.
+    spdlog::info("GGTB::CastSkillById skillId={} targetId={} rv={}",
+                 skillId, targetId, rv);
     return true;
 }
 
@@ -2266,11 +2513,7 @@ static int CallNetSendDwordSEH(NetBeginSendFn pBegin, NetSendDwordFn pSend,
 
 bool ReviveToTown(bool safetyCheck, int reviveMode)
 {
-    if (safetyCheck && !IsLocalDead())
-    {
-        spdlog::warn("GGTB::ReviveToTown: player not dead (hp={})", GetLocalHp());
-        return false;
-    }
+    (void)safetyCheck; // Kept for remote-command compatibility; always send.
 
     auto beginAddr = PatternResolver::Get("NetBeginSend");
     auto sendAddr  = PatternResolver::Get("NetSendDword");
@@ -2293,6 +2536,147 @@ bool ReviveToTown(bool safetyCheck, int reviveMode)
     }
     spdlog::info("GGTB::ReviveToTown: sent CG_PLAYER_REVIVE(412017) mode={} rv={}",
                  reviveMode, rv);
+    return true;
+}
+
+bool RequestLevelUpCheck(int payload)
+{
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSendDword");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::RequestLevelUpCheck: pattern unresolved (begin={:x} send={:x})",
+                      beginAddr, sendAddr);
+        return false;
+    }
+
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSendDwordFn>(sendAddr);
+
+    constexpr int kProtoLevelUpCheck = 412016;
+    int rv = CallNetSendDwordSEH(pBegin, pSend, kProtoLevelUpCheck, payload);
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::RequestLevelUpCheck: SEH on send payload={}", payload);
+        return false;
+    }
+    spdlog::info("GGTB::RequestLevelUpCheck: sent CG_LEVEL_UP_CHECK(412016) payload={} rv={}",
+                 payload, rv);
+    return true;
+}
+
+// ---------- Auto-trade (CExchange trade flow) ----------
+// 三条交易包(412028/412033/412035)都是单 DWORD body,复用 AutoRevive 的
+// NetSendDword SEH 路径。同意/锁定/确认这层只发包就够,引擎从服务端响应里推进
+// 交易状态机;但"本地把交易窗口弹出来"那一步服务端不负责 —— 必须像手动点接受
+// 按钮一样本地调 Trade_OpenLocalExchangeWindow,见下方 OpenLocalTradeWindow。
+namespace
+{
+bool SendTradeDwordPacket(int proto, int value, const char *tag)
+{
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSendDword");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::{}: pattern unresolved (begin={:x} send={:x})",
+                      tag, beginAddr, sendAddr);
+        return false;
+    }
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSendDwordFn>(sendAddr);
+    int rv = CallNetSendDwordSEH(pBegin, pSend, proto, value);
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::{}: SEH on send proto={} value={}", tag, proto, value);
+        return false;
+    }
+    spdlog::info("GGTB::{}: sent proto={} value={} rv={}", tag, proto, value, rv);
+    return true;
+}
+} // namespace
+
+bool SendTradeAccept(uint32_t requesterId)
+{
+    return SendTradeDwordPacket(412028, static_cast<int>(requesterId), "SendTradeAccept");
+}
+bool SendTradeDecline(uint32_t requesterId)
+{
+    return SendTradeDwordPacket(412029, static_cast<int>(requesterId), "SendTradeDecline");
+}
+bool SendTradeLock()
+{
+    return SendTradeDwordPacket(412033, 412033, "SendTradeLock");
+}
+bool SendTradeConfirm()
+{
+    return SendTradeDwordPacket(412035, 412035, "SendTradeConfirm");
+}
+bool SendTradeCancel()
+{
+    return SendTradeDwordPacket(412036, 412036, "SendTradeCancel");
+}
+
+// 自动接受时本地开交易窗口 —— 复刻 Trade_RequestPopup accept 分支的第一步。
+// 手动点「接受」按钮做的是 Trade_OpenLocalExchangeWindow(ctrl) + 发 412028 两件
+// 事;我们之前只发 412028,服务端虽认为已同意,本地窗口却停在请求态,直到对方
+// 放物品才被动刷出来。这里把 control 32(CExchange)取出来调引擎开窗函数补齐。
+//
+// control 32 由 GC_OnTradeRequest_07CC62 收到请求时 sub_9E9C50(32,...) 建好。worker
+// 跨线程轮询到请求信号时通常已建好;若派发竞态尚未建好,GetUIContent 返回 0,本
+// 函数返回 false 让调用方下个 poll 再试。三个引擎调用全程 SEH 包。
+namespace
+{
+using UIMgrGetSingletonFn = void *(__cdecl *)();
+using UIMgrGetUIContentFn = int(__thiscall *)(void *, int);
+using TradeOpenWindowFn   = int(__thiscall *)(int);
+
+// 返回:1 = 已开窗;0 = control 32 还不在(或单例为空),调用方应重试;-1 = SEH。
+static int CallOpenTradeWindowSEH(UIMgrGetSingletonFn pMgr,
+                                  UIMgrGetUIContentFn pGet,
+                                  TradeOpenWindowFn pOpen)
+{
+    __try
+    {
+        void *mgr = pMgr();
+        if (!mgr)
+            return 0;
+        int ctrl = pGet(mgr, 32); // CExchange trade window control id = 32
+        if (!ctrl)
+            return 0;
+        pOpen(ctrl);
+        return 1;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return -1;
+    }
+}
+} // namespace
+
+bool OpenLocalTradeWindow()
+{
+    auto mgrAddr  = PatternResolver::Get("UIManagerGetSingleton");
+    auto getAddr  = PatternResolver::Get("UIManagerGetUIContent");
+    auto openAddr = PatternResolver::Get("TradeOpenLocalWindow");
+    if (!mgrAddr || !getAddr || !openAddr)
+    {
+        spdlog::error("GGTB::OpenLocalTradeWindow: pattern unresolved "
+                      "(mgr={:x} get={:x} open={:x})", mgrAddr, getAddr, openAddr);
+        return false;
+    }
+
+    int rv = CallOpenTradeWindowSEH(
+        reinterpret_cast<UIMgrGetSingletonFn>(mgrAddr),
+        reinterpret_cast<UIMgrGetUIContentFn>(getAddr),
+        reinterpret_cast<TradeOpenWindowFn>(openAddr));
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::OpenLocalTradeWindow: SEH");
+        return false;
+    }
+    if (rv == 0)
+        return false; // control 32 not built yet (or singleton null) — caller retries
+    spdlog::info("GGTB::OpenLocalTradeWindow: opened CExchange window (ctrl 32)");
     return true;
 }
 
@@ -2382,11 +2766,41 @@ static int CallSendPublicChatSEH(NetBeginSendFn pBegin, NetSendChatStrFn pSend,
         return -1;
     }
 }
+
+static std::string Utf8ToBig5Lossy(const char *src)
+{
+    if (!src || !*src)
+        return {};
+
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, src, -1, nullptr, 0);
+    if (wlen <= 0)
+        return src;
+
+    std::wstring w(static_cast<size_t>(wlen), L'\0');
+    if (MultiByteToWideChar(CP_UTF8, 0, src, -1, w.data(), wlen) <= 0)
+        return src;
+
+    int blen = WideCharToMultiByte(950, 0, w.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (blen <= 0)
+        return src;
+
+    std::string out(static_cast<size_t>(blen), '\0');
+    if (WideCharToMultiByte(950, 0, w.c_str(), -1, out.data(), blen, nullptr, nullptr) <= 0)
+        return src;
+
+    if (!out.empty() && out.back() == '\0')
+        out.pop_back();
+    return out;
+}
 } // namespace
 
 bool SendPublicChat(const char *message)
 {
     if (!message || !*message)
+        return false;
+
+    auto encoded = Utf8ToBig5Lossy(message);
+    if (encoded.empty())
         return false;
 
     auto beginAddr = PatternResolver::Get("NetBeginSend");
@@ -2399,13 +2813,14 @@ bool SendPublicChat(const char *message)
 
     auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
     auto pSend  = reinterpret_cast<NetSendChatStrFn>(sendAddr);
-    int rv = CallSendPublicChatSEH(pBegin, pSend, message);
+    int rv = CallSendPublicChatSEH(pBegin, pSend, encoded.c_str());
     if (rv < 0)
     {
         spdlog::warn("GGTB::SendPublicChat: SEH caught");
         return false;
     }
-    spdlog::info("GGTB::SendPublicChat: msg='{}' rv={}", message, rv);
+    spdlog::info("GGTB::SendPublicChat: msg='{}' bytes={} rv={}",
+                 message, encoded.size(), rv);
     return true;
 }
 
@@ -2436,7 +2851,7 @@ static int CallSendDialogSelectSEH(NetBeginSendFn pBegin, NetSendDialogSelectFn 
 }
 } // anonymous
 
-bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption)
+bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption, uint32_t sub)
 {
     auto beginAddr = PatternResolver::Get("NetBeginSend");
     auto sendAddr  = PatternResolver::Get("NetSendDialogSelect");
@@ -2450,19 +2865,19 @@ bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption)
     auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
     auto pSend  = reinterpret_cast<NetSendDialogSelectFn>(sendAddr);
 
-    // Engine arg order is (a3=dialogOption, a4=npcId) — verified 2026-05-09.
+    // Engine arg order is (a3=dialogOption, a4=npcId, a5=sub) — verified 2026-05-09.
     // See CLocalPlayer.h doc + IDA Net__SendDialogSelect @ 0xB2C930.
     int rv = CallSendDialogSelectSEH(pBegin, pSend, kProtocolDialogSelect,
                                      static_cast<int>(dialogOption),
                                      static_cast<int>(npcId),
-                                     kDialogSelectSubAction);
+                                     static_cast<int>(sub));
     if (rv < 0)
     {
         spdlog::warn("GGTB::SendDialogSelect: SEH npc={} opt={}", npcId, dialogOption);
         return false;
     }
     spdlog::info("GGTB::SendDialogSelect: npc={} opt={} sub={}",
-                 npcId, dialogOption, kDialogSelectSubAction);
+                 npcId, dialogOption, sub);
     return true;
 }
 
@@ -3666,6 +4081,432 @@ bool LookupCreatureById(uint32_t creatureId, CreatureSnapshot &out)
     out.y    = f.y;
     out.z    = f.z;
     return true;
+}
+
+// ---------- Active buffs (BuffHelper) ----------
+namespace
+{
+// FindHostBuffContainer @ 0x6486C0 — __thiscall(this=&g_BuffHelper, hostType,
+// hostId). Returns the per-host std::list container (0 if the host has no
+// active buffs). We model __thiscall as __fastcall (ecx=this, edx=unused) so we
+// can pass the BuffHelper singleton explicitly.
+using BuffFindHostContainerFn = uintptr_t(__fastcall *)(uintptr_t thisPtr,
+                                                        int edxDummy, int hostType,
+                                                        int hostId);
+
+uintptr_t CallFindBuffContainerSEH(BuffFindHostContainerFn fn, uintptr_t thisPtr,
+                                   int hostType, int hostId)
+{
+    __try
+    {
+        return fn(thisPtr, 0, hostType, hostId);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return 0;
+    }
+}
+
+bool SafeReadPtr(uintptr_t addr, uintptr_t &out)
+{
+    __try
+    {
+        out = *reinterpret_cast<volatile uintptr_t *>(addr);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+// Raw snapshot of one buff node, read under SEH so a torn list/scene transition
+// can't crash the worker thread. buffDesc resolution stays inside the same SEH
+// scope (the BuffDesc array can be reallocated during a map load).
+struct BuffInstRaw
+{
+    uint32_t buffId;
+    uint32_t duration;
+    int64_t  endTs;
+    uint32_t boolActive;
+    uint32_t category;
+    uint32_t flags;
+    char     name[kBuffNameMaxLen];
+    bool     descOk;
+};
+
+bool ReadBuffInstSEH(uintptr_t node, BuffInstRaw *out)
+{
+    __try
+    {
+        out->buffId     = *reinterpret_cast<volatile uint16_t *>(node + kBuffInstIdOffset);
+        out->duration   = *reinterpret_cast<volatile uint32_t *>(node + kBuffInstDurationOffset);
+        out->endTs      = *reinterpret_cast<volatile int64_t  *>(node + kBuffInstEndTsOffset);
+        out->boolActive = *reinterpret_cast<volatile uint32_t *>(node + kBuffInstBoolOffset);
+
+        uintptr_t desc = *reinterpret_cast<volatile uintptr_t *>(node + kBuffInstDescOffset);
+        out->descOk = false;
+        out->category = 0;
+        out->flags = 0;
+        out->name[0] = 0;
+        if (desc)
+        {
+            out->category = *reinterpret_cast<volatile uint8_t *>(desc + kBuffDescCategoryOffset);
+            out->flags    = *reinterpret_cast<volatile uint32_t *>(desc + kBuffDescFlagsOffset);
+            const char *nm = reinterpret_cast<const char *>(desc + kBuffDescNameOffset);
+            size_t i = 0;
+            for (; i < kBuffNameMaxLen - 1; ++i)
+            {
+                char c = nm[i];
+                out->name[i] = c;
+                if (!c)
+                    break;
+            }
+            out->name[i] = 0;
+            out->descOk = true;
+        }
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+BuffKind CategoryToKind(uint32_t category)
+{
+    // RenderNormalBuffBar whitelists {1,2,5}; RenderCashBuffBar whitelists {4,0}.
+    return (category == 1 || category == 2 || category == 5) ? BuffKind::Normal
+                                                             : BuffKind::Cash;
+}
+} // anonymous
+
+uint32_t GetSkillBuffId(uint32_t skillId)
+{
+    auto tableAddr = PatternResolver::Get("SkillBuffMap");
+    if (!tableAddr)
+        return 0;
+    for (size_t i = 0; i < kSkillBuffMapCount; ++i)
+    {
+        uint32_t sid = 0, bid = 0;
+        if (!SafeReadDword(tableAddr + i * 8, sid))
+            break;
+        if (sid == skillId)
+        {
+            SafeReadDword(tableAddr + i * 8 + 4, bid);
+            return bid;
+        }
+    }
+    return 0;
+}
+
+uint32_t GetBuffSourceSkillId(uint32_t buffId)
+{
+    if (buffId == 0)
+        return 0;
+    auto tableAddr = PatternResolver::Get("SkillBuffMap");
+    if (!tableAddr)
+        return 0;
+    for (size_t i = 0; i < kSkillBuffMapCount; ++i)
+    {
+        uint32_t sid = 0, bid = 0;
+        if (!SafeReadDword(tableAddr + i * 8, sid))
+            break;
+        SafeReadDword(tableAddr + i * 8 + 4, bid);
+        if (bid == buffId)
+            return sid;
+    }
+    return 0;
+}
+
+std::vector<ActiveBuff> GetHostBuffs(uint32_t hostId, int hostType, int kindFilter)
+{
+    std::vector<ActiveBuff> result;
+    if (hostId == 0)
+        return result;
+
+    auto findAddr = PatternResolver::Get("BuffFindHostContainer");
+    if (!findAddr)
+    {
+        spdlog::error("GGTB::GetHostBuffs: BuffFindHostContainer unresolved");
+        return result;
+    }
+    auto thisAddr = PatternResolver::Get("BuffHelperThis");
+    if (!thisAddr)
+    {
+        spdlog::error("GGTB::GetHostBuffs: BuffHelperThis unresolved");
+        return result;
+    }
+
+    auto pFind = reinterpret_cast<BuffFindHostContainerFn>(findAddr);
+    uintptr_t container = CallFindBuffContainerSEH(pFind, thisAddr, hostType,
+                                                   static_cast<int>(hostId));
+    if (!container)
+        return result; // host has no buffs
+
+    // Walk the intrusive circular list. The stored links point AT each node's
+    // +0x43 link field; node base = link - 0x43; the chain ends back at the
+    // sentinel slot (container + 0x59). See header for the RE derivation.
+    const uintptr_t end = container + kBuffContainerSentinelOffset;
+    uintptr_t link = 0;
+    if (!SafeReadPtr(end, link))
+        return result;
+
+    DWORD   nowMs  = GetTickCount();
+    int64_t nowSec = static_cast<int64_t>(_time64(nullptr));
+
+    size_t guard = 0;
+    while (link && link != end && guard < kBuffMaxListWalk)
+    {
+        ++guard;
+        uintptr_t node = link - kBuffNodeLinkOffset;
+
+        BuffInstRaw raw{};
+        if (!ReadBuffInstSEH(node, &raw))
+            break;
+
+        // Advance early so a malformed entry below doesn't strand the walk.
+        uintptr_t nextLink = 0;
+        if (!SafeReadPtr(link, nextLink))
+            break;
+        link = nextLink;
+
+        if (!raw.descOk)
+            continue;
+
+        BuffKind kind = CategoryToKind(raw.category);
+        if (kindFilter == 0 && kind != BuffKind::Normal)
+            continue;
+        if (kindFilter == 1 && kind != BuffKind::Cash)
+            continue;
+
+        ActiveBuff b{};
+        b.buffId     = raw.buffId;
+        b.category   = raw.category;
+        b.kind       = kind;
+        b.name       = Big5ToUtf8(raw.name);
+        b.duration   = raw.duration;
+        b.isBoolBuff = (raw.flags & kBuffFlagBool) != 0;
+        b.skillId    = GetBuffSourceSkillId(raw.buffId);
+        b.instAddr   = node;
+
+        if (b.isBoolBuff)
+        {
+            b.remainingMs = -1; // toggle buff, no countdown
+        }
+        else if (raw.flags & kBuffFlagSeconds)
+        {
+            int64_t rem = raw.endTs - nowSec;
+            b.remainingMs = rem > 0 ? rem * 1000 : 0;
+        }
+        else
+        {
+            int64_t rem = raw.endTs - static_cast<int64_t>(nowMs);
+            b.remainingMs = rem > 0 ? rem : 0;
+        }
+
+        result.push_back(std::move(b));
+    }
+
+    std::sort(result.begin(), result.end(),
+              [](const ActiveBuff &a, const ActiveBuff &c) {
+                  // -1 (no countdown) sorts last; otherwise ascending by remaining.
+                  int64_t ra = a.remainingMs < 0 ? INT64_MAX : a.remainingMs;
+                  int64_t rc = c.remainingMs < 0 ? INT64_MAX : c.remainingMs;
+                  return ra < rc;
+              });
+    return result;
+}
+
+struct CashIconRaw
+{
+    uint32_t typeId;
+    uint32_t iconId;
+    char     name[kBuffNameMaxLen];
+    uint8_t  blink;
+};
+
+// Reads one 280-byte HUD cash-icon record under SEH (the vector can be
+// reallocated mid-walk during a scene transition).
+bool ReadCashIconSEH(uintptr_t rec, CashIconRaw *out)
+{
+    __try
+    {
+        out->typeId = *reinterpret_cast<volatile uint32_t *>(rec + kHudCashRecTypeOffset);
+        out->iconId = *reinterpret_cast<volatile uint32_t *>(rec + kHudCashRecIconOffset);
+        out->blink  = *reinterpret_cast<volatile uint8_t  *>(rec + kHudCashRecBlinkOffset);
+        const char *nm = reinterpret_cast<const char *>(rec + kHudCashRecNameOffset);
+        size_t i = 0;
+        for (; i < kBuffNameMaxLen - 1; ++i)
+        {
+            char c = nm[i];
+            out->name[i] = c;
+            if (!c)
+                break;
+        }
+        out->name[i] = 0;
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+std::vector<ActiveBuff> GetCashItemIcons()
+{
+    std::vector<ActiveBuff> result;
+
+    auto hud = PatternResolver::Get("GameHUDThis");
+    if (!hud)
+    {
+        spdlog::error("GGTB::GetCashItemIcons: GameHUDThis unresolved");
+        return result;
+    }
+
+    uintptr_t begin = 0, end = 0;
+    if (!SafeReadPtr(hud + kHudCashVecBeginOffset, begin) ||
+        !SafeReadPtr(hud + kHudCashVecEndOffset, end))
+        return result;
+    if (!begin || end <= begin)
+        return result;
+
+    size_t count = (end - begin) / kHudCashRecStride;
+    if (count > kHudCashMaxRecords)
+        count = kHudCashMaxRecords; // torn/garbage guard
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        CashIconRaw raw{};
+        if (!ReadCashIconSEH(begin + i * kHudCashRecStride, &raw))
+            break;
+
+        std::string name = Big5ToUtf8(raw.name);
+        if (name.empty())
+            continue; // unused/blank slot
+
+        ActiveBuff b{};
+        b.buffId      = 0;             // HUD icons have no BuffDesc buffId
+        b.category    = 0;             // synthetic; classified as Cash
+        b.kind        = BuffKind::Cash;
+        b.name        = std::move(name);
+        b.duration    = 0;
+        b.remainingMs = -1;            // no countdown exposed on the record
+        b.skillId     = raw.iconId;    // diagnostic: HUD icon-table key
+        b.isBoolBuff  = false;
+        b.instAddr    = begin + i * kHudCashRecStride;
+        result.push_back(std::move(b));
+    }
+    return result;
+}
+
+PartySnapshot GetPartyMembers(bool includeBuffs)
+{
+    PartySnapshot snap{};
+    snap.inParty   = false;
+    snap.role      = 0;
+    snap.selfIndex = -1;
+
+    auto countAddr   = PatternResolver::Get("PartyMemberCount");
+    auto arrayAddr   = PatternResolver::Get("PartyMemberArray");
+    auto selfIdxAddr = PatternResolver::Get("PartySelfIndex");
+    auto roleAddr    = PatternResolver::Get("PartySelfRole");
+    auto stateAddr   = PatternResolver::Get("PartyMemberStateArray");
+    if (!countAddr || !arrayAddr)
+        return snap;
+
+    uint32_t count = 0;
+    if (!SafeReadDword(countAddr, count) || count == 0 || count > kPartyMaxMembers)
+        return snap; // solo / not in a party (or torn read)
+
+    int32_t selfIndex = -1;
+    if (selfIdxAddr)
+    {
+        uint32_t v = 0;
+        if (SafeReadDword(selfIdxAddr, v))
+            selfIndex = static_cast<int32_t>(v);
+    }
+    uint32_t role = 0;
+    if (roleAddr)
+        SafeReadDword(roleAddr, role);
+
+    snap.inParty   = true;
+    snap.role      = static_cast<int>(role);
+    snap.selfIndex = selfIndex;
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        uintptr_t entry = arrayAddr + kPartyEntryStride * i;
+
+        char nameBuf[kPartyEntryNameMaxLen + 1] = {};
+        SafeReadString(entry + kPartyEntryNameOffset, nameBuf, sizeof(nameBuf));
+
+        uint32_t online = 0, mid = 0;
+        SafeReadDword(entry + kPartyEntryOnlineOffset, online);
+        SafeReadDword(entry + kPartyEntryIdOffset, mid);
+
+        PartyMember m{};
+        m.index  = static_cast<int>(i);
+        m.name   = Big5ToUtf8(nameBuf);
+        m.userId = mid;
+        m.isSelf = (static_cast<int32_t>(i) == selfIndex);
+        m.online = (static_cast<int32_t>(online) > 0);
+        m.hp     = -1;
+        m.maxHp  = -1;
+
+        if (stateAddr)
+        {
+            uintptr_t st = stateAddr + kPartyStateStride * i;
+            uint32_t  hp = 0, maxHp = 0;
+            if (SafeReadDword(st + kPartyStateHpOffset, hp))
+                m.hp = static_cast<int32_t>(hp);
+            if (SafeReadDword(st + kPartyStateMaxHpOffset, maxHp))
+                m.maxHp = static_cast<int32_t>(maxHp);
+        }
+
+        // The self slot is blanked in the roster/state table (the engine draws
+        // the local player from the player object). Back-fill from the locals.
+        if (m.isSelf)
+        {
+            uint32_t selfId = GetLocalUserId();
+            if (selfId)
+                m.userId = selfId;
+            std::string selfName = GetLocalPlayerName();
+            if (!selfName.empty())
+                m.name = std::move(selfName);
+            m.online = true;
+            if (m.hp <= 0)
+                m.hp = static_cast<int32_t>(GetLocalHp());
+        }
+
+        if (includeBuffs && m.userId != 0 && m.userId != 0xFFFFFFFF)
+        {
+            // Self buffs key on hostType 0; teammates on hostType 2 — the same
+            // key CMessenger_RenderPartyMemberBuffIcons (0x8452F0) passes to the
+            // engine's buff-icon renderer for remote party members.
+            int hostType = m.isSelf ? 0 : 2;
+            m.buffs = GetHostBuffs(m.userId, hostType, -1);
+        }
+
+        snap.members.push_back(std::move(m));
+    }
+    return snap;
+}
+
+std::vector<ActiveBuff> GetActiveBuffs(int kindFilter)
+{
+    std::vector<ActiveBuff> result = GetHostBuffs(GetLocalUserId(), 0, kindFilter);
+
+    // BuffHelper only owns one cash buff; the rest of the cash icons live on the
+    // HUD object. Merge them in whenever the caller wants Cash (all or Cash-only).
+    if (kindFilter != 0)
+    {
+        auto cash = GetCashItemIcons();
+        result.insert(result.end(),
+                      std::make_move_iterator(cash.begin()),
+                      std::make_move_iterator(cash.end()));
+    }
+    return result;
 }
 
 } // namespace GGTB

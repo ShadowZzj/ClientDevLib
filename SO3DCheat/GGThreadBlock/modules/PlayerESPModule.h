@@ -53,7 +53,8 @@ class PlayerESPModule : public IModule
         for (auto &p : players)
         {
             if (marked_.count(p.name))
-                activeEntries_.push_back({p.name, p.x, p.y, p.z, p.distance});
+                activeEntries_.push_back({p.name, p.professionName,
+                                          p.x, p.y, p.z, p.distance});
         }
     }
 
@@ -89,6 +90,7 @@ class PlayerESPModule : public IModule
     struct MarkedEntry
     {
         std::string name;
+        std::string professionName;
         float       x, y, z;
         float       distance;
     };
@@ -153,7 +155,12 @@ class PlayerESPModule : public IModule
         for (size_t i = 0; i < entries.size(); ++i)
         {
             auto &e = entries[i];
-            snprintf(buf, sizeof(buf), u8"出现标记玩家：%s (%.0f)", e.name.c_str(), e.distance);
+            if (!e.professionName.empty())
+                snprintf(buf, sizeof(buf), u8"出现标记玩家：%s[%s] (%.0f)",
+                         e.name.c_str(), e.professionName.c_str(), e.distance);
+            else
+                snprintf(buf, sizeof(buf), u8"出现标记玩家：%s (%.0f)",
+                         e.name.c_str(), e.distance);
 
             ImVec2 textSize = ImGui::CalcTextSize(buf);
             float textX = centerX - textSize.x * 0.5f;
@@ -187,7 +194,11 @@ class PlayerESPModule : public IModule
 
             drawList->AddCircleFilled(ImVec2(sx, sy), 5.0f, IM_COL32(255, 50, 50, 220));
 
-            snprintf(buf, sizeof(buf), "%s (%.0f)", e.name.c_str(), e.distance);
+            if (!e.professionName.empty())
+                snprintf(buf, sizeof(buf), "%s[%s] (%.0f)",
+                         e.name.c_str(), e.professionName.c_str(), e.distance);
+            else
+                snprintf(buf, sizeof(buf), "%s (%.0f)", e.name.c_str(), e.distance);
 
             // black outline for readability
             drawList->AddText(ImVec2(sx + 9, sy - 7), IM_COL32(0, 0, 0, 255), buf);

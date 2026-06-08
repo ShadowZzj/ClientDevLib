@@ -2,6 +2,7 @@
 #include <d3d9.h>
 #include <Windows/util/DirectX/Setting.hpp>
 #include <memory>
+#include <string>
 namespace zzj
 {
     namespace D3D
@@ -9,23 +10,41 @@ namespace zzj
         class D3D9Hook
         {
         public:
+            struct SetupOptions
+            {
+                std::string windowClassName;
+                std::string windowName;
+                DWORD exStyle = WS_EX_TOOLWINDOW;
+                DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+                int x = CW_USEDEFAULT;
+                int y = CW_USEDEFAULT;
+                int width = 460;
+                int height = 430;
+                HWND parent = nullptr;
+                HMENU menu = nullptr;
+                HINSTANCE instance = nullptr;
+                bool showInitially = false;
+            };
+
             D3D9Hook() = default;
             ~D3D9Hook() = default;
-            static bool SetupWindowClass(const char* windowClassName) noexcept;
+            static bool SetupWindowClass(const SetupOptions& options) noexcept;
             static void DestroyWindowClass() noexcept;
  
-            static bool SetupWindow(const char* windowName) noexcept;
+            static bool SetupWindow(const SetupOptions& options) noexcept;
             static void DestroyWindow() noexcept;
  
             static bool SetupDirectX() noexcept;
             static void DestroyDirectX() noexcept;
  
-            static void Setup(std::shared_ptr<Setting> setting);
+            static void Setup(std::shared_ptr<Setting> setting, const SetupOptions& options);
 
             static void SetupMenu(LPDIRECT3DDEVICE9 device) noexcept;
             static void Destroy() noexcept;
 
             static void Render() noexcept;
+            static void SetOpen(bool value) noexcept;
+            static void ToggleOpen() noexcept;
 
             static void SetupHook();
             static void DestroyHook();

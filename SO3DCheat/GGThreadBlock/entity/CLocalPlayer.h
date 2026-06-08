@@ -24,10 +24,10 @@ inline constexpr uintptr_t kPositionYOffset      = 0x44; // ground-plane Y
 inline constexpr uintptr_t kMoveSpeedOffset      = 0x1A4;
 inline constexpr uintptr_t kNameOffset           = 0x1AC0; // char[~16], null-terminated
 inline constexpr size_t    kNameMaxLen           = 0x20;
-// 8 per-job CalcStatus writes + 2 TraceMove per-frame clamps (mounted/normal).
-// All 10 entries get the same 8-byte NOP — they're either `movss [reg+1A4],xmm0`
-// (CalcStatus) or `movss [eax+1A4],xmm0` (TraceMove); same instruction shape, same length.
-inline constexpr size_t    kMoveSpeedWriteCount  = 10;
+// 8 per-job CalcStatus writes + 2 TraceMove per-frame clamps (mounted/normal)
+// + 5 mount/state refresh writes. All entries get the same 8-byte NOP: each is
+// a `movss [reg+1A4],xmm0`-style write to CLocalUser.moveSpeed.
+inline constexpr size_t    kMoveSpeedWriteCount  = 15;
 inline constexpr size_t    kMoveSpeedPatchSize   = 8; // movss [reg+1A4h], xmm0
 
 // attackSpeed / skillSpeed: animation divisors (lower value = faster animation).
@@ -128,12 +128,16 @@ bool RestoreSkillRange();
 
 // ---------- Action-time movement bypass ----------
 //
-// Removes the "can't move while attacking / casting" lock by patching 4 sites:
+// Removes the "can't move while attacking / casting" lock by patching 5 sites:
 //
 //   SetAfterActionGate  @ 0x7539FE: 5-byte `E9 C1 02 00 00` overwrites the first
 //                                   `jle short loc_753A22` and unconditionally
 //                                   jumps to the success path at 0x753CC4. Skips
 //                                   every reject gate inside SetAfterAction.
+//   InstantCastStartup  @ 0x756331: 6-byte `E9 C1 00 00 00 90` overwrites
+//                                   `jbe loc_7563F7` and always jumps to the
+//                                   immediate-send branch. Skips the preTime
+//                                   mode=3 raise-hand/start-cast branch.
 //   TraceMoveGate1      @ 0x756FAA: flip `76 -> EB` so the per-frame stunTime
 //                                   check (+0x3468) is always skipped.
 //   TraceMoveOrChain    @ 0x756FCD: 5-byte `E9 19 01 00 00` jumps to
@@ -142,6 +146,7 @@ bool RestoreSkillRange();
 //   TraceMoveGate2      @ 0x7570FD: flip `76 -> EB` so the +0x2BCC per-frame
 //                                   timer check is always skipped.
 inline constexpr size_t kActionMoveSetAfterActionGateSize = 5; // jle short -> jmp near
+inline constexpr size_t kActionMoveInstantCastStartupSize  = 6; // jbe near -> jmp near + nop
 inline constexpr size_t kActionMoveTraceMoveGate1Size     = 1; // jbe short -> jmp short
 inline constexpr size_t kActionMoveTraceMoveOrChainSize   = 5; // cmp imm32 -> jmp near
 inline constexpr size_t kActionMoveTraceMoveGate2Size     = 1; // jbe short -> jmp short
@@ -169,6 +174,11 @@ inline constexpr size_t kBlockLevelUpPatchSize = 1; // jge short -> jmp short
 bool PatchBlockLevelUp();
 bool RestoreBlockLevelUp();
 
+// Sends the same CG_LEVEL_UP_CHECK packet emitted by CLocalPlayer::UpdateExp
+// when EXP reaches the level cap. IDA shows the engine pushes 0x64970 twice:
+// Net__SendDword(buf, 412016, 412016).
+bool RequestLevelUpCheck(int payload = 412016);
+
 // ---------- Entity iteration (remote players nearby) ----------
 //
 // EntityManager exposes two views of the same player set:
@@ -188,12 +198,15 @@ inline constexpr uint32_t  kUserKindPlayer        = 5;
 struct NearbyPlayer
 {
     std::string name;
+    uint32_t    profession;
+    std::string professionName;
     float       distance;
     float       x, y, z;
 };
 
 bool        GetLocalPosition(float &x, float &y, float &z);
 std::string GetLocalPlayerName();
+std::string GetProfessionName(uint32_t profession);
 
 // Walks the EntityManager's around-player linked list, filters by
 // kind==kUserKindPlayer (so CLocalUser / monsters / NPCs are skipped), and
@@ -206,6 +219,7 @@ std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
 // 公屏聊天 511004 包带 senderUserId 但不带名字,引擎自己也是 EntityManager
 // 反查的。AOI 范围之外(野外/不同区)拿不到,返回空字符串。
 std::string LookupAroundPlayerNameById(uint32_t userId);
+bool LookupAroundPlayerById(uint32_t userId, NearbyPlayer &out);
 
 // ---------- Drop-item iteration (auto-pickup) ----------
 //
@@ -215,15 +229,22 @@ std::string LookupAroundPlayerNameById(uint32_t userId);
 //   DropItem layout (alloc size 0x118):
 //     +0x00 dropId (uint32, primary key for SendPickItemPacket)
 //     +0x04 itemId (uint32, item table id)
-//     +0x14/0x18/0x1C worldX/Y/Z (float)
+//     +0x14 worldX, +0x18 vertical, +0x1C worldY (float) — SAME field order as
+//       CLocalUser (+0x3C worldX / +0x40 vertical / +0x44 worldY).
 //     +0x2E canPick (uint8 — 1 if free to grab, 0 if owned by another player)
 //     +0x88 next (DropItem*)
+// GetLocalPosition returns the tuple (worldX, worldY, vertical), so the drop
+// Y/Z offsets below are mapped to MATCH that tuple: kDropPosYOffset=worldY(0x1C),
+// kDropPosZOffset=vertical(0x18). If these two are swapped the distance filter
+// pairs drop-vertical against player-worldY and inflates every distance by the
+// ground-plane magnitude (~580u here), so GetNearbyDropItems rejects every drop
+// and auto-pickup silently reports drops=0.
 inline constexpr uintptr_t kDropContainerHeadOffset = 0x6C;
 inline constexpr uintptr_t kDropIdOffset            = 0x00;
 inline constexpr uintptr_t kDropItemIdOffset        = 0x04;
-inline constexpr uintptr_t kDropPosXOffset          = 0x14;
-inline constexpr uintptr_t kDropPosYOffset          = 0x18;
-inline constexpr uintptr_t kDropPosZOffset          = 0x1C;
+inline constexpr uintptr_t kDropPosXOffset          = 0x14; // worldX   -> player +0x3C
+inline constexpr uintptr_t kDropPosYOffset          = 0x1C; // worldY   -> player +0x44
+inline constexpr uintptr_t kDropPosZOffset          = 0x18; // vertical -> player +0x40
 inline constexpr uintptr_t kDropCanPickOffset       = 0x2E;
 inline constexpr uintptr_t kDropNextOffset          = 0x88;
 
@@ -549,6 +570,24 @@ int CastSkill(const LearnedSkillInfo           &skill,
 // network state that can be torn during scene transitions.
 bool CastSkillOnMonster(uint32_t skillId, uint32_t monsterId);
 
+// Casts a skill through the engine's own high-level entry (Combat__TryUseSkill
+// @ 0x601CA0) — the same path the in-game AutoHunt uses. Unlike
+// CastSkillOnMonster (which only fires the raw CG_SKILL_22 effect packet), this
+// runs the full state machine: cooldown/learned checks, CG_SKILL_24 startup +
+// CG_SKILL_22 effect, target plumbing. Works for self-buff skills (type==Self),
+// single-target, and AOE alike — the engine picks the packet shape.
+//
+// targetId: creature/user id for targeted skills; pass 0 (or own userId) for
+// self-buffs. For a "cast this buff skill on myself when the buff is missing"
+// feature, 0 is correct — the engine resolves self-target internally.
+//
+// checkCanCast=true (default) pre-gates on SkillManager__CanCastSkill (skill
+// learned + off cooldown) so we don't spam TryUseSkill while on cooldown.
+//
+// Returns true if the engine accepted the cast (packets sent). SEH-wrapped.
+bool CastSkillById(uint32_t skillId, uint32_t targetId = 0, bool checkCanCast = true);
+
+
 // ---------- Bomber-class bomb-throwing (火力全开 爆破师分支) ----------
 //
 // CLocalUser.profession (uint32). Verified against AutoHunt__ChooseNextAction
@@ -782,13 +821,41 @@ uint32_t GetCurrentMapId();
 // 默认我们也用 1,跟玩家手动点 OK 一致(确切是去哪个地方由服务端决定)。
 // 411170 是老版本 rebirth_ok 那条路径,这版抓的实际 wire 是 412017 所以走它。
 //
-// safetyCheck: if true (default) only sends when the player is actually
-// dead. Set to false if you want to test on a live char (server will reject
-// silently, but client doesn't care).
+// safetyCheck is kept for remote-command compatibility only; ReviveToTown
+// always sends and does not gate on local HP/dead state.
 //
 // reviveMode: payload dword written by Net__SendDword. 1=默认(已验证)。
 // 其它值留给后续调整。
 bool ReviveToTown(bool safetyCheck = true, int reviveMode = 1);
+
+// ---------- Auto-trade (CExchange trade flow) ----------
+//
+// 交易流程的三条 CG 包(同意/锁定/确认)都是单 DWORD body 包,和 CG_PLAYER_REVIVE
+// 同形,所以全部走 Net__SendDword(buf, proto, value):
+//   412028 ACCEPT  : value = requesterEntityId  (来自 GC 0x07CC62 的 body[0])
+//   412029 DECLINE : value = requesterEntityId
+//   412033 LOCK    : value = 412033  (body 回显 proto id)
+//   412035 CONFIRM : value = 412035
+//   412036 CANCEL  : value = 412036
+// wire 字节实测自 shadowpope(接受方)的 sendlog:
+//   412028 -> 0C000000 7C490600 C9000000   (len12, proto412028, body=requesterId)
+//   412033 -> 0C000000 81490600 81490600   (proto412033, body=412033)
+//   412035 -> 0C000000 83490600 83490600   (proto412035, body=412035)
+// 因果链(shadowpope=接受方): RECV 0x07CC62(body=C9) -> SEND 412028(body=C9);
+//   RECV 0x07D050(对方锁定) -> SEND 412033(锁定) -> SEND 412035(确认)。确认只 gate
+//   在本地双方锁定态上,锁定到确认之间没有单独的 peer-confirm recv。
+// 全部经共享的 CallNetSendDwordSEH SEH 包,返回 true 表示已发送。
+bool SendTradeAccept(uint32_t requesterId);
+bool SendTradeDecline(uint32_t requesterId);
+bool SendTradeLock();
+bool SendTradeConfirm();
+bool SendTradeCancel();
+
+// 自动接受时本地开交易窗口。手动点「接受」按钮 = Trade_OpenLocalExchangeWindow
+// (sub_71E040) + 发 412028;只发包不开窗,本地窗口会停在请求态直到对方放物品。
+// 取 CExchange control 32(CUIManager__GetUIContent(GetSingleton(),32))调引擎开窗。
+// 返回 false 表示 control 32 还没建好(派发竞态)或 pattern 未解析 —— 调用方重试。
+bool OpenLocalTradeWindow();
 
 // (移除: 之前的 SendDelegate / CMessenger 路径不对。自动委托跳图实际上是
 // CG_NPC_DIALOG_SELECT (411026),wire = 14 字节,(npcId, dialogOption, sub=1)
@@ -843,8 +910,10 @@ bool SendPublicChat(const char *message);
 // This wrapper keeps a friendly (npcId, dialogOption) API and swaps internally.
 //
 // Sister of NetSendTriple (used for CG_ITEM_DROP) but emits one extra DWORD.
-// SEH-wrapped. Returns true on send.
-bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption);
+// SEH-wrapped. Returns true on send. `sub` is the trailing sub-action DWORD
+// (a5); defaults to 1 (the normal "confirm option" value). The 同步 feature
+// passes through the master's captured sub so a mirrored select is byte-identical.
+bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption, uint32_t sub = 1);
 
 // ---------- NPC dialog state snapshot (web UI) ----------
 //
@@ -979,6 +1048,208 @@ inline constexpr int       kCashSlotWireBase    = 13; // wire = slotIndex + 13
 
 std::vector<BagItemInfo> GetCashBagItems();
 bool UseCashItem(uint32_t slotIndex);
+
+// ---------- Active buffs (BuffHelper) ----------
+//
+// All buffs are owned by a single engine singleton, BuffHelper (g_BuffHelper @
+// linear 0xE09178). Per host (player / creature) it keeps a std::list of active
+// buff instances, retrieved by (hostType, hostId). For the local player:
+//   hostType = 0, hostId = GetLocalUserId()  (g_pLocalUser + 112)
+//
+// Container lookup + list walk (verified against BuffHelper_ForEachHostBuff
+// @ 0x648580 disassembly — an intrusive circular list whose stored pointers
+// point AT the link field, not the node base):
+//   container = FindHostBuffContainer(0, hostId)        -- NULL/empty => no buffs
+//   end       = container + 0x59  (sentinel link-slot; also the head pointer)
+//   firstLink = *(container + 0x59)                     -- ==end or 0 => empty
+//   buffInst  = firstLink - 0x43                        -- node base
+//   advance   : nextLink = *(buffInst + 0x43)
+//               stop when nextLink == end ; else buffInst = nextLink - 0x43
+//   (the +0x43/+0x47 fields are the two list links embedded in each buffInst.)
+//
+// Reproducing the engine's keyed container lookup (an STL rb-tree keyed by the
+// (hostType,hostId) pair) from C++ is fragile, so we resolve the container
+// pointer by calling the engine's own FindHostBuffContainer (BuffHelper_
+// FindHostBuffContainer @ 0x6486C0, __stdcall(hostType, hostId) — operates on
+// the BuffHelper global internally, no `this` needed) through a function
+// pointer (PatternResolver "BuffFindHostContainer"), then walk the intrusive
+// list ourselves. The list link offsets are stable across the build.
+//
+// buffInst layout (offsets read by BuildBuffIconList / OnBuffmgrCallback):
+//   +0x10 buffId        (uint16)
+//   +0x12 duration      (uint32) -- total, GC "duration=%ld" in OnBuffmgrCallback
+//   +0x37 endTimestamp  (int64)  -- remaining = endTimestamp - now
+//   +0x33 boolActive    (uint32) -- only meaningful for flag 0x100000 buffs
+//   +0x3F buffDesc*      -> BuffDesc row (see below)
+//
+// BuffDesc row = g_BuffDescTable + 0xAF * buffId (engine sub_58D630). Fields:
+//   +0x02 category (uint8)  -- 1/2/5 = normal (skill) buff, 4/0 = cash/system
+//   +0x05 name     (char[], Big5)
+//   +0x79 flags    (uint32) -- 0x80000 => endTimestamp/duration are in SECONDS
+//                              (time()), otherwise MILLISECONDS (GetTickCount).
+//                              0x100000 => bool-style buff (uses boolActive, no
+//                              countdown).
+//   +0x7F iconGroup (int16) -- -1 means not rendered
+//
+// "Now" base: GetTickCount() for ms buffs, time(NULL) for sec buffs (matches
+// BuildBuffIconList's `v15=GetTickCount` / `v20=time(0)` split). remainingMs is
+// normalised to milliseconds (-1 / 0 => no countdown / expired).
+inline constexpr uintptr_t kBuffInstIdOffset       = 0x10; // uint16
+inline constexpr uintptr_t kBuffInstDurationOffset = 0x12; // uint32
+inline constexpr uintptr_t kBuffInstBoolOffset     = 0x33; // uint32
+inline constexpr uintptr_t kBuffInstEndTsOffset    = 0x37; // int64
+inline constexpr uintptr_t kBuffInstDescOffset     = 0x3F; // BuffDesc*
+inline constexpr uintptr_t kBuffContainerSentinelOffset = 0x59; // sentinel link-slot / head ptr
+inline constexpr uintptr_t kBuffNodeLinkOffset          = 0x43; // node = linkValue - 0x43
+inline constexpr size_t    kBuffMaxListWalk             = 256;  // torn-list safety cap
+
+inline constexpr uintptr_t kBuffDescCategoryOffset  = 0x02; // uint8
+inline constexpr uintptr_t kBuffDescNameOffset      = 0x05; // Big5 char[]
+inline constexpr uintptr_t kBuffDescFlagsOffset     = 0x79; // uint32
+inline constexpr uintptr_t kBuffDescIconGroupOffset = 0x7F; // int16
+inline constexpr size_t    kBuffDescStride          = 0xAF; // 175
+inline constexpr size_t    kBuffNameMaxLen          = 64;
+
+inline constexpr uint32_t  kBuffFlagSeconds  = 0x80000;  // duration in sec not ms
+inline constexpr uint32_t  kBuffFlagBool     = 0x100000; // bool buff, no countdown
+
+// g_SkillBuffMap (RVA 0x9C2640): skill->buff table, 116 entries of
+// {int skillId, int buffTableId}. We use it to answer "which skill produced
+// this buff". The pairing is skillId -> buffTableId; the buffTableId is the
+// per-skill effect row id, which DoSkillBuff resolves to a runtime buffId. In
+// this build the buffTableId equals the runtime buffId for skill buffs, so a
+// direct reverse scan (entry.buffTableId == liveBuffId) yields the skill id.
+// Returns 0 if no skill maps to this buff (server/system/cash buffs).
+inline constexpr size_t kSkillBuffMapCount = 0x74; // 116 entries
+
+// Category classification mirroring the two engine render bars
+// (RenderNormalBuffBar {1,2,5} vs RenderCashBuffBar {4,0}).
+enum class BuffKind : uint32_t
+{
+    Normal = 0, // category 1/2/5 — skill / status buffs (top bar, has countdown)
+    Cash   = 1, // category 4/0 — cash-shop / system buffs (second bar)
+};
+
+struct ActiveBuff
+{
+    uint32_t    buffId;       // buffInst+0x10
+    uint32_t    category;     // buffDesc+0x02 (raw)
+    BuffKind    kind;         // Normal vs Cash (derived from category)
+    std::string name;         // UTF-8, from buffDesc+0x05 (Big5)
+    uint32_t    duration;     // buffInst+0x12 (total)
+    int64_t     remainingMs;  // normalised remaining time in ms; -1 = no countdown
+    uint32_t    skillId;      // reverse-mapped via g_SkillBuffMap; 0 if none
+    bool        isBoolBuff;   // flag 0x100000 (toggle-style, no timer)
+    uintptr_t   instAddr;     // buffInst base (diagnostics)
+};
+
+// Returns the buffId that a given skill applies, by scanning g_SkillBuffMap.
+// 0 if the skill is not a skill-buff. Mirrors engine sub_B93040 semantics.
+uint32_t GetSkillBuffId(uint32_t skillId);
+
+// Reverse of the above: given a runtime buffId, returns the skillId that
+// produces it (0 if none / system buff). Used to annotate ActiveBuff.skillId.
+uint32_t GetBuffSourceSkillId(uint32_t buffId);
+
+// SEH-safe snapshot of the local player's active buffs. Walks BuffHelper's
+// per-host buff list via the engine's FindHostBuffContainer, reads each
+// buffInst + its BuffDesc, computes remaining time, and reverse-maps the source
+// skill. `kindFilter` < 0 returns all; 0 = Normal only; 1 = Cash only.
+// Sorted by remainingMs ascending (永久/无倒计时 buff sorted last).
+std::vector<ActiveBuff> GetActiveBuffs(int kindFilter = -1);
+
+// Convenience: active buffs of a specific host (player or creature) by id.
+// hostType 0 = player (UserList), other host types match the engine's
+// FindHostBuffContainer keying. Mainly for nearby-player/creature buff display.
+std::vector<ActiveBuff> GetHostBuffs(uint32_t hostId, int hostType = 0,
+                                     int kindFilter = -1);
+
+// ---------- Cash-item effect icons (g_pGameHUD) ----------
+//
+// The cash-buff icons the user sees are NOT all owned by BuffHelper. The
+// BuffHelper container only holds a single category-{4,0} buff (e.g.
+// premiumselling). The rest are timed "active cash item effect" icons owned by
+// the in-game HUD object g_pGameHUD (linear 0xED40F0, PatternResolver
+// "GameHUDThis"). HUD_RenderCashItemBars (sub_7C2230) draws them from a
+// std::vector at GameHUD+0x25C0 (begin ptr @ +0x25C0, end ptr @ +0x25C4),
+// 280-byte records. Record layout (from producer sub_7C5BB0 / sub_7C59E0):
+//   +0x00 typeId   (uint32) -- cash-item effect type (special value 7)
+//   +0x0C iconId   (uint32) -- HUD icon-table key (sub_A368E0 group lookup)
+//   +0x10 name     (char[], Big5) -- label text
+//   +0x114 blink   (uint8)  -- 1 = expiring (alpha-blinked)
+// count = (end - begin) / 280.
+//
+// We surface these as ActiveBuff entries with kind=Cash so queryBuffs returns
+// the full cash list. They have no buffId/duration in the BuffDesc sense, so
+// buffId=0, remainingMs=-1, and the iconId is carried in `skillId` purely as a
+// diagnostic. (A second std::map at GameHUD+0x27F4 also feeds the bar, but it is
+// an rb-tree that is fragile to walk; left out unless entries are still missing.)
+inline constexpr uintptr_t kHudCashVecBeginOffset = 0x25C0; // begin ptr
+inline constexpr uintptr_t kHudCashVecEndOffset   = 0x25C4; // end ptr
+inline constexpr size_t    kHudCashRecStride      = 280;
+inline constexpr uintptr_t kHudCashRecTypeOffset  = 0x00;  // uint32
+inline constexpr uintptr_t kHudCashRecIconOffset  = 0x0C;  // uint32
+inline constexpr uintptr_t kHudCashRecNameOffset  = 0x10;  // Big5 char[]
+inline constexpr uintptr_t kHudCashRecBlinkOffset = 0x114; // uint8 (276)
+inline constexpr size_t    kHudCashMaxRecords     = 64;    // sanity cap
+
+// SEH-safe snapshot of the HUD cash-item effect icons (vector @ GameHUD+0x25C0).
+// Returned as ActiveBuff entries (kind=Cash, buffId=0, name from rec+0x10).
+std::vector<ActiveBuff> GetCashItemIcons();
+
+// ---------- Party / 组队 (classic CMessenger party) ----------
+//
+// The party roster lives in data-section globals (registered in PatternResolver;
+// RVA = linear - 0x400000). Fully reversed off CMessenger_RecvPartyMemberList
+// (0x843DF0) and verified live against shadowsing's party (2026-06-08):
+//   g_PartyMemberCount   (RVA 0xA2872C) int — 0 = solo, max 6
+//   g_PartyMemberArray   (RVA 0xA28730) 6 × 0x3B entries
+//   g_PartySelfIndex     (RVA 0xA2896C) int — my slot, -1 = unset
+//   g_PartySelfRole      (RVA 0xA28894) int — 0=none 1=leader(idx0) 2=member
+//   g_PartyMemberStateArray (RVA 0xA28898) 6 × 7 dwords; state[0]=HP state[1]=MaxHP
+//   g_PartyListValid     (RVA 0xA28974) int
+// Member entry (stride 0x3B=59): +0x00 name char[17] (Big5, engine strncmp 0x11),
+// +0x19 int online/valid gate (>0 = slot in use), +0x31 int member userId.
+//
+// NOTE — the SELF slot in the array + state table reads back as -1/blank: the
+// engine renders the local player's own HP/name from the player object, not
+// from this roster. GetPartyMembers() therefore back-fills the self member from
+// GetLocalUserId()/GetLocalPlayerName()/GetLocalHp().
+inline constexpr size_t    kPartyMaxMembers        = 6;
+inline constexpr uintptr_t kPartyEntryStride       = 0x3B;
+inline constexpr uintptr_t kPartyEntryNameOffset   = 0x00;
+inline constexpr size_t    kPartyEntryNameMaxLen   = 17;  // engine strncmp 0x11
+inline constexpr uintptr_t kPartyEntryOnlineOffset = 0x19;
+inline constexpr uintptr_t kPartyEntryIdOffset     = 0x31;
+inline constexpr uintptr_t kPartyStateStride       = 0x1C; // 7 dwords / member
+inline constexpr uintptr_t kPartyStateHpOffset     = 0x00; // state[0]
+inline constexpr uintptr_t kPartyStateMaxHpOffset  = 0x04; // state[1]
+
+struct PartyMember
+{
+    int                     index;   // slot in the engine roster array
+    std::string             name;    // UTF-8 (from Big5)
+    uint32_t                userId;  // entry+0x31 (self back-filled)
+    bool                    isSelf;  // index == g_PartySelfIndex
+    bool                    online;  // entry+0x19 > 0
+    int32_t                 hp;      // state[0]; -1 = unknown
+    int32_t                 maxHp;   // state[1]; -1 = unknown
+    std::vector<ActiveBuff> buffs;   // GetHostBuffs(userId, isSelf?0:2)
+};
+
+struct PartySnapshot
+{
+    bool                     inParty;   // g_PartyMemberCount > 0
+    int                      role;      // g_PartySelfRole
+    int                      selfIndex; // g_PartySelfIndex
+    std::vector<PartyMember> members;
+};
+
+// SEH-safe snapshot of the local player's party. When includeBuffs is true each
+// member's `buffs` is filled via GetHostBuffs (self = hostType 0, teammates =
+// hostType 2 — the same key the engine's own party-UI buff-icon renderer uses).
+// Returns inParty=false / empty members when solo.
+PartySnapshot GetPartyMembers(bool includeBuffs = true);
 
 // ---------- MailBox::SendItemMail (proto 411524, op=1) ----------
 //

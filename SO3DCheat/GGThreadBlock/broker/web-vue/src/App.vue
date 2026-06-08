@@ -12,6 +12,9 @@
         <DeathNotifyView v-if="activeTab === 'deathnotify'" />
         <AutoReviveView v-if="activeTab === 'autorevive'" />
         <AutoDelegationView v-if="activeTab === 'autodelegation'" />
+        <BuffKeeperView v-if="activeTab === 'buffkeeper'" />
+        <SyncView v-if="activeTab === 'sync'" />
+        <OnlineWhitelistView v-if="activeTab === 'onlinewhitelist'" />
         <PaodianView v-if="activeTab === 'paodian'" />
         <ChatView v-if="activeTab === 'chat'" />
         <GmReplyView v-if="activeTab === 'gmreply'" />
@@ -32,6 +35,9 @@ import CashBagView from '@/views/CashBagView.vue'
 import DeathNotifyView from '@/views/DeathNotifyView.vue'
 import AutoReviveView from '@/views/AutoReviveView.vue'
 import AutoDelegationView from '@/views/AutoDelegationView.vue'
+import BuffKeeperView from '@/views/BuffKeeperView.vue'
+import SyncView from '@/views/SyncView.vue'
+import OnlineWhitelistView from '@/views/OnlineWhitelistView.vue'
 import PaodianView from '@/views/PaodianView.vue'
 import ChatView from '@/views/ChatView.vue'
 import GmReplyView from '@/views/GmReplyView.vue'

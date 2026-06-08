@@ -13,7 +13,7 @@
       想暂停某个角色 → 取消勾选「自动运行」并保存。
     </p>
 
-    <el-form label-width="100px" style="max-width: 720px">
+    <el-form label-width="100px" style="max-width: 980px">
       <el-form-item label="当前实例">
         <span v-if="selectedInstance">
           <strong>{{ selectedInstance.characterName || `pid=${selectedInstance.pid}` }}</strong>
@@ -41,6 +41,13 @@
                 type="warning" style="margin-left: 6px">
           step {{ state.currentStepIdx + 1 }}/{{ config.steps.length }}
         </el-tag>
+        <el-tag v-if="state?.pausedByGm" type="warning" style="margin-left: 6px">
+          GM 暂停: {{ state.nearbyGmName || '?' }}
+          <span v-if="state.nearbyGmDistance !== undefined">({{ Math.round(state.nearbyGmDistance) }})</span>
+        </el-tag>
+        <el-tag v-if="state?.pausedBySchedule" type="warning" style="margin-left: 6px">
+          时间段外暂停
+        </el-tag>
       </el-form-item>
 
       <el-form-item label="自动运行">
@@ -50,26 +57,113 @@
         <span class="sub-hint">改完点「保存配置」生效。关掉会清掉当前 pending 排程。</span>
       </el-form-item>
 
-      <el-form-item label="死亡后延迟">
+      <el-form-item label="GM 暂停">
+        <el-checkbox v-model="config.pauseOnNearbyGm">
+          检测到 GM 在旁边时暂停复活倒计时
+        </el-checkbox>
+        <span class="sub-hint">GM 名单读取“GM 自动回复”的 GM 角色名。</span>
+      </el-form-item>
+
+      <el-form-item label="默认延迟">
         <el-input-number v-model="config.delayMinMin" :min="0" :step="1" style="width: 110px" />
         <span style="margin: 0 8px">~</span>
         <el-input-number v-model="config.delayMinMax" :min="0" :step="1" style="width: 110px" />
         <span class="sub-hint">
-          分钟,范围。检测到死亡后 broker 在 [min, max] 内<strong>随机挑一个</strong>具体值
-          再排程(防止固定节奏)。两端相等 = 固定延迟;0 = 立刻。
+          分钟,未配置时间段时使用。配置时间段后,只在时间段内启用,并使用对应时间段的延迟。
           <span v-if="pendingRemainingSec > 0" style="color: var(--el-color-warning);">
             <strong>broker 已排程,剩 {{ Math.ceil(pendingRemainingSec) }}s 执行</strong>
             <el-button link type="primary" size="small" @click="cancelPending">取消排程</el-button>
           </span>
         </span>
       </el-form-item>
+
+      <el-form-item label="时间段">
+        <div class="schedule-editor">
+          <div class="schedule-hint">
+            为空 = 全天按默认延迟运行。添加后,只有启用且命中的时间段会自动复活;跨午夜时间段也支持。
+          </div>
+          <el-table :data="config.scheduleWindows" size="small" style="width: 760px">
+            <el-table-column label="开" width="58">
+              <template #default="{ row }">
+                <el-checkbox v-model="row.enabled" />
+              </template>
+            </el-table-column>
+            <el-table-column label="开始" width="130">
+              <template #default="{ row }">
+                <el-time-picker v-model="row.start" format="HH:mm" value-format="HH:mm" :clearable="false" size="small" style="width: 110px" />
+              </template>
+            </el-table-column>
+            <el-table-column label="结束" width="130">
+              <template #default="{ row }">
+                <el-time-picker v-model="row.end" format="HH:mm" value-format="HH:mm" :clearable="false" size="small" style="width: 110px" />
+              </template>
+            </el-table-column>
+            <el-table-column label="延迟分钟" min-width="240">
+              <template #default="{ row }">
+                <el-input-number v-model="row.delayMinMin" :min="0" :step="1" size="small" style="width: 95px" />
+                <span style="margin: 0 8px">~</span>
+                <el-input-number v-model="row.delayMinMax" :min="0" :step="1" size="small" style="width: 95px" />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="90">
+              <template #default="{ $index }">
+                <el-button size="small" type="danger" @click="removeScheduleWindow($index)">删</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <div class="schedule-actions">
+            <el-button size="small" @click="addScheduleWindow">+ 加时间段</el-button>
+            <el-button size="small" @click="sortScheduleWindows">按开始时间排序</el-button>
+          </div>
+        </div>
+      </el-form-item>
     </el-form>
+
+    <div class="bulk-panel">
+      <h4>批量应用到在线角色</h4>
+      <div class="bulk-row">
+        <el-select
+          v-model="bulkTargets"
+          multiple
+          filterable
+          collapse-tags
+          collapse-tags-tooltip
+          placeholder="选择要套用配置的角色"
+          style="width: 420px"
+        >
+          <el-option
+            v-for="inst in onlineNamedInstances"
+            :key="inst.characterName"
+            :label="`${inst.characterName} (pid ${inst.pid})`"
+            :value="inst.characterName"
+          />
+        </el-select>
+        <el-button size="small" @click="selectAllBulkTargets">全选在线</el-button>
+        <el-button size="small" @click="bulkTargets = []">清空</el-button>
+      </div>
+      <div class="bulk-row">
+        <el-checkbox-group v-model="bulkSections">
+          <el-checkbox label="runtime">自动运行 / GM 暂停</el-checkbox>
+          <el-checkbox label="schedule">默认延迟 / 时间段</el-checkbox>
+          <el-checkbox label="steps">脚本步骤</el-checkbox>
+        </el-checkbox-group>
+        <el-button type="primary" :loading="bulkApplying" @click="applyBulkConfig">
+          应用到选中角色
+        </el-button>
+      </div>
+      <p class="hint">
+        批量只是把当前角色的配置复制到选中的角色。某个号要特殊配置,切过去单独改再保存即可。
+      </p>
+    </div>
 
     <el-divider />
 
     <div class="run-bar">
       <el-button type="danger" size="large" :disabled="running" :loading="running" @click="runNow">
         {{ running ? '执行中...' : '立即执行脚本(不看死活)' }}
+      </el-button>
+      <el-button type="danger" plain size="large" :loading="revivingAll" @click="runAllDeadNow">
+        全部复活(HP=0)
       </el-button>
       <el-button :disabled="!running" @click="abortScript">中止</el-button>
       <span class="muted" style="margin-left: 12px">
@@ -235,8 +329,9 @@ import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useInstances } from '@/composables/useInstances'
 import { useWebSocket } from '@/composables/useWebSocket'
+import type { Instance } from '@/types'
 
-const { selectedPid, selectedInstance } = useInstances()
+const { instances, selectedPid, selectedInstance } = useInstances()
 const { onMessage } = useWebSocket()
 
 interface StepBase { delayMs: number; repeatCount?: number; repeatDelayMs?: number }
@@ -250,11 +345,21 @@ interface StepSleep extends StepBase { type: 'sleep' }
 type Step = StepReviveToTown | StepMoveTo | StepWaitInTown | StepWaitOutOfTown
           | StepSendDialogSelectRaw | StepPressHookedKey | StepSleep
 
+interface ScheduleWindow {
+  enabled: boolean
+  start: string
+  end: string
+  delayMinMin: number
+  delayMinMax: number
+}
+
 interface ReviveConfig {
   characterName: string
   autoRun: boolean
   delayMinMin: number
   delayMinMax: number
+  pauseOnNearbyGm: boolean
+  scheduleWindows: ScheduleWindow[]
   steps: Step[]
 }
 
@@ -266,6 +371,12 @@ interface BrokerState {
   currentStepIdx: number
   lastError?: string
   lastRunAt?: number
+  pausedByGm?: boolean
+  nearbyGmName?: string
+  nearbyGmDistance?: number
+  gmPauseLastTickAt?: number
+  pausedBySchedule?: boolean
+  schedulePauseLastTickAt?: number
 }
 
 interface LiveStatus {
@@ -285,6 +396,8 @@ const defaultConfig = (name: string): ReviveConfig => ({
   autoRun: false,
   delayMinMin: 5,
   delayMinMax: 5,
+  pauseOnNearbyGm: false,
+  scheduleWindows: [],
   steps: [],
 })
 function withStepDefaults<T extends Step>(step: T): T {
@@ -296,6 +409,36 @@ function withStepDefaults<T extends Step>(step: T): T {
 function normalizeSteps(steps: Step[]) {
   return steps.map((s) => withStepDefaults(s))
 }
+function normalizeClock(value: string | undefined, fallback: string): string {
+  const m = String(value || '').trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!m) return fallback
+  const h = Number(m[1])
+  const min = Number(m[2])
+  if (!Number.isInteger(h) || !Number.isInteger(min) || h < 0 || h > 23 || min < 0 || min > 59) return fallback
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+}
+function addHours(clock: string, hours: number): string {
+  const [h, m] = normalizeClock(clock, '00:00').split(':').map(Number)
+  const minutes = (h * 60 + m + hours * 60) % (24 * 60)
+  const fixed = minutes < 0 ? minutes + 24 * 60 : minutes
+  return `${String(Math.floor(fixed / 60)).padStart(2, '0')}:${String(fixed % 60).padStart(2, '0')}`
+}
+function normalizeScheduleWindows(windows: ScheduleWindow[] | undefined): ScheduleWindow[] {
+  return (windows || []).map((w) => {
+    let lo = Number(w.delayMinMin)
+    let hi = Number(w.delayMinMax)
+    if (!Number.isFinite(lo)) lo = config.value.delayMinMin
+    if (!Number.isFinite(hi)) hi = lo
+    if (hi < lo) [lo, hi] = [hi, lo]
+    return {
+      enabled: w.enabled !== false,
+      start: normalizeClock(w.start, '00:00'),
+      end: normalizeClock(w.end, '23:59'),
+      delayMinMin: Math.max(0, lo),
+      delayMinMax: Math.max(0, hi),
+    }
+  })
+}
 const defaultScript = (): Step[] => ([
   withStepDefaults({ type: 'reviveToTown', delayMs: 5000 }),
   withStepDefaults({ type: 'waitInTown', mapId: 11, timeoutMs: 5000, delayMs: 5000 }),
@@ -306,9 +449,18 @@ const defaultScript = (): Step[] => ([
 
 const config = ref<ReviveConfig>(defaultConfig(''))
 const state = ref<BrokerState | null>(null)
+const bulkTargets = ref<string[]>([])
+const bulkSections = ref<Array<'runtime' | 'schedule' | 'steps'>>(['runtime', 'schedule'])
+const bulkApplying = ref(false)
+const revivingAll = ref(false)
 
 const characterKey = computed(() =>
   selectedInstance.value?.characterName || ''
+)
+const onlineNamedInstances = computed<Instance[]>(() =>
+  [...instances.value]
+    .filter((inst) => !!inst.characterName)
+    .sort((a, b) => a.characterName.localeCompare(b.characterName) || a.pid - b.pid)
 )
 
 const running = computed(() => state.value?.phase === 'running')
@@ -342,6 +494,8 @@ const totalDurationSec = computed(() => {
 const tickNow = ref<number>(Date.now())
 const pendingRemainingSec = computed(() => {
   if (!state.value || state.value.phase !== 'pending') return 0
+  if (state.value.pausedByGm) return Math.max(0, (state.value.scheduledAt - (state.value.gmPauseLastTickAt ?? tickNow.value)) / 1000)
+  if (state.value.pausedBySchedule) return Math.max(0, (state.value.scheduledAt - (state.value.schedulePauseLastTickAt ?? tickNow.value)) / 1000)
   const rem = state.value.scheduledAt - tickNow.value
   return rem > 0 ? rem / 1000 : 0
 })
@@ -357,8 +511,9 @@ async function loadConfigFromBroker() {
   try {
     const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(characterKey.value)}`)
     if (r.ok) {
-      config.value = await r.json()
+      config.value = { ...defaultConfig(characterKey.value), ...(await r.json()) }
       config.value.steps = normalizeSteps(config.value.steps || [])
+      config.value.scheduleWindows = normalizeScheduleWindows(config.value.scheduleWindows)
     } else if (r.status === 404) {
       // broker 没有 → 检查本地 localStorage 老格式做一次性迁移
       const migrated = await migrateFromLocalStorage(characterKey.value)
@@ -401,6 +556,8 @@ async function migrateFromLocalStorage(name: string): Promise<boolean> {
       autoRun: !!parsed.autoRun,
       delayMinMin: Number.isFinite(parsed.delayMinMin) ? parsed.delayMinMin : single,
       delayMinMax: Number.isFinite(parsed.delayMinMax) ? parsed.delayMinMax : single,
+      pauseOnNearbyGm: !!parsed.pauseOnNearbyGm,
+      scheduleWindows: normalizeScheduleWindows(parsed.scheduleWindows),
       steps: Array.isArray(parsed.steps) && parsed.steps.length ? normalizeSteps(parsed.steps) : defaultScript(),
     }
     const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(name)}`, {
@@ -409,7 +566,8 @@ async function migrateFromLocalStorage(name: string): Promise<boolean> {
       body: JSON.stringify(cfg),
     })
     if (!r.ok) return false
-    config.value = await r.json()
+    config.value = { ...defaultConfig(name), ...(await r.json()) }
+    config.value.scheduleWindows = normalizeScheduleWindows(config.value.scheduleWindows)
     // 迁移成功 → 清掉本地 + 老的 deadAt key,以后只读 broker
     localStorage.removeItem(oldKey)
     localStorage.removeItem(`${oldKey}.deadAt`)
@@ -427,13 +585,16 @@ async function saveConfig() {
   }
   try {
     config.value.steps = normalizeSteps(config.value.steps)
+    config.value.scheduleWindows = normalizeScheduleWindows(config.value.scheduleWindows)
     const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(characterKey.value)}`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(config.value),
     })
     if (!r.ok) throw new Error(`HTTP ${r.status}`)
-    config.value = await r.json()
+    config.value = { ...defaultConfig(characterKey.value), ...(await r.json()) }
+    config.value.steps = normalizeSteps(config.value.steps || [])
+    config.value.scheduleWindows = normalizeScheduleWindows(config.value.scheduleWindows)
     ElMessage.success(`已保存到 broker (${characterKey.value})`)
   } catch (e: any) {
     ElMessage.error(`保存失败: ${e.message}`)
@@ -469,9 +630,122 @@ async function runNow() {
   if (!obj.ok) ElMessage.error(`无法启动: ${obj.detail || '?'}`)
 }
 
+async function runAllDeadNow() {
+  revivingAll.value = true
+  try {
+    const r = await fetch('/api/auto-revive/run-all-dead', { method: 'POST' })
+    const obj = await r.json()
+    const results = Array.isArray(obj.results) ? obj.results : []
+    const ok = results.filter((x: any) => x.ok).length
+    const skipped = results.length - ok
+    if (results.length === 0) {
+      ElMessage.info('当前没有 HP=0 的在线角色')
+    } else if (skipped > 0) {
+      ElMessage.warning(`已触发 ${ok} 个,跳过 ${skipped} 个`)
+    } else {
+      ElMessage.success(`已触发 ${ok} 个死亡角色的复活脚本`)
+    }
+  } catch (e: any) {
+    ElMessage.error(`全部复活失败: ${e.message}`)
+  } finally {
+    revivingAll.value = false
+  }
+}
+
 async function abortScript() {
   if (!characterKey.value) return
   await fetch(`/api/auto-revive/abort/${encodeURIComponent(characterKey.value)}`, { method: 'POST' })
+}
+
+function addScheduleWindow() {
+  const last = config.value.scheduleWindows[config.value.scheduleWindows.length - 1]
+  const start = last?.end || '00:00'
+  config.value.scheduleWindows.push({
+    enabled: true,
+    start,
+    end: addHours(start, 2),
+    delayMinMin: config.value.delayMinMin,
+    delayMinMax: config.value.delayMinMax,
+  })
+}
+function removeScheduleWindow(i: number) {
+  config.value.scheduleWindows.splice(i, 1)
+}
+function sortScheduleWindows() {
+  config.value.scheduleWindows = normalizeScheduleWindows(config.value.scheduleWindows)
+    .sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end))
+}
+function selectAllBulkTargets() {
+  bulkTargets.value = onlineNamedInstances.value.map((inst) => inst.characterName)
+}
+function cloneConfig<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+async function fetchConfigForName(name: string): Promise<ReviveConfig> {
+  const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(name)}`)
+  if (r.ok) {
+    const cfg = { ...defaultConfig(name), ...(await r.json()) }
+    cfg.steps = normalizeSteps(cfg.steps || [])
+    cfg.scheduleWindows = normalizeScheduleWindows(cfg.scheduleWindows)
+    return cfg
+  }
+  const cfg = defaultConfig(name)
+  cfg.steps = defaultScript()
+  return cfg
+}
+async function putConfigForName(name: string, cfg: ReviveConfig): Promise<ReviveConfig> {
+  const r = await fetch(`/api/auto-revive/configs/${encodeURIComponent(name)}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ...cfg, characterName: name }),
+  })
+  if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`)
+  const saved = { ...defaultConfig(name), ...(await r.json()) }
+  saved.steps = normalizeSteps(saved.steps || [])
+  saved.scheduleWindows = normalizeScheduleWindows(saved.scheduleWindows)
+  return saved
+}
+async function applyBulkConfig() {
+  const targets = Array.from(new Set(bulkTargets.value.filter(Boolean)))
+  if (targets.length === 0) {
+    ElMessage.warning('先选择要应用的角色')
+    return
+  }
+  if (bulkSections.value.length === 0) {
+    ElMessage.warning('至少勾选一个应用内容')
+    return
+  }
+
+  const source = cloneConfig(config.value)
+  source.steps = normalizeSteps(source.steps || [])
+  source.scheduleWindows = normalizeScheduleWindows(source.scheduleWindows)
+  bulkApplying.value = true
+  try {
+    let ok = 0
+    for (const name of targets) {
+      const target = await fetchConfigForName(name)
+      if (bulkSections.value.includes('runtime')) {
+        target.autoRun = source.autoRun
+        target.pauseOnNearbyGm = source.pauseOnNearbyGm
+      }
+      if (bulkSections.value.includes('schedule')) {
+        target.delayMinMin = source.delayMinMin
+        target.delayMinMax = source.delayMinMax
+        target.scheduleWindows = cloneConfig(source.scheduleWindows)
+      }
+      if (bulkSections.value.includes('steps')) {
+        target.steps = cloneConfig(source.steps)
+      }
+      const saved = await putConfigForName(name, target)
+      if (name === characterKey.value) config.value = saved
+      ok += 1
+    }
+    ElMessage.success(`已应用到 ${ok} 个角色`)
+  } catch (e: any) {
+    ElMessage.error(`批量应用失败: ${e.message}`)
+  } finally {
+    bulkApplying.value = false
+  }
 }
 
 // ---------- 步骤编辑 ----------
@@ -714,6 +988,37 @@ h4 { margin: 16px 0 8px; }
   display: flex;
   gap: 8px;
   margin: 10px 0;
+}
+.schedule-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.schedule-hint {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+.schedule-actions {
+  display: flex;
+  gap: 8px;
+}
+.bulk-panel {
+  max-width: 980px;
+  margin: 12px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 6px;
+  background: var(--el-fill-color-lighter);
+}
+.bulk-panel h4 {
+  margin-top: 0;
+}
+.bulk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0;
 }
 .run-log {
   max-height: 320px;

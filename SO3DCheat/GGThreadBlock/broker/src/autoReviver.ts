@@ -67,6 +67,24 @@ export interface AutoReviveCompletedEvent {
     steps: number;
 }
 
+export interface ReviveAllResult {
+    characterName: string;
+    pid: number;
+    ok: boolean;
+    detail?: string;
+}
+
+interface DelayRange {
+    delayMinMin: number;
+    delayMinMax: number;
+}
+
+export interface AutoReviveScheduleWindow extends DelayRange {
+    enabled: boolean;
+    start: string;
+    end: string;
+}
+
 export interface AutoReviveConfig {
     characterName: string;
     autoRun: boolean;
@@ -74,6 +92,8 @@ export interface AutoReviveConfig {
     // 决定 scheduledAt。两个值一样就是固定延迟。
     delayMinMin: number;
     delayMinMax: number;
+    pauseOnNearbyGm: boolean;
+    scheduleWindows: AutoReviveScheduleWindow[];
     steps: Step[];
 }
 
@@ -87,6 +107,13 @@ export interface AutoReviveState {
     currentStepIdx: number; // running 阶段第几步,0 起;非 running 时 -1
     lastError?: string;
     lastRunAt?: number;
+    pausedByGm?: boolean;
+    nearbyGmName?: string;
+    nearbyGmDistance?: number;
+    gmPauseStartedAt?: number;
+    gmPauseLastTickAt?: number;
+    pausedBySchedule?: boolean;
+    schedulePauseLastTickAt?: number;
 }
 
 const PERSIST_FILE = path.resolve(
@@ -96,6 +123,8 @@ const PERSIST_FILE = path.resolve(
 
 const STATUS_POLL_MS = 5000;     // 角色级状态轮询节奏
 const RING_BUF_LINES = 200;       // 每角色日志环形缓冲行数
+
+const GM_NEARBY_MAX_DISTANCE = 600;
 
 interface PersistedDoc {
     configs: AutoReviveConfig[];
@@ -111,16 +140,74 @@ function defaultConfig(name: string): AutoReviveConfig {
         autoRun: false,
         delayMinMin: 5,
         delayMinMax: 5,
+        pauseOnNearbyGm: false,
+        scheduleWindows: [],
         steps: [],
     };
 }
 
 // 在 [minMin, maxMin] (分钟) 区间内随机挑一个具体值,返回 ms。
-function rollDelayMs(cfg: AutoReviveConfig): number {
-    const lo = Math.max(0, Math.min(cfg.delayMinMin, cfg.delayMinMax));
-    const hi = Math.max(0, Math.max(cfg.delayMinMin, cfg.delayMinMax));
+function rollDelayMs(range: DelayRange): number {
+    const lo = Math.max(0, Math.min(range.delayMinMin, range.delayMinMax));
+    const hi = Math.max(0, Math.max(range.delayMinMin, range.delayMinMax));
     const minutes = lo + Math.random() * (hi - lo);
     return Math.round(minutes * 60_000);
+}
+
+function normalizeClock(value: any, fallback: string): string {
+    const s = String(value || "").trim();
+    const m = /^(\d{1,2}):(\d{2})$/.exec(s);
+    if (!m) return fallback;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if (!Number.isInteger(h) || !Number.isInteger(min) || h < 0 || h > 23 || min < 0 || min > 59) {
+        return fallback;
+    }
+    return `${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+}
+
+function parseClockMinutes(value: string): number | null {
+    const s = normalizeClock(value, "");
+    if (!s) return null;
+    const [h, m] = s.split(":").map(Number);
+    return h * 60 + m;
+}
+
+function isClockRangeActive(win: AutoReviveScheduleWindow, now: Date): boolean {
+    const start = parseClockMinutes(win.start);
+    const end = parseClockMinutes(win.end);
+    if (start === null || end === null || start === end) return false;
+    const cur = now.getHours() * 60 + now.getMinutes();
+    if (start < end) return cur >= start && cur < end;
+    return cur >= start || cur < end;
+}
+
+function normalizeScheduleWindow(raw: any): AutoReviveScheduleWindow | null {
+    if (!raw || typeof raw !== "object") return null;
+    const start = normalizeClock(raw.start, "00:00");
+    const end = normalizeClock(raw.end, "23:59");
+    const loRaw = Number(raw.delayMinMin);
+    const hiRaw = Number(raw.delayMinMax);
+    let lo = Number.isFinite(loRaw) ? loRaw : 5;
+    let hi = Number.isFinite(hiRaw) ? hiRaw : lo;
+    if (hi < lo) [lo, hi] = [hi, lo];
+    return {
+        enabled: raw.enabled !== false,
+        start,
+        end,
+        delayMinMin: Math.max(0, lo),
+        delayMinMax: Math.max(0, hi),
+    };
+}
+
+function rangeText(range: DelayRange): string {
+    return range.delayMinMin === range.delayMinMax
+        ? `${range.delayMinMin}min`
+        : `[${range.delayMinMin}, ${range.delayMinMax}]min`;
+}
+
+function scheduleWindowText(win: AutoReviveScheduleWindow): string {
+    return `${win.start}-${win.end}`;
 }
 
 function normalizeStep(step: any): Step | null {
@@ -143,10 +230,12 @@ export class AutoReviver extends EventEmitter {
     private logs = new Map<string, string[]>(); // 环形缓冲
     private aborts = new Map<string, boolean>();
     private timer: NodeJS.Timeout | null = null;
+    private getGmNames: () => string[];
 
-    constructor(registry: InstanceRegistry) {
+    constructor(registry: InstanceRegistry, getGmNames: () => string[] = () => []) {
         super();
         this.registry = registry;
+        this.getGmNames = getGmNames;
         this.load();
         this.start();
     }
@@ -223,6 +312,12 @@ export class AutoReviver extends EventEmitter {
             autoRun: !!c.autoRun,
             delayMinMin: Math.max(0, lo),
             delayMinMax: Math.max(0, hi),
+            pauseOnNearbyGm: !!c.pauseOnNearbyGm,
+            scheduleWindows: Array.isArray(c.scheduleWindows)
+                ? c.scheduleWindows
+                    .map(normalizeScheduleWindow)
+                    .filter((w: AutoReviveScheduleWindow | null): w is AutoReviveScheduleWindow => !!w)
+                : [],
             steps: Array.isArray(c.steps)
                 ? c.steps.map(normalizeStep).filter((s: Step | null): s is Step => !!s)
                 : [],
@@ -250,6 +345,8 @@ export class AutoReviver extends EventEmitter {
                 st.deadAt = 0;
                 st.scheduledAt = 0;
                 st.phase = "idle";
+                this.clearGmPause(st);
+                this.clearSchedulePause(st);
                 this.emit("state", name, this.snapshotState(name));
             }
         }
@@ -265,6 +362,8 @@ export class AutoReviver extends EventEmitter {
             st.deadAt = 0;
             st.scheduledAt = 0;
             st.phase = "idle";
+            this.clearGmPause(st);
+            this.clearSchedulePause(st);
         }
         if (had) this.save();
         return had;
@@ -290,6 +389,8 @@ export class AutoReviver extends EventEmitter {
         st.deadAt = 0;
         st.scheduledAt = 0;
         st.phase = "idle";
+        this.clearGmPause(st);
+        this.clearSchedulePause(st);
         this.save();
         this.emit("state", name, this.snapshotState(name));
         return true;
@@ -319,6 +420,40 @@ export class AutoReviver extends EventEmitter {
         return { ok: true };
     }
 
+    async runAllDeadNow(): Promise<{ ok: boolean; results: ReviveAllResult[] }> {
+        const results: ReviveAllResult[] = [];
+        const online = this.registry.list()
+            .filter((inst) => !!inst.characterName && inst.status.hp === 0);
+
+        for (const inst of online) {
+            const name = inst.characterName!;
+            const cfg = this.configs.get(name);
+            const st = this.ensureState(name);
+            if (!cfg) {
+                results.push({ characterName: name, pid: inst.pid, ok: false, detail: "no config" });
+                continue;
+            }
+            if (st.phase === "running") {
+                results.push({ characterName: name, pid: inst.pid, ok: false, detail: "already running" });
+                continue;
+            }
+            st.deadAt = 0;
+            st.scheduledAt = 0;
+            this.clearGmPause(st);
+            this.clearSchedulePause(st);
+            this.runScript(name, inst.pid, { ignoreReviveSafetyCheck: true, countAsAutoRevive: true }).catch((e) =>
+                console.warn(`[autoReviver] runAllDeadNow ${name} failed: ${e.message}`)
+            );
+            results.push({ characterName: name, pid: inst.pid, ok: true });
+        }
+
+        if (results.length === 0) {
+            return { ok: true, results: [] };
+        }
+        this.save();
+        return { ok: results.some((r) => r.ok), results };
+    }
+
     // ---------- 内部 ----------
     private ensureState(name: string): AutoReviveState {
         let st = this.states.get(name);
@@ -337,6 +472,60 @@ export class AutoReviver extends EventEmitter {
 
     private snapshotState(name: string): AutoReviveState {
         return { ...this.ensureState(name) };
+    }
+
+    private clearGmPause(st: AutoReviveState): void {
+        delete st.pausedByGm;
+        delete st.nearbyGmName;
+        delete st.nearbyGmDistance;
+        delete st.gmPauseStartedAt;
+        delete st.gmPauseLastTickAt;
+    }
+
+    private clearSchedulePause(st: AutoReviveState): void {
+        delete st.pausedBySchedule;
+        delete st.schedulePauseLastTickAt;
+    }
+
+    private hasScheduleWindows(cfg: AutoReviveConfig): boolean {
+        return cfg.scheduleWindows.length > 0;
+    }
+
+    private getActiveScheduleWindow(cfg: AutoReviveConfig, now: number): AutoReviveScheduleWindow | null {
+        const d = new Date(now);
+        return cfg.scheduleWindows.find((w) => w.enabled && isClockRangeActive(w, d)) ?? null;
+    }
+
+    private async findNearbyGm(pid: number): Promise<{ name: string; distance: number } | null> {
+        const names = this.getGmNames()
+            .map((s) => String(s || "").trim())
+            .filter((s) => s.length > 0);
+        if (names.length === 0) return null;
+
+        const gmSet = new Set(names);
+        try {
+            const r = await this.registry.sendCommand(
+                pid,
+                "getNearbyPlayers",
+                { maxDistance: GM_NEARBY_MAX_DISTANCE },
+                3000
+            );
+            if (!r.ok) return null;
+            const arr = typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail;
+            if (!Array.isArray(arr)) return null;
+
+            let best: { name: string; distance: number } | null = null;
+            for (const p of arr) {
+                const name = String(p?.name || "").trim();
+                if (!gmSet.has(name)) continue;
+                const distance = Number(p?.distance);
+                const item = { name, distance: Number.isFinite(distance) ? distance : 0 };
+                if (!best || item.distance < best.distance) best = item;
+            }
+            return best;
+        } catch {
+            return null;
+        }
     }
 
     private appendLog(name: string, line: string): void {
@@ -396,30 +585,65 @@ export class AutoReviver extends EventEmitter {
                     st.deadAt = 0;
                     st.scheduledAt = 0;
                     st.phase = "idle";
+                    this.clearGmPause(st);
+                    this.clearSchedulePause(st);
                     this.save();
                     this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
                 }
                 continue;
             }
 
+            const hasScheduleWindows = this.hasScheduleWindows(cfg);
+            const activeWindow = this.getActiveScheduleWindow(cfg, now);
+            if (hasScheduleWindows && !activeWindow) {
+                const wasPaused = !!st.pausedBySchedule;
+                if (st.deadAt === 0) {
+                    st.deadAt = now;
+                    st.scheduledAt = 0;
+                    st.phase = "pending";
+                    this.clearGmPause(st);
+                } else if (st.scheduledAt > 0) {
+                    const lastTick = st.schedulePauseLastTickAt || now;
+                    const delta = Math.max(0, now - lastTick);
+                    if (delta > 0) st.scheduledAt += delta;
+                }
+                st.pausedBySchedule = true;
+                st.schedulePauseLastTickAt = now;
+                if (!wasPaused) {
+                    this.appendLog(cfg.characterName, `[auto] 当前不在启用时间段 → 暂停/等待复活倒计时`);
+                }
+                this.save();
+                this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
+                continue;
+            }
+
+            if (st.pausedBySchedule) {
+                const label = activeWindow ? scheduleWindowText(activeWindow) : "默认";
+                this.appendLog(cfg.characterName, `[auto] 进入启用时间段 ${label} → 恢复复活倒计时`);
+                this.clearSchedulePause(st);
+                this.save();
+                this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
+            }
+
+            const delayRange: DelayRange = activeWindow ?? cfg;
+            const delaySource = activeWindow ? `时间段 ${scheduleWindowText(activeWindow)}` : "默认";
+
             // 死着。首次进入 pending → 记时间戳 + roll 出一个具体延迟。
             // 在 [delayMinMin, delayMinMax] 范围里随机挑(防止固定节奏被识别),
             // 然后 scheduledAt 持久化,broker 重启也不会再 roll 一次。
-            if (st.deadAt === 0) {
-                const delayMs = rollDelayMs(cfg);
-                st.deadAt = now;
+            if (st.deadAt === 0 || st.scheduledAt === 0) {
+                const delayMs = rollDelayMs(delayRange);
+                if (st.deadAt === 0) st.deadAt = now;
                 st.scheduledAt = now + delayMs;
                 st.phase = "pending";
+                this.clearGmPause(st);
+                this.clearSchedulePause(st);
                 const delayS = Math.round(delayMs / 1000);
                 if (delayMs > 0) {
-                    const rangeStr =
-                        cfg.delayMinMin === cfg.delayMinMax
-                            ? `${cfg.delayMinMin}min`
-                            : `[${cfg.delayMinMin}, ${cfg.delayMinMax}]min`;
                     this.appendLog(cfg.characterName,
-                        `[auto] 检测到死亡 → 随机延迟 ${delayS}s (范围 ${rangeStr}) 后执行`);
+                        `[auto] 检测到死亡 → ${delaySource} 随机延迟 ${delayS}s (范围 ${rangeText(delayRange)}) 后执行`);
                 } else {
-                    this.appendLog(cfg.characterName, `[auto] 检测到死亡 → 立刻执行`);
+                    this.appendLog(cfg.characterName, `[auto] 检测到死亡 → ${delaySource} 立刻执行`);
                 }
                 this.save();
                 this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
@@ -427,10 +651,42 @@ export class AutoReviver extends EventEmitter {
 
             // 到点 → run。先清 deadAt,跑完不会被立刻再次触发;真要再触发,
             // 等下一次"HP 从恢复 → 又掉到 0"的边沿。
+            if (cfg.pauseOnNearbyGm) {
+                const nearbyGm = await this.findNearbyGm(pid);
+                if (nearbyGm) {
+                    const wasPaused = !!st.pausedByGm;
+                    const lastTick = st.gmPauseLastTickAt || now;
+                    const delta = Math.max(0, now - lastTick);
+                    if (delta > 0) st.scheduledAt += delta;
+                    st.pausedByGm = true;
+                    st.nearbyGmName = nearbyGm.name;
+                    st.nearbyGmDistance = nearbyGm.distance;
+                    if (!st.gmPauseStartedAt) st.gmPauseStartedAt = now;
+                    st.gmPauseLastTickAt = now;
+                    if (!wasPaused) {
+                        this.appendLog(
+                            cfg.characterName,
+                            `[auto] GM ${nearbyGm.name} nearby (${Math.round(nearbyGm.distance)}) -> pause revive timer`
+                        );
+                    }
+                    this.save();
+                    this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
+                    continue;
+                }
+                if (st.pausedByGm) {
+                    this.appendLog(cfg.characterName, `[auto] GM left -> resume revive timer`);
+                    this.clearGmPause(st);
+                    this.save();
+                    this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
+                }
+            }
+
             if (now >= st.scheduledAt) {
                 this.appendLog(cfg.characterName, `[auto] 延迟到点 → 触发复活脚本`);
                 st.deadAt = 0;
                 st.scheduledAt = 0;
+                this.clearGmPause(st);
+                this.clearSchedulePause(st);
                 this.save();
                 this.runScript(cfg.characterName, pid, { countAsAutoRevive: true }).catch((e) =>
                     console.warn(`[autoReviver] runScript ${cfg.characterName} failed: ${e.message}`)

@@ -23,6 +23,25 @@ export interface Instance {
     lastSeen: number;
 }
 
+export interface MoneyUpdateEvent {
+    pid: number;
+    characterName?: string;
+    money: number;
+    proto?: number;
+    itemSlot?: number;
+    source?: string;
+    timestamp: number;
+}
+
+export interface DialogSelectEvent {
+    pid: number;
+    characterName?: string;
+    npc: number;
+    opt: number;
+    sub: number;
+    timestamp: number;
+}
+
 interface PendingAck {
     resolve: (v: { ok: boolean; detail?: string }) => void;
     reject: (e: Error) => void;
@@ -84,7 +103,7 @@ export class InstanceRegistry extends EventEmitter {
             return;
         }
         const type = frame.type as string;
-        if (type !== "status" && type !== "ack" && type !== "pong") {
+        if (type !== "status" && type !== "ack" && type !== "pong" && type !== "moneyUpdate") {
             console.log(`[broker] frame type=${type} pid=${frame.pid ?? state.pid}`);
         }
         switch (type) {
@@ -105,6 +124,12 @@ export class InstanceRegistry extends EventEmitter {
                 break;
             case "chat":
                 this.onChat(state, frame);
+                break;
+            case "dialogSelect":
+                this.onDialogSelect(state, frame);
+                break;
+            case "moneyUpdate":
+                this.onMoneyUpdate(state, frame);
                 break;
             case "bye":
                 console.log(`[broker] bye pid=${frame.pid}`);
@@ -180,6 +205,31 @@ export class InstanceRegistry extends EventEmitter {
         }
     }
 
+    private onMoneyUpdate(state: ConnState, f: any): void {
+        const inst = this.instances.get(state.connId);
+        if (!inst) return;
+
+        const money = typeof f.money === "number" ? f.money : Number(f.money);
+        if (!Number.isFinite(money)) return;
+
+        if (typeof f.characterName === "string" && f.characterName) {
+            inst.characterName = f.characterName;
+        }
+        inst.status.money = money;
+        inst.lastSeen = Date.now();
+
+        this.emit("moneyUpdate", {
+            pid: inst.pid,
+            characterName: inst.characterName,
+            money,
+            proto: finiteNumberOrUndefined(f.proto),
+            itemSlot: finiteNumberOrUndefined(f.itemSlot),
+            source: typeof f.source === "string" ? f.source : undefined,
+            timestamp: inst.lastSeen,
+        } satisfies MoneyUpdateEvent);
+        this.emit("change");
+    }
+
     private onAck(state: ConnState, f: any): void {
         const id = String(f.id || "");
         const p = state.pending.get(id);
@@ -192,6 +242,37 @@ export class InstanceRegistry extends EventEmitter {
         p.resolve({ ok: !!f.ok, detail: f.detail });
     }
 
+    updateStatusFromCommand(pid: number, status: any): void {
+        const connId = this.byPid.get(pid);
+        if (!connId) return;
+        const inst = this.instances.get(connId);
+        if (!inst || !status || typeof status !== "object") return;
+        if (typeof status.hp === "number") inst.status.hp = status.hp;
+        if (typeof status.money === "number") inst.status.money = status.money;
+        if (typeof status.characterName === "string" && status.characterName) inst.characterName = status.characterName;
+        inst.lastSeen = Date.now();
+        this.emit("change");
+        if (inst.characterName && typeof inst.status.money === "number") {
+            this.emit("status", inst);
+        }
+    }
+
+    private onDialogSelect(state: ConnState, f: any): void {
+        const inst = this.instances.get(state.connId);
+        const npc = finiteNumberOrUndefined(f.npc);
+        const opt = finiteNumberOrUndefined(f.opt);
+        const sub = finiteNumberOrUndefined(f.sub);
+        if (npc === undefined || opt === undefined) return;
+        this.emit("dialogSelect", {
+            pid: f.pid ?? state.pid,
+            characterName: inst?.characterName ?? (typeof f.characterName === "string" ? f.characterName : undefined),
+            npc,
+            opt,
+            sub: sub ?? 1,
+            timestamp: Date.now(),
+        } satisfies DialogSelectEvent);
+    }
+
     private onChat(state: ConnState, f: any): void {
         const inst = this.instances.get(state.connId);
         this.emit("chat", {
@@ -199,6 +280,10 @@ export class InstanceRegistry extends EventEmitter {
             characterName: inst?.characterName,
             sender: f.sender,
             message: f.message,
+            senderUserId: finiteNumberOrUndefined(f.senderUserId),
+            channelId: finiteNumberOrUndefined(f.channelId),
+            senderProfession: finiteNumberOrUndefined(f.senderProfession),
+            senderProfessionName: typeof f.senderProfessionName === "string" ? f.senderProfessionName : undefined,
             timestamp: Date.now(),
         });
     }
@@ -279,6 +364,11 @@ function parseAccountNameFromTitle(title: string): string | undefined {
     if (idx < 0) return undefined;
     const account = title.slice(idx + 1).trim();
     return account || undefined;
+}
+
+function finiteNumberOrUndefined(value: unknown): number | undefined {
+    const n = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(n) ? n : undefined;
 }
 
 function getMainWindowTitle(pid: number): Promise<string> {

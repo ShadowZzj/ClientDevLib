@@ -134,6 +134,17 @@ void PatternResolver::RegisterAll()
              "8B 45 F0 F3 0F 10 05 ?? ?? ?? ?? F3 0F 11 80 A4 01 00 00 8B 4D F0",
              0x357743, 1, 11);
 
+    // Mount/state refresh writes. These are outside CalcStatus/TraceMove and
+    // can pull +0x1A4 back down when mounting or when vehicle state is synced:
+    //   sub_A03F60: 0xA03F8E / 0xA03FB6 / 0xA03FEA
+    //   sub_A04050: 0xA04CB7
+    //   sub_A074E0: 0xA075FF
+    Register("MoveSpeedMountStateBoost",   "", 0x603F8E);
+    Register("MoveSpeedMountStateMax",     "", 0x603FB6);
+    Register("MoveSpeedMountStateDefault", "", 0x603FEA);
+    Register("MoveSpeedMountStatusSync",   "", 0x604CB7);
+    Register("MoveSpeedMountPathRefresh",  "", 0x6075FF);
+
     // CLocalUser::CalcStatus per-frame writes — single NOP each.
     //   0x745C18: F3 0F 11 88 1C 2E 00 00  movss [eax+2E1Ch], xmm1   (attackSpeed)
     //   0x745CCF: F3 0F 11 88 20 2E 00 00  movss [eax+2E20h], xmm1   (skillSpeed)
@@ -223,6 +234,53 @@ void PatternResolver::RegisterAll()
     // g_pCashItemContainer — same struct, different instance for cash bag
     Register("CashContainerPtr",    "", 0xA08160);
 
+    // ---------- Active buffs (BuffHelper) ----------
+    // BuffHelper_FindHostBuffContainer @ 0x6486C0 — __thiscall(this, hostType,
+    // hostId): ecx = &g_BuffHelper, then 2 stack args (retn 8). Returns the
+    // std::list container of active buff instances for that host. 0 => no buffs.
+    // (Disasm @ 0x6485a9 proves ecx is the live BuffHelper `this`, NOT a dead
+    // register — calling it as __stdcall makes the internal keyed lookup use a
+    // garbage `this` and always return 0.)
+    Register("BuffFindHostContainer", "", 0x2486C0);
+    // &g_BuffHelper @ 0xE09178 — the BuffHelper singleton's address (used as
+    // `this` for FindHostBuffContainer). `mov ecx, offset g_BuffHelper` at
+    // 0x7C8396 confirms this is the address itself, not a pointer to deref.
+    // RVA = 0xE09178 - 0x400000 = 0xA09178.
+    Register("BuffHelperThis",        "", 0xA09178);
+    // &g_pGameHUD @ 0xED40F0 — the in-game HUD object's address (used directly as
+    // `this`, NOT a pointer to deref; `mov ecx, offset g_pGameHUD` at 0x5DAD07
+    // confirms). It owns the cash-item icon row drawn by HUD_RenderCashItemBars
+    // (sub_7C2230): a std::vector at this+0x25C0 of 280-byte records (rec+0 type,
+    // rec+12 iconId, rec+16 Big5 name, rec+276 blink flag) holding timed cash/system
+    // effect icons. RVA = 0xED40F0 - 0x400000 = 0xAD40F0.
+    Register("GameHUDThis",           "", 0xAD40F0);
+    // g_BuffDescTable @ 0x9E355C — base of the BuffDesc array; row = base+0xAF*id.
+    // g_BuffDescCount @ 0x9E3560 — element-count ceiling (id must be < this).
+    Register("BuffDescTable",         "", 0x9E355C); // *(BuffDesc**) base ptr
+    Register("BuffDescCount",         "", 0x9E3560); // int count
+    // g_SkillBuffMap @ 0x9C2640 — 116 entries of {int skillId, int buffTableId};
+    // used to reverse-map a live buff back to the skill that applied it.
+    Register("SkillBuffMap",          "", 0x9C2640);
+
+    // ---------- Party / 组队 (classic CMessenger party roster) ----------
+    // Reversed off CMessenger_RecvPartyMemberList (0x843DF0) and verified live
+    // (shadowsing's party, 2026-06-08). RVA = linear - 0x400000. The self slot in
+    // the roster/state table is blanked; GetPartyMembers back-fills it. See the
+    // party block in entity/CLocalPlayer.h for the full layout doc.
+    Register("PartyMemberCount",      "", 0xA2872C); // int, 0 = solo, max 6
+    Register("PartyMemberArray",      "", 0xA28730); // 6 × 0x3B entries
+    Register("PartySelfIndex",        "", 0xA2896C); // int, my slot (-1 unset)
+    Register("PartySelfRole",         "", 0xA28894); // int, 0/1/2
+    Register("PartyMemberStateArray", "", 0xA28898); // 6 × 7 dwords (HP@0,MaxHP@4)
+    Register("PartyListValid",        "", 0xA28974); // int
+
+    // Combat__TryUseSkill @ 0x601CA0 — high-level "cast skill" entry the engine's
+    // own AutoHunt uses. Declared __fastcall(ctx, edx, skillId, targetId) but the
+    // ctx/edx regs are never read; all state comes from g_pLocalUser/g_pSkillManager
+    // globals. Runs the full state machine (UseSkill -> SendSkillCast -> CG_SKILL_24
+    // + CG_SKILL_22). For self-buff skills pass targetId = own userId (or 0).
+    Register("CombatTryUseSkill",      "", 0x201CA0);
+
     // ---------- Action-time movement bypass ----------
     // CLocalUser::SetAfterAction (0x7539E0) queues the "move-after-action" target
     // (writes [this+32F0/F4/F8/FC] + sets [this+2BC8]=1). It runs through 7 reject
@@ -236,6 +294,9 @@ void PatternResolver::RegisterAll()
     //   0x7539FE: jle short loc_753A22 (2B `7E 22`) — first reject gate. Overwrite
     //             5 bytes with `E9 C1 02 00 00` = jmp loc_753CC4 (success path).
     //             Skips ALL SetAfterAction rejects in one shot.
+    //   0x756331: jbe loc_7563F7 (6B `0F 86 C0 00 00 00`) — Skill__GetPreTime
+    //             gate in SendSkillCast. Force it to the immediate-send branch
+    //             so preTime skills skip the mode=3 raise-hand/start-cast path.
     //   0x756FAA: jbe short loc_756FCA (2B `76 1E`) — TraceMove stunTime gate
     //             (+0x3468). Flip `76 -> EB` so it always jumps past the reject.
     //   0x756FCD: cmp [eax+194h], 0 (5B start of OR-chain). Overwrite with
@@ -244,6 +305,7 @@ void PatternResolver::RegisterAll()
     //   0x7570FD: jbe short loc_75711D (2B `76 1E`) — TraceMove second timer gate
     //             (+0x2BCC). Flip `76 -> EB`.
     Register("ActionMoveSetAfterActionGate", "", 0x3539FE);
+    Register("ActionMoveInstantCastStartup",  "", 0x356331);
     Register("ActionMoveTraceMoveGate1",     "", 0x356FAA);
     Register("ActionMoveTraceMoveOrChain",   "", 0x356FCD);
     Register("ActionMoveTraceMoveGate2",     "", 0x3570FD);
@@ -297,6 +359,10 @@ void PatternResolver::RegisterAll()
     // init — safe to call from any thread; SEH-wrap at the caller just in case
     // the item-table pointer is torn during scene transitions.
     Register("ItemGetItemClass",   "", 0x1FCD70);
+
+    // StringTableCopy(id, dst, cap) -> localized Big5 text. The client itself
+    // displays profession text as StringTableCopy(sub_978880(prof)+0x198).
+    Register("StringTableCopy", "", 0x1BF8E0);
 
     // ---------- Hardware-fingerprint spoof ----------
     // HwFp_FillBuffer — __thiscall(this=SYSTEMTIME*, outPkt). Linear 0xBCCBF0
@@ -536,6 +602,20 @@ void PatternResolver::RegisterAll()
     // (引擎用 sub_AA2050)。Map__IsBlocked @ 0xA97080 是引擎的可达性查询入口,
     // A* 寻路、target-spec 检查全都funnel through 它。
     Register("CurMapPtr", "", 0x149E070);
+
+    // ---------- Auto-trade: local exchange-window open ----------
+    // 自动接受交易时复刻「点接受按钮」的本地动作。手动 accept 在
+    // Trade_RequestPopup (0x721080) 里先调 Trade_OpenLocalExchangeWindow(ctrl)
+    // 把请求弹窗(control 32)就地转成交易窗口,再发 412028。只发包不调它,窗口
+    // 会停在请求态直到对方放物品才被动弹出 —— 这三条用来补上本地开窗那一步。
+    //
+    // CUIManager__GetSingleton() (__cdecl) 返回 UI 管理器单例;
+    // CUIManager__GetUIContent(mgr, id) (__thiscall) 取 control(无则返回 0);
+    // Trade_OpenLocalExchangeWindow(ctrl) (__thiscall) 铺出 itembox/item 子控件。
+    // 调用链:Open(GetUIContent(GetSingleton(), 32))。RVA = linear - 0x400000。
+    Register("TradeOpenLocalWindow",  "", 0x31E040); // sub_71E040
+    Register("UIManagerGetSingleton", "", 0x5EA420); // sub_9EA420
+    Register("UIManagerGetUIContent", "", 0x5EA4D0); // sub_9EA4D0 (CUIManager::GetUIContent)
 }
 
 void PatternResolver::ScanAll()

@@ -13,7 +13,6 @@ class CheatSetting : public zzj::D3D::Setting
     virtual void Init() override;
     virtual void Render(bool &open) override;
     virtual void End() override;
-    virtual DWORD GetToggleMenuKey() override { return VK_INSERT; }
 
     const std::vector<std::shared_ptr<IModule>> &GetModules() const { return modules_; }
 

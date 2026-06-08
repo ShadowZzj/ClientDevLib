@@ -69,12 +69,17 @@ DWORD WINAPI HackThread(LPVOID lpParam)
 
     try
     {
-        zzj::D3D::D3D9Hook::Setup(setting);
+        zzj::D3D::D3D9Hook::SetupOptions menuOptions{};
+        menuOptions.windowClassName = "SO3DCheat.ExternalMenu";
+        menuOptions.windowName = "SO3DCheat";
+        zzj::D3D::D3D9Hook::Setup(setting, menuOptions);
 
         while (true)
         {
             if (GetAsyncKeyState(VK_END) & 1)
                 break;
+            if (GetAsyncKeyState(VK_INSERT) & 1)
+                zzj::D3D::D3D9Hook::ToggleOpen();
             Sleep(100);
         }
     }

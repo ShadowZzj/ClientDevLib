@@ -32,11 +32,17 @@ std::string                     s_currentName;       // UTF-8, sanitised
 std::atomic<bool>               s_ready{false};
 std::unordered_set<std::string> s_whitelist;         // UTF-8 entries
 std::atomic<int64_t>            s_pendingSaveAt{0};  // GetTickCount64() target; 0 = idle
+std::unordered_set<std::string> s_remoteWhitelist;   // UTF-8 entries, refreshed from broker sync file
+uint64_t                        s_remoteLastLoadMs = 0;
 
 constexpr const char *kLoggerName    = "ggtb";
 constexpr const char *kBootstrapName = "_bootstrap";
 constexpr const char *kConfigFile    = "config.json";
 constexpr const char *kLogFile       = "ggtb.log";
+constexpr const char *kManualWhitelistKey = "manualWhitelist";
+constexpr const char *kRemoteWhitelistFile = "online_whitelist.json";
+constexpr uint64_t    kRemoteWhitelistReloadMs = 5000;
+constexpr int64_t     kDefaultRemoteWhitelistTtlMs = 30000;
 
 // ClientDevLib's spdlog is built with the default filename_t = std::string,
 // which means basic_file_sink calls fopen() and treats paths as ACP. CJK
@@ -210,6 +216,105 @@ fs::path DllDirFromHandle(HMODULE h)
     return fs::path{buf}.parent_path();
 }
 
+fs::path GetEnvPath(const wchar_t *name)
+{
+    DWORD len = GetEnvironmentVariableW(name, nullptr, 0);
+    if (!len)
+        return {};
+    std::wstring value(len, L'\0');
+    DWORD written = GetEnvironmentVariableW(name, value.data(), len);
+    if (!written)
+        return {};
+    if (!value.empty() && value.back() == L'\0')
+        value.pop_back();
+    return fs::path{value};
+}
+
+fs::path DefaultRemoteWhitelistPath()
+{
+    fs::path overridePath = GetEnvPath(L"GGTB_ONLINE_WHITELIST_FILE");
+    if (!overridePath.empty())
+        return overridePath;
+
+    fs::path localAppData = GetEnvPath(L"LOCALAPPDATA");
+    if (!localAppData.empty())
+        return localAppData / "GGTB" / kRemoteWhitelistFile;
+
+    if (!s_dllDir.empty())
+        return s_dllDir / "GGConfig" / kRemoteWhitelistFile;
+
+    return fs::path{kRemoteWhitelistFile};
+}
+
+void LoadRemoteWhitelistLocked(bool force = false)
+{
+    uint64_t now = GetTickCount64();
+    if (!force && now - s_remoteLastLoadMs < kRemoteWhitelistReloadMs)
+        return;
+    s_remoteLastLoadMs = now;
+    s_remoteWhitelist.clear();
+
+    auto path = DefaultRemoteWhitelistPath();
+    std::error_code ec;
+    if (!fs::exists(path, ec))
+        return;
+
+    json j;
+    try
+    {
+        std::ifstream ifs(path, std::ios::binary);
+        if (!ifs.is_open())
+            return;
+        ifs >> j;
+    }
+    catch (const std::exception &e)
+    {
+        spdlog::warn("GGTB::UserConfig: remote whitelist read failed: {}", e.what());
+        return;
+    }
+
+    int64_t nowEpochMs = static_cast<int64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
+    int64_t fileTtlMs = kDefaultRemoteWhitelistTtlMs;
+    if (j.contains("ttlMs") && j["ttlMs"].is_number_integer())
+        fileTtlMs = std::max<int64_t>(1000, j["ttlMs"].get<int64_t>());
+    else if (j.contains("expireMs") && j["expireMs"].is_number_integer())
+        fileTtlMs = std::max<int64_t>(1000, j["expireMs"].get<int64_t>());
+
+    auto addIfFresh = [&](const json &entry) {
+        if (!entry.is_object())
+            return;
+        std::string name;
+        if (entry.contains("name") && entry["name"].is_string())
+            name = entry["name"].get<std::string>();
+        else if (entry.contains("characterName") && entry["characterName"].is_string())
+            name = entry["characterName"].get<std::string>();
+        if (name.empty())
+            return;
+
+        int64_t expiresAt = 0;
+        if (entry.contains("expiresAt") && entry["expiresAt"].is_number_integer())
+            expiresAt = entry["expiresAt"].get<int64_t>();
+        else if (entry.contains("lastSeen") && entry["lastSeen"].is_number_integer())
+            expiresAt = entry["lastSeen"].get<int64_t>() + fileTtlMs;
+
+        if (expiresAt > nowEpochMs)
+            s_remoteWhitelist.insert(std::move(name));
+    };
+
+    if (j.contains("characters") && j["characters"].is_array())
+    {
+        for (const auto &entry : j["characters"])
+            addIfFresh(entry);
+    }
+    else if (j.contains("whitelist") && j["whitelist"].is_array())
+    {
+        for (const auto &entry : j["whitelist"])
+            addIfFresh(entry);
+    }
+}
+
 void SwapLoggerTo(const fs::path &logPath)
 {
     std::error_code ec;
@@ -246,7 +351,7 @@ void WriteConfigJsonLocked(Setting *setting)
 
     json wl = json::array();
     for (auto &n : s_whitelist) wl.push_back(n);
-    j["whitelist"] = std::move(wl);
+    j[kManualWhitelistKey] = std::move(wl);
 
     json mods = json::object();
     for (auto &mod : setting->GetModules())
@@ -330,10 +435,10 @@ void LoadConfigJsonLocked(Setting *setting)
         return;
     }
 
-    if (j.contains("whitelist") && j["whitelist"].is_array())
+    if (j.contains(kManualWhitelistKey) && j[kManualWhitelistKey].is_array())
     {
         s_whitelist.clear();
-        for (auto &v : j["whitelist"])
+        for (auto &v : j[kManualWhitelistKey])
             if (v.is_string()) s_whitelist.insert(v.get<std::string>());
     }
 
@@ -422,7 +527,7 @@ void Tick(Setting *setting)
     LoadConfigJsonLocked(setting);
 
     s_ready.store(true);
-    spdlog::info("GGTB::UserConfig: ready (whitelist size={})", s_whitelist.size());
+    spdlog::info("GGTB::UserConfig: ready (manual whitelist size={})", s_whitelist.size());
     if (AutoLoginSignal::SignalCharacterReady())
     {
         spdlog::info("GGTB::UserConfig: signalled autologin character-ready event");
@@ -447,7 +552,10 @@ bool IsWhitelisted(const std::string &utf8name)
 {
     if (utf8name.empty()) return false;
     std::lock_guard<std::mutex> lk(s_mutex);
-    return s_whitelist.count(utf8name) > 0;
+    if (s_whitelist.count(utf8name) > 0)
+        return true;
+    LoadRemoteWhitelistLocked();
+    return s_remoteWhitelist.count(utf8name) > 0;
 }
 
 std::vector<std::string> GetWhitelist()

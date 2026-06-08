@@ -8,7 +8,8 @@ namespace GGTB
 {
 
 // Action-time movement bypass — removes the "can't move while attacking /
-// casting" lock. See CLocalPlayer.{h,cpp} for the 4-site patch rationale.
+// casting" lock and skips the preTime raise-hand branch. See
+// CLocalPlayer.{h,cpp} for the 5-site patch rationale.
 //
 // Pure on/off toggle: no slider, no per-frame re-poke (the patches are static
 // byte rewrites, not field writes). NPG can pause/resume via OnShutdown/OnResume.

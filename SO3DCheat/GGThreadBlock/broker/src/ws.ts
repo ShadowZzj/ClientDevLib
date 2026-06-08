@@ -27,6 +27,7 @@ export function attachWs(
                 hostExe: i.hostExe,
                 dllVersion: i.dllVersion,
                 money: i.status.money,
+                hp: i.status.hp,
                 lastSeen: i.lastSeen,
             })),
             moneyCharacters: moneyStats.listCharacters(),

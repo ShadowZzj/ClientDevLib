@@ -8,6 +8,8 @@
       <el-select
         v-model="selectedPid"
         placeholder="选择实例"
+        class="instance-select"
+        :class="selectedInstanceClass"
         style="width: 260px"
         :disabled="instances.length === 0"
       >
@@ -16,7 +18,11 @@
           :key="inst.pid"
           :label="instLabel(inst)"
           :value="inst.pid"
-        />
+        >
+          <span class="instance-option-label" :class="instanceLifeClass(inst)">
+            {{ instLabel(inst) }}
+          </span>
+        </el-option>
       </el-select>
       <span class="meta" v-if="selectedInstance">
         钱包: {{ fmtMoney(selectedInstance.money) }}
@@ -34,6 +40,10 @@ import type { Instance } from '@/types'
 const { connected } = useWebSocket()
 const { instances, selectedPid, selectedInstance } = useInstances()
 
+const selectedInstanceClass = computed(() =>
+  selectedInstance.value ? instanceLifeClass(selectedInstance.value) : ''
+)
+
 const sortedInstances = computed(() => {
   return [...instances.value].sort((a, b) => {
     const an = a.characterName || '~'
@@ -47,6 +57,15 @@ function instLabel(inst: Instance): string {
   return inst.characterName
     ? `${inst.characterName} (pid ${inst.pid})`
     : `(pid ${inst.pid} connecting…)`
+}
+
+function isDead(inst: Instance): boolean {
+  return inst.hp === 0
+}
+
+function instanceLifeClass(inst: Instance): string {
+  if (isDead(inst)) return 'is-dead'
+  return typeof inst.hp === 'number' && inst.hp > 0 ? 'is-alive' : 'is-unknown'
 }
 
 function fmtMoney(n: number | undefined): string {
@@ -91,5 +110,18 @@ function fmtMoney(n: number | undefined): string {
 .meta {
   font-size: 13px;
   color: var(--el-text-color-secondary);
+}
+.instance-option-label {
+  font-weight: 600;
+}
+.instance-option-label.is-dead,
+.instance-select.is-dead :deep(.el-select__selected-item),
+.instance-select.is-dead :deep(.el-input__inner) {
+  color: var(--el-color-danger);
+}
+.instance-option-label.is-alive,
+.instance-select.is-alive :deep(.el-select__selected-item),
+.instance-select.is-alive :deep(.el-input__inner) {
+  color: var(--el-color-success);
 }
 </style>

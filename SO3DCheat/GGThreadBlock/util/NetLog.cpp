@@ -58,13 +58,20 @@ namespace
 {
 using fnSendPacketPT = int(__fastcall *)(void *ecx, void *edx, void *pkt, int len);
 using fnRawRecv     = int(__fastcall *)(void *ecx, void *edx, int timeoutSec, int timeoutUsec);
+using fnWsSend      = int(WSAAPI *)(SOCKET s, const char *buf, int len, int flags);
+using fnWsRecv      = int(WSAAPI *)(SOCKET s, char *buf, int len, int flags);
 
 fnSendPacketPT g_oSendPacketPT = nullptr;
 fnRawRecv      g_oRawRecv      = nullptr;
+fnWsSend       g_oWsSend       = nullptr;
+fnWsRecv       g_oWsRecv       = nullptr;
 
 std::atomic<bool>   s_attached{false};
+std::atomic<bool>   s_wireSendAttached{false};
+std::atomic<bool>   s_wireRecvAttached{false};
 std::atomic<bool>   s_filesOpen{false};
-std::once_flag      s_openFilesOnce;
+std::mutex          s_loggerMutex;
+std::wstring        s_openNetDir;
 
 // Last time the recv hook saw a proto-521056 (GC_SKILL_CAST_RESULT) packet.
 // FireFullPower 稳健模式 reads this to gate per-cast pacing — see NetLog.h
@@ -73,13 +80,34 @@ std::once_flag      s_openFilesOnce;
 // guarantee (worker thread reads, recv hook on game's net thread writes).
 constexpr uint32_t  kProtoSkillCastResult = 521056; // 0x7F360
 constexpr uint32_t  kProtoGcPublicChat    = 511004; // 0x7CC1C
+constexpr uint32_t  kProtoShopSellMoneyUpdate = 521054; // 0x7F35E
+constexpr uint32_t  kProtoNpcDialogSelect = 411026; // 0x645D2 — CG_NPC_DIALOG_SELECT
 std::atomic<DWORD>  s_lastSkillResultMs{0};
 std::atomic<uint32_t> s_lastSkillResultId{0};
+
+// Auto-trade observers — AutoTradeModule's worker polls these (recv hook on
+// the game's net thread writes, worker reads). 两条都在交易 handler 注册表
+// Net_RegisterRecvHandlers_07D0xx(0x8a0a90)里注册,但 proto 不是统一
+// "base+subIndex":注册时 sub_875550(literalProto) 把字面 proto 映射成 slot,
+// 字面值才是线上 proto,且 base 因 handler 而异 —— 请求走 0x07CC00 段、
+// 锁定走 0x07D000 段。早先误把所有 handler 当 base=0x07D000+subIndex,导致
+// 请求被错算成 0x07D062(从不上线),真实请求 proto 是 0x07CC62(subIndex 98,
+// base 0x07CC00)。recvlog 实测:shadowpope 交易 shadowdance 时只出现一条
+// 0x07CC62 len=12 body=requesterId,与 GC_OnTradeRequest_07CC62(sub_8A33B0)
+// 静态语义一致(读 body[0]→id,忙时 412029 DECLINE,否则 state=0 弹窗,点同意
+// 发 412028)。peer-lock 的字面值恰好等于 0x07D050,故该常量无需改。
+constexpr uint32_t  kProtoGcTradeRequest  = 0x07CC62; // 511074 — 收到交易请求; body[0]=requesterEntityId
+constexpr uint32_t  kProtoGcTradePeerLock = 0x07D050; // 512080 — 对方锁定了自己那一侧
+std::atomic<DWORD>    s_lastTradeRequestMs{0};
+std::atomic<uint32_t> s_lastTradeRequesterId{0};
+std::atomic<DWORD>    s_lastTradePeerLockMs{0};
 
 // One-shot diagnostic flags so we can confirm the code path actually fired
 // without spamming the log once per packet.
 std::atomic<bool>   s_diagSendFired{false};
 std::atomic<bool>   s_diagRecvFired{false};
+std::atomic<bool>   s_diagWireSendFired{false};
+std::atomic<bool>   s_diagWireRecvFired{false};
 std::atomic<bool>   s_diagReadySeen{false};
 
 // Dedicated loggers — one text file per direction under
@@ -298,58 +326,73 @@ std::string DecodeSendPayload(uint32_t proto, const uint8_t *buf, uint32_t len)
     }
 }
 
+std::shared_ptr<spdlog::logger> MakePacketLogger(const char *loggerName,
+                                                 const fs::path &netDir,
+                                                 const wchar_t *fileName)
+{
+    auto sink = std::make_shared<WideFileSink>(
+        (netDir / fileName).wstring(), kNetLogMaxBytes, kNetLogMaxFiles);
+    if (!sink->ok())
+    {
+        spdlog::error("GGTB::NetLog: failed to open {} sink at {}",
+                      loggerName, (netDir / fileName).string());
+        return nullptr;
+    }
+
+    spdlog::drop(loggerName);
+    auto logger = std::make_shared<spdlog::logger>(loggerName, sink);
+    logger->set_pattern("%Y-%m-%d %H:%M:%S.%e | %v");
+    logger->set_level(spdlog::level::info);
+    logger->flush_on(spdlog::level::info);
+    return logger;
+}
+
 void OpenFilesIfReady()
 {
-    if (s_filesOpen.load()) return;
-    if (!GGTB::UserConfig::IsReady()) return;
+    auto netDir = GGTB::UserConfig::UserDir() / "net";
+    auto wanted = netDir.wstring();
 
-    // First time a hook sees UserConfig ready — announce it so we can tell
-    // "hook never fired" apart from "hook fired but ready was still false".
-    if (!s_diagReadySeen.exchange(true))
-        spdlog::info("GGTB::NetLog: UserConfig is ready, attempting to open log files");
+    {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
+        if (s_filesOpen.load() && s_openNetDir == wanted)
+            return;
 
-    std::call_once(s_openFilesOnce, []() {
-        auto userDir = GGTB::UserConfig::UserDir();
-        auto netDir  = userDir / "net";
         std::error_code ec;
         fs::create_directories(netDir, ec);
         if (ec)
+        {
             spdlog::error("GGTB::NetLog: create_directories({}) failed: {}",
                           netDir.string(), ec.message());
+            return;
+        }
 
-        auto makeLogger = [&](const char *loggerName, const wchar_t *fileName)
-            -> std::shared_ptr<spdlog::logger> {
-            auto sink = std::make_shared<WideFileSink>(
-                (netDir / fileName).wstring(), kNetLogMaxBytes, kNetLogMaxFiles);
-            if (!sink->ok())
-            {
-                spdlog::error("GGTB::NetLog: failed to open {} sink at {}",
-                              loggerName, (netDir / fileName).string());
-                return nullptr;
-            }
-            // "%Y-%m-%d %H:%M:%S.%e | %v" — timestamp + our raw message. Our
-            // HookXxx code is what emits the "[SEND] 1.2.3.4:21002 len=24 hex: ..."
-            // string via %v, so formatting stays in one place (the hook) while
-            // spdlog handles the timestamp and flushing.
-            spdlog::drop(loggerName); // in case of reload
-            auto logger = std::make_shared<spdlog::logger>(loggerName, sink);
-            logger->set_pattern("%Y-%m-%d %H:%M:%S.%e | %v");
-            logger->set_level(spdlog::level::info);
-            logger->flush_on(spdlog::level::info);
-            return logger;
-        };
+        if (s_sendLogger) { s_sendLogger->flush(); s_sendLogger.reset(); }
+        if (s_recvLogger) { s_recvLogger->flush(); s_recvLogger.reset(); }
+        spdlog::drop("ggtb_net_send");
+        spdlog::drop("ggtb_net_recv");
 
-        s_sendLogger = makeLogger("ggtb_net_send", L"sendlog");
-        s_recvLogger = makeLogger("ggtb_net_recv", L"recvlog");
-
-        if (!s_sendLogger || !s_recvLogger)
+        auto sendLogger = MakePacketLogger("ggtb_net_send", netDir, L"sendlog");
+        auto recvLogger = MakePacketLogger("ggtb_net_recv", netDir, L"recvlog");
+        if (!sendLogger || !recvLogger)
+        {
+            s_sendLogger.reset();
+            s_recvLogger.reset();
+            s_filesOpen.store(false);
             spdlog::error("GGTB::NetLog: one or both net loggers failed to open under {}",
                           netDir.string());
-        else
-            spdlog::info("GGTB::NetLog: send/recv logs open at {}", netDir.string());
+            return;
+        }
 
+        s_sendLogger = std::move(sendLogger);
+        s_recvLogger = std::move(recvLogger);
+        s_openNetDir = std::move(wanted);
         s_filesOpen.store(true);
-    });
+        spdlog::info("GGTB::NetLog: send/recv logs open at {}", netDir.string());
+    }
+
+    if (GGTB::UserConfig::IsReady() && !s_diagReadySeen.exchange(true))
+        spdlog::info("GGTB::NetLog: UserConfig is ready, switched net logs to {}",
+                     netDir.string());
 }
 
 void WriteLine(spdlog::logger *logger, const char *dirTag, PeerAddr peer,
@@ -421,6 +464,61 @@ void WriteSendLine(spdlog::logger *logger, PeerAddr peer,
     if (heapBuf) std::free(heapBuf);
 }
 
+void WriteRecvLineWithCurrentLogger(PeerAddr peer, const void *payload, uint32_t len)
+{
+    OpenFilesIfReady();
+    std::shared_ptr<spdlog::logger> logger;
+    {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
+        logger = s_recvLogger;
+    }
+    if (s_filesOpen.load() && logger)
+        WriteLine(logger.get(), "RECV", peer, payload, len);
+}
+
+void WriteWireSendLine(SOCKET s, const void *payload, uint32_t len)
+{
+    OpenFilesIfReady();
+    std::shared_ptr<spdlog::logger> logger;
+    {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
+        logger = s_sendLogger;
+    }
+    if (s_filesOpen.load() && logger)
+        WriteLine(logger.get(), "WIRE_SEND", LookupPeer(s), payload, len);
+}
+
+void WriteWireRecvLine(SOCKET s, const void *payload, uint32_t len)
+{
+    OpenFilesIfReady();
+    std::shared_ptr<spdlog::logger> logger;
+    {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
+        logger = s_recvLogger;
+    }
+    if (s_filesOpen.load() && logger)
+        WriteLine(logger.get(), "WIRE_RECV", LookupPeer(s), payload, len);
+}
+
+// 主角色发出 CG_NPC_DIALOG_SELECT (411026) 时,把 npc/opt/sub 推给 broker,
+// 让「同步」功能能把同一个对话动作 fan-out 给副角色。body 三个 DWORD:
+//   +8 dialogOptionIndex, +12 npcInteractTargetId, +16 subAction
+// 这里只读 POD(SafeReadDwordAt 各自 SEH),JSON 构造放在 __try 之外(C2712)。
+static void EmitDialogSelectFrame(uint32_t npc, uint32_t opt, uint32_t sub)
+{
+    nlohmann::json frame = {
+        {"type", "dialogSelect"},
+        {"pid", GetCurrentProcessId()},
+        {"npc", npc},
+        {"opt", opt},
+        {"sub", sub},
+    };
+    const std::string name = GGTB::UserConfig::CurrentName();
+    if (!name.empty())
+        frame["characterName"] = name;
+    GGTB::RemoteControl::EmitFrame(frame);
+}
+
 int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
 {
     if (!s_diagSendFired.exchange(true))
@@ -432,7 +530,12 @@ int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
     // the body in place via memmove(Src+8, Src, Size). pkt is
     // {u32 totalLen, u32 protocolId, body...}, plaintext at this point.
     OpenFilesIfReady();
-    if (s_filesOpen.load() && s_sendLogger && pkt && len > 0)
+    std::shared_ptr<spdlog::logger> logger;
+    {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
+        logger = s_sendLogger;
+    }
+    if (s_filesOpen.load() && logger && pkt && len > 0)
     {
         uint32_t hdrLen = 0;
         SafeReadDwordAt(pkt, hdrLen);
@@ -447,12 +550,52 @@ int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
         SafeReadDwordAt(static_cast<uint8_t *>(ecx) + 0x10, sockFd);
         PeerAddr peer = LookupPeer(static_cast<SOCKET>(sockFd));
 
-        WriteSendLine(s_sendLogger.get(), peer, pkt, cap);
+        WriteSendLine(logger.get(), peer, pkt, cap);
+    }
+
+    // 同步功能:不依赖日志文件,只要连着 broker,主角色每发一次 411026 就上报。
+    // body 三个 DWORD:opt@+8, npc@+12, sub@+16。各自 SEH 读,POD only。
+    if (pkt && len >= 20)
+    {
+        uint32_t proto = 0;
+        SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 4, proto);
+        if (proto == kProtoNpcDialogSelect)
+        {
+            uint32_t opt = 0, npc = 0, sub = 0;
+            SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 8, opt);
+            SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 12, npc);
+            SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 16, sub);
+            EmitDialogSelectFrame(npc, opt, sub);
+        }
     }
     return g_oSendPacketPT(ecx, edx, pkt, len);
 }
 
+int WSAAPI HookWsSend(SOCKET s, const char *buf, int len, int flags)
+{
+    if (!s_diagWireSendFired.exchange(true))
+        spdlog::info("GGTB::NetLog: HookWsSend first hit (socket={} buf={} len={} flags={})",
+                     static_cast<uintptr_t>(s), static_cast<const void *>(buf), len, flags);
+
+    if (buf && len > 0)
+        WriteWireSendLine(s, buf, static_cast<uint32_t>(len));
+    return g_oWsSend(s, buf, len, flags);
+}
+
+int WSAAPI HookWsRecv(SOCKET s, char *buf, int len, int flags)
+{
+    if (!s_diagWireRecvFired.exchange(true))
+        spdlog::info("GGTB::NetLog: HookWsRecv first hit (socket={} buf={} len={} flags={})",
+                     static_cast<uintptr_t>(s), static_cast<void *>(buf), len, flags);
+
+    int ret = g_oWsRecv(s, buf, len, flags);
+    if (ret > 0 && buf)
+        WriteWireRecvLine(s, buf, static_cast<uint32_t>(ret));
+    return ret;
+}
+
 struct ChatHitPod { uint32_t bodyOffset; uint32_t bodyLen; };
+struct MoneyUpdatePod { uint32_t proto; uint32_t itemSlot; uint64_t money; };
 
 // Big5 (CP950) → UTF-8。游戏内字符串都是 Big5 raw bytes;转完才能塞 JSON。
 // 失败 (空串或转换失败) 退回原始字节,显示乱码也比丢消息好。
@@ -499,7 +642,9 @@ static void EmitChatFrames(uintptr_t baseAddr, const ChatHitPod *hits, int count
         if (effLen == 0) continue;
 
         std::string msgUtf8 = Big5ToUtf8Local(msgRaw, effLen);
-        std::string sender  = GGTB::LookupAroundPlayerNameById(senderUserId);
+        GGTB::NearbyPlayer senderInfo;
+        bool haveSenderInfo = GGTB::LookupAroundPlayerById(senderUserId, senderInfo);
+        std::string sender  = haveSenderInfo ? senderInfo.name : std::string{};
         if (sender.empty())
             sender = "User#" + std::to_string(senderUserId);
 
@@ -511,6 +656,33 @@ static void EmitChatFrames(uintptr_t baseAddr, const ChatHitPod *hits, int count
             {"channelId", channelId},
             {"message", msgUtf8},
         };
+        if (haveSenderInfo)
+        {
+            frame["senderProfession"] = senderInfo.profession;
+            frame["senderProfessionName"] = senderInfo.professionName;
+        }
+        GGTB::RemoteControl::EmitFrame(frame);
+    }
+}
+
+static void EmitMoneyUpdateFrames(const MoneyUpdatePod *hits, int count)
+{
+    for (int i = 0; i < count; ++i)
+    {
+        const uint64_t money = hits[i].money;
+        if (money == 0 || money > 100000000000ull) continue;
+
+        nlohmann::json frame = {
+            {"type", "moneyUpdate"},
+            {"pid", GetCurrentProcessId()},
+            {"money", money},
+            {"proto", hits[i].proto},
+            {"itemSlot", hits[i].itemSlot},
+            {"source", "recv-shop-sell"},
+        };
+        const std::string name = GGTB::UserConfig::CurrentName();
+        if (!name.empty())
+            frame["characterName"] = name;
         GGTB::RemoteControl::EmitFrame(frame);
     }
 }
@@ -558,24 +730,29 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
             // game pumps two recvs back-to-back on a different thread (rare).
             // Sub_pkt header layout is consistently {u32 totalLen, u32 proto, body...}.
             //
-            // Chat-packet capture: store offsets only (POD) inside __try,
-            // build std::string + emit JSON in EmitChatFrames (MSVC C2712:
-            // function with __try can't contain unwindable locals).
+            // Chat/money capture: store POD only inside __try, build std::string
+            // + JSON after the SEH block (MSVC C2712: __try can't share a
+            // function with unwindable locals).
             ChatHitPod chatHits[8] = {};
             int        chatHitCount = 0;
+            MoneyUpdatePod moneyHits[8] = {};
+            int            moneyHitCount = 0;
             __try
             {
-                const uint8_t *base  = reinterpret_cast<const uint8_t *>(bufAddr + oldFill);
+                const uint8_t *base  = reinterpret_cast<const uint8_t *>(bufAddr);
                 const uint8_t *chunk = base;
-                uint32_t       remaining = bytes;
-                while (remaining >= 12)  // header(8) + skillId(4) min
+                uint32_t       remaining = newFill;
+                uint32_t       frameOffset = 0;
+                while (remaining >= 8)
                 {
                     uint32_t pktLen = 0, proto = 0;
                     std::memcpy(&pktLen, chunk, 4);
                     std::memcpy(&proto,  chunk + 4, 4);
                     if (pktLen < 8 || pktLen > remaining) break;
 
-                    if (proto == kProtoSkillCastResult)
+                    const bool newlyCompleted = frameOffset + pktLen > oldFill;
+
+                    if (newlyCompleted && proto == kProtoSkillCastResult && pktLen >= 12)
                     {
                         uint32_t skillId = 0;
                         if (pktLen >= 12)
@@ -584,7 +761,23 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                         s_lastSkillResultMs.store(GetTickCount(), std::memory_order_release);
                     }
 
-                    if (proto == kProtoGcPublicChat && pktLen > 8 &&
+                    // 收到交易请求:body[0] = 发起方 entity id,AutoTrade 回 412028 同意。
+                    if (newlyCompleted && proto == kProtoGcTradeRequest && pktLen >= 12)
+                    {
+                        uint32_t requesterId = 0;
+                        std::memcpy(&requesterId, chunk + 8, 4);
+                        s_lastTradeRequesterId.store(requesterId, std::memory_order_relaxed);
+                        s_lastTradeRequestMs.store(GetTickCount(), std::memory_order_release);
+                    }
+
+                    // 对方锁定了交易:AutoTrade 据此发 412033 锁定 + 412035 确认。
+                    if (newlyCompleted && proto == kProtoGcTradePeerLock)
+                    {
+                        s_lastTradePeerLockMs.store(GetTickCount(), std::memory_order_release);
+                    }
+
+                    if (newlyCompleted &&
+                        proto == kProtoGcPublicChat && pktLen > 8 &&
                         chatHitCount < static_cast<int>(_countof(chatHits)))
                     {
                         chatHits[chatHitCount].bodyOffset =
@@ -592,21 +785,46 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                         chatHits[chatHitCount].bodyLen = pktLen - 8;
                         ++chatHitCount;
                     }
+
+                    // 521054 / 0x7F35E is the shop sell result money-sync packet.
+                    // Observed layout from recvlog:
+                    //   u32 len=0x28, u32 proto=0x7F35E, u32 itemSlot,
+                    //   u32 zero, u32 zero, u32 zero, u32 zero,
+                    //   u64 currentMoney, u32 zero
+                    // The sale gain is the positive delta between consecutive
+                    // currentMoney values, computed in broker where character
+                    // attribution and persistence already live.
+                    if (newlyCompleted &&
+                        proto == kProtoShopSellMoneyUpdate &&
+                        pktLen >= 36 &&
+                        moneyHitCount < static_cast<int>(_countof(moneyHits)))
+                    {
+                        uint32_t itemSlot = 0;
+                        uint64_t money = 0;
+                        std::memcpy(&itemSlot, chunk + 8, 4);
+                        std::memcpy(&money, chunk + 28, 8);
+                        moneyHits[moneyHitCount].proto = proto;
+                        moneyHits[moneyHitCount].itemSlot = itemSlot;
+                        moneyHits[moneyHitCount].money = money;
+                        ++moneyHitCount;
+                    }
+                    frameOffset += pktLen;
                     chunk     += pktLen;
                     remaining -= pktLen;
                 }
             }
-            __except (EXCEPTION_EXECUTE_HANDLER) { chatHitCount = 0; }
+            __except (EXCEPTION_EXECUTE_HANDLER) {
+                chatHitCount = 0;
+                moneyHitCount = 0;
+            }
 
             if (chatHitCount > 0)
-                EmitChatFrames(bufAddr + oldFill, chatHits, chatHitCount);
+                EmitChatFrames(bufAddr, chatHits, chatHitCount);
+            if (moneyHitCount > 0)
+                EmitMoneyUpdateFrames(moneyHits, moneyHitCount);
 
-            OpenFilesIfReady();
-            if (s_filesOpen.load() && s_recvLogger)
-            {
-                WriteLine(s_recvLogger.get(), "RECV", peer,
-                          reinterpret_cast<void *>(bufAddr + oldFill), bytes);
-            }
+            WriteRecvLineWithCurrentLogger(
+                peer, reinterpret_cast<void *>(bufAddr + oldFill), bytes);
         }
     }
 
@@ -631,6 +849,11 @@ void AttachNetHooks()
 
     uintptr_t addrSend = GGTB::PatternResolver::Get("NetSendPacketPlaintext");
     uintptr_t addrRecv = GGTB::PatternResolver::Get("NetRawRecv");
+    HMODULE ws2 = GetModuleHandleA("ws2_32.dll");
+    if (!ws2)
+        ws2 = LoadLibraryA("ws2_32.dll");
+    auto addrWsSend = reinterpret_cast<fnWsSend>(ws2 ? GetProcAddress(ws2, "send") : nullptr);
+    auto addrWsRecv = reinterpret_cast<fnWsRecv>(ws2 ? GetProcAddress(ws2, "recv") : nullptr);
     if (!addrSend || !addrRecv)
     {
         spdlog::error("GGTB::NetLog: missing pattern addresses (send={:x} recv={:x})",
@@ -643,24 +866,40 @@ void AttachNetHooks()
 
     g_oSendPacketPT = reinterpret_cast<fnSendPacketPT>(addrSend);
     g_oRawRecv      = reinterpret_cast<fnRawRecv>(addrRecv);
+    g_oWsSend       = addrWsSend;
+    g_oWsRecv       = addrWsRecv;
 
     DetourTransactionBegin();
     DetourUpdateThread(GetCurrentThread());
     LONG eSend = DetourAttach(reinterpret_cast<PVOID *>(&g_oSendPacketPT), HookSendPacketPT);
     LONG eRecv = DetourAttach(reinterpret_cast<PVOID *>(&g_oRawRecv),      HookRawRecv);
+    LONG eWireSend = g_oWsSend ? DetourAttach(reinterpret_cast<PVOID *>(&g_oWsSend), HookWsSend)
+                               : ERROR_PROC_NOT_FOUND;
+    LONG eWireRecv = g_oWsRecv ? DetourAttach(reinterpret_cast<PVOID *>(&g_oWsRecv), HookWsRecv)
+                               : ERROR_PROC_NOT_FOUND;
     LONG err   = DetourTransactionCommit();
     if (err != NO_ERROR || eSend != NO_ERROR || eRecv != NO_ERROR)
     {
-        spdlog::error("GGTB::NetLog: stage-2 Detour failed: commit={} attachSend={} attachRecv={}",
-                      err, eSend, eRecv);
+        spdlog::error("GGTB::NetLog: stage-2 Detour failed: commit={} attachSend={} attachRecv={} attachWireSend={} attachWireRecv={}",
+                      err, eSend, eRecv, eWireSend, eWireRecv);
         return;
+    }
+    s_wireSendAttached.store(err == NO_ERROR && eWireSend == NO_ERROR);
+    s_wireRecvAttached.store(err == NO_ERROR && eWireRecv == NO_ERROR);
+    if (!s_wireSendAttached.load() || !s_wireRecvAttached.load())
+    {
+        spdlog::warn("GGTB::NetLog: wire ws2_32 hooks not fully attached (send={} recv={})",
+                     eWireSend, eWireRecv);
     }
 
     spdlog::info("GGTB::NetLog: stage-2 post-attach send[{:x}]={} recv[{:x}]={} (expect E9)",
                  addrSend, DumpBytes(addrSend), addrRecv, DumpBytes(addrRecv));
 
     s_attached.store(true);
-    spdlog::info("GGTB::NetLog: hooks attached (send={:x}, recv={:x})", addrSend, addrRecv);
+    spdlog::info("GGTB::NetLog: hooks attached (send={:x}, recv={:x}, wsSend={}, wsRecv={})",
+                 addrSend, addrRecv,
+                 g_oWsSend ? fmt::format("{}", reinterpret_cast<void *>(g_oWsSend)) : std::string("null"),
+                 g_oWsRecv ? fmt::format("{}", reinterpret_cast<void *>(g_oWsRecv)) : std::string("null"));
 }
 } // anonymous
 
@@ -679,10 +918,12 @@ void Install()
 void Uninstall()
 {
     auto closeLoggers = []() {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
         if (s_sendLogger) { s_sendLogger->flush(); s_sendLogger.reset(); }
         if (s_recvLogger) { s_recvLogger->flush(); s_recvLogger.reset(); }
         spdlog::drop("ggtb_net_send");
         spdlog::drop("ggtb_net_recv");
+        s_openNetDir.clear();
         s_filesOpen.store(false);
     };
 
@@ -696,8 +937,14 @@ void Uninstall()
     DetourUpdateThread(GetCurrentThread());
     DetourDetach(reinterpret_cast<PVOID *>(&g_oSendPacketPT), HookSendPacketPT);
     DetourDetach(reinterpret_cast<PVOID *>(&g_oRawRecv),      HookRawRecv);
+    if (s_wireSendAttached.load())
+        DetourDetach(reinterpret_cast<PVOID *>(&g_oWsSend), HookWsSend);
+    if (s_wireRecvAttached.load())
+        DetourDetach(reinterpret_cast<PVOID *>(&g_oWsRecv), HookWsRecv);
     DetourTransactionCommit();
     s_attached.store(false);
+    s_wireSendAttached.store(false);
+    s_wireRecvAttached.store(false);
 
     // Close logs AFTER detach — otherwise a still-running hooked call could
     // race with logger shutdown.
@@ -712,6 +959,18 @@ DWORD GetLastSkillResultTickMs(uint32_t *outSkillId)
     if (outSkillId)
         *outSkillId = s_lastSkillResultId.load(std::memory_order_relaxed);
     return s_lastSkillResultMs.load(std::memory_order_acquire);
+}
+
+DWORD GetLastTradeRequestTickMs(uint32_t *outRequesterId)
+{
+    if (outRequesterId)
+        *outRequesterId = s_lastTradeRequesterId.load(std::memory_order_relaxed);
+    return s_lastTradeRequestMs.load(std::memory_order_acquire);
+}
+
+DWORD GetLastTradePeerLockTickMs()
+{
+    return s_lastTradePeerLockMs.load(std::memory_order_acquire);
 }
 
 } // namespace GGTB::NetLog

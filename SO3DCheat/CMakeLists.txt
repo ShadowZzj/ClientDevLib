@@ -106,6 +106,8 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/util/RemoteControl.cpp
     GGThreadBlock/util/InputInjector.h
     GGThreadBlock/util/InputInjector.cpp
+    GGThreadBlock/util/LoginBridge.h
+    GGThreadBlock/util/LoginBridge.cpp
     GGThreadBlock/modules/StatusModule.h
     GGThreadBlock/modules/MoveSpeedModule.h
     GGThreadBlock/modules/AttackSpeedModule.h
@@ -130,6 +132,41 @@ target_include_directories(GGThreadBlock PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/GGThreadBlock)
 target_link_options(GGThreadBlock PRIVATE "/SAFESEH:NO")
 
+add_library(GGThreadBlockLoginBridgeProbe SHARED
+    GGThreadBlock/LoginBridgeProbeDll.cpp
+    GGThreadBlock/util/LoginBridge.h
+    GGThreadBlock/util/LoginBridge.cpp)
+target_link_libraries(GGThreadBlockLoginBridgeProbe ClientDevLib ${WINDOWS_UTIL_LIB_FILES})
+target_include_directories(GGThreadBlockLoginBridgeProbe PRIVATE
+    ${WINDOWS_UTIL_INCLUDE_DIRS}
+    ${PRO_SUP}/General/ThirdParty
+    ${CMAKE_CURRENT_LIST_DIR}/GGThreadBlock)
+target_link_options(GGThreadBlockLoginBridgeProbe PRIVATE "/SAFESEH:NO")
+
+add_library(GGThreadBlockLoginBridgeProbeRawRecv SHARED
+    GGThreadBlock/LoginBridgeProbeDll.cpp
+    GGThreadBlock/util/LoginBridge.h
+    GGThreadBlock/util/LoginBridge.cpp)
+target_link_libraries(GGThreadBlockLoginBridgeProbeRawRecv ClientDevLib ${WINDOWS_UTIL_LIB_FILES})
+target_include_directories(GGThreadBlockLoginBridgeProbeRawRecv PRIVATE
+    ${WINDOWS_UTIL_INCLUDE_DIRS}
+    ${PRO_SUP}/General/ThirdParty
+    ${CMAKE_CURRENT_LIST_DIR}/GGThreadBlock)
+target_link_options(GGThreadBlockLoginBridgeProbeRawRecv PRIVATE "/SAFESEH:NO")
+
+add_library(GGThreadBlockLoginBridgeProbeNativeConnect SHARED
+    GGThreadBlock/LoginBridgeProbeDll.cpp
+    GGThreadBlock/util/LoginBridge.h
+    GGThreadBlock/util/LoginBridge.cpp)
+target_link_libraries(GGThreadBlockLoginBridgeProbeNativeConnect ClientDevLib ${WINDOWS_UTIL_LIB_FILES})
+target_include_directories(GGThreadBlockLoginBridgeProbeNativeConnect PRIVATE
+    ${WINDOWS_UTIL_INCLUDE_DIRS}
+    ${PRO_SUP}/General/ThirdParty
+    ${CMAKE_CURRENT_LIST_DIR}/GGThreadBlock)
+target_compile_definitions(GGThreadBlockLoginBridgeProbeNativeConnect PRIVATE
+    GGTB_LOGIN_BRIDGE_PIPE_PREFIX="GGTB_LOGIN_BRIDGE_NATIVE_")
+target_link_options(GGThreadBlockLoginBridgeProbeNativeConnect PRIVATE "/SAFESEH:NO")
+
 add_executable(GGThreadBlockStarter
     GGThreadBlock/Starter.cpp)
 target_link_libraries(GGThreadBlockStarter ClientDevLib ${WINDOWS_UTIL_LIB_FILES})
@@ -139,7 +176,7 @@ target_include_directories(GGThreadBlockStarter PRIVATE
 target_link_options(GGThreadBlockStarter PRIVATE "/SAFESEH:NO")
 
 set_property(
-  TARGET ClientDevLib ${PROJECT_NAME} GGThreadBlock GGThreadBlockStarter
+  TARGET ClientDevLib ${PROJECT_NAME} GGThreadBlock GGThreadBlockLoginBridgeProbe GGThreadBlockLoginBridgeProbeRawRecv GGThreadBlockLoginBridgeProbeNativeConnect GGThreadBlockStarter
   PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 ClientDevLibFinalize()

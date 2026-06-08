@@ -22,12 +22,19 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
     std::shared_ptr<zzj::D3D::Setting> setting = std::make_shared<GameSetting>();
     try
     {
-        zzj::D3D::D3D9Hook::Setup(setting);
+        zzj::D3D::D3D9Hook::SetupOptions menuOptions{};
+        menuOptions.windowClassName = "SO3DFullCheat.ExternalMenu";
+        menuOptions.windowName = "SO3D Full Cheat";
+        zzj::D3D::D3D9Hook::Setup(setting, menuOptions);
         while (true)
         {
             if (GetAsyncKeyState(VK_END) & 1)
             {
                 break;
+            }
+            if (GetAsyncKeyState(VK_INSERT) & 1)
+            {
+                zzj::D3D::D3D9Hook::ToggleOpen();
             }
             Sleep(100);
         }

@@ -24,11 +24,6 @@ class Setting
         ImGui::Button("Demo");
         ImGui::End();
     }
-    virtual DWORD GetToggleMenuKey()
-    {
-        return VK_OEM_4; // '['
-    }
-
     virtual void End()
     {
         return;

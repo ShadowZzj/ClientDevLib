@@ -9,6 +9,9 @@ import { GmReplier } from "./gmReplier";
 import { PaodianMonitor } from "./paodianMonitor";
 import { MoneyStats } from "./moneyStats";
 import { AutoReviveStats } from "./autoReviveStats";
+import { OnlineWhitelistSync } from "./onlineWhitelistSync";
+import { BuffKeeper } from "./buffKeeper";
+import { SyncManager } from "./syncManager";
 
 export function createHttpApp(
     registry: InstanceRegistry,
@@ -18,7 +21,10 @@ export function createHttpApp(
     gmReplier: GmReplier,
     paodianMonitor: PaodianMonitor,
     moneyStats: MoneyStats,
-    autoReviveStats: AutoReviveStats
+    autoReviveStats: AutoReviveStats,
+    onlineWhitelistSync: OnlineWhitelistSync,
+    buffKeeper: BuffKeeper,
+    syncManager: SyncManager
 ) {
     const app = express();
     app.use(express.json());
@@ -46,9 +52,56 @@ export function createHttpApp(
         if (!action) return res.status(400).json({ error: "missing action" });
         try {
             const r = await registry.sendCommand(pid, action, args || {}, 5000);
+            if (action === "getStatus" && r.ok) {
+                const detail = typeof r.detail === "string" ? JSON.parse(r.detail || "{}") : r.detail;
+                registry.updateStatusFromCommand(pid, detail);
+            }
             return res.json(r);
         } catch (e: any) {
             return res.status(502).json({ ok: false, error: e.message });
+        }
+    });
+
+    app.post("/api/level-up/:pid", async (req: Request, res: Response) => {
+        const pid = Number(req.params.pid);
+        if (!pid) return res.status(400).json({ ok: false, error: "bad pid" });
+
+        const rawPayload = req.body?.payload ?? 412016;
+        const payload = Number(rawPayload);
+        if (!Number.isInteger(payload)) {
+            return res.status(400).json({ ok: false, error: "payload must be an integer" });
+        }
+
+        try {
+            const r = await registry.sendCommand(pid, "requestLevelUp", { payload }, 5000);
+            return res.json({ ...r, payload });
+        } catch (e: any) {
+            return res.status(502).json({ ok: false, error: e.message });
+        }
+    });
+
+    // --- Online whitelist sync API ---
+    app.get("/api/online-whitelist", async (_req: Request, res: Response) => {
+        res.json({
+            ...onlineWhitelistSync.getSnapshot(),
+            file: await onlineWhitelistSync.readWhitelistFile(),
+        });
+    });
+
+    app.put("/api/online-whitelist", async (req: Request, res: Response) => {
+        try {
+            res.json({ config: await onlineWhitelistSync.setConfig(req.body || {}) });
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+
+    app.post("/api/online-whitelist/sync-now", async (_req: Request, res: Response) => {
+        try {
+            await onlineWhitelistSync.triggerSync();
+            res.json({ ok: true, ...onlineWhitelistSync.getSnapshot() });
+        } catch (e: any) {
+            res.status(502).json({ ok: false, error: e.message || String(e) });
         }
     });
 
@@ -159,6 +212,10 @@ export function createHttpApp(
         const r = await autoReviver.runNow(req.params.name);
         res.json(r);
     });
+    app.post("/api/auto-revive/run-all-dead", async (_req: Request, res: Response) => {
+        const r = await autoReviver.runAllDeadNow();
+        res.json(r);
+    });
 
     // --- GM 回复 API ---
     app.get("/api/gm-replier/config", (_req: Request, res: Response) => {
@@ -225,6 +282,35 @@ export function createHttpApp(
         } catch (e: any) {
             res.status(404).json({ error: e.message || String(e) });
         }
+    });
+
+    // --- Buff keeper API ---
+    // 配置:每个角色一份 { enabled, pollMs, rules[] }。前端 GET/PUT/DELETE。
+    // rules 每条 { id, enabled, buffId|buffName, skillId, targetId, minRecastMs }。
+    app.get("/api/buff-keeper/configs", (_req: Request, res: Response) => {
+        res.json(buffKeeper.listConfigs());
+    });
+    app.get("/api/buff-keeper/configs/:name", (req: Request, res: Response) => {
+        const c = buffKeeper.getConfig(req.params.name);
+        if (!c) return res.status(404).json({ error: "not found" });
+        res.json(c);
+    });
+    app.put("/api/buff-keeper/configs/:name", (req: Request, res: Response) => {
+        const cfg = buffKeeper.setConfig(req.params.name, req.body || {});
+        res.json(cfg);
+    });
+    app.delete("/api/buff-keeper/configs/:name", (req: Request, res: Response) => {
+        res.json({ ok: buffKeeper.deleteConfig(req.params.name) });
+    });
+
+    // --- 同步 (sync) API ---
+    // 单一配置:{ enabled, masterName, slaveNames[], followIntervalMs, mirrorPosition,
+    // mirrorDialog, posEpsilon }。前端 GET/PUT。主角色移动 + NPC 对话镜像给副角色。
+    app.get("/api/sync/config", (_req: Request, res: Response) => {
+        res.json(syncManager.getConfig());
+    });
+    app.put("/api/sync/config", (req: Request, res: Response) => {
+        res.json(syncManager.setConfig(req.body || {}));
     });
 
     // Embedded mode: serve from in-memory assets; otherwise use filesystem

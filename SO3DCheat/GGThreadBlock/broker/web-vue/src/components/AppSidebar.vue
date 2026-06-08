@@ -36,6 +36,18 @@
         <el-icon><Loading /></el-icon>
         <span>自动委托</span>
       </el-menu-item>
+      <el-menu-item index="buffkeeper">
+        <el-icon><Sunny /></el-icon>
+        <span>Buff 守护</span>
+      </el-menu-item>
+      <el-menu-item index="sync">
+        <el-icon><Connection /></el-icon>
+        <span>同步</span>
+      </el-menu-item>
+      <el-menu-item index="onlinewhitelist">
+        <el-icon><UserFilled /></el-icon>
+        <span>在线白名单</span>
+      </el-menu-item>
       <el-menu-item index="paodian">
         <el-icon><Coin /></el-icon>
         <span>泡点</span>
@@ -53,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, Coin, ChatDotRound, MagicStick } from '@element-plus/icons-vue'
+import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, UserFilled, Coin, ChatDotRound, MagicStick, Sunny, Connection } from '@element-plus/icons-vue'
 
 defineProps<{ modelValue: string }>()
 defineEmits<{ 'update:modelValue': [value: string] }>()

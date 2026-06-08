@@ -35,7 +35,15 @@
           <div class="hint">填入新值会覆盖保存。空值或带 *** 的掩码值不会更新。</div>
         </el-form-item>
         <el-form-item label="模型">
-          <el-input v-model="config.model" placeholder="claude-sonnet-4-6" />
+          <el-input v-model="config.model" placeholder="claude-sonnet-4-6 / gpt-5.5" />
+        </el-form-item>
+        <el-form-item label="接口风格">
+          <el-select v-model="config.apiStyle" style="width:220px">
+            <el-option label="自动 (按模型名推断)" value="auto" />
+            <el-option label="Anthropic (/v1/messages)" value="anthropic" />
+            <el-option label="OpenAI (/v1/chat/completions)" value="openai" />
+          </el-select>
+          <div class="hint">auto: claude* 走 Anthropic,gpt 等走 OpenAI。中转代理按 group 只放行一种路径时手动指定。</div>
         </el-form-item>
         <el-form-item label="出站代理">
           <el-input v-model="config.proxy" placeholder="http://127.0.0.1:7890 (可空,默认走环境变量)" />
@@ -43,6 +51,10 @@
         <el-form-item label="冷却 (毫秒)">
           <el-input-number v-model="config.cooldownMs" :min="0" :max="600000" :step="1000" />
           <span class="hint" style="margin-left:8px">同 GM 同实例两次回复最小间隔。</span>
+        </el-form-item>
+        <el-form-item label="回复延迟 (毫秒)">
+          <el-input-number v-model="config.replyDelayMs" :min="0" :max="120000" :step="500" />
+          <span class="hint" style="margin-left:8px">从开始调用模型算起，未到这个时间就等到再发。</span>
         </el-form-item>
         <el-form-item label="超时 (毫秒)">
           <el-input-number v-model="config.timeoutMs" :min="1000" :max="120000" :step="1000" />
@@ -93,8 +105,10 @@ interface GmReplierConfig {
   apiBaseUrl: string
   apiKey: string
   model: string
+  apiStyle: 'auto' | 'anthropic' | 'openai'
   proxy: string
   cooldownMs: number
+  replyDelayMs: number
   systemPrompt: string
   timeoutMs: number
 }
@@ -116,8 +130,10 @@ const config = ref<GmReplierConfig>({
   apiBaseUrl: 'https://timicc.com',
   apiKey: '',
   model: 'claude-sonnet-4-6',
+  apiStyle: 'auto',
   proxy: '',
   cooldownMs: 8000,
+  replyDelayMs: 3000,
   systemPrompt: '',
   timeoutMs: 20000,
 })

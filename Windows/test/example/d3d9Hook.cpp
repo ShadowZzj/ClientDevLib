@@ -20,13 +20,20 @@ DWORD WINAPI HackThread(LPVOID lpThreadParameter)
         spdlog::set_level(spdlog::level::level_enum::info);
         spdlog::set_default_logger(console);
         spdlog::info("Start");
-        zzj::D3D::D3D9Hook::Setup(setting);
+        zzj::D3D::D3D9Hook::SetupOptions menuOptions{};
+        menuOptions.windowClassName = "D3D9HookExample.ExternalMenu";
+        menuOptions.windowName = "D3D9Hook Example";
+        zzj::D3D::D3D9Hook::Setup(setting, menuOptions);
         spdlog::info("SetupDone");
         while (true)
         {
             if (GetAsyncKeyState(VK_END) & 1)
             {
                 break;
+            }
+            if (GetAsyncKeyState(VK_INSERT) & 1)
+            {
+                zzj::D3D::D3D9Hook::ToggleOpen();
             }
             Sleep(100);
         }

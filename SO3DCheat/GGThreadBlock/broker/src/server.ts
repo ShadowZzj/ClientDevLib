@@ -11,6 +11,9 @@ import { GmReplier } from "./gmReplier";
 import { PaodianMonitor } from "./paodianMonitor";
 import { MoneyStats } from "./moneyStats";
 import { AutoReviveStats } from "./autoReviveStats";
+import { OnlineWhitelistSync } from "./onlineWhitelistSync";
+import { BuffKeeper } from "./buffKeeper";
+import { SyncManager } from "./syncManager";
 
 const PIPE_NAME = process.env.GGTB_BROKER_PIPE || "GGTB_BROKER";
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
@@ -25,11 +28,14 @@ function main() {
     const registry = new InstanceRegistry();
     const cashScheduler = new CashScheduler(registry);
     const deathNotifier = new DeathNotifier(registry);
-    const autoReviver = new AutoReviver(registry);
     const gmReplier = new GmReplier(registry);
+    const autoReviver = new AutoReviver(registry, () => gmReplier.getGmNames());
     const paodianMonitor = new PaodianMonitor();
     const moneyStats = new MoneyStats(registry);
     const autoReviveStats = new AutoReviveStats(autoReviver);
+    const onlineWhitelistSync = new OnlineWhitelistSync(registry, dataDir);
+    const buffKeeper = new BuffKeeper(registry);
+    const syncManager = new SyncManager(registry);
 
     // 命名管道 server。Node 的 net.createServer 直接接受 \\.\pipe\X 作为 listen
     // path,内部走 ConnectNamedPipe 等价路径。DLL 客户端 CreateFileA 上来就能连。
@@ -44,7 +50,7 @@ function main() {
     });
 
     // HTTP / WS server
-    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats);
+    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats, onlineWhitelistSync, buffKeeper, syncManager);
     const httpServer = http.createServer(app);
     attachWs(httpServer, registry, autoReviver, gmReplier, moneyStats, autoReviveStats);
     httpServer.listen(HTTP_PORT, HTTP_HOST, () => {
@@ -60,6 +66,9 @@ function main() {
         paodianMonitor.destroy();
         moneyStats.destroy();
         autoReviveStats.destroy();
+        onlineWhitelistSync.destroy();
+        buffKeeper.destroy();
+        syncManager.destroy();
         pipeServer.close();
         httpServer.close();
         process.exit(0);

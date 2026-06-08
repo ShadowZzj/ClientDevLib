@@ -170,10 +170,11 @@ class NearbyPlayerGuardModule : public IModule
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
             ImGuiTableFlags_SizingStretchProp | ImGuiTableFlags_ScrollY;
 
-        if (ImGui::BeginTable("##NPGList", 7, kFlags, ImVec2(0, 160)))
+        if (ImGui::BeginTable("##NPGList", 8, kFlags, ImVec2(0, 160)))
         {
             ImGui::TableSetupColumn(u8"名字");
             ImGui::TableSetupColumn(u8"距离");
+            ImGui::TableSetupColumn(u8"职业");
             ImGui::TableSetupColumn("X");
             ImGui::TableSetupColumn("Y");
             ImGui::TableSetupColumn("Z");
@@ -188,6 +189,11 @@ class NearbyPlayerGuardModule : public IModule
                 ImGui::TextUnformatted(p.name.c_str());
                 ImGui::TableNextColumn();
                 ImGui::Text("%.1f", p.distance);
+                ImGui::TableNextColumn();
+                if (!p.professionName.empty())
+                    ImGui::Text("%s (%u)", p.professionName.c_str(), p.profession);
+                else
+                    ImGui::Text("%u", p.profession);
                 ImGui::TableNextColumn();
                 ImGui::Text("%.1f", p.x);
                 ImGui::TableNextColumn();

@@ -5,8 +5,4 @@ class GameSetting : public zzj::D3D::Setting
 {
   public:
     virtual void Render(bool &open);
-    virtual DWORD GetToggleMenuKey()
-    {
-        return VK_INSERT;
-    }
 };
