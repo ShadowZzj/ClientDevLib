@@ -466,6 +466,32 @@ export class GmReplier extends EventEmitter {
         this.save();
     }
 
+    // Web 测试用:模拟 GM 发了某句话,返回模型预测会发的内容。
+    // 走和真实回复完全相同的模型调用 + 清洗 + 60 字裁剪,但不发公屏、不写日志、
+    // 不查 enabled/gmNames/点名/冷却 —— 纯预览,不影响游戏。
+    async previewReply(message: string, characterName?: string): Promise<{
+        reply: string;
+        rawReply: string;
+        model: string;
+        apiStyle: "anthropic" | "openai";
+    }> {
+        const text = String(message || "").trim();
+        if (!text) throw new Error("message 为空");
+        if (!this.config.apiKey) throw new Error("未配置 apiKey");
+
+        const myName = (characterName || "").trim() || "我";
+        const raw = await this.callModelWithRetry(text, myName);
+        const trimmed = sanitizeModelReply(raw);
+        if (!trimmed) throw new Error("模型返回空内容");
+        const reply = trimmed.length > 60 ? trimmed.slice(0, 60) : trimmed;
+        return {
+            reply,
+            rawReply: raw,
+            model: this.config.model,
+            apiStyle: this.resolveApiStyle(),
+        };
+    }
+
     getLogs(): GmReplyLogEntry[] {
         return [...this.logs];
     }

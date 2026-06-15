@@ -6,6 +6,7 @@ export interface Instance {
   hostExe: string
   money: number
   hp?: number
+  mapId?: number
   lastSeen: number
 }
 

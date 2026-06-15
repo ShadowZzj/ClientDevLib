@@ -10,7 +10,7 @@
       </el-menu-item>
       <el-menu-item index="control">
         <el-icon><Operation /></el-icon>
-        <span>操控</span>
+        <span>控制</span>
       </el-menu-item>
       <el-menu-item index="moveto">
         <el-icon><Location /></el-icon>
@@ -24,6 +24,10 @@
         <el-icon><Goods /></el-icon>
         <span>商城背包</span>
       </el-menu-item>
+      <el-menu-item index="vendorpurchase">
+        <el-icon><Goods /></el-icon>
+        <span>摊贩购买</span>
+      </el-menu-item>
       <el-menu-item index="deathnotify">
         <el-icon><Bell /></el-icon>
         <span>死亡通知</span>
@@ -36,9 +40,17 @@
         <el-icon><Loading /></el-icon>
         <span>自动委托</span>
       </el-menu-item>
+      <el-menu-item index="autotrade">
+        <el-icon><Switch /></el-icon>
+        <span>自动交易</span>
+      </el-menu-item>
       <el-menu-item index="buffkeeper">
         <el-icon><Sunny /></el-icon>
         <span>Buff 守护</span>
+      </el-menu-item>
+      <el-menu-item index="clockwork">
+        <el-icon><Watch /></el-icon>
+        <span>自动洗发条</span>
       </el-menu-item>
       <el-menu-item index="sync">
         <el-icon><Connection /></el-icon>
@@ -65,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, UserFilled, Coin, ChatDotRound, MagicStick, Sunny, Connection } from '@element-plus/icons-vue'
+import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, UserFilled, Coin, ChatDotRound, MagicStick, Sunny, Connection, Switch, Watch } from '@element-plus/icons-vue'
 
 defineProps<{ modelValue: string }>()
 defineEmits<{ 'update:modelValue': [value: string] }>()

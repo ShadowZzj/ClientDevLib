@@ -1,13 +1,16 @@
 #include "CLocalPlayer.h"
 #include "../util/PatternResolver.h"
 #include "../util/UserConfig.h"
+#include "../util/NetLog.h"
 #include <spdlog/spdlog.h>
 #include <algorithm>
 #include <climits>
 #include <cstdint>
 #include <cstring>
+#include <atomic>
 #include <cmath>
 #include <ctime>
+#include <unordered_set>
 
 namespace GGTB
 {
@@ -920,8 +923,14 @@ int VisitUser(uintptr_t user, uintptr_t localUser,
     SafeReadDword(user + kUserProfessionOffset, profession);
     auto professionName = GetProfessionName(profession);
 
+    // 远程玩家 HP 明文存 +0x1B00(CUser__GetCurrentHP),不需要 XOR。
+    int32_t  hp = -1;
+    uint32_t rawHp = 0;
+    if (SafeReadDword(user + kLocalUserHpOffset, rawHp))
+        hp = static_cast<int32_t>(rawHp);
+
     out.push_back({std::move(utf8), profession, std::move(professionName),
-                   d, x, y, z});
+                   d, x, y, z, hp});
     return 0;
 }
 
@@ -1071,7 +1080,7 @@ bool LookupAroundPlayerById(uint32_t userId, NearbyPlayer &out)
             float x = 0, y = 0, z = 0;
             GetLocalPosition(x, y, z);
             out = {Big5ToUtf8(nameBuf), profession, GetProfessionName(profession),
-                   0.0f, x, y, z};
+                   0.0f, x, y, z, static_cast<int32_t>(GetLocalHp())};
             return true;
         }
     }
@@ -1115,8 +1124,14 @@ bool LookupAroundPlayerById(uint32_t userId, NearbyPlayer &out)
                 distance = std::sqrt(dx * dx + dy * dy + dz * dz);
             }
 
+            // 远程玩家 HP 明文存 +0x1B00(CUser__GetCurrentHP),不需要 XOR。
+            int32_t  hp = -1;
+            uint32_t rawHp = 0;
+            if (SafeReadDword(node + kLocalUserHpOffset, rawHp))
+                hp = static_cast<int32_t>(rawHp);
+
             out = {Big5ToUtf8(nameBuf), profession, GetProfessionName(profession),
-                   distance, x, y, z};
+                   distance, x, y, z, hp};
             return true;
         }
         if (!SafeReadDword(node + kUserNextOffset, node))
@@ -2161,14 +2176,15 @@ constexpr int kRoutingTagSkill = 411022; // 0x6458E
 
 static int CallSkillSendPackageSEH(NetBeginSendFn pBegin,
                                    NetSkillSendPackageFn pSend,
-                                   const void *buf, size_t size)
+                                   const void *buf, size_t size,
+                                   int routingTag = kRoutingTagSkill)
 {
     __try
     {
         void *netBuf = pBegin();
         if (!netBuf)
             return -1;
-        return pSend(netBuf, kRoutingTagSkill, buf, size);
+        return pSend(netBuf, routingTag, buf, size);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -2451,6 +2467,63 @@ uint32_t GetLocalUserId()
 bool IsLocalDead()
 {
     return GetLocalHp() <= 0;
+}
+
+// ---------- 登录凭据 (账号/密码,明文) ----------
+
+namespace {
+// 从 localUser+offset 读定长字段为 C 字符串。先跳过前导 \0,再取到下一个 \0 / maxLen。
+// 必须跳前导 \0:id_input 控件 +128 源缓冲带前导 \0,memmove 进 localUser 后账号字段
+// 实测是 "\0gongyu9011213"(见 Login__BuildAndSendLoginPacket),不跳会读成空串。SEH 安全。
+static bool ReadFixedStringSEH(uintptr_t addr, char *out, size_t maxLen)
+{
+    __try
+    {
+        size_t start = 0;
+        while (start < maxLen && *reinterpret_cast<volatile char *>(addr + start) == '\0')
+            ++start;
+        size_t n = 0;
+        for (size_t i = start; i < maxLen; ++i)
+        {
+            char c = *reinterpret_cast<volatile char *>(addr + i);
+            if (c == '\0')
+                break;
+            out[n++] = c;
+        }
+        out[n] = '\0';
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+} // namespace
+
+bool GetLoginCredentials(LoginCredentials &out)
+{
+    uintptr_t user = GetLocalUserPtr();
+    if (!user)
+    {
+        spdlog::warn("GGTB::GetLoginCredentials: localUser not ready");
+        return false;
+    }
+
+    char acc[kLoginFieldSize + 1] = {};
+    char pwd[kLoginFieldSize + 1] = {};
+    bool okAcc = ReadFixedStringSEH(user + kLoginAccountOffset, acc, kLoginFieldSize);
+    bool okPwd = ReadFixedStringSEH(user + kLoginPasswordOffset, pwd, kLoginFieldSize);
+    if (!okAcc || acc[0] == '\0')
+    {
+        spdlog::warn("GGTB::GetLoginCredentials: account empty/unreadable (okAcc={})", okAcc);
+        return false;
+    }
+
+    out.account = acc;
+    out.password = okPwd ? pwd : "";
+    // 不打印密码;只记账号 + 密码长度,便于排查而不泄露。
+    spdlog::info("GGTB::GetLoginCredentials: account='{}' pwdLen={}", out.account, out.password.size());
+    return true;
 }
 
 // ---------- Current map id ----------
@@ -2822,6 +2895,148 @@ bool SendPublicChat(const char *message)
     spdlog::info("GGTB::SendPublicChat: msg='{}' bytes={} rv={}",
                  message, encoded.size(), rv);
     return true;
+}
+
+// ---------- City teleport ("/<cityName>" chat command, proto 411076) ----------
+// Reverse-engineered chain (full call graph in CLocalPlayer.h):
+//   destId = ResolveTeleportDestByName(CUIManager::GetUIContent(99), "/cityName")
+//   then Net__SendDword(BeginSend(), 411076, destId) performs the warp. We
+//   reproduce both halves without the chat-window object. Reuses Utf8ToBig5Lossy
+//   (above) and CallNetSendDwordSEH / NetSendDwordFn (AutoRevive section).
+namespace
+{
+using UIMgrSingletonFn  = void *(__cdecl *)();
+using UIMgrGetContentFn = void *(__thiscall *)(void *, int);
+using ResolveTeleportFn = int(__thiscall *)(void *, const char *); // this=UIContent(99)
+using PlayerMoveSyncFn  = int(__thiscall *)(void *);               // this=netBuf
+
+constexpr int kUiContentTeleportTable = 99; // CUIManager::GetUIContent slot
+constexpr int kProtoTeleportReq       = 411076;
+
+// >0 destId on success; 0 = no match / level / money / valid gate; -1 = SEH.
+static int CallResolveTeleportSEH(UIMgrSingletonFn pMgr, UIMgrGetContentFn pGet,
+                                  ResolveTeleportFn pResolve, const char *nameWithSlash)
+{
+    __try
+    {
+        void *mgr = pMgr();
+        if (!mgr)
+            return 0;
+        void *content = pGet(mgr, kUiContentTeleportTable);
+        if (!content)
+            return 0;
+        int destId = pResolve(content, nameWithSlash);
+        return destId > 0 ? destId : 0;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return -1;
+    }
+}
+
+// Best-effort position sync, mirroring Teleport_SendPacket. Own BeginSend unit;
+// its internal gates may no-op it, and failure must never block the warp.
+static void CallMoveSyncSEH(NetBeginSendFn pBegin, PlayerMoveSyncFn pSync)
+{
+    __try
+    {
+        void *buf = pBegin();
+        if (buf)
+            pSync(buf);
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+    }
+}
+} // namespace
+
+int ResolveTeleportDestId(const char *cityNameUtf8)
+{
+    if (!cityNameUtf8 || !*cityNameUtf8)
+        return 0;
+
+    // Drop any leading slashes the caller sent, convert UTF-8 -> Big5 (the table
+    // is Big5; '/' is ASCII and survives), then prepend exactly one '/' — the
+    // resolver compares name+1, skipping the slash.
+    const char *p = cityNameUtf8;
+    while (*p == '/')
+        ++p;
+    std::string big5 = Utf8ToBig5Lossy(p);
+    if (big5.empty())
+        return 0;
+    std::string name = "/" + big5;
+
+    auto mgrAddr     = PatternResolver::Get("UIManagerGetSingleton");
+    auto getAddr     = PatternResolver::Get("UIManagerGetUIContent");
+    auto resolveAddr = PatternResolver::Get("ResolveTeleportDestByName");
+    if (!mgrAddr || !getAddr || !resolveAddr)
+    {
+        spdlog::error("GGTB::ResolveTeleportDestId: pattern unresolved "
+                      "(mgr={:x} get={:x} resolve={:x})", mgrAddr, getAddr, resolveAddr);
+        return 0;
+    }
+
+    int destId = CallResolveTeleportSEH(
+        reinterpret_cast<UIMgrSingletonFn>(mgrAddr),
+        reinterpret_cast<UIMgrGetContentFn>(getAddr),
+        reinterpret_cast<ResolveTeleportFn>(resolveAddr),
+        name.c_str());
+    if (destId < 0)
+    {
+        spdlog::warn("GGTB::ResolveTeleportDestId: SEH for name='{}'", cityNameUtf8);
+        return 0;
+    }
+    if (destId == 0)
+    {
+        spdlog::info("GGTB::ResolveTeleportDestId: no match for name='{}' "
+                     "(unknown city / level / money / unavailable)", cityNameUtf8);
+        return 0;
+    }
+    spdlog::info("GGTB::ResolveTeleportDestId: name='{}' -> destId={}", cityNameUtf8, destId);
+    return destId;
+}
+
+bool SendTeleportToDest(int destId)
+{
+    if (destId <= 0)
+        return false;
+
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSendDword");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::SendTeleportToDest: pattern unresolved (begin={:x} send={:x})",
+                      beginAddr, sendAddr);
+        return false;
+    }
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+
+    // Best-effort position sync first, like the engine; non-fatal if it no-ops.
+    auto syncAddr = PatternResolver::Get("SendPlayerMoveSync");
+    if (syncAddr)
+        CallMoveSyncSEH(pBegin, reinterpret_cast<PlayerMoveSyncFn>(syncAddr));
+
+    int rv = CallNetSendDwordSEH(pBegin, reinterpret_cast<NetSendDwordFn>(sendAddr),
+                                 kProtoTeleportReq, destId);
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::SendTeleportToDest: SEH on send destId={}", destId);
+        return false;
+    }
+    spdlog::info("GGTB::SendTeleportToDest: sent teleport(411076) destId={} rv={}", destId, rv);
+    return true;
+}
+
+bool TeleportByCityName(const char *cityNameUtf8)
+{
+    int destId = ResolveTeleportDestId(cityNameUtf8);
+    if (destId <= 0)
+    {
+        spdlog::warn("GGTB::TeleportByCityName: could not resolve city='{}'",
+                     cityNameUtf8 ? cityNameUtf8 : "(null)");
+        return false;
+    }
+    return SendTeleportToDest(destId);
 }
 
 // ---------- CG_NPC_DIALOG_SELECT (proto 411026) ----------
@@ -3322,6 +3537,978 @@ bool UseCashItem(uint32_t slotIndex)
     }
     spdlog::info("GGTB::UseCashItem: slot={} wire={} rv={}", slotIndex, wireSlot, rv);
     return true;
+}
+
+// ---------- Magic Spring / 发条 (CMagicSpringOption) ----------
+namespace
+{
+static bool ReadU32SEH_Spring(uintptr_t addr, uint32_t *out)
+{
+    __try { *out = *reinterpret_cast<uint32_t *>(addr); return true; }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+
+static bool ReadSpringBlockSEH(uintptr_t item, uint32_t out[7])
+{
+    __try
+    {
+        const uint32_t *src = reinterpret_cast<const uint32_t *>(item + kSpringBlockOffset);
+        for (int i = 0; i < 7; ++i) out[i] = src[i];
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+
+// 扫普通(bag=0)再 cash(bag=1)背包,找 subtype==targetSubtype 的发条。命中填 bagOut +
+// wireOut(=item+0x00, 已是 wire 格式)。
+static bool FindSpringBySubtype(uint32_t targetSubtype, int &bagOut, uint32_t &wireOut)
+{
+    auto scan = [&](const char *ptrName, uintptr_t base, size_t count, int bagId) -> bool {
+        auto addr = PatternResolver::Get(ptrName);
+        if (!addr) return false;
+        uintptr_t container = 0;
+        if (!ReadContainerPtrSEH(addr, &container) || !container) return false;
+        for (size_t i = 0; i < count; ++i)
+        {
+            uintptr_t  slot = container + base + i * kItemStride;
+            BagSlotRaw raw{};
+            if (!ReadBagSlotSEH(slot, &raw) || !raw.itemTable || raw.itemId == 0)
+                continue;
+            // subtype 在 *itemTable*+0x110, 不是 item+0x110 (item+0x110 恒为 0)。
+            // 见 IDA Bag_FindItemBySubtype_Normal: *(*(item+0x20)+272)==a2。
+            uint32_t sub = 0;
+            if (!ReadU32SEH_Spring(raw.itemTable + kItemSubtypeOffset, &sub) || sub != targetSubtype)
+                continue;
+            bagOut  = bagId;
+            wireOut = raw.bagId;
+            return true;
+        }
+        return false;
+    };
+    if (scan("ItemContainerPtr", kItemArrayBaseOffset, kItemFullSlotCount, 0)) return true;
+    if (scan("CashContainerPtr", kCashArrayBaseOffset, kCashSlotCount, 1)) return true;
+    return false;
+}
+} // anonymous
+
+SpringState ReadSpringState(uint32_t equipSlotIndex)
+{
+    SpringState st{};
+    st.valid = false;
+    if (equipSlotIndex >= kItemFullSlotCount)
+        return st;
+
+    auto contAddr = PatternResolver::Get("ItemContainerPtr");
+    if (!contAddr)
+        return st;
+    uintptr_t container = 0;
+    if (!ReadContainerPtrSEH(contAddr, &container) || !container)
+        return st;
+
+    uintptr_t  item = container + kItemArrayBaseOffset + equipSlotIndex * kItemStride;
+    BagSlotRaw raw{};
+    if (!ReadBagSlotSEH(item, &raw) || !raw.itemTable || raw.itemId == 0)
+        return st; // 空槽
+
+    uint32_t blk[7];
+    if (!ReadSpringBlockSEH(item, blk))
+        return st;
+
+    st.valid    = true;
+    st.grade    = blk[0];
+    st.attrs[0] = {blk[1], static_cast<int32_t>(blk[2])};
+    st.attrs[1] = {blk[3], static_cast<int32_t>(blk[4])};
+    st.attrs[2] = {blk[5], static_cast<int32_t>(blk[6])};
+    return st;
+}
+
+bool WashSpring(uint32_t equipSlotIndex, int springType, std::string *errOut)
+{
+    auto setErr = [&](const char *m) { if (errOut) *errOut = m; };
+    if (springType < 0 || springType > 2) { setErr("bad springType (0..2)"); return false; }
+    if (equipSlotIndex >= kItemFullSlotCount) { setErr("equip slot out of range"); return false; }
+
+    uint32_t targetSubtype = static_cast<uint32_t>(kSpringSubtypeBase + springType); // 65/66/67
+    int      springBag  = 0;
+    uint32_t springWire = 0;
+    if (!FindSpringBySubtype(targetSubtype, springBag, springWire))
+    {
+        setErr("spring item not found in normal/cash bag");
+        return false;
+    }
+
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSendDialogSelect"); // proto-generic 20B/3DW sender
+    if (!beginAddr || !sendAddr) { setErr("net pattern unresolved"); return false; }
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSendDialogSelectFn>(sendAddr);
+
+    int equipWire = static_cast<int>(equipSlotIndex) + static_cast<int>(kSpringWireSlotBase);
+    // body = [发条背包, 装备 wire 槽, 发条 wire 槽] —— 见 WashClockwork_Send_411590 @0x7F1F90
+    int rv = CallSendDialogSelectSEH(pBegin, pSend, kProtocolWashSpring,
+                                     springBag, equipWire, static_cast<int>(springWire));
+    if (rv < 0) { setErr("SEH during send"); return false; }
+    spdlog::info("GGTB::WashSpring: type={} equipSlot={} equipWire={} springBag={} springWire={} rv={}",
+                 springType, equipSlotIndex, equipWire, springBag, springWire, rv);
+    return true;
+}
+
+namespace
+{
+using StringTableCopyFn = char *(__cdecl *)(unsigned int, char *, size_t);
+static bool CallStringTableCopySEH(StringTableCopyFn fn, unsigned int id, char *buf, size_t sz)
+{
+    __try { fn(id, buf, sz); return true; }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+static std::string FetchGameString(int strId)
+{
+    auto addr = PatternResolver::Get("StringTableCopy");
+    if (!addr) return {};
+    auto fn = reinterpret_cast<StringTableCopyFn>(addr);
+    char buf[160] = {};
+    if (!CallStringTableCopySEH(fn, static_cast<unsigned int>(strId), buf, sizeof(buf)))
+        return {};
+    return Big5ToUtf8(buf);
+}
+} // anonymous
+
+std::string GetSpringAttrName(uint32_t attrId, bool *isPercentOut)
+{
+    // attr id -> 字符串表 id,出处 sub_7F2520 的 switch(1..23) 反汇编实证(2026-06-14)。
+    // 注:Hex-Rays 对本函数 8..20 的常量提取有误,以反汇编 push 值为准。pct=百分比(+N%)。
+    //   1攻擊力 2魔法力 3命中 4迴避率 5防禦力 6必殺技 7攻擊速度 8移動速度
+    //   9HP 10AP 11HP% 12AP% 13增加傷害力% 14減少傷害力%
+    //   21減少道具配戴限制等級 22經驗值獲得量增加% 23副本傷害增加%
+    static const struct { uint32_t id; int strId; bool pct; } kSingle[] = {
+        {1, 79, false},   {2, 80, false},   {3, 78, false},   {4, 84, false},
+        {5, 81, false},   {6, 83, false},   {7, 82, false},   {8, 1349, false},
+        {9, 1350, false}, {10, 1351, false}, {11, 1350, true}, {12, 1351, true},
+        {13, 887, true},  {14, 888, true},
+        {21, 3206, false}, {22, 3207, true}, {23, 3208, true},
+    };
+    // 复合(15..20):"每N等級增加<属性> +M",值 lo16/hi16 打包。strId b = 属性名:
+    //   2830力量 2831敏捷 2832智力 2833幸運 2834體力 2835精神。展示用属性名 + "(每級)"。
+    static const struct { uint32_t id; int b; } kDual[] = {
+        {15, 2830}, {16, 2831}, {17, 2832}, {18, 2833}, {19, 2834}, {20, 2835},
+    };
+
+    for (auto &m : kSingle)
+        if (m.id == attrId)
+        {
+            if (isPercentOut) *isPercentOut = m.pct;
+            return FetchGameString(m.strId);
+        }
+    for (auto &m : kDual)
+        if (m.id == attrId)
+        {
+            if (isPercentOut) *isPercentOut = false;
+            std::string nm = FetchGameString(m.b);
+            while (!nm.empty() && (nm.back() == ' ' || nm.back() == '\t')) nm.pop_back();
+            if (nm.empty()) return {};
+            return nm + u8"(每級)";
+        }
+    if (isPercentOut) *isPercentOut = false;
+    return {};
+}
+
+// ---------- Summoned vendor shop packets ----------
+namespace
+{
+constexpr uintptr_t kVendorItemNameOffset  = 0x0C;
+constexpr uintptr_t kVendorItemPriceOffset = 0x3F4;
+
+using ShopTableManagerFn    = void *(__cdecl *)(int);
+using ShopTableGetElemFn    = void *(__thiscall *)(void *, int, int, int);
+using ShopListGetAtFn       = uint32_t *(__thiscall *)(void *, int);
+using ShopItemTableByIdFn   = uintptr_t(__thiscall *)(void *, int, int);
+using ShopFindBagSlotFn     = int(__thiscall *)(void *, int, int, int, int);
+using UIManagerGetSingletonFn = void *(__cdecl *)();
+using UIManagerGetUIContentFn = void *(__thiscall *)(void *, int);
+using UIManagerIsContentOpenFn = int(__thiscall *)(void *, int);
+using UIManagerCloseContentFn = uint8_t(__thiscall *)(void *, int);
+using UIManagerCloseActiveContentFn = void(__thiscall *)(void *, void *);
+using UIContentMarkCloseFn = void(__thiscall *)(void *);
+using VendorUiCloseFn = uint8_t(__thiscall *)(void *);
+// CUIManager::BeginContent(this=mgr, contentEnum, rendererArg)。__thiscall, retn 8。
+// 返回找到/打开的 UIContent 对象指针(0=失败)。打开仓库 = BeginContent(mgr, 2, renderer)。
+// 参数顺序由 case 0x63D 反汇编确认(先 push renderer 后 push 2 → arg0=enum, arg1=renderer)。
+using UIManagerBeginContentFn = void *(__thiscall *)(void *, int, int);
+
+static void *CallShopTableManagerSEH(ShopTableManagerFn fn, int type)
+{
+    __try { return fn(type); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+}
+
+static void *CallShopTableGetElemSEH(ShopTableGetElemFn fn, void *mgr,
+                                     int tableType, int vendorId, int sub)
+{
+    __try { return fn(mgr, tableType, vendorId, sub); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+}
+
+static uint32_t *CallShopListGetAtSEH(ShopListGetAtFn fn, void *list, int idx)
+{
+    __try { return fn(list, idx); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+}
+
+static uintptr_t CallShopItemTableByIdSEH(ShopItemTableByIdFn fn, void *container,
+                                          int itemId, int sub)
+{
+    __try { return fn(container, itemId, sub); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return 0; }
+}
+
+static int CallShopFindBagSlotSEH(ShopFindBagSlotFn fn, void *container,
+                                  int itemId, int a2, int a3, int count)
+{
+    __try { return fn(container, itemId, a2, a3, count); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return -1; }
+}
+
+static void *CallUIManagerGetSingletonSEH(UIManagerGetSingletonFn fn)
+{
+    __try { return fn(); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+}
+
+static void *CallUIManagerGetUIContentSEH(UIManagerGetUIContentFn fn, void *mgr, int id)
+{
+    __try { return fn(mgr, id); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+}
+
+static int CallUIManagerIsContentOpenSEH(UIManagerIsContentOpenFn fn, void *mgr, int id)
+{
+    __try { return fn(mgr, id) ? 1 : 0; }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return -1; }
+}
+
+static int CallUIManagerCloseContentSEH(UIManagerCloseContentFn fn, void *mgr, int id)
+{
+    __try { return fn(mgr, id) ? 1 : 0; }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return -1; }
+}
+
+static bool CallUIManagerCloseActiveContentSEH(UIManagerCloseActiveContentFn fn,
+                                               void *mgr, void *renderer)
+{
+    __try
+    {
+        fn(mgr, renderer);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+static bool CallUIContentMarkCloseSEH(UIContentMarkCloseFn fn, void *content)
+{
+    __try
+    {
+        fn(content);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+static void *CallUIManagerBeginContentSEH(UIManagerBeginContentFn fn, void *mgr,
+                                          int contentEnum, int rendererArg)
+{
+    // 实参顺序铁定:case 0x63D 先 push renderer 后 push 2,故进函数 arg0=contentEnum、
+    // arg1=renderer。__thiscall fn(mgr, contentEnum, rendererArg) 正好复刻这条压栈。
+    __try { return fn(mgr, contentEnum, rendererArg); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+}
+
+static int CallVendorUiCloseSEH(VendorUiCloseFn fn, void *content)
+{
+    __try
+    {
+        return fn(content) ? 1 : 0;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return -1;
+    }
+}
+
+static bool ReadShopItemIdSEH(uint32_t *p, uint32_t &out)
+{
+    __try
+    {
+        out = *p;
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+static bool GetItemContainer(uintptr_t &container)
+{
+    container = 0;
+    auto addr = PatternResolver::Get("ItemContainerPtr");
+    return addr && ReadContainerPtrSEH(addr, &container) && container;
+}
+
+static int FindVendorTargetSlot(uint32_t itemId, uint32_t count)
+{
+    uintptr_t container = 0;
+    if (!GetItemContainer(container))
+        return -1;
+    auto findAddr = PatternResolver::Get("ShopFindInventorySlot");
+    if (!findAddr)
+        return -1;
+    auto fn = reinterpret_cast<ShopFindBagSlotFn>(findAddr);
+    return CallShopFindBagSlotSEH(fn, reinterpret_cast<void *>(container),
+                                  static_cast<int>(itemId), 0, 0,
+                                  static_cast<int>(count));
+}
+
+static int FindFallbackEmptyBagWireSlot(const std::unordered_set<uint32_t> *avoidTargetSlots)
+{
+    uintptr_t container = 0;
+    if (!GetItemContainer(container))
+        return -1;
+
+    for (size_t i = 0; i < kItemFullSlotCount; ++i)
+    {
+        uintptr_t slot = container + kItemArrayBaseOffset + i * kItemStride;
+        BagSlotRaw raw{};
+        if (!ReadBagSlotSEH(slot, &raw))
+            continue;
+        if (raw.itemTable || raw.itemId != 0)
+            continue;
+
+        uint32_t wireSlot = static_cast<uint32_t>(i) + kCashSlotWireBase;
+        if (avoidTargetSlots && avoidTargetSlots->find(wireSlot) != avoidTargetSlots->end())
+            continue;
+        return static_cast<int>(wireSlot);
+    }
+    return -1;
+}
+
+static int FindVendorTargetSlotAvoiding(uint32_t itemId, uint32_t count,
+                                        const std::unordered_set<uint32_t> *avoidTargetSlots)
+{
+    int targetSlot = FindVendorTargetSlot(itemId, count);
+    if (targetSlot <= 0)
+        return targetSlot;
+    if (!avoidTargetSlots || avoidTargetSlots->find(static_cast<uint32_t>(targetSlot)) == avoidTargetSlots->end())
+        return targetSlot;
+
+    int fallback = FindFallbackEmptyBagWireSlot(avoidTargetSlots);
+    if (fallback > 0)
+    {
+        spdlog::info("GGTB::FindVendorTargetSlotAvoiding: targetSlot {} already used, fallback empty slot {}",
+                     targetSlot, fallback);
+        return fallback;
+    }
+
+    spdlog::warn("GGTB::FindVendorTargetSlotAvoiding: targetSlot {} reused and no fallback empty slot found",
+                 targetSlot);
+    return targetSlot;
+}
+
+struct VendorUiCandidate
+{
+    int      id = -1;
+    void    *ui = nullptr;
+    uint32_t vtable = 0;
+    uint32_t closeSlot = 0;
+    int      isOpen = -1;
+};
+
+static bool ReadUiVtableCloseSlot(void *ui, uint32_t &vtable, uint32_t &closeSlot)
+{
+    vtable = 0;
+    closeSlot = 0;
+    if (!ui)
+        return false;
+    if (!SafeReadDword(reinterpret_cast<uintptr_t>(ui), vtable) || !vtable)
+        return false;
+    SafeReadDword(static_cast<uintptr_t>(vtable) + 0x58, closeSlot);
+    return true;
+}
+
+static bool IsVendorUiVtable(uint32_t vtable, uint32_t closeSlot,
+                             uintptr_t vendorVtableAddr, uintptr_t vendorCloseAddr)
+{
+    return vtable == static_cast<uint32_t>(vendorVtableAddr) ||
+           closeSlot == static_cast<uint32_t>(vendorCloseAddr);
+}
+
+static bool FindVendorUiContent(UIManagerGetUIContentFn pGet,
+                                UIManagerIsContentOpenFn pIsOpen,
+                                void *mgr,
+                                uintptr_t vendorVtableAddr,
+                                uintptr_t vendorCloseAddr,
+                                VendorUiCandidate &out)
+{
+    constexpr int kMaxUiContentId = 256;
+
+    for (int id = 0; id < kMaxUiContentId; ++id)
+    {
+        int open = CallUIManagerIsContentOpenSEH(pIsOpen, mgr, id);
+        if (open <= 0)
+            continue;
+
+        void *ui = CallUIManagerGetUIContentSEH(pGet, mgr, id);
+        if (!ui)
+            continue;
+
+        uint32_t vtable = 0;
+        uint32_t closeSlot = 0;
+        if (!ReadUiVtableCloseSlot(ui, vtable, closeSlot))
+            continue;
+
+        bool match = IsVendorUiVtable(vtable, closeSlot, vendorVtableAddr, vendorCloseAddr);
+
+        if (id == 31 && !match)
+        {
+            spdlog::info("GGTB::FindVendorUiContent: id=31 is not merchant open={} ui={:x} vtable={:x} closeSlot={:x}",
+                         open, reinterpret_cast<uintptr_t>(ui), vtable, closeSlot);
+        }
+
+        if (!match)
+            continue;
+
+        VendorUiCandidate cand{};
+        cand.id = id;
+        cand.ui = ui;
+        cand.vtable = vtable;
+        cand.closeSlot = closeSlot;
+        cand.isOpen = open;
+
+        spdlog::info("GGTB::FindVendorUiContent: merchant candidate id={} open={} ui={:x} vtable={:x} closeSlot={:x}",
+                     cand.id, cand.isOpen, reinterpret_cast<uintptr_t>(cand.ui),
+                     cand.vtable, cand.closeSlot);
+
+        out = cand;
+        return true;
+    }
+
+    return false;
+}
+} // namespace
+
+std::vector<VendorShopItem> GetVendorShopItems(uint32_t vendorId)
+{
+    std::vector<VendorShopItem> result;
+    auto mgrAddr   = PatternResolver::Get("ShopTableManager");
+    auto elemAddr  = PatternResolver::Get("ShopTableGetElem");
+    auto listAddr  = PatternResolver::Get("ShopListGetAt");
+    auto itemAddr  = PatternResolver::Get("ShopItemTableById");
+    if (!mgrAddr || !elemAddr || !listAddr || !itemAddr)
+    {
+        spdlog::error("GGTB::GetVendorShopItems: pattern unresolved (mgr={:x} elem={:x} list={:x} item={:x})",
+                      mgrAddr, elemAddr, listAddr, itemAddr);
+        return result;
+    }
+
+    uintptr_t container = 0;
+    if (!GetItemContainer(container))
+    {
+        spdlog::warn("GGTB::GetVendorShopItems: g_pItemContainer not resolved");
+        return result;
+    }
+
+    auto pMgr  = reinterpret_cast<ShopTableManagerFn>(mgrAddr);
+    auto pElem = reinterpret_cast<ShopTableGetElemFn>(elemAddr);
+    auto pList = reinterpret_cast<ShopListGetAtFn>(listAddr);
+    auto pItem = reinterpret_cast<ShopItemTableByIdFn>(itemAddr);
+
+    void *mgr = CallShopTableManagerSEH(pMgr, 17);
+    if (!mgr)
+    {
+        spdlog::warn("GGTB::GetVendorShopItems: shop table manager null");
+        return result;
+    }
+    void *vendorRow = CallShopTableGetElemSEH(pElem, mgr, 17, static_cast<int>(vendorId), 0);
+    if (!vendorRow)
+    {
+        spdlog::warn("GGTB::GetVendorShopItems: vendorId={} row null", vendorId);
+        return result;
+    }
+
+    void *list = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(vendorRow) + 12);
+    result.reserve(kVendorMaxShopItems);
+    for (uint32_t i = 0; i < kVendorMaxShopItems; ++i)
+    {
+        uint32_t *entry = CallShopListGetAtSEH(pList, list, static_cast<int>(i));
+        if (!entry)
+            continue;
+        uint32_t itemId = 0;
+        if (!ReadShopItemIdSEH(entry, itemId) || itemId == 0)
+            continue;
+        uintptr_t itemTable = CallShopItemTableByIdSEH(pItem,
+            reinterpret_cast<void *>(container), static_cast<int>(itemId), 0);
+        if (!itemTable)
+            continue;
+
+        VendorShopItem info{};
+        info.shopIndex = i;
+        info.itemId    = itemId;
+        SafeReadDword(itemTable + kVendorItemPriceOffset, info.unitPrice);
+        char nameBuf[128] = {};
+        if (ReadItemNameSEH(itemTable, nameBuf, sizeof(nameBuf)))
+            info.name = Big5ToUtf8(nameBuf);
+        result.push_back(std::move(info));
+    }
+    return result;
+}
+
+bool SendVendorOpen(uint32_t token)
+{
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSendDword");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::SendVendorOpen: pattern unresolved (begin={:x} send={:x})",
+                      beginAddr, sendAddr);
+        return false;
+    }
+
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSendDwordFn>(sendAddr);
+    int rv = CallNetSendDwordSEH(pBegin, pSend, kProtocolVendorOpen,
+                                 static_cast<int>(token));
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::SendVendorOpen: SEH token={:08X}", token);
+        return false;
+    }
+    spdlog::info("GGTB::SendVendorOpen: token={:08X} rv={}", token, rv);
+    return true;
+}
+
+bool SendVendorBuy(uint32_t vendorId, uint32_t shopIndex, uint32_t count,
+                   uint32_t targetSlot, uint32_t token)
+{
+    if (count == 0)
+    {
+        spdlog::warn("GGTB::SendVendorBuy: invalid count=0");
+        return false;
+    }
+    if (targetSlot == 0)
+    {
+        spdlog::warn("GGTB::SendVendorBuy: invalid targetSlot=0");
+        return false;
+    }
+
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSkillSendPackage");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::SendVendorBuy: pattern unresolved (begin={:x} send={:x})",
+                      beginAddr, sendAddr);
+        return false;
+    }
+
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSkillSendPackageFn>(sendAddr);
+    uint32_t payload[5] = { vendorId, shopIndex, count, targetSlot, token };
+    int rv = CallSkillSendPackageSEH(pBegin, pSend, payload, sizeof(payload),
+                                     kProtocolVendorBuy);
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::SendVendorBuy: SEH vendorId={} shopIndex={} count={} targetSlot={} token={:08X}",
+                     vendorId, shopIndex, count, targetSlot, token);
+        return false;
+    }
+    spdlog::info("GGTB::SendVendorBuy: vendorId={} shopIndex={} count={} targetSlot={} token={:08X} rv={}",
+                 vendorId, shopIndex, count, targetSlot, token, rv);
+    return true;
+}
+
+bool SendVendorBuyShopItem(uint32_t itemId, uint32_t shopIndex, uint32_t count,
+                           uint32_t vendorId, uint32_t token,
+                           const std::unordered_set<uint32_t> *avoidTargetSlots,
+                           VendorBuyResult *out)
+{
+    if (itemId == 0 || count == 0)
+    {
+        spdlog::warn("GGTB::SendVendorBuyShopItem: invalid itemId={} count={}", itemId, count);
+        return false;
+    }
+
+    int targetSlot = FindVendorTargetSlotAvoiding(itemId, count, avoidTargetSlots);
+    if (targetSlot <= 0)
+    {
+        spdlog::warn("GGTB::SendVendorBuyShopItem: no target bag slot itemId={} shopIndex={} count={} rv={}",
+                     itemId, shopIndex, count, targetSlot);
+        return false;
+    }
+
+    bool ok = SendVendorBuy(vendorId, shopIndex, count,
+                            static_cast<uint32_t>(targetSlot), token);
+    if (ok && out)
+    {
+        out->vendorId   = vendorId;
+        out->shopIndex  = shopIndex;
+        out->itemId     = itemId;
+        out->count      = count;
+        out->targetSlot = static_cast<uint32_t>(targetSlot);
+        out->token      = token;
+    }
+    return ok;
+}
+
+bool SendVendorBuyItem(uint32_t itemId, uint32_t count,
+                       uint32_t vendorId, uint32_t token,
+                       const std::unordered_set<uint32_t> *avoidTargetSlots,
+                       VendorBuyResult *out)
+{
+    if (itemId == 0 || count == 0)
+    {
+        spdlog::warn("GGTB::SendVendorBuyItem: invalid itemId={} count={}", itemId, count);
+        return false;
+    }
+
+    auto items = GetVendorShopItems(vendorId);
+    auto it = std::find_if(items.begin(), items.end(),
+                           [itemId](const VendorShopItem &row) {
+                               return row.itemId == itemId;
+                           });
+    if (it == items.end())
+    {
+        spdlog::warn("GGTB::SendVendorBuyItem: itemId={} not found vendorId={} rows={}",
+                     itemId, vendorId, items.size());
+        return false;
+    }
+
+    return SendVendorBuyShopItem(itemId, it->shopIndex, count, vendorId, token,
+                                 avoidTargetSlots, out);
+}
+
+bool CloseVendorWindowLocal(bool *packetSentByUiHandler)
+{
+    if (packetSentByUiHandler)
+        *packetSentByUiHandler = false;
+
+    auto mgrAddr          = PatternResolver::Get("UIManagerGetSingleton");
+    auto getAddr          = PatternResolver::Get("UIManagerGetUIContent");
+    auto isOpenAddr       = PatternResolver::Get("UIManagerIsContentOpen");
+    auto markCloseAddr    = PatternResolver::Get("UIManagerCloseContent");
+    auto closeActiveAddr  = PatternResolver::Get("UIManagerCloseActiveContent");
+    auto contentMarkAddr  = PatternResolver::Get("UIContentMarkClose");
+    auto rendererPtrAddr  = PatternResolver::Get("RendererPtr");
+    auto vendorVtableAddr = PatternResolver::Get("VendorUiVTable");
+    auto vendorCloseAddr  = PatternResolver::Get("VendorUiClose");
+    if (!mgrAddr || !getAddr || !isOpenAddr || !markCloseAddr || !closeActiveAddr ||
+        !contentMarkAddr || !rendererPtrAddr || !vendorVtableAddr || !vendorCloseAddr)
+    {
+        spdlog::error("GGTB::CloseVendorWindowLocal: pattern unresolved "
+                      "(mgr={:x} get={:x} isOpen={:x} markClose={:x} closeActive={:x} contentMark={:x} rendererPtr={:x} vendorVtable={:x} vendorClose={:x})",
+                      mgrAddr, getAddr, isOpenAddr, markCloseAddr, closeActiveAddr,
+                      contentMarkAddr, rendererPtrAddr, vendorVtableAddr, vendorCloseAddr);
+        return false;
+    }
+
+    auto pMgr = reinterpret_cast<UIManagerGetSingletonFn>(mgrAddr);
+    auto pGet = reinterpret_cast<UIManagerGetUIContentFn>(getAddr);
+    auto pIsOpen = reinterpret_cast<UIManagerIsContentOpenFn>(isOpenAddr);
+    auto pMarkClose = reinterpret_cast<UIManagerCloseContentFn>(markCloseAddr);
+    auto pCloseActive = reinterpret_cast<UIManagerCloseActiveContentFn>(closeActiveAddr);
+    auto pContentMark = reinterpret_cast<UIContentMarkCloseFn>(contentMarkAddr);
+
+    void *mgr = CallUIManagerGetSingletonSEH(pMgr);
+    if (!mgr)
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: UI manager null");
+        return false;
+    }
+
+    VendorUiCandidate vendor{};
+    if (!FindVendorUiContent(pGet, pIsOpen, mgr, vendorVtableAddr, vendorCloseAddr, vendor))
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: merchant UI not found vendorVtable={:x} vendorClose={:x}",
+                     vendorVtableAddr, vendorCloseAddr);
+        return false;
+    }
+
+    uint32_t renderer = 0;
+    if (!SafeReadDword(rendererPtrAddr, renderer) || !renderer)
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: renderer null/invalid ptrAddr={:x} renderer={:x}",
+                     rendererPtrAddr, renderer);
+        return false;
+    }
+
+    bool directMark = CallUIContentMarkCloseSEH(pContentMark, vendor.ui);
+    int markRv = CallUIManagerCloseContentSEH(pMarkClose, mgr, vendor.id);
+    if (markRv < 0)
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: UIManager mark-close SEH id={} directMark={}",
+                     vendor.id, directMark);
+    }
+    if (!directMark && markRv <= 0)
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: mark-close failed id={} ui={:x} directMark={} managerRv={}",
+                     vendor.id, reinterpret_cast<uintptr_t>(vendor.ui), directMark, markRv);
+        return false;
+    }
+
+    spdlog::info("GGTB::CloseVendorWindowLocal: marked merchant close id={} directMark={} managerRv={} mgr={:x} renderer={:x} vendorUi={:x}",
+                 vendor.id, directMark, markRv,
+                 reinterpret_cast<uintptr_t>(mgr), renderer,
+                 reinterpret_cast<uintptr_t>(vendor.ui));
+
+    bool processed = CallUIManagerCloseActiveContentSEH(
+        pCloseActive, mgr, reinterpret_cast<void *>(static_cast<uintptr_t>(renderer)));
+    if (!processed)
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: CloseActiveContent SEH id={}", vendor.id);
+        return false;
+    }
+
+    int afterOpen = CallUIManagerIsContentOpenSEH(pIsOpen, mgr, vendor.id);
+    void *afterUi = CallUIManagerGetUIContentSEH(pGet, mgr, vendor.id);
+    uint32_t afterVtable = 0;
+    uint32_t afterCloseSlot = 0;
+    bool afterStillVendor =
+        afterUi &&
+        ReadUiVtableCloseSlot(afterUi, afterVtable, afterCloseSlot) &&
+        IsVendorUiVtable(afterVtable, afterCloseSlot, vendorVtableAddr, vendorCloseAddr);
+
+    bool closed = (afterOpen == 0) || !afterStillVendor;
+    int vendorCloseRv = -2;
+    bool fallbackProcessed = false;
+    if (!closed)
+    {
+        auto pVendorClose = reinterpret_cast<VendorUiCloseFn>(vendorCloseAddr);
+        vendorCloseRv = CallVendorUiCloseSEH(pVendorClose, vendor.ui);
+        if (vendorCloseRv >= 0)
+        {
+            if (packetSentByUiHandler)
+                *packetSentByUiHandler = true;
+            directMark = CallUIContentMarkCloseSEH(pContentMark, vendor.ui) || directMark;
+            fallbackProcessed = CallUIManagerCloseActiveContentSEH(
+                pCloseActive, mgr, reinterpret_cast<void *>(static_cast<uintptr_t>(renderer)));
+
+            afterOpen = CallUIManagerIsContentOpenSEH(pIsOpen, mgr, vendor.id);
+            afterUi = CallUIManagerGetUIContentSEH(pGet, mgr, vendor.id);
+            afterVtable = 0;
+            afterCloseSlot = 0;
+            afterStillVendor =
+                afterUi &&
+                ReadUiVtableCloseSlot(afterUi, afterVtable, afterCloseSlot) &&
+                IsVendorUiVtable(afterVtable, afterCloseSlot, vendorVtableAddr, vendorCloseAddr);
+            closed = (afterOpen == 0) || !afterStillVendor;
+        }
+    }
+
+    if (packetSentByUiHandler)
+        *packetSentByUiHandler = *packetSentByUiHandler || closed;
+
+    spdlog::info("GGTB::CloseVendorWindowLocal: close-active done id={} directMark={} managerRv={} vendorCloseRv={} fallbackProcessed={} afterOpen={} afterUi={:x} afterVtable={:x} afterCloseSlot={:x} closed={}",
+                 vendor.id, directMark, markRv, vendorCloseRv, fallbackProcessed,
+                 afterOpen, reinterpret_cast<uintptr_t>(afterUi), afterVtable,
+                 afterCloseSlot, closed);
+    if (!closed)
+    {
+        spdlog::warn("GGTB::CloseVendorWindowLocal: merchant UI still open after close-active route id={} ui={:x}",
+                     vendor.id, reinterpret_cast<uintptr_t>(vendor.ui));
+    }
+    return closed;
+}
+
+bool SendVendorClose(uint32_t token)
+{
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSendDword");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::SendVendorClose: pattern unresolved (begin={:x} send={:x})",
+                      beginAddr, sendAddr);
+        return false;
+    }
+
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSendDwordFn>(sendAddr);
+    int rv = CallNetSendDwordSEH(pBegin, pSend, kProtocolVendorClose,
+                                 static_cast<int>(token));
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::SendVendorClose: SEH token={:08X}", token);
+        return false;
+    }
+    spdlog::info("GGTB::SendVendorClose: token={:08X} rv={}", token, rv);
+    return true;
+}
+
+// ---------- Account-shared bank (账号共享仓库) ----------
+
+// BeginContent 返回的仓库 UIContent 对象指针,供 SendBankClose 标记关闭。openBank /
+// closeBank 是 broker 串行下发的命令(同一命令线程),用 atomic 仅为跨命令可见性保险。
+namespace { std::atomic<void *> g_bankContent{nullptr}; }
+
+bool SendBankOpen()
+{
+    auto mgrAddr      = PatternResolver::Get("UIManagerGetSingleton");
+    auto beginAddr    = PatternResolver::Get("UIManagerBeginContent");
+    auto rendererAddr = PatternResolver::Get("RendererPtr");
+    if (!mgrAddr || !beginAddr || !rendererAddr)
+    {
+        spdlog::error("GGTB::SendBankOpen: pattern unresolved (mgr={:x} begin={:x} renderer={:x})",
+                      mgrAddr, beginAddr, rendererAddr);
+        return false;
+    }
+
+    auto pMgr   = reinterpret_cast<UIManagerGetSingletonFn>(mgrAddr);
+    auto pBegin = reinterpret_cast<UIManagerBeginContentFn>(beginAddr);
+
+    void *mgr = CallUIManagerGetSingletonSEH(pMgr);
+    if (!mgr)
+    {
+        spdlog::warn("GGTB::SendBankOpen: UI manager null");
+        return false;
+    }
+
+    uint32_t renderer = 0;
+    if (!SafeReadDword(rendererAddr, renderer) || !renderer)
+    {
+        spdlog::warn("GGTB::SendBankOpen: renderer null ptrAddr={:x} renderer={:x}",
+                     rendererAddr, renderer);
+        return false;
+    }
+
+    // 复刻 UICmdDispatcher__OnButton case 0x63D: BeginContent(mgr, enum=2, renderer)。
+    // 内部建本地仓库 UI content 并发 411154/411644。返回 content 对象指针(0=失败)。
+    void *content = CallUIManagerBeginContentSEH(
+        pBegin, mgr, kBankContentEnum, static_cast<int>(renderer));
+    if (!content)
+    {
+        spdlog::warn("GGTB::SendBankOpen: BeginContent returned null (mgr={:x} renderer={:x})",
+                     reinterpret_cast<uintptr_t>(mgr), renderer);
+        return false;
+    }
+    g_bankContent.store(content, std::memory_order_release);
+    spdlog::info("GGTB::SendBankOpen: opened bank UI content={:x}",
+                 reinterpret_cast<uintptr_t>(content));
+    return true;
+}
+
+bool SendBankClose()
+{
+    auto mgrAddr         = PatternResolver::Get("UIManagerGetSingleton");
+    auto rendererAddr    = PatternResolver::Get("RendererPtr");
+    auto markCloseAddr   = PatternResolver::Get("UIContentMarkClose");
+    auto closeActiveAddr = PatternResolver::Get("UIManagerCloseActiveContent");
+    if (!mgrAddr || !rendererAddr || !markCloseAddr || !closeActiveAddr)
+    {
+        spdlog::error("GGTB::SendBankClose: pattern unresolved (mgr={:x} renderer={:x} mark={:x} closeActive={:x})",
+                      mgrAddr, rendererAddr, markCloseAddr, closeActiveAddr);
+        return false;
+    }
+
+    auto pMgr         = reinterpret_cast<UIManagerGetSingletonFn>(mgrAddr);
+    auto pMarkClose   = reinterpret_cast<UIContentMarkCloseFn>(markCloseAddr);
+    auto pCloseActive = reinterpret_cast<UIManagerCloseActiveContentFn>(closeActiveAddr);
+
+    void *mgr = CallUIManagerGetSingletonSEH(pMgr);
+    if (!mgr)
+    {
+        spdlog::warn("GGTB::SendBankClose: UI manager null");
+        return false;
+    }
+    uint32_t renderer = 0;
+    SafeReadDword(rendererAddr, renderer);
+
+    // 标记仓库 content 关闭,再让 UIManager 处理关闭(与 CloseVendorWindowLocal 同范式)。
+    void *content = g_bankContent.load(std::memory_order_acquire);
+    bool marked = content ? CallUIContentMarkCloseSEH(pMarkClose, content) : false;
+    bool processed = renderer
+        ? CallUIManagerCloseActiveContentSEH(
+              pCloseActive, mgr, reinterpret_cast<void *>(static_cast<uintptr_t>(renderer)))
+        : false;
+    g_bankContent.store(nullptr, std::memory_order_release);
+    spdlog::info("GGTB::SendBankClose: content={:x} marked={} processed={}",
+                 reinterpret_cast<uintptr_t>(content), marked, processed);
+    return processed;
+}
+
+std::vector<BankItemInfo> GetBankItems()
+{
+    std::vector<NetLog::BankEntry> raw;
+    NetLog::GetBankSnapshot(raw);
+    std::vector<BankItemInfo> out;
+    out.reserve(raw.size());
+    for (const auto &e : raw)
+        out.push_back(BankItemInfo{e.uid, e.itemId, e.count});
+    return out;
+}
+
+int SendBankMoveToCash(uint32_t uid, uint32_t itemId, uint32_t count)
+{
+    if (uid == 0 || count == 0)
+    {
+        spdlog::warn("GGTB::SendBankMoveToCash: invalid uid={} count={}", uid, count);
+        return -1;
+    }
+
+    // 挑目标 cash 格:优先已有同 itemId 的格(堆叠),否则首个空格;满则失败。
+    auto cash = GetCashBagItems();
+    std::unordered_set<uint32_t> used;
+    int dest = -1;
+    for (const auto &it : cash)
+    {
+        used.insert(it.slotIndex);
+        if (itemId != 0 && it.itemId == itemId && dest < 0)
+            dest = static_cast<int>(it.slotIndex);
+    }
+    if (dest < 0)
+    {
+        for (uint32_t s = 0; s < kCashSlotCount; ++s)
+        {
+            if (!used.count(s))
+            {
+                dest = static_cast<int>(s);
+                break;
+            }
+        }
+    }
+    if (dest < 0)
+    {
+        spdlog::warn("GGTB::SendBankMoveToCash: no free cash slot uid={} itemId={}", uid, itemId);
+        return -1;
+    }
+
+    auto beginAddr = PatternResolver::Get("NetBeginSend");
+    auto sendAddr  = PatternResolver::Get("NetSkillSendPackage");
+    if (!beginAddr || !sendAddr)
+    {
+        spdlog::error("GGTB::SendBankMoveToCash: pattern unresolved (begin={:x} send={:x})",
+                      beginAddr, sendAddr);
+        return -1;
+    }
+
+    auto pBegin = reinterpret_cast<NetBeginSendFn>(beginAddr);
+    auto pSend  = reinterpret_cast<NetSkillSendPackageFn>(sendAddr);
+    // body = [destCashWireSlot(slot+13), bankUniqueId, 0, count]。与摊贩购买同发送器。
+    uint32_t payload[4] = {
+        static_cast<uint32_t>(dest) + kCashSlotWireBase, uid, 0, count
+    };
+    int rv = CallSkillSendPackageSEH(pBegin, pSend, payload, sizeof(payload),
+                                     kProtocolBankMove);
+    if (rv < 0)
+    {
+        spdlog::warn("GGTB::SendBankMoveToCash: SEH uid={} itemId={} count={} dest={}",
+                     uid, itemId, count, dest);
+        return -1;
+    }
+    spdlog::info("GGTB::SendBankMoveToCash: uid={} itemId={} count={} -> cash slot {} rv={}",
+                 uid, itemId, count, dest, rv);
+    return dest;
 }
 
 // ---------- Walk-to-world-position (CLocalUser::SetAfterAction) ----------
@@ -4446,13 +5633,15 @@ PartySnapshot GetPartyMembers(bool includeBuffs)
         SafeReadDword(entry + kPartyEntryIdOffset, mid);
 
         PartyMember m{};
-        m.index  = static_cast<int>(i);
-        m.name   = Big5ToUtf8(nameBuf);
-        m.userId = mid;
-        m.isSelf = (static_cast<int32_t>(i) == selfIndex);
-        m.online = (static_cast<int32_t>(online) > 0);
-        m.hp     = -1;
-        m.maxHp  = -1;
+        m.index    = static_cast<int>(i);
+        m.name     = Big5ToUtf8(nameBuf);
+        m.userId   = mid;
+        m.isSelf   = (static_cast<int32_t>(i) == selfIndex);
+        m.online   = (static_cast<int32_t>(online) > 0);
+        m.hp       = -1;
+        m.maxHp    = -1;
+        m.nearby   = false;
+        m.distance = -1.0f;
 
         if (stateAddr)
         {
@@ -4474,9 +5663,27 @@ PartySnapshot GetPartyMembers(bool includeBuffs)
             std::string selfName = GetLocalPlayerName();
             if (!selfName.empty())
                 m.name = std::move(selfName);
-            m.online = true;
+            m.online   = true;
+            m.nearby   = true;   // self is trivially in range
+            m.distance = 0.0f;
             if (m.hp <= 0)
                 m.hp = static_cast<int32_t>(GetLocalHp());
+        }
+        else if (m.userId != 0 && m.userId != 0xFFFFFFFF)
+        {
+            // Teammate is "nearby" iff the engine loaded them into the
+            // around-player AOI list — that's the same gate the engine uses to
+            // resolve a remote target, so a buff cast only reaches them when
+            // nearby. Used by the broker's party-buff keeper to skip far members.
+            NearbyPlayer np;
+            if (LookupAroundPlayerById(m.userId, np))
+            {
+                m.nearby   = true;
+                m.distance = np.distance;
+                // 组队状态表的 HP 更新慢/不准,用 AOI 里 CUser 的实时 HP 覆盖(明文 +0x1B00)。
+                if (np.hp >= 0)
+                    m.hp = np.hp;
+            }
         }
 
         if (includeBuffs && m.userId != 0 && m.userId != 0xFFFFFFFF)

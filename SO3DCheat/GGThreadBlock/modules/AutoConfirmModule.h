@@ -135,6 +135,85 @@ inline bool EnsureHooksInstalled()
                  msgBoxAddr, countAddr);
     return true;
 }
+
+// ---------- 开箱战利品自动入袋 ----------
+// 把 OnBoxLootRecv_AutoMoveToBag 的两道门 NOP 掉，让箱子开出东西无条件自动
+// 入袋。两处都是 6 字节近跳转 (0F 84 / 0F 85 + rel32)。和"自动确认弹窗以及
+// 物品最大"开关联动启停。
+inline constexpr size_t kBoxGatePatchSize = 6;
+
+inline BYTE s_boxGate1Orig[kBoxGatePatchSize] = {};
+inline BYTE s_boxGate2Orig[kBoxGatePatchSize] = {};
+inline bool s_boxGate1Captured = false;
+inline bool s_boxGate2Captured = false;
+inline bool s_boxAutoMovePatched = false;
+
+inline bool NopBoxGate(const char *name, BYTE *backup, bool &captured)
+{
+    uintptr_t addr = PatternResolver::Get(name);
+    if (!addr)
+    {
+        spdlog::error("GGTB::AutoConfirm: {} unresolved", name);
+        return false;
+    }
+    DWORD oldProt = 0;
+    if (!VirtualProtect(reinterpret_cast<void *>(addr), kBoxGatePatchSize,
+                        PAGE_EXECUTE_READWRITE, &oldProt))
+    {
+        spdlog::error("GGTB::AutoConfirm: VirtualProtect failed @ {:x}", addr);
+        return false;
+    }
+    if (!captured)
+    {
+        memcpy(backup, reinterpret_cast<void *>(addr), kBoxGatePatchSize);
+        captured = true;
+    }
+    memset(reinterpret_cast<void *>(addr), 0x90, kBoxGatePatchSize);
+    VirtualProtect(reinterpret_cast<void *>(addr), kBoxGatePatchSize, oldProt, &oldProt);
+    FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void *>(addr),
+                          kBoxGatePatchSize);
+    spdlog::info("GGTB::AutoConfirm: NOP {} @ {:x}", name, addr);
+    return true;
+}
+
+inline bool RestoreBoxGate(const char *name, const BYTE *backup, bool captured)
+{
+    if (!captured)
+        return true;
+    uintptr_t addr = PatternResolver::Get(name);
+    if (!addr)
+        return false;
+    DWORD oldProt = 0;
+    if (!VirtualProtect(reinterpret_cast<void *>(addr), kBoxGatePatchSize,
+                        PAGE_EXECUTE_READWRITE, &oldProt))
+        return false;
+    memcpy(reinterpret_cast<void *>(addr), backup, kBoxGatePatchSize);
+    VirtualProtect(reinterpret_cast<void *>(addr), kBoxGatePatchSize, oldProt, &oldProt);
+    FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void *>(addr),
+                          kBoxGatePatchSize);
+    return true;
+}
+
+inline void SetBoxAutoMove(bool on)
+{
+    if (on)
+    {
+        if (s_boxAutoMovePatched)
+            return;
+        bool ok1 = NopBoxGate("BoxAutoMoveGate1", s_boxGate1Orig, s_boxGate1Captured);
+        bool ok2 = NopBoxGate("BoxAutoMoveGate2", s_boxGate2Orig, s_boxGate2Captured);
+        s_boxAutoMovePatched = ok1 && ok2;
+    }
+    else
+    {
+        if (!s_boxAutoMovePatched)
+            return;
+        RestoreBoxGate("BoxAutoMoveGate1", s_boxGate1Orig, s_boxGate1Captured);
+        RestoreBoxGate("BoxAutoMoveGate2", s_boxGate2Orig, s_boxGate2Captured);
+        s_boxAutoMovePatched = false;
+        spdlog::info("GGTB::AutoConfirm: box auto-move-to-bag restored");
+    }
+}
 } // namespace AutoConfirmDetail
 
 class AutoConfirmModule : public IModule
@@ -151,10 +230,11 @@ class AutoConfirmModule : public IModule
             if (enabled_ && !AutoConfirmDetail::s_hooked)
                 AutoConfirmDetail::EnsureHooksInstalled();
             AutoConfirmDetail::s_enabled.store(enabled_, std::memory_order_relaxed);
+            AutoConfirmDetail::SetBoxAutoMove(enabled_);
         }
         if (enabled_)
             ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f),
-                               u8"所有确认对话框自动 YES，数量弹窗自动取 Max");
+                               u8"所有确认对话框自动 YES，数量弹窗自动取 Max，开箱自动入袋");
         else
             ImGui::TextDisabled(u8"(不持久化,每次启动默认关闭)");
     }
@@ -162,6 +242,7 @@ class AutoConfirmModule : public IModule
     void OnShutdown() override
     {
         AutoConfirmDetail::s_enabled.store(false, std::memory_order_relaxed);
+        AutoConfirmDetail::SetBoxAutoMove(false);
     }
 
     std::string ConfigKey() const override { return {}; }

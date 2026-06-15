@@ -197,9 +197,10 @@ void HandleCommand(const nlohmann::json &cmd)
 
 struct StatusSnapshot
 {
-    int64_t money = 0;
-    int64_t hp = 0;
-    float   x = 0, y = 0, z = 0;
+    int64_t  money = 0;
+    int64_t  hp = 0;
+    float    x = 0, y = 0, z = 0;
+    uint32_t mapId = 0;
 };
 
 // 只跑 SEH-wrap 的引擎读取 — 不涉及任何带析构的局部，绕开 MSVC C2712。
@@ -211,11 +212,13 @@ StatusSnapshot ReadStatusSEH()
         s.money = GGTB::GetLocalMoney();
         s.hp    = GGTB::GetLocalHp();
         GGTB::GetLocalPosition(s.x, s.y, s.z);
+        s.mapId = GGTB::GetCurrentMapId();
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
         s.money = 0;
         s.x = s.y = s.z = 0;
+        s.mapId = 0;
     }
     return s;
 }
@@ -236,6 +239,7 @@ void TickThreadProc()
             {"money", s.money},
             {"hp", s.hp},
             {"posX", s.x}, {"posY", s.y}, {"posZ", s.z},
+            {"mapId", s.mapId},
         };
         if (!name.empty())
             st["characterName"] = name;

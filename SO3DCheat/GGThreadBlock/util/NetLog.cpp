@@ -17,6 +17,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cstdio>
 #include <cstdint>
@@ -82,10 +83,29 @@ constexpr uint32_t  kProtoSkillCastResult = 521056; // 0x7F360
 constexpr uint32_t  kProtoGcPublicChat    = 511004; // 0x7CC1C
 constexpr uint32_t  kProtoShopSellMoneyUpdate = 521054; // 0x7F35E
 constexpr uint32_t  kProtoNpcDialogSelect = 411026; // 0x645D2 — CG_NPC_DIALOG_SELECT
+constexpr uint32_t  kProtoTeleportReq     = 411076; // 0x64614 — CG city teleport (单 DWORD destId)
 std::atomic<DWORD>  s_lastSkillResultMs{0};
 std::atomic<uint32_t> s_lastSkillResultId{0};
 
-// Auto-trade observers — AutoTradeModule's worker polls these (recv hook on
+// Auto-fishing bait observer — AutoFishingModule 轮询 GetLastFishingBaitId() 回填
+// UI。手动抛一次竿就把 411047/411174 的 body[0](baitItemId@+8)学下来。模块自己
+// 不再挂 Detour(那会和本 send hook 在同一函数上打架导致闪退),纯靠观察这个 hook。
+constexpr uint32_t  kProtoFishingBait    = 411047; // CG_FISHING_BAIT 抛竿; body[0]=baitItemId
+constexpr uint32_t  kProtoFishingBaitAlt = 411174; // 备用饵类型,body 布局同上
+std::atomic<uint32_t> s_lastFishingBaitId{0};
+
+// Fishing-pose broadcast observer — AutoFishingModule 抛竿后用它做"等广播再微移"的
+// 时序门。proto 511058 = GC_OnEntityAction_07CC52(IDA 实证字面注册:
+// Net__RegisterPacketHandlersB @ 0x8928c0 处 sub_875550(511058, handler),非 base+sub)。
+// 分发器 GC_DispatchActorAction @ 0x94ED10 case 3/13 = 钓鱼动作。wire body(自 +8 起):
+// body[0]@+8 = actorId,body[1]@+12 = 动作子码(3/13=钓鱼),末尾 u32 = 姿态开关 flag。
+// 只在动作子码=钓鱼时记录"目标 actorId + tick",getter 比对调用方自己的 actorId 才返回。
+// recv hook(游戏 net 线程)写,worker 跨线程读。
+constexpr uint32_t  kProtoEntityAction   = 511058; // 0x7CCB2 — GC_OnEntityAction_07CC52
+std::atomic<DWORD>    s_lastFishPoseMs{0};
+std::atomic<uint32_t> s_lastFishPoseActorId{0};
+
+// Auto-trade observers — AutoTradeController's worker polls these (recv hook on
 // the game's net thread writes, worker reads). 两条都在交易 handler 注册表
 // Net_RegisterRecvHandlers_07D0xx(0x8a0a90)里注册,但 proto 不是统一
 // "base+subIndex":注册时 sub_875550(literalProto) 把字面 proto 映射成 slot,
@@ -101,6 +121,30 @@ constexpr uint32_t  kProtoGcTradePeerLock = 0x07D050; // 512080 — 对方锁定
 std::atomic<DWORD>    s_lastTradeRequestMs{0};
 std::atomic<uint32_t> s_lastTradeRequesterId{0};
 std::atomic<DWORD>    s_lastTradePeerLockMs{0};
+
+// ---------- 洗发条结果观察 (ClockworkWasher) ----------
+// 511644 = 0x7CE9C GC_RES_SPRING_OPT_ASSIGN, body(@+8)=8×u32:
+//   [resultCode(0=成功), grade, id1,id2,id3, val1,val2,val3]。
+// 冷发 411590(不开 UI)客户端不会把新属性写回物品内存(写到对话框 stale 目标),
+// 故洗发条权威结果只能从此回包取。tick 用 release 发布,其余 relaxed。
+// 注:线上 wire proto 实测是 0x7CE9C(recvlog 字节 9C CE 07 00),不是 IDA handler 注册
+// 表里看到的 0x7CC9C —— 早先按注册表误填 0x7CC9C 导致永远收不到回包。
+constexpr uint32_t    kProtoSpringAssign = 0x7CE9C; // 511644
+std::atomic<DWORD>    s_lastSpringMs{0};
+std::atomic<uint32_t> s_springResultCode{0};
+std::atomic<uint32_t> s_springGrade{0};
+std::atomic<uint32_t> s_springId[3]{};
+std::atomic<uint32_t> s_springVal[3]{};
+
+// 账号共享仓库整桶(511320)/单格更新(511322)。整桶用 mutex 保护的 vector 快照(条目数
+// 不定,放不进单个 atomic),搬运后 511322 据 uid 删格保持快照新鲜。recv hook(net 线程)
+// 写,broker 命令(worker 线程)读。
+constexpr uint32_t    kProtoBankBulk   = 511320; // 0x7CD58 SC_BANK_BULK
+constexpr uint32_t    kProtoBankUpdate = 511322; // 0x7CD5A SC_BANK_UPDATE
+constexpr uint32_t    kBankEntryStride = 24;     // 511320 每条目字节数
+std::mutex            s_bankMutex;
+std::vector<BankEntry> s_bankEntries;            // guarded by s_bankMutex
+std::atomic<DWORD>    s_lastBankBulkMs{0};
 
 // One-shot diagnostic flags so we can confirm the code path actually fired
 // without spamming the log once per packet.
@@ -286,7 +330,7 @@ std::string DecodeSendPayload(uint32_t proto, const uint8_t *buf, uint32_t len)
         return true;
     };
 
-    uint32_t a = 0, b = 0, c = 0;
+    uint32_t a = 0, b = 0, c = 0, d = 0, e = 0;
 
     switch (proto)
     {
@@ -319,6 +363,22 @@ std::string DecodeSendPayload(uint32_t proto, const uint8_t *buf, uint32_t len)
         // cached g_NpcInteractTargetId at *(dword_ED347C+1016).
         rd32(8, a); rd32(12, b); rd32(16, c);
         return fmt::format("CG_NPC_DIALOG_SELECT opt={} npc={} sub={}", a, b, c);
+    case 411156:
+        rd32(8, a); rd32(12, b);
+        return fmt::format("CG_USE_CASH_ITEM wireSlot={} arg={}", a, b);
+    case 411020:
+        rd32(8, a); rd32(12, b); rd32(16, c); rd32(20, d); rd32(24, e);
+        return fmt::format("CG_VENDOR_BUY vendorId={} shopIndex={} count={} targetSlot={} token=0x{:08X}",
+                           a, b, c, d, e);
+    case 411455:
+        rd32(8, a);
+        return fmt::format("CG_VENDOR_OPEN token=0x{:08X}", a);
+    case 411456:
+        rd32(8, a);
+        return fmt::format("CG_VENDOR_CLOSE token=0x{:08X}", a);
+    case 412067:
+        rd32(8, a);
+        return fmt::format("CG_PET_ENJOY value={}", a);
     case 411723:
         return "CG_UI_REFRESH"; // 0x647CB
     default:
@@ -519,6 +579,21 @@ static void EmitDialogSelectFrame(uint32_t npc, uint32_t opt, uint32_t sub)
     GGTB::RemoteControl::EmitFrame(frame);
 }
 
+// 主角色发出城市传送 (proto 411076) 时,把 destId 推给 broker,让「同步」把同一次
+// 传送 fan-out 给同组副角色。411076 是单 DWORD body:+8 destId(跟 411026 同序)。
+static void EmitTeleportFrame(uint32_t destId)
+{
+    nlohmann::json frame = {
+        {"type", "teleport"},
+        {"pid", GetCurrentProcessId()},
+        {"destId", destId},
+    };
+    const std::string name = GGTB::UserConfig::CurrentName();
+    if (!name.empty())
+        frame["characterName"] = name;
+    GGTB::RemoteControl::EmitFrame(frame);
+}
+
 int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
 {
     if (!s_diagSendFired.exchange(true))
@@ -566,6 +641,28 @@ int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
             SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 12, npc);
             SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 16, sub);
             EmitDialogSelectFrame(npc, opt, sub);
+        }
+    }
+    // 城市传送 (411076) 是单 DWORD body,len 比对话短,单独判一遍:destId@+8。
+    if (pkt && len >= 12)
+    {
+        uint32_t proto = 0;
+        SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 4, proto);
+        if (proto == kProtoTeleportReq)
+        {
+            uint32_t destId = 0;
+            SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 8, destId);
+            if (destId)
+                EmitTeleportFrame(destId);
+        }
+        // 自动钓鱼:学手动抛竿的 baitItemId(411047/411174 的 body[0]@+8)。
+        // 我们自己发的钓鱼包也会经过这里,store 的是同一个值,无害。
+        if (proto == kProtoFishingBait || proto == kProtoFishingBaitAlt)
+        {
+            uint32_t bait = 0;
+            SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 8, bait);
+            if (bait)
+                s_lastFishingBaitId.store(bait, std::memory_order_relaxed);
         }
     }
     return g_oSendPacketPT(ecx, edx, pkt, len);
@@ -687,6 +784,28 @@ static void EmitMoneyUpdateFrames(const MoneyUpdatePod *hits, int count)
     }
 }
 
+// 把 recv hook 在 __try 里采到的仓库 POD 结果提交进互斥保护的快照。必须是独立函数:
+// HookRawRecv 用了 __try,不能在同一函数里出现需要栈展开的 C++ 对象(lock_guard/vector)。
+static void CommitBankSnapshot(const BankEntry *hits, int count,
+                              const uint32_t *removedUids, int removedCount,
+                              bool bulkSeen)
+{
+    std::lock_guard<std::mutex> lk(s_bankMutex);
+    if (bulkSeen)
+    {
+        s_bankEntries.assign(hits, hits + count);
+        s_lastBankBulkMs.store(GetTickCount(), std::memory_order_release);
+    }
+    for (int i = 0; i < removedCount; ++i)
+    {
+        const uint32_t uid = removedUids[i];
+        s_bankEntries.erase(
+            std::remove_if(s_bankEntries.begin(), s_bankEntries.end(),
+                           [uid](const BankEntry &e) { return e.uid == uid; }),
+            s_bankEntries.end());
+    }
+}
+
 int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
 {
     if (!s_diagRecvFired.exchange(true))
@@ -737,6 +856,13 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
             int        chatHitCount = 0;
             MoneyUpdatePod moneyHits[8] = {};
             int            moneyHitCount = 0;
+            // 仓库整桶解析(POD,__try 内只填这些,出来再进 mutex)。bankBulkSeen 表示本批
+            // 收到了一桶 511320(即便桶为空也要清空快照)。bankRemovedUids 收 511322 要删的格。
+            BankEntry      bankHits[512] = {};
+            int            bankHitCount  = 0;
+            bool           bankBulkSeen  = false;
+            uint32_t       bankRemovedUids[16] = {};
+            int            bankRemovedCount = 0;
             __try
             {
                 const uint8_t *base  = reinterpret_cast<const uint8_t *>(bufAddr);
@@ -776,6 +902,21 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                         s_lastTradePeerLockMs.store(GetTickCount(), std::memory_order_release);
                     }
 
+                    // 钓鱼姿态广播 (511058 entity-action, body[1]@+12 = 钓鱼动作 3/13):
+                    // 记下被摆姿态的 actorId + tick。AutoFishing 抛竿后轮询本 tick,等服务端
+                    // 把"我"广播成钓鱼之后再触发破姿态微移 —— 保证走路动作盖在钓鱼广播之后。
+                    if (newlyCompleted && proto == kProtoEntityAction && pktLen >= 16)
+                    {
+                        uint32_t actorId = 0, action = 0;
+                        std::memcpy(&actorId, chunk + 8, 4);
+                        std::memcpy(&action, chunk + 12, 4);
+                        if (action == 3 || action == 13)
+                        {
+                            s_lastFishPoseActorId.store(actorId, std::memory_order_relaxed);
+                            s_lastFishPoseMs.store(GetTickCount(), std::memory_order_release);
+                        }
+                    }
+
                     if (newlyCompleted &&
                         proto == kProtoGcPublicChat && pktLen > 8 &&
                         chatHitCount < static_cast<int>(_countof(chatHits)))
@@ -808,6 +949,65 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                         moneyHits[moneyHitCount].money = money;
                         ++moneyHitCount;
                     }
+
+                    // 洗发条结果 511132: body=[resultCode,grade,id1,id2,id3,val1,val2,val3]。
+                    // ClockworkWasher 发 411590 后轮询 s_lastSpringMs 等这条回包确认完成。
+                    if (newlyCompleted && proto == kProtoSpringAssign && pktLen >= 40)
+                    {
+                        uint32_t w[8] = {};
+                        std::memcpy(w, chunk + 8, 32);
+                        s_springResultCode.store(w[0], std::memory_order_relaxed);
+                        s_springGrade.store(w[1], std::memory_order_relaxed);
+                        s_springId[0].store(w[2], std::memory_order_relaxed);
+                        s_springId[1].store(w[3], std::memory_order_relaxed);
+                        s_springId[2].store(w[4], std::memory_order_relaxed);
+                        s_springVal[0].store(w[5], std::memory_order_relaxed);
+                        s_springVal[1].store(w[6], std::memory_order_relaxed);
+                        s_springVal[2].store(w[7], std::memory_order_relaxed);
+                        s_lastSpringMs.store(GetTickCount(), std::memory_order_release);
+                    }
+
+                    // 仓库整桶 511320:body+4 条目数,每条 24B(+0 uid/+8 itemId/+12 packed)。
+                    // 重建快照(空条目跳过)。可堆叠真实数量=packed+1(攤販呼叫券等计数物品)。
+                    if (newlyCompleted && proto == kProtoBankBulk && pktLen >= 16)
+                    {
+                        bankBulkSeen = true;
+                        bankHitCount = 0;
+                        uint32_t entryCount = 0;
+                        std::memcpy(&entryCount, chunk + 12, 4); // body+4
+                        const uint8_t *e = chunk + 16;           // body+8
+                        uint32_t bytesLeft = pktLen - 16;
+                        for (uint32_t k = 0;
+                             k < entryCount && bytesLeft >= kBankEntryStride &&
+                             bankHitCount < static_cast<int>(_countof(bankHits));
+                             ++k)
+                        {
+                            uint32_t uid = 0, itemId = 0, packed = 0;
+                            std::memcpy(&uid, e, 4);
+                            std::memcpy(&itemId, e + 8, 4);
+                            std::memcpy(&packed, e + 12, 4);
+                            if (uid && itemId)
+                            {
+                                bankHits[bankHitCount].uid    = uid;
+                                bankHits[bankHitCount].itemId = itemId;
+                                bankHits[bankHitCount].count  = packed + 1;
+                                ++bankHitCount;
+                            }
+                            e += kBankEntryStride;
+                            bytesLeft -= kBankEntryStride;
+                        }
+                    }
+
+                    // 单格仓库更新 511322(搬出一格后回流):body+20 是该实例 uid,记下来
+                    // 出 __try 后从快照里删掉,避免补货循环重复搬同一格。
+                    if (newlyCompleted && proto == kProtoBankUpdate && pktLen >= 32 &&
+                        bankRemovedCount < static_cast<int>(_countof(bankRemovedUids)))
+                    {
+                        uint32_t uid = 0;
+                        std::memcpy(&uid, chunk + 28, 4); // body+20
+                        if (uid)
+                            bankRemovedUids[bankRemovedCount++] = uid;
+                    }
                     frameOffset += pktLen;
                     chunk     += pktLen;
                     remaining -= pktLen;
@@ -816,12 +1016,21 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
             __except (EXCEPTION_EXECUTE_HANDLER) {
                 chatHitCount = 0;
                 moneyHitCount = 0;
+                bankBulkSeen = false;
+                bankHitCount = 0;
+                bankRemovedCount = 0;
             }
 
             if (chatHitCount > 0)
                 EmitChatFrames(bufAddr, chatHits, chatHitCount);
             if (moneyHitCount > 0)
                 EmitMoneyUpdateFrames(moneyHits, moneyHitCount);
+
+            // 仓库快照提交:整桶整体替换;单格更新按 uid 删格。在 __try 外、独立函数里做
+            // (HookRawRecv 含 __try,本函数不能出现需要栈展开的 lock_guard/vector)。
+            if (bankBulkSeen || bankRemovedCount > 0)
+                CommitBankSnapshot(bankHits, bankHitCount, bankRemovedUids,
+                                   bankRemovedCount, bankBulkSeen);
 
             WriteRecvLineWithCurrentLogger(
                 peer, reinterpret_cast<void *>(bufAddr + oldFill), bytes);
@@ -968,9 +1177,47 @@ DWORD GetLastTradeRequestTickMs(uint32_t *outRequesterId)
     return s_lastTradeRequestMs.load(std::memory_order_acquire);
 }
 
+DWORD GetLastSpringAssign(uint32_t *outResultCode, uint32_t *outGrade,
+                          uint32_t outIds[3], uint32_t outVals[3])
+{
+    DWORD t = s_lastSpringMs.load(std::memory_order_acquire);
+    if (outResultCode) *outResultCode = s_springResultCode.load(std::memory_order_relaxed);
+    if (outGrade)      *outGrade      = s_springGrade.load(std::memory_order_relaxed);
+    for (int k = 0; k < 3; ++k)
+    {
+        if (outIds)  outIds[k]  = s_springId[k].load(std::memory_order_relaxed);
+        if (outVals) outVals[k] = s_springVal[k].load(std::memory_order_relaxed);
+    }
+    return t;
+}
+
 DWORD GetLastTradePeerLockTickMs()
 {
     return s_lastTradePeerLockMs.load(std::memory_order_acquire);
+}
+
+uint32_t GetLastFishingBaitId()
+{
+    return s_lastFishingBaitId.load(std::memory_order_relaxed);
+}
+
+DWORD GetLastSelfFishingPoseTickMs(uint32_t selfActorId)
+{
+    // 先读 tick(acquire)再读 actorId:tick 是发布点,actorId 在它之前已 relaxed 写入。
+    // 只有这条广播确实是针对"我"(actorId 匹配)时才返回 tick,否则当作没见到。
+    DWORD ms = s_lastFishPoseMs.load(std::memory_order_acquire);
+    if (ms == 0 || selfActorId == 0)
+        return 0;
+    if (s_lastFishPoseActorId.load(std::memory_order_relaxed) != selfActorId)
+        return 0;
+    return ms;
+}
+
+DWORD GetBankSnapshot(std::vector<BankEntry> &out)
+{
+    std::lock_guard<std::mutex> lk(s_bankMutex);
+    out = s_bankEntries;
+    return s_lastBankBulkMs.load(std::memory_order_acquire);
 }
 
 } // namespace GGTB::NetLog

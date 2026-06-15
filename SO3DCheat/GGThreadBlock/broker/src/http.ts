@@ -11,7 +11,11 @@ import { MoneyStats } from "./moneyStats";
 import { AutoReviveStats } from "./autoReviveStats";
 import { OnlineWhitelistSync } from "./onlineWhitelistSync";
 import { BuffKeeper } from "./buffKeeper";
+import { ClockworkWasher } from "./clockworkWasher";
 import { SyncManager } from "./syncManager";
+import { VendorPurchaser } from "./vendorPurchaser";
+import { AutoTradeManager } from "./autoTradeManager";
+import { PurchaseMonitor } from "./purchaseMonitor";
 
 export function createHttpApp(
     registry: InstanceRegistry,
@@ -24,7 +28,11 @@ export function createHttpApp(
     autoReviveStats: AutoReviveStats,
     onlineWhitelistSync: OnlineWhitelistSync,
     buffKeeper: BuffKeeper,
-    syncManager: SyncManager
+    syncManager: SyncManager,
+    vendorPurchaser: VendorPurchaser,
+    autoTradeManager: AutoTradeManager,
+    clockworkWasher: ClockworkWasher,
+    purchaseMonitor: PurchaseMonitor
 ) {
     const app = express();
     app.use(express.json());
@@ -40,6 +48,7 @@ export function createHttpApp(
                 dllVersion: i.dllVersion,
                 money: i.status.money,
                 hp: i.status.hp,
+                mapId: i.status.mapId,
                 lastSeen: i.lastSeen,
             }))
         );
@@ -77,6 +86,29 @@ export function createHttpApp(
             return res.json({ ...r, payload });
         } catch (e: any) {
             return res.status(502).json({ ok: false, error: e.message });
+        }
+    });
+
+    // --- Summoned vendor purchase API ---
+    app.get("/api/vendor-purchase/config", (_req: Request, res: Response) => {
+        res.json(vendorPurchaser.getConfig());
+    });
+
+    app.put("/api/vendor-purchase/config", async (req: Request, res: Response) => {
+        try {
+            res.json(await vendorPurchaser.setConfig(req.body || {}));
+        } catch (e: any) {
+            res.status(400).json({ ok: false, error: e.message || String(e) });
+        }
+    });
+
+    app.post("/api/vendor-purchase/:pid", async (req: Request, res: Response) => {
+        const pid = Number(req.params.pid);
+        if (!pid) return res.status(400).json({ ok: false, error: "bad pid" });
+        try {
+            res.json(await vendorPurchaser.purchase(pid, req.body || {}));
+        } catch (e: any) {
+            res.status(502).json({ ok: false, error: e.message || String(e), steps: e.steps });
         }
     });
 
@@ -217,6 +249,36 @@ export function createHttpApp(
         res.json(r);
     });
 
+    // --- Auto revive 全局模板库 API ---
+    // stepTemplates: 命名的脚本步骤集合(不含定点坐标),任意角色可套用。
+    // dialogTemplates: 给 sendDialogSelectRaw 的 (npcId, option) 命名。
+    app.get("/api/auto-revive/step-templates", (_req: Request, res: Response) => {
+        res.json(autoReviver.listStepTemplates());
+    });
+    app.put("/api/auto-revive/step-templates", (req: Request, res: Response) => {
+        try {
+            res.json(autoReviver.saveStepTemplate(req.body || {}));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.delete("/api/auto-revive/step-templates/:id", (req: Request, res: Response) => {
+        res.json({ ok: autoReviver.deleteStepTemplate(req.params.id) });
+    });
+    app.get("/api/auto-revive/dialog-templates", (_req: Request, res: Response) => {
+        res.json(autoReviver.listDialogTemplates());
+    });
+    app.put("/api/auto-revive/dialog-templates", (req: Request, res: Response) => {
+        try {
+            res.json(autoReviver.saveDialogTemplate(req.body || {}));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.delete("/api/auto-revive/dialog-templates/:id", (req: Request, res: Response) => {
+        res.json({ ok: autoReviver.deleteDialogTemplate(req.params.id) });
+    });
+
     // --- GM 回复 API ---
     app.get("/api/gm-replier/config", (_req: Request, res: Response) => {
         res.json(gmReplier.getConfig());
@@ -231,6 +293,19 @@ export function createHttpApp(
     app.post("/api/gm-replier/logs/clear", (_req: Request, res: Response) => {
         gmReplier.clearLogs();
         res.json({ ok: true });
+    });
+    // 测试:模拟 GM 发某句话,只返回模型预测的回复,不发游戏、不写日志。
+    app.post("/api/gm-replier/test", async (req: Request, res: Response) => {
+        const { message, characterName } = req.body || {};
+        if (!message || typeof message !== "string") {
+            return res.status(400).json({ error: "missing message" });
+        }
+        try {
+            const result = await gmReplier.previewReply(message, characterName);
+            res.json(result);
+        } catch (e: any) {
+            res.status(500).json({ error: e?.message ?? String(e) });
+        }
     });
 
     // --- Paodian API ---
@@ -284,6 +359,50 @@ export function createHttpApp(
         }
     });
 
+    // --- Purchase monitor API (监控购买) ---
+    // 监控某角色 cash 背包某物品数量,低于阈值就用该角色账号去泡点买并搬进 cash 背包。
+    app.get("/api/purchase-monitor/config", (_req: Request, res: Response) => {
+        res.json(purchaseMonitor.getConfig());
+    });
+    app.put("/api/purchase-monitor/config", (req: Request, res: Response) => {
+        try {
+            res.json(purchaseMonitor.setConfig(req.body || {}));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.get("/api/purchase-monitor/entries", (_req: Request, res: Response) => {
+        res.json(purchaseMonitor.getEntries());
+    });
+    app.post("/api/purchase-monitor/entries", (req: Request, res: Response) => {
+        try {
+            res.json(purchaseMonitor.addOrUpdateEntry(req.body || {}));
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+    app.delete("/api/purchase-monitor/entries", (req: Request, res: Response) => {
+        const characterName = String(req.query.characterName || "");
+        const itemName = String(req.query.itemName || "");
+        res.json({ ok: purchaseMonitor.removeEntry(characterName, itemName) });
+    });
+    // 手动触发(测试用):买 count 个并搬进 cash 背包,忽略最小间隔,不更新 lastTriggered。
+    app.post("/api/purchase-monitor/run", async (req: Request, res: Response) => {
+        try {
+            const { characterName, itemName, itemId, count } = req.body || {};
+            res.json(
+                await purchaseMonitor.manualRun({
+                    characterName,
+                    itemName,
+                    itemId: itemId !== undefined ? Number(itemId) : undefined,
+                    count: Number(count),
+                })
+            );
+        } catch (e: any) {
+            res.status(400).json({ error: e.message || String(e) });
+        }
+    });
+
     // --- Buff keeper API ---
     // 配置:每个角色一份 { enabled, pollMs, rules[] }。前端 GET/PUT/DELETE。
     // rules 每条 { id, enabled, buffId|buffName, skillId, targetId, minRecastMs }。
@@ -303,6 +422,26 @@ export function createHttpApp(
         res.json({ ok: buffKeeper.deleteConfig(req.params.name) });
     });
 
+    // --- 自动洗发条 (clockwork-washer) API ---
+    // 配置:每个角色一份 { enabled, slotIndex, springType, targetGrade, requiredAttrs[],
+    // minMatchCount, pollMs, maxWashes } + 运行时 { washCount, status, lastGrade, lastAttrs }。
+    // 实时查物品/属性表走通用 /api/command/:pid (queryClockwork / getSpringAttrTable)。
+    app.get("/api/clockwork-washer/configs", (_req: Request, res: Response) => {
+        res.json(clockworkWasher.listConfigs());
+    });
+    app.get("/api/clockwork-washer/configs/:name", (req: Request, res: Response) => {
+        const c = clockworkWasher.getConfig(req.params.name);
+        if (!c) return res.status(404).json({ error: "not found" });
+        res.json(c);
+    });
+    app.put("/api/clockwork-washer/configs/:name", (req: Request, res: Response) => {
+        const cfg = clockworkWasher.setConfig(req.params.name, req.body || {});
+        res.json(cfg);
+    });
+    app.delete("/api/clockwork-washer/configs/:name", (req: Request, res: Response) => {
+        res.json({ ok: clockworkWasher.deleteConfig(req.params.name) });
+    });
+
     // --- 同步 (sync) API ---
     // 单一配置:{ enabled, masterName, slaveNames[], followIntervalMs, mirrorPosition,
     // mirrorDialog, posEpsilon }。前端 GET/PUT。主角色移动 + NPC 对话镜像给副角色。
@@ -311,6 +450,16 @@ export function createHttpApp(
     });
     app.put("/api/sync/config", (req: Request, res: Response) => {
         res.json(syncManager.setConfig(req.body || {}));
+    });
+
+    // --- 自动交易 (auto-trade) API ---
+    // 全局单一配置:{ enabled, acceptAll, autoLockConfirm, acceptDelayMs,
+    // confirmDelayMs, whitelist[] }。所有角色共用,改了即推给全部在线实例。
+    app.get("/api/auto-trade/config", (_req: Request, res: Response) => {
+        res.json(autoTradeManager.getConfig());
+    });
+    app.put("/api/auto-trade/config", (req: Request, res: Response) => {
+        res.json(autoTradeManager.setConfig(req.body || {}));
     });
 
     // Embedded mode: serve from in-memory assets; otherwise use filesystem

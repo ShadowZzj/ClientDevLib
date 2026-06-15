@@ -48,6 +48,38 @@
 
     <el-divider />
 
+    <!-- 城市传送（复刻聊天框 "/城市名"） -->
+    <h4>城市传送</h4>
+    <p class="hint">
+      复刻聊天框输入「/狮子城」的城市传送 —— 客户端本地用 UIManager 传送表把城名
+      解析成目的地 id，再发 411076。城名按游戏菜单里的写法填（此 build 为繁体）。
+      等级 / 金钱不够的城会解析失败；死亡 / 地图限制由服务端校验。
+    </p>
+    <el-form label-width="100px" style="max-width: 520px">
+      <el-form-item label="城市名">
+        <el-input
+          v-model="teleportCity"
+          placeholder="如 狮子城"
+          style="width: 220px"
+          clearable
+          @keyup.enter="doTeleport"
+        />
+        <el-button type="primary" :loading="teleporting" @click="doTeleport" style="margin-left: 8px">
+          传送
+        </el-button>
+      </el-form-item>
+      <el-form-item v-if="teleportHistory.length" label="最近">
+        <el-tag
+          v-for="c in teleportHistory"
+          :key="c"
+          class="tp-tag"
+          @click="quickTeleport(c)"
+        >{{ c }}</el-tag>
+      </el-form-item>
+    </el-form>
+
+    <el-divider />
+
     <h4>历史目标</h4>
     <el-table :data="historyRows" size="small" style="max-width: 720px">
       <el-table-column prop="x" label="X" width="120" />
@@ -286,6 +318,41 @@ function applyHistory(row: MoveHistoryEntry & { actionText: string }) {
   targetId.value = row.targetId
 }
 
+// ---------- 城市传送 ----------
+// 复刻聊天框 "/城市名"：broker teleport handler 先用传送表把城名解析成 destId
+// 再发 411076。城名是 UTF-8，DLL 内部转 Big5（此 build 为 TW 包）。最近城市存
+// localStorage，点 tag 直接重发。
+const teleportCity = ref('')
+const teleporting = ref(false)
+const teleportStore = useLocalHistory('ggtb.teleport')
+const teleportHistory = ref<string[]>(teleportStore.getAll())
+
+async function doTeleport() {
+  const city = teleportCity.value.trim()
+  if (!city) { ElMessage.warning('请输入城市名'); return }
+  if (!selectedPid.value) { ElMessage.warning('未选择实例'); return }
+  teleporting.value = true
+  try {
+    const r = await postCommand('teleport', { cityName: city })
+    if (r?.ok) {
+      ElMessage.success(`已下发传送: ${city}`)
+      teleportStore.push(city)
+      teleportHistory.value = teleportStore.getAll()
+    } else {
+      ElMessage.error(`失败: ${r?.detail || r?.error || 'unknown'}`)
+    }
+  } catch (e: any) {
+    ElMessage.error(`失败: ${e.message}`)
+  } finally {
+    teleporting.value = false
+  }
+}
+
+function quickTeleport(city: string) {
+  teleportCity.value = city
+  doTeleport()
+}
+
 // ---------- NPC / 怪物 ----------
 interface NpcRow {
   id: number
@@ -446,6 +513,8 @@ watch(autoRefreshDialog, () => { startDialogPoll() })
 }
 .sub-hint { color: var(--el-text-color-secondary); margin-left: 8px; font-size: 12px; }
 h4 { margin: 12px 0 8px; }
+
+.tp-tag { margin: 0 6px 6px 0; cursor: pointer; }
 
 .npc-toolbar {
   display: flex;

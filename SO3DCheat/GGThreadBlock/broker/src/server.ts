@@ -13,7 +13,11 @@ import { MoneyStats } from "./moneyStats";
 import { AutoReviveStats } from "./autoReviveStats";
 import { OnlineWhitelistSync } from "./onlineWhitelistSync";
 import { BuffKeeper } from "./buffKeeper";
+import { ClockworkWasher } from "./clockworkWasher";
 import { SyncManager } from "./syncManager";
+import { VendorPurchaser } from "./vendorPurchaser";
+import { AutoTradeManager } from "./autoTradeManager";
+import { PurchaseMonitor } from "./purchaseMonitor";
 
 const PIPE_NAME = process.env.GGTB_BROKER_PIPE || "GGTB_BROKER";
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
@@ -36,6 +40,10 @@ function main() {
     const onlineWhitelistSync = new OnlineWhitelistSync(registry, dataDir);
     const buffKeeper = new BuffKeeper(registry);
     const syncManager = new SyncManager(registry);
+    const vendorPurchaser = new VendorPurchaser(registry, dataDir);
+    const autoTradeManager = new AutoTradeManager(registry);
+    const clockworkWasher = new ClockworkWasher(registry);
+    const purchaseMonitor = new PurchaseMonitor(registry, paodianMonitor);
 
     // 命名管道 server。Node 的 net.createServer 直接接受 \\.\pipe\X 作为 listen
     // path,内部走 ConnectNamedPipe 等价路径。DLL 客户端 CreateFileA 上来就能连。
@@ -50,7 +58,7 @@ function main() {
     });
 
     // HTTP / WS server
-    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats, onlineWhitelistSync, buffKeeper, syncManager);
+    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats, onlineWhitelistSync, buffKeeper, syncManager, vendorPurchaser, autoTradeManager, clockworkWasher, purchaseMonitor);
     const httpServer = http.createServer(app);
     attachWs(httpServer, registry, autoReviver, gmReplier, moneyStats, autoReviveStats);
     httpServer.listen(HTTP_PORT, HTTP_HOST, () => {
@@ -69,6 +77,9 @@ function main() {
         onlineWhitelistSync.destroy();
         buffKeeper.destroy();
         syncManager.destroy();
+        autoTradeManager.destroy();
+        clockworkWasher.destroy();
+        purchaseMonitor.destroy();
         pipeServer.close();
         httpServer.close();
         process.exit(0);

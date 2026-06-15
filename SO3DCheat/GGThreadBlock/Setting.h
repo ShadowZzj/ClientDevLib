@@ -17,7 +17,7 @@ class Setting : public zzj::D3D::Setting
     void Init() override;
     void Render(bool &open) override;
     void End() override;
-    DWORD GetToggleMenuKey() override { return VK_OEM_4; } // '['
+    DWORD GetToggleMenuKey() const { return VK_OEM_4; } // '['
 
     const std::vector<std::shared_ptr<IModule>> &GetModules() const { return modules_; }
 

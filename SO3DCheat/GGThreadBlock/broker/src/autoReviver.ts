@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { EventEmitter } from "events";
+import { v4 as uuid } from "uuid";
 import { InstanceRegistry } from "./instances";
 
 // ---------------- step + config 类型 ----------------
@@ -93,8 +94,40 @@ export interface AutoReviveConfig {
     delayMinMin: number;
     delayMinMax: number;
     pauseOnNearbyGm: boolean;
+    // 位置卡住自动复活:存活但坐标连续 stuckReviveMinutes 分钟没变化(超过
+    // STUCK_MOVE_EPSILON 才算移动)→ 直接跑一遍复活脚本。前提是 autoRun 开。
+    // 死亡场景仍走 delay 排程,两者互不干扰。
+    stuckReviveEnabled: boolean;
+    stuckReviveMinutes: number;
     scheduleWindows: AutoReviveScheduleWindow[];
     steps: Step[];
+    // 定点挂机坐标:作为角色运行时的真实来源。套用脚本模板时从模板复制进来
+    // (不同模板可能传送到不同地图)。
+    farmX?: number;
+    farmY?: number;
+    // 勾上才会在脚本跑完后把定点坐标推送给游戏(setStationaryFarm)。默认不推。
+    farmPushEnabled: boolean;
+}
+
+// 全局共享脚本步骤模板库:存「脚本步骤 + 定点挂机坐标 + 是否推送」。不同模板可能
+// 传送到不同地图,所以定点坐标和推送开关都跟着模板走,套用模板时一并带入角色 config。
+// 用户给它命名,任意角色都能挑一个套到自己的 steps 上。
+export interface StepTemplate {
+    id: string;
+    name: string;
+    steps: Step[];
+    farmX?: number;
+    farmY?: number;
+    farmPushEnabled?: boolean;
+}
+
+// 全局共享对话选择模板库:给 sendDialogSelectRaw 的 (npcId, option) 起名,
+// 用户在步骤里直接挑名字而不用记两个数字。
+export interface DialogTemplate {
+    id: string;
+    name: string;
+    npcId: number;
+    option: number;
 }
 
 export type Phase = "idle" | "pending" | "running" | "armed";
@@ -114,6 +147,11 @@ export interface AutoReviveState {
     gmPauseLastTickAt?: number;
     pausedBySchedule?: boolean;
     schedulePauseLastTickAt?: number;
+    // 位置卡住检测的运行时基线(不持久化):上次观测到的坐标 + 上次发生移动的
+    // 时刻。lastMoveAt 起就是「未移动」计时起点。
+    lastPosX?: number;
+    lastPosY?: number;
+    lastMoveAt?: number;
 }
 
 const PERSIST_FILE = path.resolve(
@@ -126,12 +164,19 @@ const RING_BUF_LINES = 200;       // 每角色日志环形缓冲行数
 
 const GM_NEARBY_MAX_DISTANCE = 600;
 
+// 位置卡住检测:坐标变化超过这个值(单位同 moveTo 的 x/y,主城坐标量级在几百)
+// 才算「移动了」,过滤浮点噪声。低于它视为原地不动。
+const STUCK_MOVE_EPSILON = 1.0;
+
 interface PersistedDoc {
     configs: AutoReviveConfig[];
     // 排程也持久化:broker 重启后,pending 的角色既不丢死亡时间戳也不会被
     // 重新 roll 一个延迟。 scheduledAt 已经包含 broker 上次 roll 出来的具体值。
     deadAt: Record<string, number>;
     scheduledAt: Record<string, number>;
+    // 全局共享模板库:脚本步骤模板 + 对话选择模板。所有角色共用。
+    stepTemplates?: StepTemplate[];
+    dialogTemplates?: DialogTemplate[];
 }
 
 function defaultConfig(name: string): AutoReviveConfig {
@@ -141,8 +186,11 @@ function defaultConfig(name: string): AutoReviveConfig {
         delayMinMin: 5,
         delayMinMax: 5,
         pauseOnNearbyGm: false,
+        stuckReviveEnabled: false,
+        stuckReviveMinutes: 10,
         scheduleWindows: [],
         steps: [],
+        farmPushEnabled: false,
     };
 }
 
@@ -231,6 +279,9 @@ export class AutoReviver extends EventEmitter {
     private aborts = new Map<string, boolean>();
     private timer: NodeJS.Timeout | null = null;
     private getGmNames: () => string[];
+    // 全局共享模板库(非角色级)。
+    private stepTemplates = new Map<string, StepTemplate>();
+    private dialogTemplates = new Map<string, DialogTemplate>();
 
     constructor(registry: InstanceRegistry, getGmNames: () => string[] = () => []) {
         super();
@@ -249,6 +300,14 @@ export class AutoReviver extends EventEmitter {
             for (const c of doc.configs || []) {
                 if (!c.characterName) continue;
                 this.configs.set(c.characterName, this.normalizeConfig(c));
+            }
+            for (const t of doc.stepTemplates || []) {
+                const norm = this.normalizeStepTemplate(t);
+                if (norm) this.stepTemplates.set(norm.id, norm);
+            }
+            for (const t of doc.dialogTemplates || []) {
+                const norm = this.normalizeDialogTemplate(t);
+                if (norm) this.dialogTemplates.set(norm.id, norm);
             }
             const deadAt = doc.deadAt || {};
             const scheduled = doc.scheduledAt || {};
@@ -284,6 +343,8 @@ export class AutoReviver extends EventEmitter {
             configs: Array.from(this.configs.values()),
             deadAt,
             scheduledAt,
+            stepTemplates: Array.from(this.stepTemplates.values()),
+            dialogTemplates: Array.from(this.dialogTemplates.values()),
         };
         try {
             fs.writeFileSync(PERSIST_FILE, JSON.stringify(doc, null, 2), "utf8");
@@ -313,6 +374,10 @@ export class AutoReviver extends EventEmitter {
             delayMinMin: Math.max(0, lo),
             delayMinMax: Math.max(0, hi),
             pauseOnNearbyGm: !!c.pauseOnNearbyGm,
+            stuckReviveEnabled: !!c.stuckReviveEnabled,
+            stuckReviveMinutes: Number.isFinite(c.stuckReviveMinutes)
+                ? Math.max(0, Math.round(c.stuckReviveMinutes))
+                : 10,
             scheduleWindows: Array.isArray(c.scheduleWindows)
                 ? c.scheduleWindows
                     .map(normalizeScheduleWindow)
@@ -321,7 +386,39 @@ export class AutoReviver extends EventEmitter {
             steps: Array.isArray(c.steps)
                 ? c.steps.map(normalizeStep).filter((s: Step | null): s is Step => !!s)
                 : [],
+            ...(Number.isFinite(c.farmX) ? { farmX: Math.round(c.farmX) } : {}),
+            ...(Number.isFinite(c.farmY) ? { farmY: Math.round(c.farmY) } : {}),
+            farmPushEnabled: !!c.farmPushEnabled,
         };
+    }
+
+    private normalizeStepTemplate(t: any): StepTemplate | null {
+        if (!t || typeof t !== "object") return null;
+        const name = String(t.name || "").trim();
+        if (!name) return null;
+        const id = String(t.id || "").trim() || uuid();
+        const steps = Array.isArray(t.steps)
+            ? t.steps.map(normalizeStep).filter((s: Step | null): s is Step => !!s)
+            : [];
+        return {
+            id,
+            name,
+            steps,
+            ...(Number.isFinite(t.farmX) ? { farmX: Math.round(t.farmX) } : {}),
+            ...(Number.isFinite(t.farmY) ? { farmY: Math.round(t.farmY) } : {}),
+            farmPushEnabled: !!t.farmPushEnabled,
+        };
+    }
+
+    private normalizeDialogTemplate(t: any): DialogTemplate | null {
+        if (!t || typeof t !== "object") return null;
+        const name = String(t.name || "").trim();
+        if (!name) return null;
+        const npcId = Number(t.npcId);
+        const option = Number(t.option);
+        if (!Number.isFinite(npcId) || !Number.isFinite(option)) return null;
+        const id = String(t.id || "").trim() || uuid();
+        return { id, name, npcId: Math.round(npcId), option: Math.round(option) };
     }
 
     // ---------- public API ----------
@@ -365,6 +462,44 @@ export class AutoReviver extends EventEmitter {
             this.clearGmPause(st);
             this.clearSchedulePause(st);
         }
+        if (had) this.save();
+        return had;
+    }
+
+    // ---------- 全局模板库 CRUD ----------
+    listStepTemplates(): StepTemplate[] {
+        return Array.from(this.stepTemplates.values());
+    }
+
+    // upsert:带 id 且已存在 → 更新;否则新建一个 id。返回规整后的模板。
+    saveStepTemplate(input: any): StepTemplate {
+        const norm = this.normalizeStepTemplate(input);
+        if (!norm) throw new Error("invalid step template (need name)");
+        this.stepTemplates.set(norm.id, norm);
+        this.save();
+        return norm;
+    }
+
+    deleteStepTemplate(id: string): boolean {
+        const had = this.stepTemplates.delete(id);
+        if (had) this.save();
+        return had;
+    }
+
+    listDialogTemplates(): DialogTemplate[] {
+        return Array.from(this.dialogTemplates.values());
+    }
+
+    saveDialogTemplate(input: any): DialogTemplate {
+        const norm = this.normalizeDialogTemplate(input);
+        if (!norm) throw new Error("invalid dialog template (need name, npcId, option)");
+        this.dialogTemplates.set(norm.id, norm);
+        this.save();
+        return norm;
+    }
+
+    deleteDialogTemplate(id: string): boolean {
+        const had = this.dialogTemplates.delete(id);
         if (had) this.save();
         return had;
     }
@@ -568,13 +703,14 @@ export class AutoReviver extends EventEmitter {
             const pid = nameToPid.get(cfg.characterName);
             if (pid === undefined) continue; // 离线就不动状态机
 
-            // 拉 hp。失败 = 当成 idle (不会误触发自动复活)。
+            // 拉 hp + 坐标。失败 = 当成 idle (不会误触发自动复活)。
             let isDead = false;
+            let statusObj: any = null;
             try {
                 const r = await this.registry.sendCommand(pid, "getStatus", {}, 3000);
                 if (!r.ok) continue;
-                const obj = typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail;
-                isDead = !!obj?.isDead;
+                statusObj = typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail;
+                isDead = !!statusObj?.isDead;
             } catch {
                 continue;
             }
@@ -590,8 +726,15 @@ export class AutoReviver extends EventEmitter {
                     this.save();
                     this.emit("state", cfg.characterName, this.snapshotState(cfg.characterName));
                 }
+                // 存活才做位置卡住检测;死亡交给下面的延迟排程。
+                await this.tickStuckDetect(cfg, st, pid, statusObj, now);
                 continue;
             }
+
+            // 到这里 = 死亡。重置卡住基线,死亡/复活过程中坐标冻结不计入「未移动」。
+            st.lastPosX = undefined;
+            st.lastPosY = undefined;
+            st.lastMoveAt = undefined;
 
             const hasScheduleWindows = this.hasScheduleWindows(cfg);
             const activeWindow = this.getActiveScheduleWindow(cfg, now);
@@ -695,6 +838,69 @@ export class AutoReviver extends EventEmitter {
         }
     }
 
+    // 位置卡住检测(仅在存活 + phase 非 running 时被 tick 调用)。
+    // 思路:每个 tick 比对坐标。移动了 → 刷新基线 + lastMoveAt;没动且累计
+    // 时长 >= stuckReviveMinutes → 跑一遍复活脚本(同「立即执行(不看死活)」语义,
+    // ignoreReviveSafetyCheck)。复用 pauseOnNearbyGm:GM 在旁就先不触发。
+    private async tickStuckDetect(
+        cfg: AutoReviveConfig,
+        st: AutoReviveState,
+        pid: number,
+        statusObj: any,
+        now: number
+    ): Promise<void> {
+        if (!cfg.stuckReviveEnabled || cfg.stuckReviveMinutes <= 0 || cfg.steps.length === 0) {
+            // 功能关闭 / 无脚本 → 清基线,避免下次打开立刻命中旧基线。
+            st.lastPosX = undefined;
+            st.lastPosY = undefined;
+            st.lastMoveAt = undefined;
+            return;
+        }
+
+        const posX = Number(statusObj?.posX);
+        const posY = Number(statusObj?.posY);
+        if (!Number.isFinite(posX) || !Number.isFinite(posY)) return;
+
+        const baselineUnset = st.lastPosX === undefined || st.lastPosY === undefined;
+        const moved = baselineUnset
+            || Math.abs(posX - (st.lastPosX as number)) > STUCK_MOVE_EPSILON
+            || Math.abs(posY - (st.lastPosY as number)) > STUCK_MOVE_EPSILON;
+
+        if (moved) {
+            st.lastPosX = posX;
+            st.lastPosY = posY;
+            st.lastMoveAt = now;
+            return;
+        }
+
+        const stuckMs = now - (st.lastMoveAt ?? now);
+        const thresholdMs = cfg.stuckReviveMinutes * 60_000;
+        if (stuckMs < thresholdMs) return;
+
+        // 到时间了。GM 在旁边就先不跑(不重置基线,GM 走后下个 tick 立刻触发)。
+        if (cfg.pauseOnNearbyGm) {
+            const gm = await this.findNearbyGm(pid);
+            if (gm) {
+                this.appendLog(cfg.characterName,
+                    `[stuck] 位置 ${Math.round(stuckMs / 1000)}s 未变化,但 GM ${gm.name} (${Math.round(gm.distance)}) 在旁 → 暂不触发`);
+                return;
+            }
+        }
+
+        this.appendLog(cfg.characterName,
+            `[stuck] 位置 ${Math.round(stuckMs / 1000)}s (>=${cfg.stuckReviveMinutes}min) 未变化 → 触发复活流程`);
+        // 重置基线:脚本跑完不会因为还在原点而立刻重复触发,需重新累计满 X 分钟。
+        st.lastPosX = posX;
+        st.lastPosY = posY;
+        st.lastMoveAt = now;
+        this.runScript(cfg.characterName, pid, {
+            ignoreReviveSafetyCheck: true,
+            countAsAutoRevive: true,
+        }).catch((e) =>
+            console.warn(`[autoReviver] stuck runScript ${cfg.characterName} failed: ${e.message}`)
+        );
+    }
+
     private async runScript(name: string, pid: number, options: RunScriptOptions = {}): Promise<void> {
         const cfg = this.configs.get(name);
         if (!cfg) return;
@@ -741,6 +947,19 @@ export class AutoReviver extends EventEmitter {
                 }
             }
             this.appendLog(name, `脚本执行完毕`);
+            // 脚本顺利跑完(未失败/未中止)且勾了「推送定点坐标」→ 推送定点挂机坐标。
+            // 坐标跟着脚本走,由角色 config 持有(套用模板时从模板复制进来)。
+            const runOk = !failed && this.aborts.get(name) !== true;
+            if (runOk && cfg.farmPushEnabled && Number.isFinite(cfg.farmX as number) && Number.isFinite(cfg.farmY as number)) {
+                const x = Math.round(cfg.farmX as number);
+                const y = Math.round(cfg.farmY as number);
+                try {
+                    const r = await this.registry.sendCommand(pid, "setStationaryFarm", { x, y }, 5000);
+                    this.appendLog(name, `  推送定点挂机坐标 (${x}, ${y}) -> ${r.ok ? "ok" : "FAIL: " + r.detail}`);
+                } catch (e: any) {
+                    this.appendLog(name, `  推送定点坐标异常: ${e.message}`);
+                }
+            }
             const completed = cfg.steps.length > 0 && !failed && this.aborts.get(name) !== true;
             if (completed && options.countAsAutoRevive) {
                 this.emit("autoRunComplete", {

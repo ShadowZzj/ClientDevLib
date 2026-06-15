@@ -16,17 +16,48 @@ class StationaryFarmModule : public IModule
   public:
     StationaryFarmModule() : IModule(u8"定点挂机")
     {
+        s_instance.store(this);
         worker_ = std::thread([this] { WorkerLoop(); });
     }
 
     ~StationaryFarmModule() override
     {
+        StationaryFarmModule *expected = this;
+        s_instance.compare_exchange_strong(expected, nullptr);
         stop_.store(true);
         if (worker_.joinable())
             worker_.join();
     }
 
     bool CanAutoPause() const override { return false; }
+
+    // broker 远程下发定点坐标(自动复活页面「推送坐标到游戏」)。只写坐标,不动
+    // enable 开关 —— 是否启用定点挂机仍由用户在游戏内自己勾。
+    //   * 已启用: worker 下一拍就把新坐标写进游戏,角色随即被拉到新点。
+    //   * 未启用: 坐标存进 savedX_/savedY_ 并打 pendingExternal_,下次用户勾启用时
+    //             用这个坐标而不是「快照当前位置」,免得 web 推的点被覆盖。
+    static bool ApplyRemoteCoords(int x, int y)
+    {
+        StationaryFarmModule *self = s_instance.load();
+        if (!self)
+            return false;
+        self->savedX_.store(x);
+        self->savedY_.store(y);
+        self->hasSaved_.store(true);
+        self->pendingExternal_.store(true);
+        spdlog::info("GGTB::StationaryFarm: remote coords set ({}, {})", x, y);
+        return true;
+    }
+
+    static bool GetSavedCoords(int &x, int &y)
+    {
+        StationaryFarmModule *self = s_instance.load();
+        if (!self || !self->hasSaved_.load())
+            return false;
+        x = self->savedX_.load();
+        y = self->savedY_.load();
+        return true;
+    }
 
     void OnRender() override
     {
@@ -45,30 +76,39 @@ class StationaryFarmModule : public IModule
 
         if (armed && enabled_ && !prev)
         {
-            int cx = 0, cy = 0;
-            if (TryReadCoords(cx, cy))
+            // web 刚推过坐标(pendingExternal_)→ 用推来的点,不快照当前位置。
+            if (pendingExternal_.exchange(false) && hasSaved_.load())
             {
-                savedX_ = cx;
-                savedY_ = cy;
-                hasSaved_ = true;
-                spdlog::info("GGTB::StationaryFarm: locked position ({}, {})", savedX_, savedY_);
+                spdlog::info("GGTB::StationaryFarm: locked remote position ({}, {})",
+                             savedX_.load(), savedY_.load());
             }
             else
             {
-                enabled_ = false;
-                spdlog::warn("GGTB::StationaryFarm: cannot read coords, disabled");
+                int cx = 0, cy = 0;
+                if (TryReadCoords(cx, cy))
+                {
+                    savedX_.store(cx);
+                    savedY_.store(cy);
+                    hasSaved_.store(true);
+                    spdlog::info("GGTB::StationaryFarm: locked position ({}, {})", cx, cy);
+                }
+                else
+                {
+                    enabled_ = false;
+                    spdlog::warn("GGTB::StationaryFarm: cannot read coords, disabled");
+                }
             }
         }
         else if (!enabled_ && prev)
         {
-            hasSaved_ = false;
+            hasSaved_.store(false);
             spdlog::info("GGTB::StationaryFarm: unlocked position");
         }
 
-        if (enabled_ && hasSaved_)
+        if (enabled_ && hasSaved_.load())
         {
             ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f),
-                               u8"锁定坐标: (%d, %d)", savedX_, savedY_);
+                               u8"锁定坐标: (%d, %d)", savedX_.load(), savedY_.load());
         }
         else if (armed)
         {
@@ -103,10 +143,10 @@ class StationaryFarmModule : public IModule
     void SaveState(nlohmann::json &j) const override
     {
         IModule::SaveState(j);
-        if (hasSaved_)
+        if (hasSaved_.load())
         {
-            j["savedX"] = savedX_;
-            j["savedY"] = savedY_;
+            j["savedX"] = savedX_.load();
+            j["savedY"] = savedY_.load();
             j["hasSaved"] = true;
         }
         else
@@ -120,9 +160,9 @@ class StationaryFarmModule : public IModule
         bool hadSaved = j.value("hasSaved", false);
         if (hadSaved)
         {
-            savedX_ = j.value("savedX", 0);
-            savedY_ = j.value("savedY", 0);
-            hasSaved_ = true;
+            savedX_.store(j.value("savedX", 0));
+            savedY_.store(j.value("savedY", 0));
+            hasSaved_.store(true);
         }
         IModule::LoadState(j);
     }
@@ -220,9 +260,9 @@ class StationaryFarmModule : public IModule
                     }
                     armed_.store(true);
 
-                    if (enabled_ && hasSaved_)
+                    if (enabled_ && hasSaved_.load())
                     {
-                        if (!TryWriteCoords(savedX_, savedY_))
+                        if (!TryWriteCoords(savedX_.load(), savedY_.load()))
                             spdlog::warn("GGTB::StationaryFarm: write failed");
                     }
                 }
@@ -239,9 +279,14 @@ class StationaryFarmModule : public IModule
 
     bool IsArmed() const { return armed_.load(); }
 
-    int  savedX_   = 0;
-    int  savedY_   = 0;
-    bool hasSaved_ = false;
+    // 单实例(Setting 只注册一份),供 broker 远程命令 ApplyRemoteCoords 找到自己。
+    static inline std::atomic<StationaryFarmModule *> s_instance{nullptr};
+
+    std::atomic<int>  savedX_{0};
+    std::atomic<int>  savedY_{0};
+    std::atomic<bool> hasSaved_{false};
+    // web 刚下发坐标、还没被「启用」消费的标记。见 ApplyRemoteCoords / OnRender。
+    std::atomic<bool> pendingExternal_{false};
 
     // UI display cache — throttled to once per second so we don't hammer the
     // game pointer on every frame while the user hasn't locked a position.

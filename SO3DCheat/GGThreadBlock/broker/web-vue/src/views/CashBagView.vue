@@ -110,6 +110,103 @@
           <el-table-column prop="error" label="错误" min-width="220" />
         </el-table>
       </el-tab-pane>
+
+      <el-tab-pane label="监控购买" name="monitor">
+        <div class="overview-toolbar">
+          <el-button :loading="monitorLoading" @click="loadMonitor" size="small">刷新</el-button>
+          <el-button type="primary" size="small" @click="openMonitorDialog()">新增监控</el-button>
+          <el-switch
+            v-model="monitorConfig.autoEnabled"
+            active-text="自动监控"
+            @change="saveMonitorConfig"
+          />
+          <span class="overview-summary">轮询间隔</span>
+          <el-select
+            v-model="monitorConfig.pollIntervalMs"
+            size="small"
+            style="width: 110px"
+            @change="saveMonitorConfig"
+          >
+            <el-option :value="30 * 1000" label="30 秒" />
+            <el-option :value="60 * 1000" label="1 分钟" />
+            <el-option :value="5 * 60 * 1000" label="5 分钟" />
+            <el-option :value="15 * 60 * 1000" label="15 分钟" />
+          </el-select>
+        </div>
+
+        <el-table :data="monitorEntries" size="small" stripe v-loading="monitorLoading" max-height="320">
+          <el-table-column prop="characterName" label="角色" width="110" />
+          <el-table-column prop="itemName" label="物品" min-width="120" />
+          <el-table-column prop="threshold" label="阈值<" width="70" align="right" />
+          <el-table-column prop="buyCount" label="购买量" width="80" align="right" />
+          <el-table-column label="最小间隔" width="90">
+            <template #default="{ row }">{{ formatInterval(row.minIntervalMs) }}</template>
+          </el-table-column>
+          <el-table-column label="启用" width="70">
+            <template #default="{ row }">
+              <el-switch v-model="row.enabled" @change="() => toggleEntry(row)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="上次触发" width="150">
+            <template #default="{ row }">{{ row.lastTriggered ? new Date(row.lastTriggered).toLocaleString() : '从未' }}</template>
+          </el-table-column>
+          <el-table-column label="cash数量" width="80" align="right">
+            <template #default="{ row }">{{ row.lastChecked ? row.lastCashCount : '-' }}</template>
+          </el-table-column>
+          <el-table-column label="上次探测" width="150">
+            <template #default="{ row }">{{ row.lastChecked ? new Date(row.lastChecked).toLocaleString() : '从未' }}</template>
+          </el-table-column>
+          <el-table-column label="状态" min-width="170">
+            <template #default="{ row }">
+              <el-tag
+                v-if="row.lastStatus"
+                :type="row.lastStatus === 'ok' ? 'success' : row.lastStatus === 'running' ? 'info' : 'danger'"
+                size="small"
+              >
+                {{ row.lastResult || row.lastStatus }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150">
+            <template #default="{ row }">
+              <el-button size="small" @click="openMonitorDialog(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="removeMonitorEntry(row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <h3 style="margin-top: 24px">手动测试(立即买并转移,不影响自动间隔)</h3>
+        <el-form :inline="true" class="overview-toolbar">
+          <el-form-item label="角色">
+            <el-select v-model="manualCharacter" filterable placeholder="选择在线角色" style="width: 160px" size="small">
+              <el-option v-for="inst in onlineCharacters" :key="inst.pid" :label="inst.label" :value="inst.characterName" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="物品名">
+            <el-input v-model.trim="manualItemName" placeholder="如 攤販呼叫券" style="width: 160px" size="small" />
+          </el-form-item>
+          <el-form-item label="数量">
+            <el-input-number v-model="manualCount" :min="1" :step="1" size="small" style="width: 130px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :loading="manualRunning" @click="runManual" size="small">测试购买并转移</el-button>
+          </el-form-item>
+        </el-form>
+
+        <el-table v-if="manualResult" :data="manualResult.steps" size="small" stripe max-height="240" style="margin-top: 8px">
+          <el-table-column prop="action" label="步骤" width="170" />
+          <el-table-column label="结果" width="70">
+            <template #default="{ row }">
+              <el-tag :type="row.ok ? 'success' : 'danger'" size="small">{{ row.ok ? 'OK' : 'X' }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="detail" label="详情" min-width="220" />
+        </el-table>
+        <div v-if="manualResult" class="overview-summary" style="margin-top: 6px">
+          {{ manualResult.ok ? '成功' : '失败' }}: 买{{ manualResult.buyCount }} 搬{{ manualResult.moved }}
+          cash {{ manualResult.cashBefore }}→{{ manualResult.cashAfter }}{{ manualResult.error ? ' | ' + manualResult.error : '' }}
+        </div>
+      </el-tab-pane>
     </el-tabs>
 
     <!-- Schedule dialog -->
@@ -183,6 +280,58 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="monitorDlgVisible" :title="monitorDlgEditing ? '编辑监控' : '新增监控'" width="440px">
+      <el-form label-width="92px">
+        <el-form-item label="角色">
+          <el-input v-if="monitorDlgEditing" :model-value="monitorForm.characterName" disabled />
+          <div v-else style="display: flex; gap: 8px; width: 100%">
+            <el-select
+              v-model="monitorCharacters"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              placeholder="选择在线角色(可多选)"
+              style="flex: 1"
+            >
+              <el-option v-for="inst in onlineCharacters" :key="inst.pid" :label="inst.label" :value="inst.characterName" />
+            </el-select>
+            <el-button @click="selectAllOnline">全选在线</el-button>
+          </div>
+        </el-form-item>
+        <el-form-item label="物品名">
+          <el-input v-model.trim="monitorForm.itemName" placeholder="如 攤販呼叫券" />
+        </el-form-item>
+        <el-form-item label="itemId">
+          <el-input-number v-model="monitorForm.itemId" :min="0" :step="1" style="width: 160px" />
+          <span class="overview-summary" style="margin-left: 8px">0=按名字在泡点表解析</span>
+        </el-form-item>
+        <el-form-item label="低于阈值">
+          <el-input-number v-model="monitorForm.threshold" :min="0" :step="1" style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="每次购买">
+          <el-input-number v-model="monitorForm.buyCount" :min="1" :step="1" style="width: 160px" />
+        </el-form-item>
+        <el-form-item label="最小间隔">
+          <el-select v-model="monitorForm.minIntervalMs" style="width: 160px">
+            <el-option :value="60 * 60 * 1000" label="1 小时" />
+            <el-option :value="6 * 60 * 60 * 1000" label="6 小时" />
+            <el-option :value="12 * 60 * 60 * 1000" label="12 小时" />
+            <el-option :value="24 * 60 * 60 * 1000" label="1 天" />
+            <el-option :value="3 * 24 * 60 * 60 * 1000" label="3 天" />
+            <el-option :value="7 * 24 * 60 * 60 * 1000" label="7 天" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="启用">
+          <el-switch v-model="monitorForm.enabled" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="monitorDlgVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmMonitorEntry">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -251,7 +400,47 @@ interface PaodianAccount {
   username: string
 }
 
-const activeSubTab = ref<'current' | 'overview'>('current')
+interface MonitorEntry {
+  characterName: string
+  itemName: string
+  itemId?: number
+  threshold: number
+  buyCount: number
+  minIntervalMs: number
+  enabled: boolean
+  lastTriggered: number
+  lastStatus: '' | 'ok' | 'error' | 'running'
+  lastResult: string
+  lastCashCount: number
+  lastChecked: number
+}
+
+interface MonitorConfig {
+  pollIntervalMs: number
+  autoEnabled: boolean
+}
+
+interface RunStep {
+  action: string
+  ok: boolean
+  detail?: string
+}
+
+interface RunResult {
+  ok: boolean
+  characterName: string
+  account: string
+  itemName: string
+  itemId: number
+  buyCount: number
+  moved: number
+  cashBefore: number
+  cashAfter: number
+  steps: RunStep[]
+  error?: string
+}
+
+const activeSubTab = ref<'current' | 'overview' | 'monitor'>('current')
 const items = ref<BagItem[]>([])
 const allSchedules = ref<ScheduleEntry[]>([])
 const loading = ref(false)
@@ -266,6 +455,47 @@ const overviewPurchaseUsername = ref('')
 const overviewPurchaseCount = ref(1)
 const purchasingKey = ref('')
 const paodianAccounts = ref<PaodianAccount[]>([])
+
+// 监控购买
+const monitorEntries = ref<MonitorEntry[]>([])
+const monitorConfig = ref<MonitorConfig>({ pollIntervalMs: 60 * 1000, autoEnabled: true })
+const monitorLoading = ref(false)
+const monitorDlgVisible = ref(false)
+const monitorDlgEditing = ref(false)
+const monitorForm = ref<MonitorEntry>(emptyMonitorForm())
+const monitorCharacters = ref<string[]>([]) // 新增模式下的多选角色
+const manualCharacter = ref('')
+const manualItemName = ref('')
+const manualCount = ref(1)
+const manualRunning = ref(false)
+const manualResult = ref<RunResult | null>(null)
+
+const onlineCharacters = computed(() =>
+  instances.value
+    .filter((inst) => inst.pid && inst.characterName)
+    .map((inst) => ({
+      pid: inst.pid,
+      characterName: inst.characterName as string,
+      label: inst.accountName ? `${inst.characterName} (${inst.accountName})` : (inst.characterName as string),
+    }))
+)
+
+function emptyMonitorForm(): MonitorEntry {
+  return {
+    characterName: '',
+    itemName: '',
+    itemId: 0,
+    threshold: 10,
+    buyCount: 999,
+    minIntervalMs: 24 * 60 * 60 * 1000,
+    enabled: true,
+    lastTriggered: 0,
+    lastStatus: '',
+    lastResult: '',
+    lastCashCount: 0,
+    lastChecked: 0,
+  }
+}
 
 const schedules = computed(() => {
   const name = selectedInstance.value?.characterName
@@ -559,7 +789,165 @@ async function confirmOverviewPurchase() {
   }
 }
 
+// ---------- 监控购买 ----------
+
+async function loadMonitor() {
+  monitorLoading.value = true
+  try {
+    const [entriesRes, configRes] = await Promise.all([
+      fetch('/api/purchase-monitor/entries'),
+      fetch('/api/purchase-monitor/config'),
+    ])
+    monitorEntries.value = await readJson(entriesRes)
+    monitorConfig.value = await readJson(configRes)
+  } catch (e: any) {
+    ElMessage.error(e.message)
+  } finally {
+    monitorLoading.value = false
+  }
+}
+
+async function saveMonitorConfig() {
+  try {
+    const res = await fetch('/api/purchase-monitor/config', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(monitorConfig.value),
+    })
+    monitorConfig.value = await readJson(res)
+  } catch (e: any) {
+    ElMessage.error(e.message)
+  }
+}
+
+function openMonitorDialog(row?: MonitorEntry) {
+  if (row) {
+    monitorDlgEditing.value = true
+    monitorForm.value = { ...row, itemId: row.itemId || 0 }
+    monitorCharacters.value = []
+  } else {
+    monitorDlgEditing.value = false
+    monitorForm.value = emptyMonitorForm()
+    // 新增模式默认预选当前选中的角色(若有)
+    monitorCharacters.value = selectedInstance.value?.characterName
+      ? [selectedInstance.value.characterName]
+      : []
+  }
+  monitorDlgVisible.value = true
+}
+
+function selectAllOnline() {
+  monitorCharacters.value = onlineCharacters.value.map((inst) => inst.characterName)
+}
+
+async function confirmMonitorEntry() {
+  const form = monitorForm.value
+  if (!form.itemName) {
+    ElMessage.warning('物品名必填')
+    return
+  }
+  // 编辑模式只改这一条;新增模式可对多个角色批量创建相同配置。
+  const targets = monitorDlgEditing.value ? [form.characterName] : monitorCharacters.value
+  if (!targets.length) {
+    ElMessage.warning('请至少选择一个角色')
+    return
+  }
+  try {
+    let ok = 0
+    const errors: string[] = []
+    for (const characterName of targets) {
+      try {
+        const res = await fetch('/api/purchase-monitor/entries', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            characterName,
+            itemName: form.itemName,
+            itemId: form.itemId || undefined,
+            threshold: form.threshold,
+            buyCount: form.buyCount,
+            minIntervalMs: form.minIntervalMs,
+            enabled: form.enabled,
+          }),
+        })
+        await readJson(res)
+        ok++
+      } catch (e: any) {
+        errors.push(`${characterName}: ${e.message}`)
+      }
+    }
+    if (ok > 0) ElMessage.success(`已保存 ${ok} 个监控`)
+    if (errors.length) ElMessage.error(errors.join('; '))
+    if (ok > 0) {
+      monitorDlgVisible.value = false
+      await loadMonitor()
+    }
+  } catch (e: any) {
+    ElMessage.error(e.message)
+  }
+}
+
+async function toggleEntry(row: MonitorEntry) {
+  try {
+    await fetch('/api/purchase-monitor/entries', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        characterName: row.characterName,
+        itemName: row.itemName,
+        itemId: row.itemId || undefined,
+        threshold: row.threshold,
+        buyCount: row.buyCount,
+        minIntervalMs: row.minIntervalMs,
+        enabled: row.enabled,
+      }),
+    })
+  } catch (e: any) {
+    ElMessage.error(e.message)
+    await loadMonitor()
+  }
+}
+
+async function removeMonitorEntry(row: MonitorEntry) {
+  try {
+    const q = new URLSearchParams({ characterName: row.characterName, itemName: row.itemName })
+    await fetch(`/api/purchase-monitor/entries?${q.toString()}`, { method: 'DELETE' })
+    ElMessage.success('已删除')
+    await loadMonitor()
+  } catch (e: any) {
+    ElMessage.error(e.message)
+  }
+}
+
+async function runManual() {
+  if (!manualCharacter.value) { ElMessage.warning('请选择角色'); return }
+  if (!manualItemName.value) { ElMessage.warning('请输入物品名'); return }
+  manualRunning.value = true
+  manualResult.value = null
+  try {
+    const res = await fetch('/api/purchase-monitor/run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        characterName: manualCharacter.value,
+        itemName: manualItemName.value,
+        count: manualCount.value,
+      }),
+    })
+    const result = await readJson(res)
+    manualResult.value = result
+    if (result.ok) ElMessage.success(`成功: 搬运 ${result.moved} 进 cash`)
+    else ElMessage.error(result.error || '失败')
+  } catch (e: any) {
+    ElMessage.error(e.message)
+  } finally {
+    manualRunning.value = false
+  }
+}
+
 function formatInterval(ms: number): string {
+  const d = ms / (24 * 60 * 60 * 1000)
+  if (d >= 1) return Number.isInteger(d) ? `${d}天` : `${d.toFixed(1)}天`
   const h = ms / (60 * 60 * 1000)
   if (h >= 1) return `${h}小时`
   return `${ms / (60 * 1000)}分钟`
@@ -605,6 +993,7 @@ onMounted(() => {
 watch(selectedPid, (v) => { if (v && activeSubTab.value === 'current') refresh() })
 watch(activeSubTab, (tab) => {
   if (tab === 'overview' && overviewSnapshots.value.length === 0) refreshOverview()
+  if (tab === 'monitor') loadMonitor()
 })
 </script>
 

@@ -9,6 +9,7 @@ export interface InstanceStatus {
     posX?: number;
     posY?: number;
     posZ?: number;
+    mapId?: number;
 }
 
 export interface Instance {
@@ -39,6 +40,13 @@ export interface DialogSelectEvent {
     npc: number;
     opt: number;
     sub: number;
+    timestamp: number;
+}
+
+export interface TeleportEvent {
+    pid: number;
+    characterName?: string;
+    destId: number;
     timestamp: number;
 }
 
@@ -128,6 +136,9 @@ export class InstanceRegistry extends EventEmitter {
             case "dialogSelect":
                 this.onDialogSelect(state, frame);
                 break;
+            case "teleport":
+                this.onTeleport(state, frame);
+                break;
             case "moneyUpdate":
                 this.onMoneyUpdate(state, frame);
                 break;
@@ -192,6 +203,7 @@ export class InstanceRegistry extends EventEmitter {
             posX: f.posX,
             posY: f.posY,
             posZ: f.posZ,
+            mapId: typeof f.mapId === "number" ? f.mapId : undefined,
         };
         // status 也带 characterName,免得 identity-diff 漏一帧 UI 就一直显示 connecting…
         if (typeof f.characterName === "string" && f.characterName && !inst.characterName) {
@@ -249,6 +261,10 @@ export class InstanceRegistry extends EventEmitter {
         if (!inst || !status || typeof status !== "object") return;
         if (typeof status.hp === "number") inst.status.hp = status.hp;
         if (typeof status.money === "number") inst.status.money = status.money;
+        if (typeof status.posX === "number") inst.status.posX = status.posX;
+        if (typeof status.posY === "number") inst.status.posY = status.posY;
+        if (typeof status.posZ === "number") inst.status.posZ = status.posZ;
+        if (typeof status.mapId === "number") inst.status.mapId = status.mapId;
         if (typeof status.characterName === "string" && status.characterName) inst.characterName = status.characterName;
         inst.lastSeen = Date.now();
         this.emit("change");
@@ -271,6 +287,18 @@ export class InstanceRegistry extends EventEmitter {
             sub: sub ?? 1,
             timestamp: Date.now(),
         } satisfies DialogSelectEvent);
+    }
+
+    private onTeleport(state: ConnState, f: any): void {
+        const inst = this.instances.get(state.connId);
+        const destId = finiteNumberOrUndefined(f.destId);
+        if (destId === undefined || destId <= 0) return;
+        this.emit("teleport", {
+            pid: f.pid ?? state.pid,
+            characterName: inst?.characterName ?? (typeof f.characterName === "string" ? f.characterName : undefined),
+            destId,
+            timestamp: Date.now(),
+        } satisfies TeleportEvent);
     }
 
     private onChat(state: ConnState, f: any): void {

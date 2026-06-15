@@ -319,9 +319,18 @@ void PatternResolver::RegisterAll()
     // AutoTarget walks the singly-linked list head at +0x0C (next pointer at
     // creature+0x370). Same shape as EntityManager's around-player list.
     Register("CreatureMgrPtr",     "", 0xACF658);
-    // Net__BeginSend — __cdecl, no args, returns the global packet buffer.
-    // Linear 0xB2B580 in unpackd_so3d.exe (RVA 0x72B580 with imagebase 0x400000).
+    // Net__BeginSend — __cdecl, no args. Lazy-inits + returns the global
+    // CGameClient singleton (g_pGameClient @ linear 0x18B3138). Despite the name
+    // it writes no header; it just hands back the client used as ecx/this for the
+    // subsequent __thiscall body writers. Linear 0xB2B580 (RVA 0x72B580).
     Register("NetBeginSend",       "", 0x72B580);
+    // GameClientPtr — the CGameClient singleton pointer itself: client =
+    // *(void**)0x18B3138. RVA 0x14B3138 (imagebase 0x400000). Same object
+    // Net__BeginSend returns; AutoFishing reads it directly to pass as the
+    // this/ecx of Net__SendPacket_Plaintext without going through Net__BeginSend.
+    // Net__SendPacket_Plaintext gates on client+12 (connected) — a stale/pre-login
+    // pointer just makes the send a no-op.
+    Register("GameClientPtr",      "", 0x14B3138);
     // Net__SendDword — __thiscall(buf, proto, dwordValue). Linear 0xB2D240
     // (RVA 0x72D240). Used for short single-DWORD packets like 412017
     // (CG_PLAYER_REVIVE) and 411015 (CG_ITEM_USE).
@@ -346,6 +355,31 @@ void PatternResolver::RegisterAll()
     // alignment padding, then dispatches via Net__SendPacket_Plaintext. Used for
     // CG_PUBLIC_CHAT (411001) and other string-body protos.
     Register("NetSendChatStr", "", 0x72E920);
+
+    // ResolveTeleportDestByName — __thiscall(this=CUIManager::GetUIContent(99),
+    // "/cityname"). Linear 0xA1F800 (RVA 0x61F800). Iterates the in-game teleport
+    // destination table, _stricmp(name+1, entryName) (skips the leading '/'), and
+    // on match validates the record (valid flag / required level @ g_pLocalUser+6932
+    // / required money @ g_pLocalUser+13464) before returning the destination id
+    // (>0). Returns 0 when the name doesn't match or a gate fails. This is the
+    // exact resolver the chat "/狮子城" command path (ChatCmd_Teleport @ 0x966770)
+    // uses to turn a city name into the dest id sent in proto 411076.
+    Register("ResolveTeleportDestByName", "", 0x61F800);
+
+    // SendPlayerMoveSyncPacket — __thiscall(this=netBuf). Linear 0xB2DEF0
+    // (RVA 0x72DEF0). Position-sync packet (proto 411000/411163) the engine emits
+    // right before a teleport request (see Teleport_SendPacket @ 0x9925F0). Heavily
+    // self-gated (m_bCanMove / IsDead / stance) and best-effort — the teleport path
+    // discards its return value. We fire it for wire-fidelity before proto 411076.
+    Register("SendPlayerMoveSync", "", 0x72DEF0);
+
+    // Net_SendTeleportReq411076 — __thiscall(this=netBuf, destId, doSend). Linear
+    // 0xB2D9E0 (RVA 0x72D9E0). The gated 411076 sender: checks netBuf valid /
+    // !IsDead / map-warp-allowed, then (doSend!=0) Net__SendDword(buf, 411076,
+    // destId). doSend==0 is validate-only. We send proto 411076 directly via
+    // NetSendDword instead (project bypasses local gates), so this is registered
+    // for reference/fallback only.
+    Register("NetSendTeleportReq", "", 0x72D9E0);
 
     // Item__GetItemClass(int itemId) — __stdcall, 1 arg. Returns:
     //   3 = throwable bomb (backs skill 83 投掷炸弹)
@@ -391,6 +425,18 @@ void PatternResolver::RegisterAll()
     // 就实现"扔/卖/买，全堆/全栈一键执行"。
     Register("UICountDialog", "", 0x56FCD0);
 
+    // ---------- Box-loot auto-move-to-bag ----------
+    // OnBoxLootRecv_AutoMoveToBag (IDA 0x8BDF60) 是协议 511620(箱子开出战利品)
+    // 的 recv handler。它末尾有作者自带的作弊分支：开箱出战利品后自动发 411313
+    // 把战利品挪进背包(target=13 基址，服务器自动选空格)。但有两道门：
+    //   gate1 @ 0x8BE010 (RVA 0x4BE010): je  —— 测 g_boxCheatEnabled(byte_DFD67E)
+    //   gate2 @ 0x8BE026 (RVA 0x4BE026): jne —— 测 boxUI(GetUIContent(56))+0x1208
+    // gate2 的 +0x1208 只有 /openbox 期间才置 1，开箱循环结束就清 0，所以平时手动
+    // 开箱这段自动入袋根本不跑。两道都 6 字节近跳转，全 NOP 掉后：任何时候箱子开出
+    // 东西都会无条件自动入袋。挂在"自动确认弹窗以及物品最大"开关上一并启停。
+    Register("BoxAutoMoveGate1", "", 0x4BE010); // je  byte_DFD67E gate (6B 0F 84)
+    Register("BoxAutoMoveGate2", "", 0x4BE026); // jne boxUI+0x1208 gate (6B 0F 85)
+
     // ---------- Packet logger ----------
     // Net__SendPacket_Plaintext — __thiscall(this=CGameClient, pktObj, length).
     // Linear 0xB1CA60 (RVA 0x71CA60). This is the LOWEST plaintext send: pktObj
@@ -428,6 +474,28 @@ void PatternResolver::RegisterAll()
     // call sub_B2C930) but emits one extra DWORD on the wire.
     Register("NetSendDialogSelect", "", 0x72C930);
 
+    // Net__SendFiveDword - __thiscall(this=netBuf, protocolId, a1, a2, a3, a4, a5).
+    // Generic 28-byte packet builder with five DWORD body fields. Current
+    // vendor-buy implementation uses NetSkillSendPackage instead, matching the
+    // actual UI path at sub_82BF50.
+    Register("NetSendFiveDword", "", 0x72CD20);
+
+    // ---------- Shop / summoned vendor helpers ----------
+    // Merchant UI uses table type 17. The buy path sends proto 411020 with:
+    //   {vendorId, shopIndex, count, targetBagSlot, token}
+    // where shopIndex is the 0-based index in (vendorRow + 12), and targetBagSlot
+    // is computed by CItemContainer::FindInventorySlotForItem (sub_798DA0).
+    Register("ShopTableManager",     "", 0x76C6C0); // sub_B6C6C0(type), cdecl
+    Register("ShopTableGetElem",     "", 0x76D450); // sub_B6D450(this, type, vendorId, 0)
+    Register("ShopListGetAt",        "", 0x1D5460); // sub_5D5460(list, index)
+    Register("ShopItemTableById",    "", 0x39BB60); // sub_79BB60(g_pItemContainer, itemId, 0)
+    Register("ShopFindInventorySlot","", 0x398DA0); // sub_798DA0(g_pItemContainer, itemId, 0, 0, count)
+    // Merchant UI content id 31 has vtable 0xCC2334. Slot 22 (vtable+0x58)
+    // is sub_82C6F0, the real close handler: it clears merchant state and sends
+    // 411456 using this+0x40 token. Always verify the vtable before calling it.
+    Register("VendorUiVTable",       "", 0x8C2334);
+    Register("VendorUiClose",        "", 0x42C6F0);
+
     // ---------- MailBox::SendMoneyMail (proto 411524, op=0) ----------
     // Linear 0x7F51E0 (RVA 0x3F51E0). __stdcall(int op, const char *recipient,
     // int64 money, const char *body). Self-contained: calls Net__BeginSend +
@@ -455,6 +523,31 @@ void PatternResolver::RegisterAll()
     //
     // Linear 0x878BBD, RVA 0x478BBD. See entity/CLocalPlayer.h doc block.
     Register("BlockLevelUpGate", "", 0x478BBD);
+
+    // ---------- Fishing catch-handler self-close guard ----------
+    // GC_OnFishingCatch_521102 @ 0x891810 (收鱼 handler) 开头有一道一致性/反作弊保护:
+    // 客户端若既不在钓鱼会话态 (dword_ED3D74+0x31 == 0)、又没开钓鱼窗口
+    // (dword_D67CC4 != 0x10),却收到收鱼包 521102,就 SendMessageA(主窗口, WM_CLOSE)
+    // 自关 —— 这正是"纯发包中鱼→游戏闪退"的真因 (鱼仍入袋,因入袋逻辑在 WM_CLOSE 调用
+    // 之后、且 WM_CLOSE 是异步)。0x891824 处 `jnz short loc_891855` (75 2F) 在钓鱼会话态
+    // 时本就跳过第一处 WM_CLOSE;把 opcode 75→EB 改成无条件 jmp,纯发包流程也跳过。对正常
+    // 钓鱼零副作用 (正常 +49!=0 本就 jnz 跳走)。第二处 WM_CLOSE(0x89188C)被
+    // dword_D67CC4==0x10 gate,纯发包没开窗口不可达。AutoFishing 启用时打、停用时还原,
+    // 单字节补丁。Linear 0x891824, RVA 0x491824。
+    Register("FishingCatchGuardJnz", "", 0x491824);
+
+    // ---------- Fishing-pose broadcast call ----------
+    // GC_DispatchActorAction @ 0x94ED10 是通用 per-actor 动作广播分发(由 GC 收包
+    // handler GC_OnEntityAction_07CC52 @ 0x893FC0 调用)。case 3/13 = 钓鱼动作:
+    // 按 packet 里的 actorId 解析出 actor(v17, 可能就是本地玩家)后,在 0x94EFE0
+    // 处 `call Actor_SetFishingPose(v17, flag)` —— Actor_SetFishingPose @ 0xA05E80
+    // (调试串 "fishing animation setting") 把 actor+404=27(钓鱼抛竿 motion)。
+    // 服务器把我们的 411047 抛竿回显成钓鱼动作时,v17=本地玩家,这一步就是"抛竿后
+    // 进入钓鱼姿态"的来源。AutoFishing 启用时把这 5 字节 call(E8 rel32)NOP 掉,
+    // 停用/析构时还原。副作用:附近真人钓鱼者经此路径的逐动作重新摆姿也会被跳过
+    // (仅外观,且仅在启用期间;远端 spawn 摆姿走 sub_876A20 不受影响)。
+    // Linear 0x94EFE0, RVA 0x54EFE0。
+    Register("FishingPoseBroadcastCall", "", 0x54EFE0);
 
     // ---------- Walk-to-world-position ----------
     // CLocalUser::SetAfterAction — __thiscall(this=*g_pLocalUser, x, y, action, target).
@@ -615,7 +708,13 @@ void PatternResolver::RegisterAll()
     // 调用链:Open(GetUIContent(GetSingleton(), 32))。RVA = linear - 0x400000。
     Register("TradeOpenLocalWindow",  "", 0x31E040); // sub_71E040
     Register("UIManagerGetSingleton", "", 0x5EA420); // sub_9EA420
+    Register("UIManagerBeginContent", "", 0x5E9C50); // CUIManager::BeginContent(mgr, renderer, enum) retn 8; 开仓库=enum 2(内部建本地UI+发411154/411644,不能裸发包否则卡移动)
     Register("UIManagerGetUIContent", "", 0x5EA4D0); // sub_9EA4D0 (CUIManager::GetUIContent)
+    Register("UIManagerCloseContent", "", 0x5E9FB0); // sub_9E9FB0(id), marks UI content close flag (+0x25)
+    Register("UIContentMarkClose",    "", 0x739190); // sub_B39190(), direct content close flag setter used by CloseContent
+    Register("UIManagerIsContentOpen", "", 0x5EC570); // sub_9EC570(id), true when UI content id is open
+    Register("UIManagerCloseActiveContent", "", 0x5EA090); // sub_9EA090(renderer), processes marked-close UI content
+    Register("RendererPtr", "", 0x149DC08); // dword_189DC08, pushed before sub_9EA090 in the UI frame path
 }
 
 void PatternResolver::ScanAll()

@@ -9,10 +9,13 @@
         <MoveToView v-if="activeTab === 'moveto'" />
         <MailView v-if="activeTab === 'mail'" />
         <CashBagView v-if="activeTab === 'cashbag'" />
+        <VendorPurchaseView v-if="activeTab === 'vendorpurchase'" />
         <DeathNotifyView v-if="activeTab === 'deathnotify'" />
         <AutoReviveView v-if="activeTab === 'autorevive'" />
         <AutoDelegationView v-if="activeTab === 'autodelegation'" />
+        <AutoTradeView v-if="activeTab === 'autotrade'" />
         <BuffKeeperView v-if="activeTab === 'buffkeeper'" />
+        <ClockworkWasherView v-if="activeTab === 'clockwork'" />
         <SyncView v-if="activeTab === 'sync'" />
         <OnlineWhitelistView v-if="activeTab === 'onlinewhitelist'" />
         <PaodianView v-if="activeTab === 'paodian'" />
@@ -32,10 +35,13 @@ import ControlView from '@/views/ControlView.vue'
 import MoveToView from '@/views/MoveToView.vue'
 import MailView from '@/views/MailView.vue'
 import CashBagView from '@/views/CashBagView.vue'
+import VendorPurchaseView from '@/views/VendorPurchaseView.vue'
 import DeathNotifyView from '@/views/DeathNotifyView.vue'
 import AutoReviveView from '@/views/AutoReviveView.vue'
 import AutoDelegationView from '@/views/AutoDelegationView.vue'
+import AutoTradeView from '@/views/AutoTradeView.vue'
 import BuffKeeperView from '@/views/BuffKeeperView.vue'
+import ClockworkWasherView from '@/views/ClockworkWasherView.vue'
 import SyncView from '@/views/SyncView.vue'
 import OnlineWhitelistView from '@/views/OnlineWhitelistView.vue'
 import PaodianView from '@/views/PaodianView.vue'

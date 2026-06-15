@@ -58,7 +58,7 @@ namespace zzj
             inline static bool setup = false;
 
             inline static HWND window = nullptr;
-            inline static WNDCLASSEXA windowClass = { 0 };
+            inline static WNDCLASSEXW windowClass = { 0 };
             inline static WNDPROC originalWindowProcess = nullptr;
             
             inline static LPDIRECT3D9 d3d9 = nullptr;

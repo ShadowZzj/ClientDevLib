@@ -30,8 +30,8 @@
             <span class="hint" style="margin-left:8px">关掉就完全停这个角色的守护。</span>
           </el-form-item>
           <el-form-item label="轮询间隔">
-            <el-input-number v-model="config.pollMs" :min="1500" :max="60000" :step="500" />
-            <span class="hint" style="margin-left:8px">毫秒。每隔这么久查一次 buff 快照。</span>
+            <el-input-number v-model="config.pollMs" :min="250" :max="60000" :step="250" />
+            <span class="hint" style="margin-left:8px">毫秒。组队 buff 守护是一轮补一个、引擎施完补下一个,想快就调小(如 300)。</span>
           </el-form-item>
         </el-form>
 
@@ -77,6 +77,52 @@
         <div class="rule-actions">
           <el-button size="small" @click="addRule">新增规则</el-button>
           <div class="hint">buffId &gt; 0 优先按 id 匹配;否则按 buff 名精确匹配。最小间隔应 ≥ 技能冷却,避免冷却期间刷包。</div>
+        </div>
+
+        <el-divider content-position="left">组队 buff 规则 — 给缺 buff 的近身队友补</el-divider>
+        <div class="hint" style="margin-bottom:8px">
+          轮询组队成员,谁缺这个 buff 就对谁放对应技能。只对「在视野内」的成员放 —— 离太远引擎加不到,会自动跳过。每条规则一轮只补一个成员(技能本身有 CD),下一轮补下一个。
+        </div>
+        <el-table :data="config.partyRules" size="small" border style="width:100%">
+          <el-table-column label="启用" width="60">
+            <template #default="{ row }">
+              <el-switch v-model="row.enabled" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="匹配 buffId" width="130">
+            <template #default="{ row }">
+              <el-input-number v-model="row.buffId" :min="0" :controls="false" size="small" style="width:100px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="或 buff 名" min-width="140">
+            <template #default="{ row }">
+              <el-input v-model="row.buffName" size="small" placeholder="buffId=0 时按名字匹配" />
+            </template>
+          </el-table-column>
+          <el-table-column label="放技能 skillId" width="130">
+            <template #default="{ row }">
+              <el-input-number v-model="row.skillId" :min="0" :controls="false" size="small" style="width:100px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="含自己" width="80">
+            <template #default="{ row }">
+              <el-switch v-model="row.includeSelf" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="最小间隔ms" width="120">
+            <template #default="{ row }">
+              <el-input-number v-model="row.minRecastMs" :min="0" :step="500" :controls="false" size="small" style="width:100px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="70">
+            <template #default="{ $index }">
+              <el-button link type="danger" size="small" @click="config.partyRules.splice($index, 1)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="rule-actions">
+          <el-button size="small" @click="addPartyRule">新增组队规则</el-button>
+          <div class="hint">「含自己」打开后,自己缺这个 buff 也会补(targetId=0);关掉则只管队友。</div>
         </div>
 
         <el-form-item style="margin-top:16px">
@@ -146,6 +192,10 @@
               {{ m.name || '(未知)' }}
               <el-tag v-if="m.isSelf" size="small" type="primary" effect="plain">我</el-tag>
               <el-tag v-if="!m.online" size="small" type="info" effect="plain">离线</el-tag>
+              <el-tag v-if="m.nearby" size="small" type="success" effect="plain">
+                视野内<template v-if="m.distance >= 0"> · {{ Math.round(m.distance) }}</template>
+              </el-tag>
+              <el-tag v-else size="small" type="danger" effect="plain">视野外</el-tag>
             </span>
             <span class="member-hp" v-if="m.maxHp > 0">
               <el-progress
@@ -168,6 +218,9 @@
                 :type="b.kind === 'cash' ? 'warning' : 'success'"
                 effect="light"
                 class="buff-tag"
+                @click="ruleFromPartyBuff(b)"
+                style="cursor:pointer"
+                :title="'点击:用此 buff 建组队规则'"
               >
                 {{ b.name || ('#' + b.buffId) }}
                 <span class="buff-remain">{{ formatRemain(b.remainingMs) }}</span>
@@ -196,11 +249,22 @@ interface BuffRule {
   minRecastMs: number
   lastCast?: number
 }
+interface PartyBuffRule {
+  id: string
+  enabled: boolean
+  buffId: number
+  buffName: string
+  skillId: number
+  includeSelf: boolean
+  minRecastMs: number
+  lastCast?: number
+}
 interface BuffKeeperConfig {
   characterName: string
   enabled: boolean
   pollMs: number
   rules: BuffRule[]
+  partyRules: PartyBuffRule[]
 }
 interface BuffSnapshotItem {
   buffId: number
@@ -215,6 +279,8 @@ interface PartyMember {
   userId: number
   isSelf: boolean
   online: boolean
+  nearby: boolean
+  distance: number
   hp: number
   maxHp: number
   buffs: BuffSnapshotItem[]
@@ -240,7 +306,7 @@ const partyAutoRefresh = ref(true)
 let partyTimer: ReturnType<typeof setInterval> | null = null
 
 function emptyConfig(name: string): BuffKeeperConfig {
-  return { characterName: name, enabled: false, pollMs: 4000, rules: [] }
+  return { characterName: name, enabled: false, pollMs: 4000, rules: [], partyRules: [] }
 }
 
 const characterOptions = computed(() => {
@@ -287,6 +353,31 @@ function ruleFromBuff(row: BuffSnapshotItem) {
   ElMessage.success(`已添加规则:buffId=${row.buffId}${row.skillId ? ` skill=${row.skillId}` : '(技能待填)'}`)
 }
 
+function addPartyRule() {
+  config.value.partyRules.push({
+    id: genId(),
+    enabled: true,
+    buffId: 0,
+    buffName: '',
+    skillId: 0,
+    includeSelf: false,
+    minRecastMs: 3000,
+  })
+}
+
+function ruleFromPartyBuff(row: BuffSnapshotItem) {
+  config.value.partyRules.push({
+    id: genId(),
+    enabled: true,
+    buffId: row.buffId,
+    buffName: row.name,
+    skillId: row.skillId || 0,
+    includeSelf: false,
+    minRecastMs: 3000,
+  })
+  ElMessage.success(`已添加组队规则:buffId=${row.buffId}${row.skillId ? ` skill=${row.skillId}` : '(技能待填)'}`)
+}
+
 function formatRemain(ms: number): string {
   if (ms < 0) return '常驻'
   const s = Math.round(ms / 1000)
@@ -311,7 +402,7 @@ async function reload() {
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const cfg = (await res.json()) as BuffKeeperConfig
-    config.value = { ...emptyConfig(selectedName.value), ...cfg, rules: cfg.rules ?? [] }
+    config.value = { ...emptyConfig(selectedName.value), ...cfg, rules: cfg.rules ?? [], partyRules: cfg.partyRules ?? [] }
   } catch (e: any) {
     ElMessage.error(`加载失败: ${e.message}`)
   }
@@ -328,7 +419,7 @@ async function saveConfig() {
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const updated = (await res.json()) as BuffKeeperConfig
-    config.value = { ...emptyConfig(selectedName.value), ...updated, rules: updated.rules ?? [] }
+    config.value = { ...emptyConfig(selectedName.value), ...updated, rules: updated.rules ?? [], partyRules: updated.partyRules ?? [] }
     await loadConfigList()
     ElMessage.success('已保存')
   } catch (e: any) {

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace GGTB
@@ -202,6 +203,10 @@ struct NearbyPlayer
     std::string professionName;
     float       distance;
     float       x, y, z;
+    // CUser 当前 HP(明文 int32 @+0x1B00)。来自 CUser__GetCurrentHP(0x9FC340):
+    // 远程玩家 +0x1B00 存明文,只有本地玩家自己那条是 XOR 加密的。-1=未读到。
+    // 比组队状态表(g_PartyMemberStateArray)的 HP 实时,组队 buff 守护据此剔除死人。
+    int32_t     hp = -1;
 };
 
 bool        GetLocalPosition(float &x, float &y, float &z);
@@ -786,6 +791,28 @@ inline constexpr uintptr_t kUserSelfIdOffset = 112;
 // SEH-wrapped.
 uint32_t GetLocalUserId();
 
+// ---------- 登录凭据 (账号/密码,明文) ----------
+//
+// IDA 实证 (Login__BuildAndSendLoginPacket @ 0x7DC3A0):登录界面把 id_input/pass_input
+// 控件文本 memmove 进 localUser,登录后保留供重连。两者都是定长 16B 明文(ASCII),
+// 不足补 0。账号另有全局副本 g_szLoginAccount(0xDFD66C)。随后 DES 加密构造 CL_LOGIN。
+// 私服里游戏账号密码与泡点网店是同一套,所以可直接拿来做泡点购买,免去手填密码。
+// 偏移即 IDA memmove 目标(Login__BuildAndSendLoginPacket @0x7DC629/0x7DC6B1):账号写到
+// +13064、密码写到 +13227,各 16B。注意账号字段首字节可能是 \0(id_input 控件 +128 源缓冲
+// 带前导 \0,CE 实测账号 = "\0gongyu9011213"),所以读取时要跳过前导 \0,不能改偏移成 +13065。
+inline constexpr uintptr_t kLoginAccountOffset  = 13064; // *LocalUserPtr + 0x3318
+inline constexpr uintptr_t kLoginPasswordOffset = 13227; // *LocalUserPtr + 0x33AB(明文,CE 实测)
+inline constexpr size_t    kLoginFieldSize      = 16;
+
+struct LoginCredentials
+{
+    std::string account;
+    std::string password;
+};
+
+// 读 localUser 里的明文账号/密码。SEH 安全。失败(localUser 未就绪/账号空)返回 false。
+bool GetLoginCredentials(LoginCredentials &out);
+
 // Returns true iff the local player is currently dead (HP <= 0). Cheap;
 // equivalent to GetLocalHp() <= 0. Web UI uses this to enable/disable the
 // Revive button.
@@ -1046,8 +1073,141 @@ inline constexpr size_t    kCashSlotCount       = 80;
 inline constexpr int       kProtocolUseCashItem = 411156;
 inline constexpr int       kCashSlotWireBase    = 13; // wire = slotIndex + 13
 
+// ---------- Summoned vendor shop ----------
+//
+// IDA verified 2026-06-11:
+//   open  : NetSendDword(buf, 411455, token)
+//   buy   : Net__SkillSendPackage(buf, 411020,
+//           {vendorId, shopIndex, count, targetBagSlot, token}, 20)
+//   close : NetSendDword(buf, 411456, token)
+// 412067 in the same capture is an unrelated pet "enjoy" command, not vendor UI.
+inline constexpr int      kProtocolVendorBuy   = 411020;
+inline constexpr int      kProtocolVendorOpen  = 411455;
+inline constexpr int      kProtocolVendorClose = 411456;
+inline constexpr uint32_t kVendorSummonToken   = 0xFECD2408u;
+inline constexpr uint32_t kVendorDefaultId     = 2;
+inline constexpr uint32_t kVendorMaxShopItems  = 30;
+
+struct VendorShopItem
+{
+    uint32_t shopIndex; // 0-based index in the vendor's type-17 shop list.
+    uint32_t itemId;
+    uint32_t unitPrice;
+    std::string name;
+};
+
+struct VendorBuyResult
+{
+    uint32_t vendorId;
+    uint32_t shopIndex;
+    uint32_t itemId;
+    uint32_t count;
+    uint32_t targetSlot;
+    uint32_t token;
+};
+
 std::vector<BagItemInfo> GetCashBagItems();
 bool UseCashItem(uint32_t slotIndex);
+std::vector<VendorShopItem> GetVendorShopItems(uint32_t vendorId = kVendorDefaultId);
+bool SendVendorOpen(uint32_t token = kVendorSummonToken);
+bool SendVendorBuy(uint32_t vendorId, uint32_t shopIndex, uint32_t count,
+                   uint32_t targetSlot, uint32_t token = kVendorSummonToken);
+bool SendVendorBuyShopItem(uint32_t itemId, uint32_t shopIndex, uint32_t count,
+                           uint32_t vendorId = kVendorDefaultId,
+                           uint32_t token = kVendorSummonToken,
+                           const std::unordered_set<uint32_t> *avoidTargetSlots = nullptr,
+                           VendorBuyResult *out = nullptr);
+bool SendVendorBuyItem(uint32_t itemId, uint32_t count,
+                       uint32_t vendorId = kVendorDefaultId,
+                       uint32_t token = kVendorSummonToken,
+                       const std::unordered_set<uint32_t> *avoidTargetSlots = nullptr,
+                       VendorBuyResult *out = nullptr);
+bool CloseVendorWindowLocal(bool *packetSentByUiHandler = nullptr);
+bool SendVendorClose(uint32_t token = kVendorSummonToken);
+
+// ---------- Account-shared bank (账号共享仓库) ----------
+//
+// 抓包 + IDA 实证 2026-06-14 (so3dplus.exe / shadowdance):泡点网店购买的物品进账号共享
+// 仓库,需开仓库后把物品搬进 cash 背包才用得上。
+//   开仓库: CUIManager::BeginContent(mgr, renderer, 2) —— 走游戏本地 UI call(IDA 实证
+//           UICmdDispatcher__OnButton case 0x63D)。内部会建立本地仓库 UI content 并发
+//           411154[1]+411644[self]。注意:**不能**直接裸发这两个包 —— 实测裸发后服务端
+//           把角色置成"仓库交互中",但本地没建 UI content,移动被本地 gate 住,得手动开关
+//           一次 bank 才恢复。走 BeginContent 本地状态正确,不卡。
+//   仓库内容: 服务端回 recv proto 511320 整桶,由 NetLog 解析成 BankEntry 快照
+//   关仓库: UIContentMarkClose(content) + CUIManager::CloseActiveContent(mgr, renderer)
+//           (复用 vendor 关窗范式),搬完关掉恢复移动
+//   搬到 cash: NetSkillSendPackage(411155, {destCashWireSlot(slot+13), bankUniqueId, 0, count}, 16)
+//             (与摊贩购买 411020 同一发送器,只是 body 长度不同)
+inline constexpr int kProtocolBankMove   = 411155;
+inline constexpr int kBankContentEnum    = 2; // BeginContent 的 content enum:账号共享仓库
+
+struct BankItemInfo
+{
+    uint32_t uid;    // 唯一实例 id (411155 搬运引用这个)
+    uint32_t itemId; // 模板 itemId
+    uint32_t count;  // 真实件数 (packed+1,按可堆叠口径)
+};
+
+// 调游戏本地 call 打开账号共享仓库(BeginContent enum 2)。会建本地 UI 并发开仓库包。
+// 内容随后由 511320 回流,用 GetBankItems 读。失败返回 false。
+bool SendBankOpen();
+// 关闭账号共享仓库 UI(标记 content 关闭 + CloseActiveContent),搬完恢复角色移动。
+bool SendBankClose();
+// 取最近一次 511320 整桶解析出的仓库快照(转发 NetLog::GetBankSnapshot)。
+std::vector<BankItemInfo> GetBankItems();
+// 把仓库唯一实例 uid 的 count 件搬进 cash 背包。自动挑目标格:优先已有同 itemId 的格(堆叠),
+// 否则首个空格;满则失败。返回选中的 cash slotIndex(0..79),失败返回 -1。
+int SendBankMoveToCash(uint32_t uid, uint32_t itemId, uint32_t count);
+
+// ---------- Magic Spring / 发条 (CMagicSpringOption) ----------
+//
+// IDA 实证 2026-06-14 (unpackd_so3d.exe):
+//   发送(洗发条) proto 411590 = CG_REQ_SPRING_OPT_ASSIGN。WashClockwork_Send_411590
+//   @0x7F1F90 的 body=3×u32: [发条所在背包(0=普通/1=cash), 目标装备 wire 槽(=arrayIndex+13),
+//   发条物品 wire 槽(=spring item+0x00)]。服务器据 (bag, slot) 定位并消耗发条,发条种类
+//   由该槽物品的 subtype(item+0x110) 决定。复用 NetSendDialogSelect(0x72C930) 这个
+//   proto-generic 的 20-byte/3-dword 发送器(门控与 NetSendTriple 同,在线时无害)。
+//
+//   结果回包 proto 511132 = GC_RES_SPRING_OPT_ASSIGN, body=8×u32:
+//   [resultCode(0=成功), grade, id1,id2,id3, val1,val2,val3]。成功后 sub_7A6130 把
+//   [grade, id1,val1, id2,val2, id3,val3] (7×u32) qmemcpy 到 **item+0xB0**,所以洗完
+//   直接读 item+0xB0 即可拿到新状态(无需挂 recv 钩子)。grade: sub_79C780 = *(item+0xB0)。
+//
+//   属性 id(1..23) → 字符串表 id 映射在 sub_7F2520(属性名渲染器)的 switch 里,经
+//   StringTableCopy(0x1BF8E0=sub_5BF8E0) 取 Big5 名;偶数高 id 是百分比(+N%)与复合属性。
+//   三种发条 subtype: 0=實習生(65) 1=高手(66) 2=武爾坎努斯(67);可交易与不可交易版同 subtype。
+inline constexpr uintptr_t kSpringBlockOffset      = 0xB0; // item+0xB0: [grade,id1,v1,id2,v2,id3,v3]
+inline constexpr uintptr_t kItemSubtypeOffset      = 0x110; // *itemTable*(=*(item+0x20))+0x110: subtype (发条 65/66/67)
+inline constexpr int       kProtocolWashSpring     = 411590;
+inline constexpr int       kSpringSubtypeBase      = 65;   // type 0/1/2 -> subtype 65/66/67
+inline constexpr uint32_t  kSpringWireSlotBase     = 13;   // wire slot = arrayIndex + 13
+inline constexpr size_t    kSpringGradeCount       = 5;    // N/G/DG/XG/SG (grade 0..4)
+
+struct SpringAttr
+{
+    uint32_t id;     // 1..23 (0 = 空槽)
+    int32_t  value;
+};
+
+struct SpringState
+{
+    bool       valid;     // 装备存在且能读出发条块
+    uint32_t   grade;     // 0=N,1=G,2=DG,3=XG,4=SG
+    SpringAttr attrs[3];  // 固定三条 (id 可能为 0 表示该槽未启用)
+};
+
+// 读取普通背包某 arrayIndex(0..191) 上装备的发条状态 (item+0xB0)。SEH 安全。
+SpringState ReadSpringState(uint32_t equipSlotIndex);
+
+// 用 springType(0/1/2) 的发条洗 equipSlotIndex 上的装备。自动在普通/cash 背包里
+// 找对应 subtype 的发条算出 wire 槽并发 411590。找不到发条 / 资源未解析返回 false,
+// errOut(可选) 填原因。
+bool WashSpring(uint32_t equipSlotIndex, int springType, std::string *errOut = nullptr);
+
+// 属性 id(1..23) → UTF-8 中文名 (经游戏字符串表)。isPercentOut(可选) 标记是否 +N%。
+// 未知 id 返回空串。
+std::string GetSpringAttrName(uint32_t attrId, bool *isPercentOut = nullptr);
 
 // ---------- Active buffs (BuffHelper) ----------
 //
@@ -1227,14 +1387,21 @@ inline constexpr uintptr_t kPartyStateMaxHpOffset  = 0x04; // state[1]
 
 struct PartyMember
 {
-    int                     index;   // slot in the engine roster array
-    std::string             name;    // UTF-8 (from Big5)
-    uint32_t                userId;  // entry+0x31 (self back-filled)
-    bool                    isSelf;  // index == g_PartySelfIndex
-    bool                    online;  // entry+0x19 > 0
-    int32_t                 hp;      // state[0]; -1 = unknown
-    int32_t                 maxHp;   // state[1]; -1 = unknown
-    std::vector<ActiveBuff> buffs;   // GetHostBuffs(userId, isSelf?0:2)
+    int                     index;    // slot in the engine roster array
+    std::string             name;     // UTF-8 (from Big5)
+    uint32_t                userId;   // entry+0x31 (self back-filled)
+    bool                    isSelf;   // index == g_PartySelfIndex
+    bool                    online;   // entry+0x19 > 0
+    int32_t                 hp;       // state[0]; -1 = unknown
+    int32_t                 maxHp;    // state[1]; -1 = unknown
+    // nearby = userId resolves in the around-player AOI list (self always true).
+    // The AOI list only holds entities loaded around the local player, so
+    // nearby=false means the teammate is too far / on a different map and a
+    // remote buff cast wouldn't reach them. distance is world units (~50/tile),
+    // -1 when unknown (not in AOI).
+    bool                    nearby;
+    float                   distance;
+    std::vector<ActiveBuff> buffs;    // GetHostBuffs(userId, isSelf?0:2)
 };
 
 struct PartySnapshot
@@ -1341,6 +1508,38 @@ bool MoveTo(float worldX, float worldY, int action = 1, uint32_t targetId = 0);
 //
 // MUST be called on the game's main / D3D9-present thread, like MoveTo.
 bool TalkOrAttack(uint32_t creatureId);
+
+// ---------- City teleport ("/狮子城" chat command, proto 411076) ----------
+//
+// Typing "/<cityName>" in the chat box warps the player to that city. The
+// command is CLIENT-parsed: the chat dispatcher (ChatCmd_Dispatch @ 0x969E30)
+// falls through to ChatCmd_Teleport @ 0x966770, which:
+//   1) destId = ResolveTeleportDestByName(CUIManager::GetUIContent(99),
+//              "/cityName")  — looks the name up in the teleport table and
+//              returns the destination id (e.g. 狮子城 -> 202), 0 if no match
+//              / level / money / valid gate fails (resolver @ 0xA1F800).
+//   2) Teleport_Execute @ 0x995020 -> Teleport_SendPacket @ 0x9925F0 emits a
+//              position-sync packet (411000) then the warp request
+//              Net__SendDword(buf, 411076, destId).
+//
+// We replicate that on the wire WITHOUT needing the chat-window object:
+//   - ResolveTeleportDestId resolves a UTF-8 city name (converted to Big5 — the
+//     table is Big5, game is TW build) to its dest id via the UIManager(99)
+//     teleport table. A leading '/' is added if absent (the resolver compares
+//     name+1, skipping the slash).
+//   - SendTeleportToDest fires SendPlayerMoveSync (best-effort, like the engine)
+//     then Net__SendDword(411076, destId). Local death/map gates are bypassed
+//     (project philosophy — the server still validates), so a warp that the
+//     in-game button would grey out is simply rejected server-side instead of
+//     spinning.
+//
+// All SEH-wrapped. ResolveTeleportDestId returns 0 on no-match / gate-fail /
+// torn UI table; SendTeleportToDest/TeleportByCityName return false on failure.
+//
+// MUST be called on the game's main / D3D9-present thread (engine packet path).
+int  ResolveTeleportDestId(const char *cityNameUtf8);
+bool SendTeleportToDest(int destId);
+bool TeleportByCityName(const char *cityNameUtf8);
 
 // Snapshot wrapper around the engine's CreatureMgr list, filtered to entries
 // the user could "talk to" — kind != Pet, alive, has a creature id. Includes

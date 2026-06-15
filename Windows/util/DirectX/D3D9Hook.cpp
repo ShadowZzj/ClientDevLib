@@ -27,6 +27,8 @@ DWORD  g_uiThreadId = 0;
 std::atomic<bool> g_stopUi{false};
 D3DPRESENT_PARAMETERS g_d3dpp{};
 D3D9Hook::SetupOptions g_options{};
+std::wstring g_windowClassNameW;
+std::wstring g_windowNameW;
 
 struct UiThreadStart
 {
@@ -53,6 +55,33 @@ void ResetExternalDevice()
     if (FAILED(hr))
         spdlog::warn("D3D9Hook: external device Reset failed, hr=0x{:08X}", static_cast<unsigned>(hr));
     ImGui_ImplDX9_CreateDeviceObjects();
+}
+
+std::wstring Utf8ToWide(const std::string &text)
+{
+    if (text.empty())
+        return {};
+
+    UINT  codePage = CP_UTF8;
+    DWORD flags    = MB_ERR_INVALID_CHARS;
+    int len = ::MultiByteToWideChar(codePage, flags, text.c_str(),
+                                    static_cast<int>(text.size()), nullptr, 0);
+
+    if (len <= 0)
+    {
+        codePage = CP_ACP;
+        flags = 0;
+        len = ::MultiByteToWideChar(codePage, flags, text.c_str(),
+                                    static_cast<int>(text.size()), nullptr, 0);
+    }
+
+    if (len <= 0)
+        return {};
+
+    std::wstring wide(static_cast<size_t>(len), L'\0');
+    ::MultiByteToWideChar(codePage, flags, text.c_str(),
+                          static_cast<int>(text.size()), wide.data(), len);
+    return wide;
 }
 
 void ApplyMenuVisibility()
@@ -113,7 +142,7 @@ DWORD WINAPI MenuThreadProc(LPVOID param)
         MSG msg{};
         while (!g_stopUi.load(std::memory_order_acquire))
         {
-            while (::PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+            while (::PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
             {
                 if (msg.message == kSetMenuOpenMsg)
                 {
@@ -136,7 +165,7 @@ DWORD WINAPI MenuThreadProc(LPVOID param)
                 }
 
                 ::TranslateMessage(&msg);
-                ::DispatchMessageA(&msg);
+                ::DispatchMessageW(&msg);
             }
 
             ApplyMenuVisibility();
@@ -204,7 +233,7 @@ LRESULT CALLBACK D3D9Hook::WindowProcess(HWND window, UINT message, WPARAM wPara
         break;
     }
 
-    return ::DefWindowProcA(window, message, wParam, lParam);
+    return ::DefWindowProcW(window, message, wParam, lParam);
 }
 
 bool D3D9Hook::SetupWindowClass(const SetupOptions& options) noexcept
@@ -214,19 +243,24 @@ bool D3D9Hook::SetupWindowClass(const SetupOptions& options) noexcept
     if (options.instance)
         g_options.instance = options.instance;
 
-    windowClass = {sizeof(WNDCLASSEXA)};
+    g_windowClassNameW = Utf8ToWide(g_options.windowClassName);
+    if (g_windowClassNameW.empty())
+        return false;
+
+    windowClass = {sizeof(WNDCLASSEXW)};
     windowClass.style = CS_HREDRAW | CS_VREDRAW;
     windowClass.lpfnWndProc = D3D9Hook::WindowProcess;
     windowClass.hInstance = g_options.instance ? g_options.instance : GetModuleHandle(nullptr);
     windowClass.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
-    windowClass.lpszClassName = g_options.windowClassName.c_str();
-    return RegisterClassExA(&windowClass) != 0;
+    windowClass.lpszClassName = g_windowClassNameW.c_str();
+    return RegisterClassExW(&windowClass) != 0;
 }
 
 void D3D9Hook::DestroyWindowClass() noexcept
 {
     if (windowClass.lpszClassName)
-        UnregisterClassA(windowClass.lpszClassName, windowClass.hInstance);
+        UnregisterClassW(windowClass.lpszClassName, windowClass.hInstance);
+    g_windowClassNameW.clear();
 }
 
 bool D3D9Hook::SetupWindow(const SetupOptions& options) noexcept
@@ -243,8 +277,12 @@ bool D3D9Hook::SetupWindow(const SetupOptions& options) noexcept
     if (!options.windowName.empty())
         g_options.windowName = options.windowName;
 
-    window = CreateWindowExA(g_options.exStyle, windowClass.lpszClassName,
-                             g_options.windowName.c_str(), g_options.style,
+    g_windowNameW = Utf8ToWide(g_options.windowName);
+    if (g_windowNameW.empty())
+        return false;
+
+    window = CreateWindowExW(g_options.exStyle, windowClass.lpszClassName,
+                             g_windowNameW.c_str(), g_options.style,
                              g_options.x, g_options.y, g_options.width, g_options.height,
                              g_options.parent, g_options.menu, windowClass.hInstance, nullptr);
     if (!window)
@@ -262,6 +300,7 @@ void D3D9Hook::DestroyWindow() noexcept
         ::DestroyWindow(window);
         window = nullptr;
     }
+    g_windowNameW.clear();
 }
 
 bool D3D9Hook::SetupDirectX() noexcept
@@ -353,7 +392,7 @@ void D3D9Hook::Destroy() noexcept
 {
     g_stopUi.store(true, std::memory_order_release);
     if (g_uiThreadId)
-        ::PostThreadMessageA(g_uiThreadId, kQuitMenuMsg, 0, 0);
+        ::PostThreadMessageW(g_uiThreadId, kQuitMenuMsg, 0, 0);
 
     if (g_uiThread)
     {
@@ -399,13 +438,13 @@ void D3D9Hook::Render() noexcept
 void D3D9Hook::SetOpen(bool value) noexcept
 {
     if (g_uiThreadId)
-        ::PostThreadMessageA(g_uiThreadId, kSetMenuOpenMsg, value ? 1 : 0, 0);
+        ::PostThreadMessageW(g_uiThreadId, kSetMenuOpenMsg, value ? 1 : 0, 0);
 }
 
 void D3D9Hook::ToggleOpen() noexcept
 {
     if (g_uiThreadId)
-        ::PostThreadMessageA(g_uiThreadId, kToggleMenuMsg, 0, 0);
+        ::PostThreadMessageW(g_uiThreadId, kToggleMenuMsg, 0, 0);
 }
 
 void D3D9Hook::SetupHook()

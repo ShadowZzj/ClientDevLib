@@ -43,14 +43,25 @@
           />
           <el-button :loading="savingConfig" @click="saveConfig" style="margin-left: 8px">保存</el-button>
         </el-form-item>
+        <el-form-item label="泡点 ≥">
+          <el-input-number
+            v-model="paodianMin"
+            :min="0"
+            :step="1000"
+            :precision="0"
+            controls-position="right"
+            style="width: 150px"
+          />
+        </el-form-item>
       </el-form>
       <div class="meta">
-        <span>账号 {{ accounts.length }}</span>
+        <span>账号 {{ filteredAccounts.length }} / {{ accounts.length }}</span>
+        <span class="total">泡点总和 {{ formatNumber(paodianTotal) }}</span>
         <span>{{ refreshIntervalText }}</span>
       </div>
     </div>
 
-    <el-table :data="accounts" stripe size="small" v-loading="loading" class="account-table">
+    <el-table :data="filteredAccounts" stripe size="small" v-loading="loading" class="account-table">
       <el-table-column prop="username" label="账号" min-width="150" />
       <el-table-column label="泡点" width="120" align="right">
         <template #default="{ row }">
@@ -212,6 +223,8 @@ const refreshing = ref(false)
 const savingConfig = ref(false)
 const refreshIntervalMinutes = ref(DEFAULT_REFRESH_INTERVAL_MS / 60_000)
 const autoRefreshEnabled = ref(true)
+// 泡点筛选阈值(仅前端,不持久化)。只看泡点 ≥ 该值的账号,默认 0 = 全部。
+const paodianMin = ref(0)
 const form = reactive({ username: '', password: '' })
 const purchaseDialogVisible = ref(false)
 const purchaseAccount = ref<PaodianAccount | null>(null)
@@ -230,6 +243,16 @@ const refreshIntervalText = computed(() => {
   const hours = minutes / 60
   return Number.isInteger(hours) ? `${hours} 小时自动刷新` : `${minutes} 分钟自动刷新`
 })
+
+// 泡点 ≥ 阈值的账号。总和随筛选结果联动。
+const filteredAccounts = computed(() => {
+  const min = Math.max(0, Number(paodianMin.value) || 0)
+  if (min <= 0) return accounts.value
+  return accounts.value.filter((a) => (Number(a.paodian) || 0) >= min)
+})
+const paodianTotal = computed(() =>
+  filteredAccounts.value.reduce((sum, a) => sum + (Number(a.paodian) || 0), 0)
+)
 
 const filteredShopItems = computed(() => {
   const q = shopSearch.value.trim().toLowerCase()
@@ -485,6 +508,12 @@ onUnmounted(() => {
   font-size: 12px;
   line-height: 32px;
   white-space: nowrap;
+}
+
+.meta .total {
+  color: var(--el-color-warning);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .account-table {

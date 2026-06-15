@@ -3,12 +3,15 @@
 #include <Detours/build/include/detours.h>
 #include <spdlog/spdlog.h>
 #include <intrin.h>
+#include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -25,6 +28,7 @@
 #include "util/DisconnectWatchdog.h"
 #include "util/RemoteControl.h"
 #include "util/InputInjector.h"
+#include "util/LoginBridge.h"
 #include "entity/CLocalPlayer.h"
 #include "modules/StatusModule.h"
 #include "modules/MoveSpeedModule.h"
@@ -41,6 +45,7 @@
 #include "modules/AutoConfirmModule.h"  // 也用于 sendMoneyMail handler 静音 OK toast
 #include "modules/AutoDelegationModule.h"
 #include "modules/AutoMailModule.h"
+#include "modules/AutoTradeController.h"
 #include "modules/NearbyPlayerGuardModule.h"
 #include "modules/PlayerESPModule.h"
 #include "modules/StationaryFarmModule.h"
@@ -62,6 +67,7 @@ using fnCreateThread = HANDLE(WINAPI *)(LPSECURITY_ATTRIBUTES, SIZE_T,
                                         DWORD, LPDWORD);
 
 static fnCreateThread g_oCreateThread = CreateThread;
+static volatile LONG g_remoteUnloadRequested = 0;
 
 static DWORD WINAPI DummyLoopThread(LPVOID)
 {
@@ -225,6 +231,51 @@ static bool ListCapturedHooks(std::vector<std::pair<int, CapturedHookInfo>> &out
     for (auto &kv : g_capturedHooks)
         out.emplace_back(kv.first, kv.second);
     return true;
+}
+
+static uint32_t JsonU32Arg(const nlohmann::json &args, const char *name, uint32_t fallback)
+{
+    auto it = args.find(name);
+    if (it == args.end() || it->is_null())
+        return fallback;
+    try
+    {
+        if (it->is_number_unsigned())
+            return it->get<uint32_t>();
+        if (it->is_number_integer())
+            return static_cast<uint32_t>(it->get<int64_t>());
+        if (it->is_number_float())
+            return static_cast<uint32_t>(it->get<double>());
+        if (it->is_string())
+        {
+            std::string s = it->get<std::string>();
+            int base = 10;
+            if (s.size() > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
+                base = 16;
+            return static_cast<uint32_t>(std::stoull(s, nullptr, base));
+        }
+    }
+    catch (...)
+    {
+    }
+    return fallback;
+}
+
+static std::unordered_set<uint32_t> JsonU32SetArg(const nlohmann::json &args, const char *name)
+{
+    std::unordered_set<uint32_t> out;
+    auto it = args.find(name);
+    if (it == args.end() || !it->is_array())
+        return out;
+    for (const auto &entry : *it)
+    {
+        nlohmann::json wrapper;
+        wrapper["v"] = entry;
+        uint32_t value = JsonU32Arg(wrapper, "v", 0);
+        if (value != 0)
+            out.insert(value);
+    }
+    return out;
 }
 
 static bool IsAddressInHostExe(LPCVOID addr)
@@ -434,8 +485,7 @@ static void UninstallDetour()
 
 // True when the currently-focused window belongs to our own process. Hotkey
 // handlers call this so a press while the user is typing in another app
-// (browser, editor) is ignored. We still drain GetAsyncKeyState's `& 1` bit
-// regardless of focus, so the same press doesn't fire later when focus returns.
+// (browser, editor) is ignored.
 static bool HostWindowHasFocus()
 {
     HWND fg = GetForegroundWindow();
@@ -444,6 +494,11 @@ static bool HostWindowHasFocus()
     DWORD fgPid = 0;
     GetWindowThreadProcessId(fg, &fgPid);
     return fgPid == GetCurrentProcessId();
+}
+
+static bool IsKeyDown(DWORD vk)
+{
+    return (GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0;
 }
 
 static DWORD WINAPI HackThread(LPVOID lpParam)
@@ -480,11 +535,19 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     // then force-closes the process if both ports go quiet for 5 minutes.
     // Depends on NetLog's recv hook being live to feed OnRecv().
     GGTB::DisconnectWatchdog::Install();
+    GGTB::LoginBridge::Install();
 
     // Web 远控通道:HackThread 起 IO 线程主动连 \\.\pipe\GGTB_BROKER。Install 之
     // 前先把 sendMoneyMail handler 注册好,避免 broker 已经把 connect 后立刻派
     // 命令的窗口期跑空。Handler 要在 IO 线程上同步执行 — 引擎的 packet 系列在
     // 任意 worker 线程都能调,这点 AutoMail 已经验过了。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "unloadGGTB",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            InterlockedExchange(&g_remoteUnloadRequested, 1);
+            return {true, "unload requested"};
+        });
+
     GGTB::RemoteControl::RegisterCommandHandler(
         "sendMoneyMail",
         [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
@@ -567,6 +630,31 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                 return {false, "message too long (>200 bytes)"};
             bool ok = GGTB::SendPublicChat(message.c_str());
             return {ok, ok ? std::string{} : std::string{"engine returned false"}};
+        });
+
+    // teleport: 复刻聊天框输入「/狮子城」的城市传送 —— 客户端本地解析的命令。
+    //   { "cityName": "狮子城" }   -> 先用 UIManager(99) 传送表把名字解析成 destId
+    //                                (如狮子城 -> 202),再发 411076(destId)。城名是
+    //                                UTF-8,DLL 内部转 Big5(此 build 是 TW 包)。
+    //   { "destId": 202 }          -> 跳过名字解析直接发 411076(destId),绕开等级/
+    //                                金钱闸(传送表对不满足条件的城会解析失败)。
+    // 两者都给则 destId 优先。死亡/地图闸由服务端校验,这层不拦(项目惯例)。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "teleport",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            int destId = args.value("destId", 0);
+            if (destId > 0)
+            {
+                bool ok = GGTB::SendTeleportToDest(destId);
+                return {ok, ok ? std::string{} : std::string{"send failed (pattern unresolved or SEH)"}};
+            }
+            std::string cityName = args.value("cityName", std::string{});
+            if (cityName.empty())
+                return {false, "missing cityName or destId"};
+            if (cityName.size() > 64)
+                return {false, "cityName too long"};
+            bool ok = GGTB::TeleportByCityName(cityName.c_str());
+            return {ok, ok ? std::string{} : std::string{"could not resolve city (unknown / level / money / unavailable)"}};
         });
 
     GGTB::RemoteControl::RegisterCommandHandler(
@@ -679,6 +767,307 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             return {ok, ok ? "sent" : "failed"};
         });
 
+    // ---------- 发条 (Magic Spring) 自动洗 ----------
+    // queryClockwork {slotIndex}: 读普通背包 arrayIndex 上装备的发条状态(grade+3属性)。
+    // washClockwork {slotIndex, springType(0=實習生/1=高手/2=武爾坎努斯)}: 发 411590 洗一次。
+    // getSpringAttrTable: 返回属性 id->中文名 表(给 web 选"需要属性")。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "queryClockwork",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t slot = args.value("slotIndex", UINT32_MAX);
+            if (slot == UINT32_MAX)
+                return {false, "missing slotIndex"};
+            GGTB::SpringState st = GGTB::ReadSpringState(slot);
+            nlohmann::json o;
+            o["valid"] = st.valid;
+            o["grade"] = st.grade;
+            nlohmann::json arr = nlohmann::json::array();
+            for (int i = 0; i < 3; ++i)
+            {
+                uint32_t    id   = st.attrs[i].id;
+                int32_t     val  = st.attrs[i].value;
+                bool        pct  = false;
+                std::string name = id ? GGTB::GetSpringAttrName(id, &pct) : std::string{};
+                // 复合属性(15..20): value 打包 N=高16(每N等級)、M=低16(增加M)。
+                bool composite = (id >= 15 && id <= 20);
+                nlohmann::json e = {
+                    {"id", id}, {"value", val}, {"name", name},
+                    {"percent", pct}, {"composite", composite},
+                };
+                if (composite)
+                {
+                    e["n"] = (static_cast<uint32_t>(val) >> 16) & 0xFFFF;
+                    e["m"] = static_cast<uint32_t>(val) & 0xFFFF;
+                }
+                arr.push_back(e);
+            }
+            o["attrs"] = arr;
+            return {true, o.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "washClockwork",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t slot   = args.value("slotIndex", UINT32_MAX);
+            int      type   = args.value("springType", -1);
+            int      waitMs = args.value("waitMs", 1500);
+            if (slot == UINT32_MAX)
+                return {false, "missing slotIndex"};
+            if (type < 0 || type > 2)
+                return {false, "springType must be 0..2"};
+            if (waitMs < 0) waitMs = 0;
+            if (waitMs > 4000) waitMs = 4000;
+
+            // 记录发包前最近一次 511132 的 tick,发包后等它变化 = 本次洗的回包到了。
+            DWORD       preTick = GGTB::NetLog::GetLastSpringAssign();
+            std::string err;
+            if (!GGTB::WashSpring(slot, type, &err))
+                return {false, err};
+
+            uint32_t rc = 0, grade = 0, ids[3] = {}, vals[3] = {};
+            DWORD    tick     = preTick;
+            DWORD    deadline = GetTickCount() + static_cast<DWORD>(waitMs);
+            while (static_cast<int>(deadline - GetTickCount()) > 0)
+            {
+                Sleep(15);
+                tick = GGTB::NetLog::GetLastSpringAssign(&rc, &grade, ids, vals);
+                if (tick != preTick && tick != 0)
+                    break;
+            }
+
+            nlohmann::json o;
+            if (tick == preTick || tick == 0)
+            {
+                // 发出去了但 waitMs 内没等到 511132(服务端慢/掉包),本轮算「已发未确认」。
+                o["confirmed"] = false;
+                return {true, o.dump()};
+            }
+            o["confirmed"]  = true;
+            o["resultCode"] = rc; // 0=成功;非0=服务端拒绝
+            o["grade"]      = grade;
+            nlohmann::json arr = nlohmann::json::array();
+            for (int i = 0; i < 3; ++i)
+            {
+                uint32_t    id   = ids[i];
+                int32_t     val  = static_cast<int32_t>(vals[i]);
+                bool        pct  = false;
+                std::string name = id ? GGTB::GetSpringAttrName(id, &pct) : std::string{};
+                bool        composite = (id >= 15 && id <= 20);
+                nlohmann::json e = {
+                    {"id", id}, {"value", val}, {"name", name},
+                    {"percent", pct}, {"composite", composite},
+                };
+                if (composite)
+                {
+                    e["n"] = (static_cast<uint32_t>(val) >> 16) & 0xFFFF;
+                    e["m"] = static_cast<uint32_t>(val) & 0xFFFF;
+                }
+                arr.push_back(e);
+            }
+            o["attrs"] = arr;
+            return {true, o.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getSpringAttrTable",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            nlohmann::json arr = nlohmann::json::array();
+            for (uint32_t id = 1; id <= 23; ++id)
+            {
+                bool        pct  = false;
+                std::string name = GGTB::GetSpringAttrName(id, &pct);
+                if (name.empty())
+                    continue;
+                arr.push_back({{"id", id}, {"name", name}, {"percent", pct},
+                               {"composite", id >= 15 && id <= 20}});
+            }
+            return {true, arr.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "vendorOpen",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t token = JsonU32Arg(args, "token", GGTB::kVendorSummonToken);
+            bool ok = GGTB::SendVendorOpen(token);
+            return {ok, ok ? "sent" : "failed"};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getVendorShopItems",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t vendorId = JsonU32Arg(args, "vendorId", GGTB::kVendorDefaultId);
+            auto items = GGTB::GetVendorShopItems(vendorId);
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto &it : items)
+            {
+                arr.push_back({
+                    {"shopIndex", it.shopIndex},
+                    {"itemId", it.itemId},
+                    {"unitPrice", it.unitPrice},
+                    {"name", it.name},
+                });
+            }
+            return {true, arr.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "vendorBuyItem",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t itemId    = JsonU32Arg(args, "itemId", 0);
+            uint32_t count     = JsonU32Arg(args, "count", 0);
+            uint32_t vendorId  = JsonU32Arg(args, "vendorId", GGTB::kVendorDefaultId);
+            uint32_t shopIndex = JsonU32Arg(args, "shopIndex", UINT32_MAX);
+            uint32_t targetSlot = JsonU32Arg(args, "targetSlot", 0);
+            uint32_t token     = JsonU32Arg(args, "token", GGTB::kVendorSummonToken);
+            auto avoidTargetSlots = JsonU32SetArg(args, "avoidTargetSlots");
+            if (count == 0)
+                return {false, "missing count"};
+
+            nlohmann::json detail;
+            detail["vendorId"] = vendorId;
+            detail["shopIndex"] = shopIndex;
+            detail["itemId"] = itemId;
+            detail["count"] = count;
+            detail["token"] = token;
+            detail["avoidTargetSlots"] = nlohmann::json::array();
+            for (uint32_t slot : avoidTargetSlots)
+                detail["avoidTargetSlots"].push_back(slot);
+            bool ok = false;
+            if (itemId != 0 && shopIndex != UINT32_MAX)
+            {
+                GGTB::VendorBuyResult r{};
+                ok = GGTB::SendVendorBuyShopItem(
+                    itemId, shopIndex, count, vendorId, token,
+                    avoidTargetSlots.empty() ? nullptr : &avoidTargetSlots, &r);
+                if (ok)
+                {
+                    detail["vendorId"] = r.vendorId;
+                    detail["shopIndex"] = r.shopIndex;
+                    detail["itemId"] = r.itemId;
+                    detail["count"] = r.count;
+                    detail["targetSlot"] = r.targetSlot;
+                    detail["token"] = r.token;
+                }
+            }
+            else if (itemId != 0)
+            {
+                GGTB::VendorBuyResult r{};
+                ok = GGTB::SendVendorBuyItem(
+                    itemId, count, vendorId, token,
+                    avoidTargetSlots.empty() ? nullptr : &avoidTargetSlots, &r);
+                if (ok)
+                {
+                    detail["vendorId"] = r.vendorId;
+                    detail["shopIndex"] = r.shopIndex;
+                    detail["itemId"] = r.itemId;
+                    detail["count"] = r.count;
+                    detail["targetSlot"] = r.targetSlot;
+                    detail["token"] = r.token;
+                }
+            }
+            else if (shopIndex != UINT32_MAX && targetSlot != 0)
+            {
+                ok = GGTB::SendVendorBuy(vendorId, shopIndex, count, targetSlot, token);
+                if (ok)
+                {
+                    detail["vendorId"] = vendorId;
+                    detail["shopIndex"] = shopIndex;
+                    detail["count"] = count;
+                    detail["targetSlot"] = targetSlot;
+                    detail["token"] = token;
+                }
+            }
+            else
+            {
+                return {false, "missing itemId+shopIndex or shopIndex+targetSlot"};
+            }
+            return {ok, detail.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "vendorClose",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t token = JsonU32Arg(args, "token", GGTB::kVendorSummonToken);
+            bool packetSentByUi = false;
+            bool localOk = GGTB::CloseVendorWindowLocal(&packetSentByUi);
+            bool packetOk = packetSentByUi || GGTB::SendVendorClose(token);
+            nlohmann::json detail{
+                {"localUiClosed", localOk},
+                {"packetSent", packetOk},
+                {"packetSentByUiHandler", packetSentByUi},
+                {"token", token},
+            };
+            return {localOk || packetOk, detail.dump()};
+        });
+
+    // ---------- 账号共享仓库 (bank) ----------
+    // 泡点网店买的物品进账号共享仓库,需开仓库 -> 等 511320 整桶回流 -> 把物品搬进 cash 背包。
+    // broker 的 PurchaseMonitor 编排这三步。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "openBank",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            bool ok = GGTB::SendBankOpen();
+            return {ok, ok ? "opened" : "failed"};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "closeBank",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            bool ok = GGTB::SendBankClose();
+            return {ok, ok ? "closed" : "failed"};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getBankItems",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            auto items = GGTB::GetBankItems();
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto &it : items)
+            {
+                arr.push_back({
+                    {"uid", it.uid},
+                    {"itemId", it.itemId},
+                    {"count", it.count},
+                });
+            }
+            return {true, arr.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "bankMoveToCash",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t uid    = JsonU32Arg(args, "uid", 0);
+            uint32_t itemId = JsonU32Arg(args, "itemId", 0);
+            uint32_t count  = JsonU32Arg(args, "count", 0);
+            if (uid == 0 || count == 0)
+                return {false, "missing uid/count"};
+            int dest = GGTB::SendBankMoveToCash(uid, itemId, count);
+            if (dest < 0)
+                return {false, "no free cash slot or send failed"};
+            nlohmann::json detail{
+                {"uid", uid},
+                {"itemId", itemId},
+                {"count", count},
+                {"destSlot", dest},
+            };
+            return {true, detail.dump()};
+        });
+
+    // 读 localUser 里的明文登录账号/密码(私服里 = 泡点网店账号),供 broker 购买时用,
+    // 免去在 paodian 文件里手填密码。仅本机 pipe 通信。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getLoginCredentials",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            GGTB::LoginCredentials cred;
+            if (!GGTB::GetLoginCredentials(cred))
+                return {false, "login credentials unavailable"};
+            nlohmann::json detail{
+                {"account", cred.account},
+                {"password", cred.password},
+            };
+            return {true, detail.dump()};
+        });
+
     // moveTo: 让角色走到世界坐标 (x, y)。走的是引擎自己的 CLocalUser::SetAfterAction
     // 路径（跟点地走 UI 一模一样），所以一切寻路、避障、地形高度都是引擎自己算的,
     // 这层不掺和。action=1 是「纯走路」,action=3 是「走过去再打目标」, 配合 targetId
@@ -719,6 +1108,71 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             j["x"] = x;
             j["y"] = y;
             j["z"] = z;
+            return {true, j.dump()};
+        });
+
+    // setStationaryFarm: broker 自动复活页面「推送坐标到游戏」用。把定点挂机的锁定
+    // 坐标设成 (x, y)。只写坐标,不动「启用」开关 —— 是否真锁位由用户在游戏内自己勾
+    // (StationaryFarmModule::ApplyRemoteCoords 内有详细语义注释)。模块未注册/未实例
+    // 化(理论上不会)返回 false。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "setStationaryFarm",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            if (!args.contains("x") || !args.contains("y"))
+                return {false, "missing x/y"};
+            int x = static_cast<int>(std::lround(args.value("x", 0.0)));
+            int y = static_cast<int>(std::lround(args.value("y", 0.0)));
+            bool ok = GGTB::StationaryFarmModule::ApplyRemoteCoords(x, y);
+            if (!ok)
+                return {false, "StationaryFarm module not ready"};
+            nlohmann::json j{{"x", x}, {"y", y}};
+            return {true, j.dump()};
+        });
+
+    // snapPath: 把一串「想走的」世界坐标途经点用引擎碰撞表校验一遍,返回校验后
+    // 真正可走的途经点。给 broker 的同步「路径随机」用 —— broker 那边只会几何
+    // 瞎画折线(它读不到地图),途经点可能落在墙/水/山里;这里逐段沿射线步进
+    // (RaycastFurthestWalkable,内部走 Map__IsBlocked 碰撞表)把每个途经点吸附
+    // 到「从上一个可达点出发、沿该方向最远仍可走的 tile」,落在障碍后的点自然被
+    // 拉回到障碍前。终点不在这里裁剪 —— 终点是主角色站过的真实坐标,必然可达,
+    // 由调用方自己附在末尾,交给引擎 A* 去精确寻路。
+    //
+    // args: { "startX":.., "startY":..,             # 起点(副角色当前坐标)
+    //         "points": [ {"x":..,"y":..}, ... ] }  # 想走的途经点(不含起点/终点)
+    // 返回: { "points": [ {"x":..,"y":..}, ... ] }  # 校验后的可走途经点(tile 中心)
+    //        校验失败(地图没就绪)返回 {ok:false},调用方回退成直接走终点。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "snapPath",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            if (!args.contains("points") || !args["points"].is_array())
+                return {false, "missing points[]"};
+
+            int curX = static_cast<int>(std::floor(args.value("startX", 0.0f)));
+            int curY = static_cast<int>(std::floor(args.value("startY", 0.0f)));
+            // 起点都不可走(切图瞬时撕裂 / 没读到地图)就让调用方回退。
+            if (!GGTB::IsTileWalkable(curX, curY))
+                return {false, "start tile not walkable (map not ready?)"};
+
+            nlohmann::json out = nlohmann::json::array();
+            for (const auto &p : args["points"])
+            {
+                int wantX = static_cast<int>(std::floor(p.value("x", 0.0f)));
+                int wantY = static_cast<int>(std::floor(p.value("y", 0.0f)));
+                int reachX = curX, reachY = curY;
+                // 从「当前可达点」沿射线步进到目标途经点,取最远仍可走的 tile。
+                if (!GGTB::RaycastFurthestWalkable(curX, curY, wantX, wantY, reachX, reachY))
+                    continue; // 这段连一步都走不了,丢弃该途经点
+                // 原地没动(目标就是当前 tile,或第一步就被挡)不产生途经点,
+                // 免得给引擎发一串重复点。
+                if (reachX == curX && reachY == curY)
+                    continue;
+                out.push_back({{"x", static_cast<float>(reachX) + 0.5f},
+                               {"y", static_cast<float>(reachY) + 0.5f}});
+                curX = reachX;
+                curY = reachY;
+            }
+            nlohmann::json j;
+            j["points"] = out;
             return {true, j.dump()};
         });
 
@@ -772,6 +1226,32 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                     {"hp",           n.hp},
                     {"name",         n.name},
                     {"isNpc",        n.hasDialog},  // 兼容老前端字段 — 现在就是 hasDialog 别名
+                });
+            }
+            return {true, arr.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getNearbyPlayers",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            float maxDist = args.value("maxDistance", 600.0f);
+            auto players = GGTB::GetAroundPlayers(GGTB::GetLocalPlayerName(), maxDist);
+            std::sort(players.begin(), players.end(),
+                      [](const GGTB::NearbyPlayer &a, const GGTB::NearbyPlayer &b) {
+                          return a.distance < b.distance;
+                      });
+
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto &p : players)
+            {
+                arr.push_back({
+                    {"name",           p.name},
+                    {"profession",     p.profession},
+                    {"professionName", p.professionName},
+                    {"distance",       p.distance},
+                    {"x",              p.x},
+                    {"y",              p.y},
+                    {"z",              p.z},
                 });
             }
             return {true, arr.dump()};
@@ -838,7 +1318,7 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     // --- AutoRevive: 死亡 → 寻路 → 选项 ---
     //
     // 状态查询(web 用来高亮按钮 + 显示当前地图):
-    //   getStatus -> { hp, isDead, mapId, userId }
+    //   getStatus -> { hp, isDead, mapId, userId, posX, posY, posZ }
     // 操作:
     //   reviveToTown -> 模拟「死亡弹框点 OK」,发 411170 让 server 把你 warp 回主城。
     // 其它步骤(MoveTo / TalkOrAttack / SelectDialogOption)已经存在 — web 端
@@ -852,6 +1332,13 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             j["isDead"] = GGTB::IsLocalDead();
             j["mapId"]  = GGTB::GetCurrentMapId();
             j["userId"] = GGTB::GetLocalUserId();
+            // 坐标:broker 端「位置卡住自动复活」要靠它判定 X 分钟没移动。
+            // GetLocalPosition 内部处理空指针,解析不出来就保持 0。
+            float px = 0, py = 0, pz = 0;
+            GGTB::GetLocalPosition(px, py, pz);
+            j["posX"] = px;
+            j["posY"] = py;
+            j["posZ"] = pz;
             return {true, j.dump()};
         });
 
@@ -861,8 +1348,18 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             bool safety = args.value("safetyCheck", true);
             int  mode   = args.value("mode", 1);
             bool ok = GGTB::ReviveToTown(safety, mode);
-            return {ok, ok ? std::string{} : std::string{"not dead or send failed"}};
+            return {ok, ok ? std::string{} : std::string{"send failed"}};
         });
+
+    auto levelUpHandler =
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            int payload = args.value("payload", 412016);
+            bool ok = GGTB::RequestLevelUpCheck(payload);
+            return {ok, ok ? std::string{"sent"} : std::string{"send failed"}};
+        };
+
+    GGTB::RemoteControl::RegisterCommandHandler("requestLevelUp", levelUpHandler);
+    GGTB::RemoteControl::RegisterCommandHandler("levelUpCheck", levelUpHandler);
 
     // sendDialogSelectRaw: 直接发 CG_NPC_DIALOG_SELECT (411026) 的 14 字节 wire,
     // 不读 g_NpcDialogState、不做 UI 状态同步 —— 给「自动委托/复活脚本」用的:
@@ -875,9 +1372,10 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
         [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
             uint32_t npcId = args.value("npcId",  uint32_t{0});
             uint32_t opt   = args.value("option", uint32_t{0});
+            uint32_t sub   = args.value("sub",    uint32_t{1});
             if (npcId == 0)
                 return {false, "npcId required (>0)"};
-            bool ok = GGTB::SendDialogSelect(npcId, opt);
+            bool ok = GGTB::SendDialogSelect(npcId, opt, sub);
             return {ok, ok ? std::string{} : std::string{"pattern unresolved or SEH"}};
         });
 
@@ -987,11 +1485,128 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             return {true, {}};
         });
 
-    // Install 必须 RegisterCommandHandler 之后,否则 broker 一接上立刻发 sendInput
+    // queryBuffs: 返回本地玩家当前 buff 快照。web 端轮询用来判断「缺某个 buffId / name」。
+    // 参数: { kind: -1=all(默认) | 0=Normal | 1=Cash }
+    // 返回 detail = JSON 数组,每项 { buffId, name, kind, category, durationMs,
+    //              remainingMs(-1=无倒计时), skillId, isBoolBuff }。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "queryBuffs",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            int  kindFilter = args.value("kind", -1);
+            auto buffs      = GGTB::GetActiveBuffs(kindFilter);
+            auto arr        = nlohmann::json::array();
+            for (const auto &b : buffs)
+            {
+                nlohmann::json j;
+                j["buffId"]      = b.buffId;
+                j["name"]        = b.name;
+                j["kind"]        = (b.kind == GGTB::BuffKind::Cash) ? "cash" : "normal";
+                j["category"]    = b.category;
+                j["durationMs"]  = b.duration;
+                j["remainingMs"] = b.remainingMs;
+                j["skillId"]     = b.skillId;
+                j["isBoolBuff"]  = b.isBoolBuff;
+                arr.push_back(std::move(j));
+            }
+            return {true, arr.dump()};
+        });
+
+    // queryParty: 返回本地玩家所在组队的成员快照(含每人 buff)。web 端轮询用来实时
+    // 显示队员列表 + 队友 buff 状态。
+    // 参数: { buffs: true=带每人 buff(默认) | false=只要名单/血量 }
+    // 返回 detail = JSON 对象:
+    //   { inParty, role, selfIndex,
+    //     members: [ { index, name, userId, isSelf, online, hp, maxHp,
+    //                  nearby, distance,
+    //                  buffs: [ {buffId,name,kind,category,durationMs,
+    //                           remainingMs,skillId,isBoolBuff} ] } ] }
+    // nearby/distance 来自 around-player AOI 反查:nearby=false 表示该队友不在视野
+    // (太远/不同图),远程放 buff 到不了 — 组队 buff 守护据此跳过。自身 nearby=true。
+    // 队友 buff 走 hostType=2(引擎自己的队伍 UI 同 key);自己走 hostType=0。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "queryParty",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            bool withBuffs = args.value("buffs", true);
+            auto snap      = GGTB::GetPartyMembers(withBuffs);
+
+            nlohmann::json root;
+            root["inParty"]   = snap.inParty;
+            root["role"]      = snap.role;
+            root["selfIndex"] = snap.selfIndex;
+
+            auto members = nlohmann::json::array();
+            for (const auto &m : snap.members)
+            {
+                nlohmann::json jm;
+                jm["index"]  = m.index;
+                jm["name"]   = m.name;
+                jm["userId"] = m.userId;
+                jm["isSelf"] = m.isSelf;
+                jm["online"] = m.online;
+                jm["hp"]     = m.hp;
+                jm["maxHp"]  = m.maxHp;
+                jm["nearby"]   = m.nearby;
+                jm["distance"] = m.distance;
+
+                auto buffs = nlohmann::json::array();
+                for (const auto &b : m.buffs)
+                {
+                    nlohmann::json jb;
+                    jb["buffId"]      = b.buffId;
+                    jb["name"]        = b.name;
+                    jb["kind"]        = (b.kind == GGTB::BuffKind::Cash) ? "cash" : "normal";
+                    jb["category"]    = b.category;
+                    jb["durationMs"]  = b.duration;
+                    jb["remainingMs"] = b.remainingMs;
+                    jb["skillId"]     = b.skillId;
+                    jb["isBoolBuff"]  = b.isBoolBuff;
+                    buffs.push_back(std::move(jb));
+                }
+                jm["buffs"] = std::move(buffs);
+                members.push_back(std::move(jm));
+            }
+            root["members"] = std::move(members);
+            return {true, root.dump()};
+        });
+
+    // castSkill: 走引擎自己的 Combat__TryUseSkill 完整状态机释放技能(自 buff / 单体 / AOE 均可)。
+    // 参数: { skillId(必填,>0), targetId=0(0=自身/无目标), checkCanCast=true }
+    // checkCanCast=true 会先读 CSkill 的 learned/cooldown 字段做预检,避免冷却中刷包。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "castSkill",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t skillId      = args.value("skillId",      uint32_t{0});
+            uint32_t targetId     = args.value("targetId",     uint32_t{0});
+            bool     checkCanCast = args.value("checkCanCast", true);
+            if (skillId == 0)
+                return {false, "skillId required (>0)"};
+            bool ok = GGTB::CastSkillById(skillId, targetId, checkCanCast);
+            if (!ok)
+                return {false, "cast rejected (not learned / on cooldown / SEH)"};
+            return {true, {}};
+        });
+
+    // 自动交易: 配置全由 broker 下发,所有角色共用一份。交易接受→锁定→确认的 lock-step
+    // 状态机仍留在 DLL(recv 触发,管道往返跟不上),broker 只管开关 / 白名单 / 延时。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "setAutoTradeConfig",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            GGTB::AutoTradeController::Instance().SetConfig(args);
+            return {true, GGTB::AutoTradeController::Instance().GetStatus().dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getAutoTradeStatus",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            return {true, GGTB::AutoTradeController::Instance().GetStatus().dump()};
+        });
+
     // 会落空。InputInjector::Install 跟 RemoteControl::Install 顺序无强依赖 — 注入
     // 器只 hook user32 API,不依赖 broker / pipe / 引擎符号。
     GGTB::InputInjector::Install();
     GGTB::RemoteControl::Install();
+    // 自动交易 worker 独立于 Setting / 模块系统(broker 远控,无 ImGui)。
+    GGTB::AutoTradeController::Instance().Start();
 
     auto setting = std::make_shared<GGTB::Setting>();
     setting->RegisterModule(std::make_shared<GGTB::StatusModule>());
@@ -1029,26 +1644,42 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
 
     try
     {
-        zzj::D3D::D3D9Hook::Setup(setting);
+        zzj::D3D::D3D9Hook::SetupOptions menuOptions{};
+        menuOptions.windowClassName = "GGTB.ExternalMenu";
+        menuOptions.windowName = "GGThreadBlock";
+        menuOptions.width = 460;
+        menuOptions.height = 430;
+        zzj::D3D::D3D9Hook::Setup(setting, menuOptions);
+
+        DWORD lastTickMs = GetTickCount();
+        bool  endWasDown = false;
+        bool  fireWasDown = false;
+        bool  menuWasDown = false;
+        const DWORD menuToggleKey = setting->GetToggleMenuKey();
 
         while (true)
         {
-            // Hotkeys: drain GetAsyncKeyState's `& 1` bit every tick so a
-            // press that happened while another app had focus does not fire
-            // once the user alt-tabs back. Only honour presses when the host
-            // window is currently in the foreground.
-            const bool endPressed  = (GetAsyncKeyState(VK_END) & 1) != 0;
-            const bool firePressed = (GetAsyncKeyState('N')     & 1) != 0;
-            const bool focused     = HostWindowHasFocus();
+            // GGThreadBlock owns hotkey policy. The generic D3D9 menu only
+            // exposes ToggleOpen/SetOpen and does not know which key toggles it.
+            const bool focused  = HostWindowHasFocus();
+            const bool endDown  = IsKeyDown(VK_END);
+            const bool fireDown = IsKeyDown('N');
+            const bool menuDown = IsKeyDown(menuToggleKey);
+            const bool remoteUnload =
+                InterlockedCompareExchange(&g_remoteUnloadRequested, 0, 0) != 0;
 
-            if (endPressed && focused)
+            if ((endDown && !endWasDown && focused) || remoteUnload)
                 break;
+
+            if (menuDown && !menuWasDown && focused)
+                zzj::D3D::D3D9Hook::ToggleOpen();
 
             // N: toggle FireFullPower. Skip while NPG has us paused — otherwise
             // the user re-enabling mid-guard would re-apply the patch and leak
             // the effect to the nearby player (same reason the checkbox is
             // disabled in the UI while guarded).
-            if (firePressed && focused && firePowerMod && !firePowerMod->IsPausedByGuard())
+            if (fireDown && !fireWasDown && focused && firePowerMod &&
+                !firePowerMod->IsPausedByGuard())
             {
                 const bool wasEnabled = firePowerMod->IsEnabled();
                 firePowerMod->SetEnabled(!wasEnabled);
@@ -1061,8 +1692,18 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                              firePowerMod->IsEnabled() ? "ON" : "OFF");
             }
 
-            GGTB::UserConfig::Tick(setting.get());
-            Sleep(100);
+            endWasDown = endDown;
+            fireWasDown = fireDown;
+            menuWasDown = menuDown;
+
+            const DWORD now = GetTickCount();
+            if (now - lastTickMs >= 100)
+            {
+                lastTickMs = now;
+                GGTB::UserConfig::Tick(setting.get());
+            }
+
+            Sleep(10);
         }
     }
     catch (const std::exception &e)
@@ -1081,6 +1722,9 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     // detours. Stage1Trigger goes last so any late callback (shouldn't
     // happen after End() but kept for symmetry) has something to run on.
     // RemoteControl 早于 NetLog 卸,让 best-effort bye 帧的 send 走正常 socket。
+    GGTB::LoginBridge::Uninstall();
+    // 自动交易 worker 先停(join),之后 NetLog hook 卸了它也不会再轮询到。
+    GGTB::AutoTradeController::Instance().Stop();
     GGTB::RemoteControl::Uninstall();
     // InputInjector 卸在 RemoteControl 之后 — 不会再有命令进来要注入了。
     GGTB::InputInjector::Uninstall();

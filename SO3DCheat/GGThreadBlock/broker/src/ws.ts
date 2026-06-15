@@ -28,6 +28,7 @@ export function attachWs(
                 dllVersion: i.dllVersion,
                 money: i.status.money,
                 hp: i.status.hp,
+                mapId: i.status.mapId,
                 lastSeen: i.lastSeen,
             })),
             moneyCharacters: moneyStats.listCharacters(),

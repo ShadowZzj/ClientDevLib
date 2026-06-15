@@ -7,13 +7,20 @@ const PERSIST_FILE = path.resolve(
     "paodian_accounts.json"
 );
 
+// 网店商品列表(webshop-data)基本不变,落盘缓存:broker 重启后直接用,不必每次重拉。
+// 过期(SHOP_ITEMS_CACHE_MS)或前端带 force 才重新请求网络。
+const SHOP_CACHE_FILE = path.resolve(
+    process.env.GGTB_DATA_DIR || path.dirname(process.execPath),
+    "paodian_shop_cache.json"
+);
+
 const LOGIN_URL = "https://shop2.guguseal.com/api/login";
 const WEBSHOP_DATA_URL = "https://shop2.guguseal.com/api/webshop-data";
 const PURCHASE_URL = "https://shop2.guguseal.com/api/purchase";
 const DEFAULT_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 const MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const MAX_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000;
-const SHOP_ITEMS_CACHE_MS = 5 * 60 * 1000;
+const SHOP_ITEMS_CACHE_MS = 24 * 60 * 60 * 1000; // 商品列表基本不变,缓存 24h;前端"刷新"按钮可强制重拉
 
 interface PaodianAccount {
     username: string;
@@ -81,6 +88,29 @@ function emptyState(username: string): PaodianState {
 function asNumber(value: unknown, fallback = 0): number {
     const n = Number(value);
     return Number.isFinite(n) ? n : fallback;
+}
+
+// 把持久化文件里读回的 state 收敛成合法 PaodianState。重启读盘后直接拿来显示
+// (泡点 / 刷新时间等),不用等下一次刷新。"loading" 是瞬时态,落盘的不应该有,
+// 防御性地降级成 "idle"。
+function coerceState(username: string, raw: any): PaodianState {
+    if (!raw || typeof raw !== "object") return emptyState(username);
+    const status: PaodianState["status"] =
+        raw.status === "ok" || raw.status === "error" ? raw.status : "idle";
+    return {
+        username,
+        id: String(raw.id ?? username),
+        point: asNumber(raw.point),
+        paodian: asNumber(raw.paodian),
+        vip: asNumber(raw.vip),
+        paymoney: asNumber(raw.paymoney),
+        next_vip_level: asNumber(raw.next_vip_level),
+        next_vip_need: asNumber(raw.next_vip_need),
+        eps_endtime: raw.eps_endtime === null || raw.eps_endtime === undefined ? null : String(raw.eps_endtime),
+        status,
+        lastUpdated: asNumber(raw.lastUpdated),
+        error: status === "error" ? String(raw.error ?? "") : "",
+    };
 }
 
 function normalizeConfig(value: any): PaodianConfig {
@@ -196,7 +226,34 @@ export class PaodianMonitor {
 
     constructor() {
         this.load();
+        this.loadShopCache();
         this.start();
+    }
+
+    private loadShopCache(): void {
+        try {
+            if (!fs.existsSync(SHOP_CACHE_FILE)) return;
+            const parsed = JSON.parse(fs.readFileSync(SHOP_CACHE_FILE, "utf8"));
+            const items = Array.isArray(parsed?.items) ? parsed.items : null;
+            if (!items) return;
+            this.shopItems = items;
+            this.shopItemsFetchedAt = asNumber(parsed?.fetchedAt);
+            console.log(`[paodian] loaded ${this.shopItems.length} cached shop items (fetchedAt=${new Date(this.shopItemsFetchedAt).toISOString()})`);
+        } catch (e: any) {
+            console.warn(`[paodian] shop cache load failed: ${e.message}`);
+        }
+    }
+
+    private saveShopCache(): void {
+        try {
+            fs.writeFileSync(
+                SHOP_CACHE_FILE,
+                JSON.stringify({ fetchedAt: this.shopItemsFetchedAt, items: this.shopItems }, null, 2),
+                "utf8"
+            );
+        } catch (e: any) {
+            console.warn(`[paodian] shop cache save failed: ${e.message}`);
+        }
     }
 
     private load(): void {
@@ -216,10 +273,23 @@ export class PaodianMonitor {
                 }))
                 .filter((a: PaodianAccount) => a.username.length > 0);
 
-            for (const account of this.accounts) {
-                this.states.set(account.username, emptyState(account.username));
+            // 上次缓存的各账号泡点 / 刷新时间。可能是数组(viewFor 导出的)或
+            // username->state 的 map,两种都兼容。
+            const savedStates = new Map<string, any>();
+            const rawStates = Array.isArray(parsed) ? null : parsed.states;
+            if (Array.isArray(rawStates)) {
+                for (const s of rawStates) {
+                    if (s && typeof s.username === "string") savedStates.set(s.username.trim(), s);
+                }
+            } else if (rawStates && typeof rawStates === "object") {
+                for (const [k, v] of Object.entries(rawStates)) savedStates.set(k.trim(), v);
             }
-            console.log(`[paodian] loaded ${this.accounts.length} accounts`);
+
+            for (const account of this.accounts) {
+                const saved = savedStates.get(account.username);
+                this.states.set(account.username, saved ? coerceState(account.username, saved) : emptyState(account.username));
+            }
+            console.log(`[paodian] loaded ${this.accounts.length} accounts (${savedStates.size} cached states)`);
         } catch (e: any) {
             console.warn(`[paodian] load failed: ${e.message}`);
             this.accounts = [];
@@ -229,9 +299,13 @@ export class PaodianMonitor {
 
     private save(): void {
         try {
+            // states 一并落盘:重启后能先显示上次的泡点 / 刷新时间,刷新后再覆盖。
+            const states = this.accounts
+                .map((a) => this.states.get(a.username))
+                .filter((s): s is PaodianState => !!s);
             fs.writeFileSync(
                 PERSIST_FILE,
-                JSON.stringify({ accounts: this.accounts, config: this.config }, null, 2),
+                JSON.stringify({ accounts: this.accounts, config: this.config, states }, null, 2),
                 "utf8"
             );
         } catch (e: any) {
@@ -247,9 +321,27 @@ export class PaodianMonitor {
             return;
         }
         this.timer = setInterval(() => {
-            this.refreshAll().catch((e) => console.warn(`[paodian] refreshAll failed: ${e.message}`));
+            this.refreshOldest().catch((e) => console.warn(`[paodian] refreshOldest failed: ${e.message}`));
         }, this.config.refreshIntervalMs);
-        console.log(`[paodian] auto refresh interval=${this.config.refreshIntervalMs}ms`);
+        console.log(`[paodian] auto refresh interval=${this.config.refreshIntervalMs}ms (one account per tick)`);
+    }
+
+    // 每个 tick 只刷新一个账号:挑 lastUpdated 最早(最旧)的那个。这样 N 个账号摊到
+    // N*interval 才轮一遍,避免每次都把全部账号一起打到登录接口。正在刷新中的跳过。
+    private async refreshOldest(): Promise<void> {
+        let target: PaodianAccount | null = null;
+        let oldest = Infinity;
+        for (const account of this.accounts) {
+            if (this.refreshing.has(account.username)) continue;
+            const ts = this.states.get(account.username)?.lastUpdated ?? 0;
+            if (ts < oldest) {
+                oldest = ts;
+                target = account;
+            }
+        }
+        if (target) {
+            await this.refresh(target.username);
+        }
     }
 
     private viewFor(account: PaodianAccount): PaodianAccountView {
@@ -309,6 +401,7 @@ export class PaodianMonitor {
             }))
             .filter((item: PaodianShopItem) => item.itemid > 0 && item.name.length > 0);
         this.shopItemsFetchedAt = now;
+        this.saveShopCache();
         return this.shopItems;
     }
 
@@ -343,6 +436,37 @@ export class PaodianMonitor {
             message: String(data?.message ?? "购买完成"),
             account: updated,
         };
+    }
+
+    // 用显式账号/密码购买,不查 paodian_accounts.json、不刷新余额。供"监控购买"用从游戏
+    // 内存读出的登录凭据直接下单,免去在账号文件里手填密码。
+    async purchaseWithPassword(
+        username: string,
+        password: string,
+        itemID: number,
+        itemCount: number
+    ): Promise<{ message: string }> {
+        const cleanUsername = String(username || "").trim();
+        const cleanItemID = Math.trunc(Number(itemID));
+        const cleanCount = Math.trunc(Number(itemCount));
+        if (!cleanUsername) throw new Error("missing username");
+        if (!password) throw new Error("missing password (游戏内未读到密码)");
+        if (!Number.isFinite(cleanItemID) || cleanItemID <= 0) throw new Error("invalid itemID");
+        if (!Number.isFinite(cleanCount) || cleanCount <= 0) throw new Error("invalid itemCount");
+
+        const items = await this.getShopItems();
+        const item = items.find((x) => x.itemid === cleanItemID);
+        if (!item) throw new Error("item not found");
+
+        const data = await postJson(PURCHASE_URL, {
+            username: cleanUsername,
+            password,
+            itemID: item.itemid,
+            itemCount: String(cleanCount),
+            itemname: item.name,
+            bubblePrice: item.bubble_price,
+        });
+        return { message: String(data?.message ?? "购买完成") };
     }
 
     addOrUpdate(username: string, password: string): PaodianAccountView {
@@ -439,6 +563,8 @@ export class PaodianMonitor {
             console.warn(`[paodian] ${cleanUsername} refresh failed: ${e.message || e}`);
         } finally {
             this.refreshing.delete(cleanUsername);
+            // 刷新结果(泡点 / 刷新时间 / status)落盘,重启后可直接读回。
+            this.save();
         }
 
         return this.viewFor(account);

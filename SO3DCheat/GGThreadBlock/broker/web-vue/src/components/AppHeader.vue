@@ -19,13 +19,21 @@
           :label="instLabel(inst)"
           :value="inst.pid"
         >
-          <span class="instance-option-label" :class="instanceLifeClass(inst)">
-            {{ instLabel(inst) }}
-          </span>
+          <div class="instance-option-row">
+            <span class="instance-option-label" :class="instanceLifeClass(inst)">
+              {{ instLabel(inst) }}
+            </span>
+            <span class="instance-option-map" v-if="formatMapLabel(inst.mapId)">
+              {{ formatMapLabel(inst.mapId) }}
+            </span>
+          </div>
         </el-option>
       </el-select>
       <span class="meta" v-if="selectedInstance">
         钱包: {{ fmtMoney(selectedInstance.money) }}
+      </span>
+      <span class="meta" v-if="selectedInstance && selectedInstanceMap">
+        地图: {{ selectedInstanceMap }}
       </span>
     </div>
   </el-header>
@@ -35,6 +43,7 @@
 import { computed } from 'vue'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useInstances } from '@/composables/useInstances'
+import { formatMapLabel } from '@/utils/mapNames'
 import type { Instance } from '@/types'
 
 const { connected } = useWebSocket()
@@ -42,6 +51,10 @@ const { instances, selectedPid, selectedInstance } = useInstances()
 
 const selectedInstanceClass = computed(() =>
   selectedInstance.value ? instanceLifeClass(selectedInstance.value) : ''
+)
+
+const selectedInstanceMap = computed(() =>
+  selectedInstance.value ? formatMapLabel(selectedInstance.value.mapId) : ''
 )
 
 const sortedInstances = computed(() => {
@@ -113,6 +126,17 @@ function fmtMoney(n: number | undefined): string {
 }
 .instance-option-label {
   font-weight: 600;
+}
+.instance-option-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: space-between;
+}
+.instance-option-map {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
 }
 .instance-option-label.is-dead,
 .instance-select.is-dead :deep(.el-select__selected-item),

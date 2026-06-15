@@ -69,6 +69,47 @@
       </el-form>
     </el-card>
 
+    <el-card shadow="never" class="test-card">
+      <template #header>
+        <span>回复测试</span>
+        <el-tag size="small" type="warning" style="margin-left:8px">不发游戏</el-tag>
+      </template>
+      <el-form label-width="120px" size="default">
+        <el-form-item label="GM 消息">
+          <el-input
+            v-model="testMessage"
+            type="textarea"
+            :rows="2"
+            placeholder="模拟 GM 在公屏说的话,例如:在吗 请问 3+5 等于几"
+          />
+        </el-form-item>
+        <el-form-item label="我的角色名">
+          <el-input v-model="testCharacterName" placeholder="可空,默认用「我」" style="max-width:260px" />
+          <div class="hint">仅用于拼进 prompt(回答会带上「我的角色名是…」),不影响是否触发。</div>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="runTest" :loading="testing" :disabled="!testMessage.trim()">
+            预测回复
+          </el-button>
+          <span class="hint" style="margin-left:8px">用已保存的配置(模型 / Key / System Prompt),改了记得先保存。</span>
+        </el-form-item>
+        <el-form-item v-if="testError" label="预测结果">
+          <div class="log-error">{{ testError }}</div>
+        </el-form-item>
+        <el-form-item v-else-if="testResult" label="预测结果">
+          <div style="width:100%">
+            <div class="log-outgoing" style="margin-left:0; font-size:15px">→ {{ testResult.reply }}</div>
+            <div class="hint">
+              模型 {{ testResult.model }} ({{ testResult.apiStyle }})
+              <span v-if="testResult.rawReply !== testResult.reply">
+                · 原始: {{ testResult.rawReply }}
+              </span>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
     <el-card shadow="never" class="log-card">
       <template #header>
         <span>触发记录</span>
@@ -141,6 +182,18 @@ const apiKeyInput = ref('')
 const logs = ref<GmReplyLogEntry[]>([])
 const saving = ref(false)
 
+interface GmTestResult {
+  reply: string
+  rawReply: string
+  model: string
+  apiStyle: string
+}
+const testMessage = ref('')
+const testCharacterName = ref('')
+const testing = ref(false)
+const testResult = ref<GmTestResult | null>(null)
+const testError = ref('')
+
 const displayLogs = computed(() => [...logs.value].reverse())
 
 const { onMessage } = useWebSocket()
@@ -190,6 +243,28 @@ async function saveConfig() {
   }
 }
 
+async function runTest() {
+  const message = testMessage.value.trim()
+  if (!message) return
+  testing.value = true
+  testError.value = ''
+  try {
+    const res = await fetch('/api/gm-replier/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, characterName: testCharacterName.value.trim() }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
+    testResult.value = data as GmTestResult
+  } catch (e: any) {
+    testResult.value = null
+    testError.value = e.message || String(e)
+  } finally {
+    testing.value = false
+  }
+}
+
 async function doClear() {
   try {
     await fetch('/api/gm-replier/logs/clear', { method: 'POST' })
@@ -215,6 +290,9 @@ onUnmounted(() => { unsub() })
   max-width: 900px;
 }
 .config-card {
+  margin-bottom: 16px;
+}
+.test-card {
   margin-bottom: 16px;
 }
 .hint {
