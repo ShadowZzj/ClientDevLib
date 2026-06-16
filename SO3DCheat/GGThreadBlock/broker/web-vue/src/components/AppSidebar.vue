@@ -48,6 +48,10 @@
         <el-icon><Sunny /></el-icon>
         <span>Buff 守护</span>
       </el-menu-item>
+      <el-menu-item index="rewardclaim">
+        <el-icon><Present /></el-icon>
+        <span>奖励领取</span>
+      </el-menu-item>
       <el-menu-item index="clockwork">
         <el-icon><Watch /></el-icon>
         <span>自动洗发条</span>
@@ -77,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, UserFilled, Coin, ChatDotRound, MagicStick, Sunny, Connection, Switch, Watch } from '@element-plus/icons-vue'
+import { Monitor, Operation, Location, Message, Goods, Bell, RefreshLeft, Loading, UserFilled, Coin, ChatDotRound, MagicStick, Sunny, Connection, Switch, Watch, Present } from '@element-plus/icons-vue'
 
 defineProps<{ modelValue: string }>()
 defineEmits<{ 'update:modelValue': [value: string] }>()

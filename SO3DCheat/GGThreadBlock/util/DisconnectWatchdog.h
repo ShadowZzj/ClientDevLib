@@ -17,9 +17,12 @@ namespace GGTB::DisconnectWatchdog
 //      unhook cleanly.
 //   2) If no main window can be found, or PostMessage fails, ExitProcess(0).
 //
-// Arming: we only start counting after the FIRST non-channel recv arrives.
-// That avoids false positives during login (channel/login chatter on 3000
-// keeps happening and would otherwise look like "still alive").
+// Arming: we only start counting after BOTH (a) a character is in-game
+// (UserConfig::IsReady() — we've locked onto a name) AND (b) the FIRST
+// non-channel recv has arrived. Before login/char-select, recv silence on the
+// game ports is normal, so the watchdog stays disarmed and never closes us
+// while no character is loaded. That also avoids false positives from the
+// channel/login chatter on 3000.
 
 void Install();
 void Uninstall();

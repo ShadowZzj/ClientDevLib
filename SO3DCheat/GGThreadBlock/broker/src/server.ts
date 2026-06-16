@@ -18,6 +18,7 @@ import { SyncManager } from "./syncManager";
 import { VendorPurchaser } from "./vendorPurchaser";
 import { AutoTradeManager } from "./autoTradeManager";
 import { PurchaseMonitor } from "./purchaseMonitor";
+import { RewardClaimer } from "./rewardClaimer";
 
 const PIPE_NAME = process.env.GGTB_BROKER_PIPE || "GGTB_BROKER";
 const PIPE_PATH = `\\\\.\\pipe\\${PIPE_NAME}`;
@@ -44,6 +45,7 @@ function main() {
     const autoTradeManager = new AutoTradeManager(registry);
     const clockworkWasher = new ClockworkWasher(registry);
     const purchaseMonitor = new PurchaseMonitor(registry, paodianMonitor);
+    const rewardClaimer = new RewardClaimer(registry);
 
     // 命名管道 server。Node 的 net.createServer 直接接受 \\.\pipe\X 作为 listen
     // path,内部走 ConnectNamedPipe 等价路径。DLL 客户端 CreateFileA 上来就能连。
@@ -58,7 +60,7 @@ function main() {
     });
 
     // HTTP / WS server
-    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats, onlineWhitelistSync, buffKeeper, syncManager, vendorPurchaser, autoTradeManager, clockworkWasher, purchaseMonitor);
+    const app = createHttpApp(registry, cashScheduler, deathNotifier, autoReviver, gmReplier, paodianMonitor, moneyStats, autoReviveStats, onlineWhitelistSync, buffKeeper, syncManager, vendorPurchaser, autoTradeManager, clockworkWasher, purchaseMonitor, rewardClaimer);
     const httpServer = http.createServer(app);
     attachWs(httpServer, registry, autoReviver, gmReplier, moneyStats, autoReviveStats);
     httpServer.listen(HTTP_PORT, HTTP_HOST, () => {
@@ -80,6 +82,7 @@ function main() {
         autoTradeManager.destroy();
         clockworkWasher.destroy();
         purchaseMonitor.destroy();
+        rewardClaimer.destroy();
         pipeServer.close();
         httpServer.close();
         process.exit(0);

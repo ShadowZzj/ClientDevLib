@@ -1160,6 +1160,74 @@ std::vector<BankItemInfo> GetBankItems();
 // 否则首个空格;满则失败。返回选中的 cash slotIndex(0..79),失败返回 -1。
 int SendBankMoveToCash(uint32_t uid, uint32_t itemId, uint32_t count);
 
+// ---------- Daily rewards: 在线奖励(Access) / 签到奖励(Attendance) ----------
+//
+// IDA 实证 2026-06-16 (unpackd_so3d.exe):
+//   两个奖励弹窗都是预建 UIContent。在线=content 62、签到=content 61(GetUIContent(mgr,id) 取)。
+//   开窗走游戏自身 __stdcall 开窗 call(先建本地 UI 状态再发 CG 开窗包,faithful 到点按钮,
+//   不卡角色移动):RewardAccessOpen 发 412562、RewardAttendanceOpen 发 412560。
+//   服务器收到开窗包后回流奖励列表,填充弹窗的两段 entry 表:
+//     page0 std::vector<Entry*> begin@dlg+0x44 end@dlg+0x48
+//     page1 std::vector<Entry*> begin@dlg+0x50 end@dlg+0x54
+//   Entry(0x1C): +0x00 按钮控件 +0x04 物品槽控件 +0x08 status(0 未解锁/1 可领/2 已领)
+//                +0x0C accessType(page) +0x10 id(index)
+//   领取直发(跳过 OnClick 的确认弹窗 3002/3003):
+//     在线 RewardAccessEntry_SendClaim(entry) __thiscall,发 412563 body{accessType,id}(8B);
+//           每个 status==1 的 entry 都要单独领一次(按时长分档,逐档可领)。
+//     签到 RewardAttendance_SendClaim() 无参,发 412561,一次领掉今天那档。
+//   关窗:UIContentMarkClose(dlg) + CUIManager::CloseActiveContent(mgr, renderer)(复用仓库关窗范式)。
+//   注:在线奖励按累计在线时长逐档解锁(status 在时长不够时一直是 0),单次登录+短等待只能领到
+//       已解锁档;签到当天即可领。所以 broker 侧需在会话内周期重试。
+inline constexpr int kRewardAccessContentId     = 62; // 在线奖励 UIContent id
+inline constexpr int kRewardAttendanceContentId = 61; // 签到奖励 UIContent id
+inline constexpr uintptr_t kRewardEntryStatusOffset = 0x08; // entry+0x08: 0 锁/1 可领/2 已领
+inline constexpr uintptr_t kRewardDlgPage0BeginOffset = 0x44; // dlg+0x44: page0 vec begin
+inline constexpr uintptr_t kRewardDlgPage0EndOffset   = 0x48; // dlg+0x48: page0 vec end
+inline constexpr uintptr_t kRewardDlgPage1BeginOffset = 0x50; // dlg+0x50: page1 vec begin
+inline constexpr uintptr_t kRewardDlgPage1EndOffset   = 0x54; // dlg+0x54: page1 vec end
+// dlg+0x38(byte): 该奖励是否有可领档(任一 entry status==1)。服务器登录即主动推送完整列表包
+// (在线 0x7CE76 / 签到 0x7CE74)会填条目并算出此位 + 驱动 HUD 图标闪烁(闹钟/红心),领取/解锁后
+// 的更新包也实时刷新它。+0x39(byte)是 open-flag(图标点击置位,开窗后清),登录时为 0 故只点灯
+// 不开窗 —— 所以此位登录即有效、无需开窗即可读。详见 IDA Recalc*HasClaimable* / Receive_FullList*。
+inline constexpr uintptr_t kRewardDlgHasClaimableOffset = 0x38;
+inline constexpr int kProtocolRewardAccessOpen      = 412562;
+inline constexpr int kProtocolRewardAttendanceOpen  = 412560;
+inline constexpr int kProtocolRewardAccessClaim     = 412563;
+inline constexpr int kProtocolRewardAttendanceClaim = 412561;
+
+// 一次领取的统计结果。claimable=本次发现的 status==1(已对其下发领取);claimed=本次发现的
+// 已领(status==2);locked=未解锁(status==0)。day-done 判定靠 broker:claimable==0 &&
+// locked==0 && signin 已领。ok 表示至少成功打开并读到弹窗。
+struct RewardClaimResult
+{
+    bool ok = false;
+    int onlineClaimed = 0;
+    int onlineClaimable = 0;
+    int onlineLocked = 0;
+    int signinClaimed = 0;
+    int signinClaimable = 0;
+    int signinLocked = 0;
+};
+
+// 打开在线/签到奖励弹窗,领取当前所有可领档位,再关窗。返回各档统计。
+// 在命令线程(pipe)上同步执行:开窗后轮询等待服务器回流填充 entry 表再读。
+// doOnline/doSignin 选择只领某一种还是都领(默认都领);未选的那种统计字段保持 0。
+RewardClaimResult ClaimDailyRewards(bool doOnline = true, bool doSignin = true);
+
+// 只读探测「现在是否有可领奖励」——不开窗、不发包,仅读 GetUIContent(62/61)+0x38 那个 HUD
+// 图标闪烁位(见 kRewardDlgHasClaimableOffset)。content 对象登录后即由服务器推送填好,故可在
+// 角色上线后随时轮询;只有 +0x38==1 时才值得真正 ClaimDailyRewards 开窗去领。
+// resolved=false 表示 content 还没取到(UI 未就绪 / 刚上线),此时 claimable 不可信,应稍后重试。
+struct RewardPeekResult
+{
+    bool ok = false;              // UI manager 取到 = true
+    bool onlineResolved = false;  // content 62 取到
+    bool signinResolved = false;  // content 61 取到
+    bool onlineClaimable = false; // content62+0x38
+    bool signinClaimable = false; // content61+0x38
+};
+RewardPeekResult PeekRewardClaimable();
+
 // ---------- Magic Spring / 发条 (CMagicSpringOption) ----------
 //
 // IDA 实证 2026-06-14 (unpackd_so3d.exe):

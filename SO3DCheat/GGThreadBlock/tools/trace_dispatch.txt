@@ -1,0 +1,43 @@
+total real insns: 42
+10050866  CALL 10050A47 sub_10050A47
+1005086B  test    eax, eax
+10050873  jz      short loc_100508E2     -> 100508E2
+10050875  CALL 1075606A sub_1075606A
+100508C8  CALL 1060F4CF sub_1060F4CF
+100509E2  CALL 100508BD sub_100508BD
+100509E7  push    small word ptr [esp+1] <MEM>
+100509EC  mov     [esp+2+var_2], dx <MEM>
+10050A23  jg      loc_10050866           -> 10050866
+10050A2C  lea     eax, ds:0[edi*4] <MEM>
+10050A3D  mov     eax, 1
+10050A9A  push    ebp; [CONFIRMED] obf_recv_dispatch(SOCKET s, char* buf, int len, int flags) = recv wrapper. EXE Net__RawRecv(0xB1C750) 的 call recv(0xB1C88A) 被补丁成 call 此函数(见 LoginBridge.cpp kExpected123RecvRva=0x50A9A). 内部: 调真recv 收密文 -> 长度门(>=0Ch,<0FA000h) -> 包类型判断 -> 对加密包调VM解密. 解密算法=Blowfish-CBC(已逆,见tools/protect_blowfish.py): key="tjqjsjanaksgdkdy!_@)#($123\0"(len27), CBC IV=0 密文反馈, 每块8字节bswap后跑标准Blowfish. 帧头{u32 totalLen,u32 proto}不加密, body解密后={u32 tick, u32 CRC32(poly EDB88320 reflected), 真body, PKCS7填充}. buf=[ebp+0Ch]解密前是密文/解密后是明文(原地). 密钥/多项式被VMProtect虚拟化,123.dll静态搜不到明文常量. <MEM>
+10050A9B  mov     ebp, esp
+10050A9D  sub     esp, 10h <ARITH>
+10050AA3  mov     [ebp+var_4], 0; [DEOBF] var_4 = 0  ([ebp-4] result/accumulator) <MEM>
+10050BDF  mov     esp, ebp
+10050BE1  pop     ebp
+10050BE2  retn
+10756016  CALL 1060F35B sub_1060F35B
+1075601B  CALL 10755FF8 sub_10755FF8
+10756024  cmp     [ebp-0Ch], eax; [DEOBF] cmp [ebp-0Ch], arg0([ebp+8]) <MEM>
+10756049  jnz     loc_100508C8; [DEOBF] if (v != arg0) -> FAIL path A (sub_1060F4CF @100508C8) -> 100508C8
+1075604F  push    ebx
+10756054  push    dword ptr [ebp-4] <MEM>
+10756099  sub     esp, 11h <ARITH>
+107560A4  mov     [ebp-0Ch], eax <MEM>
+107560BB  push    dword ptr [ebp+0Ch] <MEM>
+107560BE  CALL 10756085 sub_10756085
+107560C3  jnz     loc_100508E2; [DEOBF] if result!=0 -> FAIL path B (@100508E2 -> sub_1075616D) -> 100508E2
+107560D9  mov     eax, [ebp+8] <MEM>
+107560DD  cmp     [ebp-0Ch], eax <MEM>
+107560E2  push    dword ptr [ebp-4] <MEM>
+10756121  mov     eax, [ebp-4] <MEM>
+10756124  CALL 10756108 sub_10756108
+1075612D  leave
+1075612E  retn    10h; [DEOBF] normal return: eax = var_4; retn 10h (4 dword args, stdcall)
+1075616E  mov     ax, cx
+10756171  mov     eax, [ebp-4] <MEM>
+10756174  CALL 1075613F sub_1075613F
+10756179  mov     eax, 0
+107561B4  push    dword ptr [ebp+0Ch]; push [ebp+0Ch] = recv的buf(content指针), 传给处理链sub_1060F532->sub_1060F515->obf_packet_process_inner(0x100521E3)->VM_Entry. 这里是解密入口: VM原地解密同一块buf. <MEM>
+107561B7  CALL 1060F532 sub_1060F532

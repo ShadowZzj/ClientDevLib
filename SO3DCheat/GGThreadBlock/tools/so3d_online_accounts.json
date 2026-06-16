@@ -1,0 +1,34 @@
+{
+  "accounts": [
+    {
+      "account": "beifeng1",
+      "password": "zxczxczxc",
+      "character": "asdasd",
+      "fishing_enabled": true
+    },
+    {
+      "account": "beifeng2",
+      "password": "zxczxczxc",
+      "character": "dasdasd",
+      "fishing_enabled": true
+    },
+    {
+      "account": "beifeng3",
+      "password": "zxczxc",
+      "character": "sadasdsadas",
+      "fishing_enabled": true
+    },
+    {
+      "account": "gongyu901121",
+      "password": "901121",
+      "character": "shadowpope",
+      "fishing_enabled": false
+    },
+    {
+      "account": "gongyu9011213",
+      "password": "901121",
+      "character": "shadowdance",
+      "fishing_enabled": false
+    }
+  ]
+}

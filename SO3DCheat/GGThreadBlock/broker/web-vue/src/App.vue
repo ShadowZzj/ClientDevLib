@@ -15,6 +15,7 @@
         <AutoDelegationView v-if="activeTab === 'autodelegation'" />
         <AutoTradeView v-if="activeTab === 'autotrade'" />
         <BuffKeeperView v-if="activeTab === 'buffkeeper'" />
+        <RewardClaimView v-if="activeTab === 'rewardclaim'" />
         <ClockworkWasherView v-if="activeTab === 'clockwork'" />
         <SyncView v-if="activeTab === 'sync'" />
         <OnlineWhitelistView v-if="activeTab === 'onlinewhitelist'" />
@@ -41,6 +42,7 @@ import AutoReviveView from '@/views/AutoReviveView.vue'
 import AutoDelegationView from '@/views/AutoDelegationView.vue'
 import AutoTradeView from '@/views/AutoTradeView.vue'
 import BuffKeeperView from '@/views/BuffKeeperView.vue'
+import RewardClaimView from '@/views/RewardClaimView.vue'
 import ClockworkWasherView from '@/views/ClockworkWasherView.vue'
 import SyncView from '@/views/SyncView.vue'
 import OnlineWhitelistView from '@/views/OnlineWhitelistView.vue'

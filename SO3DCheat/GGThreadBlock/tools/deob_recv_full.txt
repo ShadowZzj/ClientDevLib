@@ -1,0 +1,22 @@
+1005097E  push    dword_105C0004
+10050984  CALL 1060F2DD sub_1060F2DD
+10050989  ; inline 10050968
+1005098E    mov     [ebp-4], eax
+10050996    cmp     dword ptr [ebp-4], 0Ch
+1005099A    CALL 100509B9 loc_100509B9
+1005099F    scasb
+100509A0    mov     ecx, 50A1A37h
+100509A5    adc     [ebp-54F7EA24h], ah
+100509AB    db 0DEh
+100509B0    push    dword ptr [ebp+8]
+1005097E    push    dword_105C0004
+10050984    CALL 1060F2DD sub_1060F2DD
+10050989    CALL 10050968 sub_10050968
+1005098E  mov     [ebp-4], eax
+10050996  cmp     dword ptr [ebp-4], 0Ch
+1005099A  CALL 100509B9 loc_100509B9
+1005099F  scasb
+100509A0  mov     ecx, 50A1A37h
+100509A5  adc     [ebp-54F7EA24h], ah
+100509AB  db 0DEh
+100509B0  push    dword ptr [ebp+8]

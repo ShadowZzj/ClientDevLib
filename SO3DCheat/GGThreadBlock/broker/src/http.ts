@@ -16,6 +16,7 @@ import { SyncManager } from "./syncManager";
 import { VendorPurchaser } from "./vendorPurchaser";
 import { AutoTradeManager } from "./autoTradeManager";
 import { PurchaseMonitor } from "./purchaseMonitor";
+import { RewardClaimer } from "./rewardClaimer";
 
 export function createHttpApp(
     registry: InstanceRegistry,
@@ -32,7 +33,8 @@ export function createHttpApp(
     vendorPurchaser: VendorPurchaser,
     autoTradeManager: AutoTradeManager,
     clockworkWasher: ClockworkWasher,
-    purchaseMonitor: PurchaseMonitor
+    purchaseMonitor: PurchaseMonitor,
+    rewardClaimer: RewardClaimer
 ) {
     const app = express();
     app.use(express.json());
@@ -420,6 +422,28 @@ export function createHttpApp(
     });
     app.delete("/api/buff-keeper/configs/:name", (req: Request, res: Response) => {
         res.json({ ok: buffKeeper.deleteConfig(req.params.name) });
+    });
+
+    // --- 每日奖励领取 (reward-claim) API ---
+    // 每角色一份 { enabled, doneDate, lastAttempt, lastResult }。前端多选角色开关。
+    // 开启后角色在线 10s 触发一次领取(在线+签到),当天全领完则当天不再开窗。
+    app.get("/api/reward-claim/configs", (_req: Request, res: Response) => {
+        res.json(rewardClaimer.listConfigs());
+    });
+    app.get("/api/reward-claim/configs/:name", (req: Request, res: Response) => {
+        const c = rewardClaimer.getConfig(req.params.name);
+        if (!c) return res.status(404).json({ error: "not found" });
+        res.json(c);
+    });
+    app.put("/api/reward-claim/configs/:name", (req: Request, res: Response) => {
+        res.json(rewardClaimer.setConfig(req.params.name, req.body || {}));
+    });
+    app.delete("/api/reward-claim/configs/:name", (req: Request, res: Response) => {
+        res.json({ ok: rewardClaimer.deleteConfig(req.params.name) });
+    });
+    // 立即领取(测试 / 手动):无视 10s 与当天已领完标记,角色须在线。
+    app.post("/api/reward-claim/run-now/:name", async (req: Request, res: Response) => {
+        res.json(await rewardClaimer.runNow(req.params.name));
     });
 
     // --- 自动洗发条 (clockwork-washer) API ---

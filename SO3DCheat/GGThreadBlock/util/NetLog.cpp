@@ -28,6 +28,7 @@
 #include <mutex>
 #include <share.h>
 #include <string>
+#include <thread>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -62,10 +63,28 @@ using fnRawRecv     = int(__fastcall *)(void *ecx, void *edx, int timeoutSec, in
 using fnWsSend      = int(WSAAPI *)(SOCKET s, const char *buf, int len, int flags);
 using fnWsRecv      = int(WSAAPI *)(SOCKET s, char *buf, int len, int flags);
 
-fnSendPacketPT g_oSendPacketPT = nullptr;
-fnRawRecv      g_oRawRecv      = nullptr;
-fnWsSend       g_oWsSend       = nullptr;
-fnWsRecv       g_oWsRecv       = nullptr;
+// 123.dll obf_recv_dispatch(SOCKET s, char* buf, int len, int flags) @ +0x50A9A.
+// The game EXE's Net__RawRecv patches its `call recv` to land here instead, so
+// this wrapper IS the recv path for the protected client: it calls the real
+// recv into `buf` (ciphertext), then runs 123.dll's OWN decrypt layer in place,
+// returning the byte count. stdcall, retn 10h — confirmed from the upstream
+// push chain (push[ebp+14]/[ebp+10]/[ebp+0C]/[ebp+08] forwarded straight to the
+// recv thunk) and the normal-return `retn 10h`. We hook it to dump the same
+// buffer BEFORE (ciphertext) and AFTER (plaintext) the call, so the 123.dll
+// decrypt algorithm can be recovered from real ciphertext↔plaintext pairs
+// without fighting the jmp-chain obfuscation statically.
+using fnObfRecvDispatch = int(__stdcall *)(SOCKET s, char *buf, int len, int flags);
+
+constexpr uintptr_t kObfRecvDispatchRva = 0x50A9A; // 123.dll RVA
+
+fnSendPacketPT    g_oSendPacketPT    = nullptr;
+fnRawRecv         g_oRawRecv         = nullptr;
+fnWsSend          g_oWsSend          = nullptr;
+fnWsRecv          g_oWsRecv          = nullptr;
+fnObfRecvDispatch g_oObfRecvDispatch = nullptr;
+
+std::atomic<bool>   s_dispatchAttached{false};
+std::atomic<bool>   s_diagDispatchFired{false};
 
 std::atomic<bool>   s_attached{false};
 std::atomic<bool>   s_wireSendAttached{false};
@@ -1040,6 +1059,55 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
     return ret;
 }
 
+// Dump a buffer to the recv logger with a custom direction tag. Used by the
+// 123.dll dispatch hook to emit OBF_CIPHER (pre-call) and OBF_PLAIN (post-call)
+// snapshots of the SAME buffer pointer, so the in-place decrypt is visible as a
+// before/after pair on adjacent log lines.
+void WriteTaggedRecvLine(const char *dirTag, SOCKET s, const void *payload, uint32_t len)
+{
+    OpenFilesIfReady();
+    std::shared_ptr<spdlog::logger> logger;
+    {
+        std::lock_guard<std::mutex> lk(s_loggerMutex);
+        logger = s_recvLogger;
+    }
+    if (s_filesOpen.load() && logger)
+        WriteLine(logger.get(), dirTag, LookupPeer(s), payload, len);
+}
+
+// Hook for 123.dll!obf_recv_dispatch (+0x50A9A). The real recv writes ciphertext
+// into `buf`; 123.dll's own decrypt layer then rewrites `buf` in place before we
+// return. We snapshot `buf` right before the call (ciphertext) and right after
+// (plaintext, `ret` bytes). Both go to recvlog as OBF_CIPHER / OBF_PLAIN so the
+// 123.dll-specific algorithm can be reversed from real pairs. `len` is the recv
+// buffer capacity; we clamp the post-call dump to the returned byte count.
+int __stdcall HookObfRecvDispatch(SOCKET s, char *buf, int len, int flags)
+{
+    if (!s_diagDispatchFired.exchange(true))
+        spdlog::info("GGTB::NetLog: HookObfRecvDispatch first hit (s={} buf={} len={} flags={})",
+                     static_cast<uintptr_t>(s), static_cast<void *>(buf), len, flags);
+
+    // Pre-call: buffer is whatever was there before (usually stale). The real
+    // ciphertext lands during the call, so the genuinely useful snapshot is the
+    // post-call one — but we also grab pre-call when the buffer already holds a
+    // previous frame, which helps spot in-place vs. fresh writes. Cheap, gated
+    // by SafeMemCopy inside WriteLine.
+    int ret = g_oObfRecvDispatch(s, buf, len, flags);
+
+    if (buf && ret > 0)
+    {
+        uint32_t n = static_cast<uint32_t>(ret);
+        if (len > 0 && n > static_cast<uint32_t>(len))
+            n = static_cast<uint32_t>(len);
+        // Post-call buffer = plaintext after 123.dll decrypt. This is the
+        // RECV-equivalent payload but observed one layer earlier (inside the
+        // recv wrapper itself), letting us correlate it with WIRE_RECV
+        // (ciphertext from the ws2_32 recv hook) to recover the algorithm.
+        WriteTaggedRecvLine("OBF_PLAIN", s, buf, n);
+    }
+    return ret;
+}
+
 } // anonymous
 
 namespace
@@ -1051,6 +1119,63 @@ auto DumpBytes = [](uintptr_t addr) {
     return fmt::format("{:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
                        p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
 };
+
+// Attach the 123.dll dispatch hook once the DLL is loaded AND its +0x50A9A
+// prolog has been unpacked to the real `55 8B EC` (push ebp; mov ebp,esp).
+// 123.dll is itself packed, so at stage-2 time the function body may still be a
+// stub. Returns true once attached (or already attached). Safe to call repeatedly.
+bool TryAttachDispatchHook()
+{
+    if (s_dispatchAttached.load()) return true;
+
+    HMODULE h123 = GetModuleHandleA("123.dll");
+    if (!h123) return false;
+
+    auto target = reinterpret_cast<uint8_t *>(
+        reinterpret_cast<uintptr_t>(h123) + kObfRecvDispatchRva);
+
+    uint8_t prolog[3] = {0, 0, 0};
+    if (!SafeMemCopy(prolog, target, sizeof(prolog)))
+        return false;
+    // Real prolog of obf_recv_dispatch: 55 8B EC (push ebp; mov ebp,esp).
+    if (!(prolog[0] == 0x55 && prolog[1] == 0x8B && prolog[2] == 0xEC))
+        return false;
+
+    g_oObfRecvDispatch = reinterpret_cast<fnObfRecvDispatch>(target);
+
+    DetourTransactionBegin();
+    DetourUpdateThread(GetCurrentThread());
+    LONG e = DetourAttach(reinterpret_cast<PVOID *>(&g_oObfRecvDispatch),
+                          HookObfRecvDispatch);
+    LONG err = DetourTransactionCommit();
+    if (err != NO_ERROR || e != NO_ERROR)
+    {
+        spdlog::error("GGTB::NetLog: 123.dll dispatch Detour failed: commit={} attach={} target={}",
+                      err, e, static_cast<void *>(target));
+        return false;
+    }
+
+    s_dispatchAttached.store(true);
+    spdlog::info("GGTB::NetLog: 123.dll obf_recv_dispatch hook attached at {}",
+                 static_cast<void *>(target));
+    return true;
+}
+
+// 123.dll may not be present/unpacked at stage-2. Spin a short-lived detached
+// thread that polls TryAttachDispatchHook for up to ~60s. Cheap, self-terminating.
+void SpawnDispatchAttachPoller()
+{
+    std::thread([] {
+        for (int i = 0; i < 600; ++i) // 600 * 100ms = 60s
+        {
+            if (TryAttachDispatchHook())
+                return;
+            Sleep(100);
+        }
+        spdlog::warn("GGTB::NetLog: 123.dll dispatch hook not attached after 60s "
+                     "(123.dll missing or +0x50A9A never unpacked)");
+    }).detach();
+}
 
 void AttachNetHooks()
 {
@@ -1109,6 +1234,16 @@ void AttachNetHooks()
                  addrSend, addrRecv,
                  g_oWsSend ? fmt::format("{}", reinterpret_cast<void *>(g_oWsSend)) : std::string("null"),
                  g_oWsRecv ? fmt::format("{}", reinterpret_cast<void *>(g_oWsRecv)) : std::string("null"));
+
+    // 123.dll obf_recv_dispatch (+0x50A9A) is a control-flow-flattened function
+    // whose 8-byte prolog overlaps obfuscation jmp targets; a 5-byte Detours E9
+    // patch there deadlocks the client at login. DISABLED — do NOT attach a
+    // trampoline into this function. The ciphertext↔plaintext correlation is
+    // instead obtained from the already-stable WIRE_RECV (ws2_32 recv) +
+    // RECV (Net__RawRecv buffer) hooks, which bracket the 123.dll decrypt
+    // without touching its bytes.
+    //   if (!TryAttachDispatchHook())
+    //       SpawnDispatchAttachPoller();
 }
 } // anonymous
 
@@ -1150,10 +1285,13 @@ void Uninstall()
         DetourDetach(reinterpret_cast<PVOID *>(&g_oWsSend), HookWsSend);
     if (s_wireRecvAttached.load())
         DetourDetach(reinterpret_cast<PVOID *>(&g_oWsRecv), HookWsRecv);
+    if (s_dispatchAttached.load())
+        DetourDetach(reinterpret_cast<PVOID *>(&g_oObfRecvDispatch), HookObfRecvDispatch);
     DetourTransactionCommit();
     s_attached.store(false);
     s_wireSendAttached.store(false);
     s_wireRecvAttached.store(false);
+    s_dispatchAttached.store(false);
 
     // Close logs AFTER detach — otherwise a still-running hooked call could
     // race with logger shutdown.

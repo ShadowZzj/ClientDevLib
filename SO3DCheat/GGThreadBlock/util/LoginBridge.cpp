@@ -49,6 +49,19 @@ constexpr uintptr_t kNetRawRecv = 0xB1C750;
 constexpr uintptr_t kNetRawSendAll = 0xB1C9A0;
 constexpr uintptr_t kRawRecvCallSite = 0xB1C88A; // call recv inside Net__RawRecv
 constexpr uintptr_t kExpected123RecvRva = 0x50A9A;
+// 123.dll socket-fd gate inside obf_gateA_socket_fd_check (sub_10756099), reached
+// from obf_recv_dispatch via the tail-jmp at 0x100508CD. Live stack-trace confirmed:
+//   0x107560A4  mov [ebp-0Ch], eax   ; incoming fd = recv arg0
+//   0x107560D9  mov eax, [ebp+8]     ; fd read from CGameClient obj+0x10
+//   0x107560DD  cmp [ebp-0Ch], eax   ; the two fds must be EQUAL
+//   0x107560C3  0F 85 19 A8 8F FF    jnz FAIL_B (0x100508E2 -> no decrypt)
+//   0x107561B4  push buf; call sub_1060F532  ; PASS -> VM in-place decrypt
+// NOP-ing the jnz at 0x107560C3 (6 bytes -> 90x6) forces the decrypt fallthrough
+// regardless of which fd we pass. The old 0x10756049 site was an unrelated jnz in
+// sub_10755FF8 and is no longer patched.
+constexpr uintptr_t k123IdaImageBase = 0x10000000;
+constexpr uintptr_t k123GateFdRva = 0x107560C3 - k123IdaImageBase; // 0x7560C3
+constexpr size_t kGateJnzLen = 6; // 0F 85 + rel32
 constexpr size_t kNativeClientObjectSize = 0x88;
 constexpr size_t kNativeRecvBufferSize = 0x2800;
 
@@ -838,6 +851,224 @@ nlohmann::json HandleSendRecv(const nlohmann::json &cmd)
     };
 }
 
+// obf_recv_dispatch(SOCKET s, char* buf, int len, int flags) = 123.dll+0x50A9A.
+// It is the patched recv: calls real recv on `s`, then for encrypted channels
+// decrypts `buf` in place (layer-1, VMProtect-virtualized). Returns recv's byte count.
+using ObfRecvDispatchFn = int(__stdcall *)(SOCKET, char *, int, int);
+
+// Build a connected loopback TCP pair (Windows has no socketpair). Returns the
+// two ends in `feed` (we send ciphertext here) and `drain` (we hand this fd to
+// the 123.dll dispatch so its internal recv reads our bytes).
+bool MakeLoopbackPair(SOCKET &feed, SOCKET &drain, int &wsaError)
+{
+    feed = INVALID_SOCKET;
+    drain = INVALID_SOCKET;
+    SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listener == INVALID_SOCKET)
+    {
+        wsaError = WSAGetLastError();
+        return false;
+    }
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0;
+    int addrLen = sizeof(addr);
+    if (bind(listener, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) != 0 ||
+        getsockname(listener, reinterpret_cast<sockaddr *>(&addr), &addrLen) != 0 ||
+        listen(listener, 1) != 0)
+    {
+        wsaError = WSAGetLastError();
+        closesocket(listener);
+        return false;
+    }
+
+    SOCKET client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (client == INVALID_SOCKET)
+    {
+        wsaError = WSAGetLastError();
+        closesocket(listener);
+        return false;
+    }
+    if (connect(client, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) != 0)
+    {
+        wsaError = WSAGetLastError();
+        closesocket(client);
+        closesocket(listener);
+        return false;
+    }
+
+    SOCKET server = accept(listener, nullptr, nullptr);
+    closesocket(listener);
+    if (server == INVALID_SOCKET)
+    {
+        wsaError = WSAGetLastError();
+        closesocket(client);
+        return false;
+    }
+
+    // feed = client (python's ciphertext goes in here), drain = server (handed to dispatch).
+    feed = client;
+    drain = server;
+    return true;
+}
+
+// Temporarily NOP a gate's `0F 85 rel32` so obf_recv_dispatch falls through to the
+// VM decrypt path. Saves originals; Restore() puts them back. RAII so any early
+// return / SEH unwind still restores the code.
+struct GatePatch
+{
+    struct Site { uintptr_t addr = 0; unsigned char orig[kGateJnzLen]{}; bool patched = false; };
+    Site fd;
+
+    static bool PatchOne(Site &s, uintptr_t addr)
+    {
+        s.addr = addr;
+        DWORD oldProt = 0;
+        if (!VirtualProtect(reinterpret_cast<void *>(addr), kGateJnzLen, PAGE_EXECUTE_READWRITE, &oldProt))
+            return false;
+        std::memcpy(s.orig, reinterpret_cast<void *>(addr), kGateJnzLen);
+        unsigned char nops[kGateJnzLen];
+        std::memset(nops, 0x90, kGateJnzLen);
+        std::memcpy(reinterpret_cast<void *>(addr), nops, kGateJnzLen);
+        VirtualProtect(reinterpret_cast<void *>(addr), kGateJnzLen, oldProt, &oldProt);
+        FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void *>(addr), kGateJnzLen);
+        s.patched = true;
+        return true;
+    }
+    static void RestoreOne(Site &s)
+    {
+        if (!s.patched) return;
+        DWORD oldProt = 0;
+        if (VirtualProtect(reinterpret_cast<void *>(s.addr), kGateJnzLen, PAGE_EXECUTE_READWRITE, &oldProt))
+        {
+            std::memcpy(reinterpret_cast<void *>(s.addr), s.orig, kGateJnzLen);
+            VirtualProtect(reinterpret_cast<void *>(s.addr), kGateJnzLen, oldProt, &oldProt);
+            FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void *>(s.addr), kGateJnzLen);
+        }
+        s.patched = false;
+    }
+
+    bool Apply(uintptr_t moduleBase)
+    {
+        return PatchOne(fd, moduleBase + k123GateFdRva);
+    }
+    ~GatePatch() { RestoreOne(fd); }
+};
+
+// Pure layer-1 verification: feed a known wire ciphertext through 123.dll's
+// obf_recv_dispatch and return what it wrote back (= 123.dll-decrypted plaintext).
+// No real game server involved. Python then applies layer-2 xor and compares to
+// the captured [RECV] line. When forceDecrypt is set, temporarily NOP the socket-fd
+// gate (0x107560C3) so dispatch decrypts even though our loopback socket isn't the
+// game's registered login/game fd.
+nlohmann::json HandleDecryptWire(const nlohmann::json &cmd)
+{
+    auto patch = WaitForRecvPatchReady(cmd.value("waitRecvPatchMs", 30000));
+    if (!patch.ready || !patch.target)
+        return {{"ok", false}, {"error", "123.dll recv patch is not ready"},
+                {"recvPatch", RecvPatchStatusJson(patch)}};
+
+    std::vector<unsigned char> wire;
+    std::string parseError;
+    if (!ParseHex(cmd.value("hex", std::string{}), wire, parseError))
+        return {{"ok", false}, {"error", parseError}};
+    if (wire.size() < 12)
+        return {{"ok", false}, {"error", "wire payload must be >= 12 bytes (len gate is >=0xC)"}};
+
+    WSADATA wsa{};
+    WSAStartup(MAKEWORD(2, 2), &wsa);
+
+    SOCKET feed = INVALID_SOCKET, drain = INVALID_SOCKET;
+    int wsaError = 0;
+    if (!MakeLoopbackPair(feed, drain, wsaError))
+        return {{"ok", false}, {"error", "loopback pair failed"}, {"wsaError", wsaError}};
+
+    int sent = send(feed, reinterpret_cast<const char *>(wire.data()),
+                    static_cast<int>(wire.size()), 0);
+    if (sent != static_cast<int>(wire.size()))
+    {
+        int err = WSAGetLastError();
+        closesocket(feed);
+        closesocket(drain);
+        return {{"ok", false}, {"error", "send to loopback failed"}, {"wsaError", err}, {"sent", sent}};
+    }
+
+    // Give the bytes a moment to land in the drain socket's recv queue.
+    Sleep(20);
+
+    // buf must be at least as large as `len` we pass; dispatch's internal recv
+    // reads up to len bytes, then decrypts in place. Pad generously.
+    const int reqLen = static_cast<int>(wire.size());
+    std::vector<unsigned char> buf(static_cast<size_t>(reqLen) + 64, 0);
+
+    auto dispatch = reinterpret_cast<ObfRecvDispatchFn>(patch.target);
+    int ret = 0;
+    DWORD seh = 0;
+    auto callSeh = [](ObfRecvDispatchFn fn, SOCKET s, char *b, int len, int *retOut, DWORD *sehOut) -> bool {
+        __try
+        {
+            *retOut = fn(s, b, len, 0);
+            return true;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            *sehOut = GetExceptionCode();
+            return false;
+        }
+    };
+
+    // Optionally force the decrypt path by NOP-ing the two gates. moduleBase comes
+    // from the verified recv patch (target = moduleBase + 0x50A9A).
+    const bool forceDecrypt = cmd.value("forceDecrypt", false);
+    GatePatch gates;
+    bool gatesApplied = false;
+    if (forceDecrypt && patch.moduleBase)
+        gatesApplied = gates.Apply(patch.moduleBase);
+
+    // Snapshot for diffing is implicit: we compare outBytes against the original wire.
+    bool ok = callSeh(dispatch, drain, reinterpret_cast<char *>(buf.data()), reqLen, &ret, &seh);
+
+    // Restore gates immediately (RAII would too, but keep the patched window minimal).
+    gates.~GatePatch();
+
+    closesocket(feed);
+    closesocket(drain);
+
+    if (!ok)
+        return {{"ok", false}, {"error", "obf_recv_dispatch threw"}, {"sehCode", HexPtr(seh)},
+                {"dispatch", HexPtr(patch.target)}};
+
+    int outLen = ret;
+    if (outLen < 0)
+        outLen = 0;
+    if (outLen > static_cast<int>(buf.size()))
+        outLen = static_cast<int>(buf.size());
+
+    std::vector<unsigned char> outBytes(buf.begin(), buf.begin() + outLen);
+    bool changed = outBytes.size() == wire.size()
+                       ? std::memcmp(outBytes.data(), wire.data(), wire.size()) != 0
+                       : true;
+
+    spdlog::info("GGTB::LoginBridge decryptWire dispatch={} force={} gates={} wireLen={} ret={} changed={} wireHex={} outHex={}",
+                 HexPtr(patch.target), forceDecrypt, gatesApplied, wire.size(), ret, changed,
+                 HexDump(wire.data(), std::min<size_t>(wire.size(), 64)),
+                 HexDump(outBytes.data(), std::min<size_t>(outBytes.size(), 64)));
+
+    return {
+        {"ok", true},
+        {"dispatch", HexPtr(patch.target)},
+        {"forceDecrypt", forceDecrypt},
+        {"gatesApplied", gatesApplied},
+        {"wireLen", static_cast<int>(wire.size())},
+        {"ret", ret},
+        {"changed", changed},
+        {"wireHex", HexDump(wire.data(), wire.size())},
+        {"plainHex", HexDump(outBytes.data(), outBytes.size())},
+    };
+}
+
 nlohmann::json HandleCommand(const nlohmann::json &cmd)
 {
     std::string name = cmd.value("cmd", std::string{});
@@ -855,6 +1086,8 @@ nlohmann::json HandleCommand(const nlohmann::json &cmd)
         return HandleOpen(cmd);
     if (name == "sendRecv")
         return HandleSendRecv(cmd);
+    if (name == "decryptWire")
+        return HandleDecryptWire(cmd);
     if (name == "close")
     {
         CloseSession(cmd.value("sessionId", 0u), ResolveApi());

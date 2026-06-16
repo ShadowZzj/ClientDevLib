@@ -1053,6 +1053,49 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             return {true, detail.dump()};
         });
 
+    // ---------- 每日奖励一键领取 (在线 + 签到) ----------
+    // broker 的 RewardClaimer 在角色上线后编排:开窗 -> 等服务器回流 -> 领可领档 -> 关窗。
+    // 同步在命令线程跑(内部有 ~4s 轮询等待),所以 broker 侧要给足 timeout。
+    // detail 返回各档统计,broker 据此判定今天是否领完(day-done)。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "claimRewards",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            // online/signin 选择只领某一种还是都领,缺省(无 args)= 都领。
+            bool doOnline = args.is_object() ? args.value("online", true) : true;
+            bool doSignin = args.is_object() ? args.value("signin", true) : true;
+            GGTB::RewardClaimResult res = GGTB::ClaimDailyRewards(doOnline, doSignin);
+            nlohmann::json detail{
+                {"online", {
+                    {"claimed", res.onlineClaimed},
+                    {"claimable", res.onlineClaimable},
+                    {"locked", res.onlineLocked},
+                }},
+                {"signin", {
+                    {"claimed", res.signinClaimed},
+                    {"claimable", res.signinClaimable},
+                    {"locked", res.signinLocked},
+                }},
+            };
+            return {res.ok, detail.dump()};
+        });
+
+    // ---------- 只读探测「现在是否有可领奖励」(不开窗、不发包) ----------
+    // 读 GetUIContent(62/61)+0x38 那个 HUD 图标闪烁位(闹钟/红心),服务器登录即推送填好。
+    // broker 用它替代「定时盲开窗」:只有 online/signin 为 true 才真正发 claimRewards 去开窗领。
+    // resolved=false = content 还没就绪(刚上线/UI 未建),claimable 不可信,broker 应稍后重试。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "peekRewards",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            GGTB::RewardPeekResult p = GGTB::PeekRewardClaimable();
+            nlohmann::json detail{
+                {"online", p.onlineClaimable},
+                {"signin", p.signinClaimable},
+                {"onlineResolved", p.onlineResolved},
+                {"signinResolved", p.signinResolved},
+            };
+            return {p.ok, detail.dump()};
+        });
+
     // 读 localUser 里的明文登录账号/密码(私服里 = 泡点网店账号),供 broker 购买时用,
     // 免去在 paodian 文件里手填密码。仅本机 pipe 通信。
     GGTB::RemoteControl::RegisterCommandHandler(

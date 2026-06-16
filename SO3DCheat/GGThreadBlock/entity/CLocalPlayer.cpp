@@ -4511,6 +4511,247 @@ int SendBankMoveToCash(uint32_t uid, uint32_t itemId, uint32_t count)
     return dest;
 }
 
+// ---------- Daily rewards: 在线奖励(Access) / 签到奖励(Attendance) ----------
+namespace
+{
+// 开窗 __stdcall(int 忽略)。领取 __thiscall:在线=entry(读 entry+0xC/0x10 当 body),
+// 签到=this 忽略(无 body)。两者 0 个栈参 / retn 0,故 __thiscall(void*) 复刻调用点。
+using RewardOpenFn       = int(__stdcall *)(int);
+using RewardEntryClaimFn = int(__thiscall *)(void *);
+
+static void CallRewardOpenSEH(RewardOpenFn fn)
+{
+    __try { fn(1); }
+    __except (EXCEPTION_EXECUTE_HANDLER) {}
+}
+
+static int CallRewardEntryClaimSEH(RewardEntryClaimFn fn, void *entry)
+{
+    __try { return fn(entry); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return -1; }
+}
+
+struct RewardCounts { int claimed = 0; int claimable = 0; int locked = 0; };
+
+// 枚举弹窗两段 entry vector(page0@+0x44/+0x48, page1@+0x50/+0x54),按 entry+0x08 的 status
+// 统计;onlineClaimFn!=null 时对每个 status==1 的 entry 直发领取(在线奖励逐档领)。
+static RewardCounts EnumRewardDialog(uintptr_t dlg, RewardEntryClaimFn onlineClaimFn)
+{
+    RewardCounts c{};
+    if (!dlg)
+        return c;
+    const uintptr_t vecs[2][2] = {
+        { dlg + kRewardDlgPage0BeginOffset, dlg + kRewardDlgPage0EndOffset },
+        { dlg + kRewardDlgPage1BeginOffset, dlg + kRewardDlgPage1EndOffset },
+    };
+    for (auto &v : vecs)
+    {
+        uint32_t begin = 0, end = 0;
+        if (!SafeReadDword(v[0], begin) || !SafeReadDword(v[1], end))
+            continue;
+        if (!begin || end <= begin)
+            continue;
+        uint32_t n = (end - begin) / 4;
+        if (n > 128) // 防御:vector 撕裂时别越界扫
+            n = 128;
+        for (uint32_t i = 0; i < n; ++i)
+        {
+            uint32_t entry = 0;
+            if (!SafeReadDword(begin + 4 * i, entry) || !entry)
+                continue;
+            uint32_t status = 0;
+            if (!SafeReadDword(entry + kRewardEntryStatusOffset, status))
+                continue;
+            if (status == 1)
+            {
+                c.claimable++;
+                if (onlineClaimFn)
+                    CallRewardEntryClaimSEH(onlineClaimFn, reinterpret_cast<void *>(entry));
+            }
+            else if (status == 2)
+                c.claimed++;
+            else
+                c.locked++;
+        }
+    }
+    return c;
+}
+} // namespace
+
+RewardClaimResult ClaimDailyRewards(bool doOnline, bool doSignin)
+{
+    RewardClaimResult r{};
+
+    auto mgrAddr         = PatternResolver::Get("UIManagerGetSingleton");
+    auto getContentAddr  = PatternResolver::Get("UIManagerGetUIContent");
+    auto markCloseAddr   = PatternResolver::Get("UIContentMarkClose");
+    auto closeByIdAddr   = PatternResolver::Get("UIManagerCloseContent");
+    auto closeActiveAddr = PatternResolver::Get("UIManagerCloseActiveContent");
+    auto rendererPtrAddr = PatternResolver::Get("RendererPtr");
+    auto accessOpenAddr  = PatternResolver::Get("RewardAccessOpen");
+    auto attendOpenAddr  = PatternResolver::Get("RewardAttendanceOpen");
+    auto accessClaimAddr = PatternResolver::Get("RewardAccessClaim");
+    auto attendClaimAddr = PatternResolver::Get("RewardAttendanceClaim");
+    if (!mgrAddr || !getContentAddr || !accessOpenAddr || !attendOpenAddr ||
+        !accessClaimAddr || !attendClaimAddr)
+    {
+        spdlog::error("GGTB::ClaimDailyRewards: pattern unresolved "
+                      "(mgr={:x} get={:x} aOpen={:x} dOpen={:x} aClaim={:x} dClaim={:x})",
+                      mgrAddr, getContentAddr, accessOpenAddr, attendOpenAddr,
+                      accessClaimAddr, attendClaimAddr);
+        return r;
+    }
+
+    auto pMgr         = reinterpret_cast<UIManagerGetSingletonFn>(mgrAddr);
+    auto pGetContent  = reinterpret_cast<UIManagerGetUIContentFn>(getContentAddr);
+    auto pAccessOpen  = reinterpret_cast<RewardOpenFn>(accessOpenAddr);
+    auto pAttendOpen  = reinterpret_cast<RewardOpenFn>(attendOpenAddr);
+    auto pAccessClaim = reinterpret_cast<RewardEntryClaimFn>(accessClaimAddr);
+    auto pAttendClaim = reinterpret_cast<RewardEntryClaimFn>(attendClaimAddr);
+    auto pMarkClose    = markCloseAddr ? reinterpret_cast<UIContentMarkCloseFn>(markCloseAddr) : nullptr;
+    auto pCloseById    = closeByIdAddr ? reinterpret_cast<UIManagerCloseContentFn>(closeByIdAddr) : nullptr;
+    auto pCloseActive  = closeActiveAddr ? reinterpret_cast<UIManagerCloseActiveContentFn>(closeActiveAddr) : nullptr;
+    uint32_t renderer  = 0;
+    if (rendererPtrAddr)
+        SafeReadDword(rendererPtrAddr, renderer);
+
+    void *mgr = CallUIManagerGetSingletonSEH(pMgr);
+    if (!mgr)
+    {
+        spdlog::warn("GGTB::ClaimDailyRewards: UI manager null");
+        return r;
+    }
+
+    // 关闭奖励窗 = 复刻 vendor 关窗(CloseVendorWindowLocal,实测能关)。光把 content+0x25 置 1 不够:
+    // 那只是「标记待关」,框架还要 UIManagerCloseActiveContent(0x5EA090, 传 renderer)去 *处理* 这个
+    // marked-close 队列,窗口才真正收起。之前只 mark(叶子 UIContentMarkClose / 命令处理器 "exit")没调
+    // CloseActiveContent,所以弹窗一直留屏 —— 这就是「关不掉」的根因。三步:① 叶子按对象 mark +
+    // ② 按 id mark(UIManagerCloseContent)+ ③ CloseActiveContent(renderer) 推队列。
+    // (写 g_currentForegroundUIId=0 只是关窗后的 *结果*,不是手段,别用。)
+    auto isOpenAddr = PatternResolver::Get("UIManagerIsContentOpen");
+    auto pIsOpen    = isOpenAddr ? reinterpret_cast<UIManagerIsContentOpenFn>(isOpenAddr) : nullptr;
+
+    auto pushClose = [&](int id, uintptr_t dlg) {
+        if (dlg && pMarkClose)
+            CallUIContentMarkCloseSEH(pMarkClose, reinterpret_cast<void *>(dlg));
+        if (pCloseById)
+            CallUIManagerCloseContentSEH(pCloseById, mgr, id);
+        if (pCloseActive && renderer)
+            CallUIManagerCloseActiveContentSEH(
+                pCloseActive, mgr, reinterpret_cast<void *>(static_cast<uintptr_t>(renderer)));
+    };
+
+    auto closeDlg = [&](int id, uintptr_t dlg) {
+        // 本函数跑在 pipe 命令线程,关窗由 UI 线程兑现;开太快(关一个紧接着开下一个)上一个会留屏。
+        // 阻塞等它真的关掉:每轮 mark + CloseActiveContent 推一次队列,轮询 IsContentOpen 直到 false
+        // (最多 ~2.5s),再停 ~400ms 让 UI 安定,才允许开下一个窗。
+        pushClose(id, dlg);
+        for (int i = 0; i < 50; ++i)
+        {
+            if (!pIsOpen || CallUIManagerIsContentOpenSEH(pIsOpen, mgr, id) != 1)
+                break; // 0=已关 / -1=异常,都不再等
+            pushClose(id, dlg);
+            Sleep(50);
+        }
+        Sleep(400);
+    };
+
+    // 开窗后服务器要回流奖励列表才会填充 entry 表。轮询等到非空或 ~2s 超时。
+    auto waitPopulated = [&](int id) -> uintptr_t {
+        for (int i = 0; i < 20; ++i)
+        {
+            uintptr_t d = reinterpret_cast<uintptr_t>(
+                CallUIManagerGetUIContentSEH(pGetContent, mgr, id));
+            if (d)
+            {
+                uint32_t b0 = 0, e0 = 0, b1 = 0, e1 = 0;
+                SafeReadDword(d + kRewardDlgPage0BeginOffset, b0);
+                SafeReadDword(d + kRewardDlgPage0EndOffset, e0);
+                SafeReadDword(d + kRewardDlgPage1BeginOffset, b1);
+                SafeReadDword(d + kRewardDlgPage1EndOffset, e1);
+                if ((b0 && e0 > b0) || (b1 && e1 > b1))
+                    return d;
+            }
+            Sleep(100);
+        }
+        return reinterpret_cast<uintptr_t>(CallUIManagerGetUIContentSEH(pGetContent, mgr, id));
+    };
+
+    // 一次只开一个窗:开 → 领 → 关 → 等它真的关掉并安定(closeDlg)→ 才开下一个。先签到后在线。
+    // ---- 签到奖励(content 61):只要有可领就一次性 412561 领今天 ----
+    if (doSignin)
+    {
+        CallRewardOpenSEH(pAttendOpen);
+        uintptr_t dlg61 = waitPopulated(kRewardAttendanceContentId);
+        RewardCounts signin = EnumRewardDialog(dlg61, nullptr);
+        r.signinClaimed   = signin.claimed;
+        r.signinClaimable = signin.claimable;
+        r.signinLocked    = signin.locked;
+        if (signin.claimable > 0)
+        {
+            CallRewardEntryClaimSEH(pAttendClaim, reinterpret_cast<void *>(dlg61));
+            // 领取会触发服务器回包刷新这个弹窗,刷新会重置 +0x25 把关窗顶掉。先等它安定再关。
+            Sleep(800);
+        }
+        closeDlg(kRewardAttendanceContentId, dlg61);
+    }
+
+    // ---- 在线奖励(content 62):逐档直发 412563 ----
+    if (doOnline)
+    {
+        CallRewardOpenSEH(pAccessOpen);
+        uintptr_t dlg62 = waitPopulated(kRewardAccessContentId);
+        RewardCounts online = EnumRewardDialog(dlg62, pAccessClaim);
+        r.onlineClaimed   = online.claimed;
+        r.onlineClaimable = online.claimable;
+        r.onlineLocked    = online.locked;
+        // EnumRewardDialog 内对每个 status==1 的档已逐档直发领取;同上,等服务器回包刷新安定再关。
+        if (online.claimable > 0)
+            Sleep(800);
+        closeDlg(kRewardAccessContentId, dlg62);
+    }
+
+    r.ok = true;
+    spdlog::info("GGTB::ClaimDailyRewards: online[claimed={} claimable={} locked={}] "
+                 "signin[claimed={} claimable={} locked={}]",
+                 r.onlineClaimed, r.onlineClaimable, r.onlineLocked,
+                 r.signinClaimed, r.signinClaimable, r.signinLocked);
+    return r;
+}
+
+RewardPeekResult PeekRewardClaimable()
+{
+    RewardPeekResult r{};
+
+    auto mgrAddr        = PatternResolver::Get("UIManagerGetSingleton");
+    auto getContentAddr = PatternResolver::Get("UIManagerGetUIContent");
+    if (!mgrAddr || !getContentAddr)
+        return r;
+
+    auto pMgr        = reinterpret_cast<UIManagerGetSingletonFn>(mgrAddr);
+    auto pGetContent = reinterpret_cast<UIManagerGetUIContentFn>(getContentAddr);
+
+    void *mgr = CallUIManagerGetSingletonSEH(pMgr);
+    if (!mgr)
+        return r;
+    r.ok = true;
+
+    // 只读 +0x38(HUD 闪烁位):有可领=1。不开窗、不发包。content 由服务器登录推送填好。
+    auto peekOne = [&](int id, bool &resolved, bool &claimable) {
+        uintptr_t c = reinterpret_cast<uintptr_t>(
+            CallUIManagerGetUIContentSEH(pGetContent, mgr, id));
+        if (!c)
+            return;
+        resolved = true;
+        uint8_t hasClaimable = 0;
+        if (SafeReadByte(c + kRewardDlgHasClaimableOffset, hasClaimable))
+            claimable = (hasClaimable != 0);
+    };
+    peekOne(kRewardAccessContentId, r.onlineResolved, r.onlineClaimable);
+    peekOne(kRewardAttendanceContentId, r.signinResolved, r.signinClaimable);
+    return r;
+}
+
 // ---------- Walk-to-world-position (CLocalUser::SetAfterAction) ----------
 namespace
 {

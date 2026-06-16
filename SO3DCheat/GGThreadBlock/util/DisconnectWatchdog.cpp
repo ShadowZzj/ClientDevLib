@@ -1,6 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include "DisconnectWatchdog.h"
 
+#include "UserConfig.h"
+
 #include <spdlog/spdlog.h>
 
 #include <atomic>
@@ -112,6 +114,11 @@ void WatchdogLoop()
 
         if (!s_armed.load()) continue;
 
+        // Only police the connection once a character is actually in-game.
+        // Before UserConfig locks onto a name we're still at login/char-select,
+        // where recv silence on game ports is normal and must not close us.
+        if (!GGTB::UserConfig::IsReady()) continue;
+
         int64_t last = s_lastRecvTickMs.load();
         int64_t now  = static_cast<int64_t>(::GetTickCount64());
         auto    idle = std::chrono::milliseconds(now - last);
@@ -147,6 +154,12 @@ void OnRecv(uint16_t port, uint32_t bytes)
 {
     if (bytes == 0) return;
     if (port == kExcludedPort) return;
+
+    // Don't arm (or keep refreshing) until a character is in-game. Arming on
+    // pre-login game-port chatter would start the idle clock at char-select,
+    // where silence is expected; gating here means the timer effectively
+    // starts at the first game-port recv AFTER the character is ready.
+    if (!GGTB::UserConfig::IsReady()) return;
 
     s_lastRecvTickMs.store(static_cast<int64_t>(::GetTickCount64()));
     if (!s_armed.exchange(true))

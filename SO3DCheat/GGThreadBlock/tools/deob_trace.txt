@@ -1,0 +1,115 @@
+10050A9B  mov     ebp, esp
+10050A9D  sub     esp, 10h
+10050AA3  mov     dword ptr [ebp-4], 0
+100509E2  CALL 100508BD sub_100508BD
+100509EC  mov     [esp+2+var_2], dx
+10050A23  jg -> 10050866
+10050A2C  lea     eax, ds:0[edi*4]
+10050A3D  mov     eax, 1
+1005086B  test    eax, eax
+10050873  jz -> 100508E2
+10050875  CALL 1075606A sub_1075606A
+10756016  CALL 1060F35B sub_1060F35B
+1075601B  CALL 10755FF8 sub_10755FF8
+10756024  cmp     [ebp-0Ch], eax
+10756049  jnz -> 100508C8
+107560BE  CALL 10756085 sub_10756085
+107560C3  jnz -> 100508E2
+107561B7  CALL 1060F532 sub_1060F532
+10756121  mov     eax, [ebp-4]
+10756124  CALL 10756108 sub_10756108
+1075612D  leave
+1075612E  retn    10h
+1075616E  mov     ax, cx
+10756171  mov     eax, [ebp-4]
+10756174  CALL 1075613F sub_1075613F
+10756179  mov     eax, 0
+10050BDF  mov     esp, ebp
+10050BE1  pop     ebp
+10050BE2  retn
+100508C8  ; --- inline 1060F4CF ---
+10756099  sub     esp, 11h
+107560A4  mov     [ebp-0Ch], eax
+107560D9  mov     eax, [ebp+8]
+107560DD  cmp     [ebp-0Ch], eax
+10050866  CALL 10050A47 sub_10050A47
+10052185    mov     ebp, esp
+10052187    sub     esp, 8
+1005218D    mov     dword ptr [ebp-4], 0
+1061CB1E    ; --- inline 1061CB69 ---
+1061CB2C    CALL 100520DC sub_100520DC
+1061CB31    inc     esp
+1061CB32    inc     ecx
+1061CB33    aam     4Ah ; 'J'
+1061CB35    sub     eax, 80C175DCh
+1061CB3A    inc     ebx
+1061CB3B    cli
+1061CB3C    aad     0E8h
+1061CB3E    js -> 1061CB78
+1061CB40    dd 78E8FFFFh, 0D0FFA352h, 37C4557Ah, 1005213Ah, 7308DCA5h
+1061CB60    cmp     [edx+391DB445h], ebp
+1061CB67    db  18h
+1061CB68    db 7Bh
+1061CB69    mov     [esp+0], dx
+1061CB6D    mov     [esp+0], edi
+1061CB79    mov     ds:0D04A13FFh, eax
+1061CB7E    inc     esi
+1061CB7F    and     eax, edx
+1061CB81    int     5Ch; NETBIOS INTERFACE
+1061CB84    scasd
+1061CB85    mov     dh, 0A1h
+1061CB87    loopne  near ptr loc_1061CB70+1
+1061CB89    in      eax, 0FFh
+1061CB8B    db 0FFh
+1061CB8C    dec     edi
+1061CB8F    rol     dword ptr [eax+5228B37h], 10h
+1061CB96    movsd
+1061CB97    fsub    qword ptr [ebx]
+1061CB99    fidivr  word ptr [edx]
+1061CB9B    adc     eax, 0F7373784h
+1061CBA0    and     al, ds:23DCA510h
+1061CBA6    fisub   word ptr [ebx]
+1075AFC5    CALL 10610208 sub_10610208
+1075AFAB    CALL 1075AFF2 sub_1075AFF2
+1075AFB0    mov     ds:373F2CDDh, al
+1075AFB5    sal     byte ptr [edx-235AEF8Bh], cl
+1075AFBB    and     ebx, esi
+1075AFBE    mov     cl, 0B0h
+1061CB69      mov     [esp+0], dx
+1061CB6D      mov     [esp+0], edi
+1061CB2C      CALL 100520DC sub_100520DC
+1061CB31      inc     esp
+1061CB32      inc     ecx
+1061CB33      aam     4Ah ; 'J'
+1061CB35      sub     eax, 80C175DCh
+1061CB3A      inc     ebx
+1061CB3B      cli
+1061CB3C      aad     0E8h
+1061CB3E      js -> 1061CB78
+1061CB40      dd 78E8FFFFh, 0D0FFA352h, 37C4557Ah, 1005213Ah, 7308DCA5h
+1061CB60      cmp     [edx+391DB445h], ebp
+1061CB67      db  18h
+1061CB68      db 7Bh
+1061CB79      mov     ds:0D04A13FFh, eax
+1061CB7E      inc     esi
+1061CB7F      and     eax, edx
+1061CB81      int     5Ch; NETBIOS INTERFACE
+1061CB84      scasd
+1061CB85      mov     dh, 0A1h
+1061CB87      loopne  near ptr loc_1061CB70+1
+1061CB89      in      eax, 0FFh
+1061CB8B      db 0FFh
+1061CB8C      dec     edi
+1061CB8F      rol     dword ptr [eax+5228B37h], 10h
+1061CB96      movsd
+1061CB97      fsub    qword ptr [ebx]
+1061CB99      fidivr  word ptr [edx]
+1061CB9B      adc     eax, 0F7373784h
+1061CBA0      and     al, ds:23DCA510h
+1061CBA6      fisub   word ptr [ebx]
+1075AFC5      CALL 10610208 sub_10610208
+1075AFAB      CALL 1075AFF2 sub_1075AFF2
+1075AFB0      mov     ds:373F2CDDh, al
+1075AFB5      sal     byte ptr [edx-235AEF8Bh], cl
+1075AFBB      and     ebx, esi
+1075AFBE      mov     cl, 0B0h

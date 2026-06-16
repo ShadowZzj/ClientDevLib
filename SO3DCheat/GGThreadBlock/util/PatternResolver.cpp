@@ -710,11 +710,31 @@ void PatternResolver::RegisterAll()
     Register("UIManagerGetSingleton", "", 0x5EA420); // sub_9EA420
     Register("UIManagerBeginContent", "", 0x5E9C50); // CUIManager::BeginContent(mgr, renderer, enum) retn 8; 开仓库=enum 2(内部建本地UI+发411154/411644,不能裸发包否则卡移动)
     Register("UIManagerGetUIContent", "", 0x5EA4D0); // sub_9EA4D0 (CUIManager::GetUIContent)
-    Register("UIManagerCloseContent", "", 0x5E9FB0); // sub_9E9FB0(id), marks UI content close flag (+0x25)
-    Register("UIContentMarkClose",    "", 0x739190); // sub_B39190(), direct content close flag setter used by CloseContent
+    Register("UIManagerCloseContent", "", 0x5E9FB0); // UIManager_CloseContentById(id): by-id map lookup → UIContent_ExitClose
+    Register("UIContentMarkClose",    "", 0x739190); // UIContent_ExitClose(content): sets content+0x25=1 (X-button "Exit_0" path)
     Register("UIManagerIsContentOpen", "", 0x5EC570); // sub_9EC570(id), true when UI content id is open
     Register("UIManagerCloseActiveContent", "", 0x5EA090); // sub_9EA090(renderer), processes marked-close UI content
     Register("RendererPtr", "", 0x149DC08); // dword_189DC08, pushed before sub_9EA090 in the UI frame path
+
+    // ---------- Daily rewards: 在线奖励(Access, content 62) / 签到奖励(Attendance, content 61) ----------
+    // 自动领每日奖励。开窗调游戏自身的 __stdcall 开窗 call(内部先建本地 UI 再发 CG 开窗包,
+    // 与裸发包不同,不卡角色移动);领取调直发 call 跳过 OnClick 的确认弹窗(3002/3003)。
+    //
+    // 开窗:RewardAccess_OpenRequest(0x794DE0) GetUIContent(62)+发412562;
+    //       RewardAttendance_OpenSend(0x794FB0) GetUIContent(61)+发412560。两者皆 __stdcall(int 忽略)。
+    // 领取:RewardAccessEntry_SendClaim(0x5DAD30) __thiscall(entry),发412563 body{entry+0xC,entry+0x10};
+    //       RewardAttendance_SendClaim(0x5E6E20) 无参,发412561 一次领今天签到。
+    // 弹窗对象用 UIManagerGetUIContent(mgr,62/61) 取;entry 表:page0 vec begin@dlg+0x44 end@+0x48,
+    //       page1 vec begin@dlg+0x50 end@+0x54,元素=Entry*;entry+0x08=status(0锁/1可领/2已领)。
+    // RVA = linear - 0x400000。
+    Register("RewardAccessOpen",     "", 0x394DE0); // RewardAccess_OpenRequest, 发412562
+    Register("RewardAttendanceOpen", "", 0x394FB0); // RewardAttendance_OpenSend, 发412560
+    Register("RewardAccessClaim",    "", 0x1DAD30); // RewardAccessEntry_SendClaim(entry), 发412563
+    Register("RewardAttendanceClaim","", 0x1E6E20); // RewardAttendance_SendClaim(), 发412561
+    // 当前前台 UI id(g_currentForegroundUIId, 直存 dword)。CE 实测:在线奖励=66、签到奖励=67、
+    // 关闭=0。奖励窗是服务器驱动弹窗,框架不轮询它的 content+0x25 关闭位,真正生效的是这个前台 id
+    // 复位回开窗前的值(领完后从 66/67 改回基值,窗口即随之收起)。RVA = 0xD67CC4 - 0x400000。
+    Register("ForegroundUIId",       "", 0x967CC4); // g_currentForegroundUIId
 }
 
 void PatternResolver::ScanAll()

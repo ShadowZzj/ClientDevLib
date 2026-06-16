@@ -1,0 +1,129 @@
+2026-06-13 13:11:02.496 | [gongyu901121/shadowpope] 第 1 次启动
+[verify] 等待上线 + 整桶(511591/511324),最长 150s ...
+2026-06-13 13:11:02.497 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_logs\gongyu901121_shadowpope.log
+2026-06-13 13:11:02.497 | [client] account='gongyu901121' character='shadowpope'
+2026-06-13 13:11:02.497 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-13 13:11:02.818 | [net] connected 165.154.194.121:1818
+2026-06-13 13:11:03.137 | [10002] handshake xor key index=7 key=21 40 23 24
+2026-06-13 13:11:03.137 | [10002] initial handshake len=12
+2026-06-13 13:11:03.137 | [client] active xor key index=7 key=21 40 23 24
+2026-06-13 13:11:03.141 | [10002] send CL_LOGIN
+2026-06-13 13:11:03.538 | [10002] recv proto=LC_LOGIN_SECONDARY len=48
+2026-06-13 13:11:03.538 | [10002] wait 5s before CL_LOGIN_SECONDARY
+2026-06-13 13:11:08.539 | [10002] send CL_LOGIN_SECONDARY
+2026-06-13 13:11:20.547 | [error] attempt 1 failed
+2026-06-13 13:11:20.548 | Traceback (most recent call last):
+2026-06-13 13:11:20.548 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_login_client.py", line 1151, in run_forever
+2026-06-13 13:11:20.548 |     run_with_log(args, log_dir, console=console)
+2026-06-13 13:11:20.548 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_login_client.py", line 1102, in run_with_log
+2026-06-13 13:11:20.548 |     run(args)
+2026-06-13 13:11:20.548 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_login_client.py", line 2385, in run
+2026-06-13 13:11:20.548 |     raw, decoded = read_game_packet(login, xor=False, key_index=key_index, timeout=args.timeout)
+2026-06-13 13:11:20.548 |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-13 13:11:20.548 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_login_client.py", line 2070, in read_game_packet
+2026-06-13 13:11:20.548 |     header = read_exact(sock, 4)
+2026-06-13 13:11:20.548 |              ^^^^^^^^^^^^^^^^^^^
+2026-06-13 13:11:20.548 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_login_client.py", line 2059, in read_exact
+2026-06-13 13:11:20.548 |     chunk = sock.recv(size - len(chunks))
+2026-06-13 13:11:20.548 |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-13 13:11:20.548 | TimeoutError: timed out
+2026-06-13 13:11:20.548 | [gongyu901121/shadowpope] 第 1 次失败，详情见 E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_logs\gongyu901121_shadowpope.log
+2026-06-13 13:11:26.555 | [gongyu901121/shadowpope] 第 2 次启动
+2026-06-13 13:11:26.555 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_logs\gongyu901121_shadowpope.log
+2026-06-13 13:11:26.555 | [client] account='gongyu901121' character='shadowpope'
+2026-06-13 13:11:26.555 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-13 13:11:27.888 | [net] connected 165.154.194.121:1818
+2026-06-13 13:11:28.218 | [10002] handshake xor key index=7 key=21 40 23 24
+2026-06-13 13:11:28.218 | [10002] initial handshake len=12
+2026-06-13 13:11:28.218 | [client] active xor key index=7 key=21 40 23 24
+2026-06-13 13:11:28.220 | [10002] send CL_LOGIN
+2026-06-13 13:11:28.587 | [10002] recv proto=LC_SERVER_LIST len=58
+2026-06-13 13:11:28.865 | [net] connected 123.58.197.240:1838
+2026-06-13 13:11:28.865 | [bill] send open opcode=1 len=38
+2026-06-13 13:11:31.875 | [bill] recv open-ack skipped: timed out
+2026-06-13 13:11:31.875 | [bill] send account opcode=2 len=22
+2026-06-13 13:11:31.875 | [bill] send ready opcode=3 len=6
+2026-06-13 13:11:32.157 | [bill] recv post-ready-1 47 00 02 00 01 00 00 00 00 00 67 6f 6e 67 79 75 39 30 31 31 32 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-13 13:11:32.434 | [bill] recv post-ready-2 30 00 03 00 01 00 00 00 00 00 67 6f 6e 67 79 75 39 30 31 31 32 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-13 13:11:32.434 | [10002] send CL_GET_CHARINFO server=2 channel=1
+2026-06-13 13:11:32.792 | [10002] recv proto=LC_CHARINFO_SUCCESS len=1124
+2026-06-13 13:11:32.792 | [char] account has 3 character(s); using configured character 'shadowpope'
+2026-06-13 13:11:32.792 | [bill] send select-server opcode=4 len=10
+2026-06-13 13:11:32.792 | [10002] send CL_GAMESERVER_CONNECT character='shadowpope'
+2026-06-13 13:11:33.188 | [10002] recv proto=LC_GSERV_CONNECT_SUCCESS len=60
+2026-06-13 13:11:33.188 | [game] lobby returned 127.1.5.42:1842 character='shadowpope' seed=0x6E41A940
+2026-06-13 13:11:33.188 | [game] host map 127.1.5.42 -> 165.154.194.124
+2026-06-13 13:11:33.188 | [game] effective server 165.154.194.124:1842 character='shadowpope' seed=0x6E41A940
+2026-06-13 13:11:33.489 | [net] connected 165.154.194.124:1842
+2026-06-13 13:11:33.491 | [game] send CG_PLAY_START
+2026-06-13 13:11:33.491 | [game] send CG_ENTER
+2026-06-13 13:11:34.197 | [chat] status source from post-enter: player_id=0x00000012 map_id=109
+2026-06-13 13:11:34.499 | [game] send CG_INIT_411555
+2026-06-13 13:11:34.499 | [game] send CG_INIT_411589
+2026-06-13 13:11:34.499 | [game] send CG_INIT_411595
+2026-06-13 13:11:34.520 | [game] send CG_PLAY_START_2
+2026-06-13 13:11:34.540 | [game] send CG_POST_ENTER_411570
+2026-06-13 13:11:34.817 | [net] connected 123.58.197.240:3000
+2026-06-13 13:11:34.817 | [chat] send login opcode=0x00004100 len=69 raw=45 00 00 41 00 00 67 6f 6e 67 79 75 39 30 31 31 32 31 00 00 00 00 00 39 30 31 31 32 31 00 00 00 00 00 00 00 00 00 00 00 73 68 61 64 6f 77 70 6f 70 65 00 00 00 00 00 00 00 01 00 00 00 1f ae 01 00 12 00 00 00
+2026-06-13 13:11:34.817 | [chat] send map-status map=109 player=0x00000012 opcode=0x00004110 len=39 raw=27 00 10 41 00 00 08 00 00 00 6d 00 00 00 73 68 61 64 6f 77 70 6f 70 65 00 00 00 00 00 00 00 00 00 00 00 12 00 00 00
+2026-06-13 13:11:35.069 | [game] send CG_POST_ENTER_411625
+2026-06-13 13:11:35.069 | [loop] online simulation is running; Ctrl+C to stop
+2026-06-13 13:11:35.069 | [gongyu901121/shadowpope] 登录成功，已上线
+2026-06-13 13:11:35.069 | [金币] 当前金币=62527018(来源 char-load)
+
+===== 初始背包 =====
+  bag_observed=True cash_observed=True
+  金币: gold_seen=True 当前金币=62,527,018
+  鱼饵(itemId=3982) 总数=793 | 召唤卷(itemId=8036) 总数=583
+  主背包占用 42 格,其中卖货区[50-191] 占用 2 格:
+    slot62  itemId=3982     count=299
+    slot63  itemId=3982     count=299
+  cash 背包占用 13 格,召唤卷格 = 4
+
+[verify] >>> 触发「立即买鱼饵」(action_queue.put('buy'))
+2026-06-13 13:11:35.569 | [购买](手动)物品=紅標槍(3982) 现有=793,准备召唤摊贩购买
+2026-06-13 13:11:35.570 | [game] send CG_USE_CASH_ITEM
+2026-06-13 13:11:35.870 | [game] send CG_VENDOR_OPEN
+2026-06-13 13:11:35.870 | [摊贩](手动)已召唤并开摊贩(cash格=4)
+2026-06-13 13:11:36.171 | [game] send CG_VENDOR_BUY
+2026-06-13 13:11:36.171 | [购买] 已下单:vendorId=2 shopIndex=11 物品=紅標槍(3982) 数量=300 targetSlot=18
+2026-06-13 13:11:36.322 | [game] send CG_VENDOR_CLOSE
+2026-06-13 13:11:36.322 | [摊贩](手动)已关摊贩
+2026-06-13 13:11:36.322 | [购买](手动)本轮购买流程结束
+2026-06-13 13:11:45.087 | [game] send CG_GAME_ALIVE
+
+===== 买鱼饵后(等 14s) =====
+  bag_observed=True cash_observed=True
+  金币: gold_seen=True 当前金币=62,527,018
+  鱼饵(itemId=3982) 总数=793 | 召唤卷(itemId=8036) 总数=583
+  主背包占用 42 格,其中卖货区[50-191] 占用 2 格:
+    slot62  itemId=3982     count=299
+    slot63  itemId=3982     count=299
+  cash 背包占用 13 格,召唤卷格 = 4
+
+[verify] >>> 触发「立即卖货」(action_queue.put('sell'))
+2026-06-13 13:11:49.595 | [贩卖](手动)跳过保留物品 格=62 物品=紅標槍(3982) 数量=299
+2026-06-13 13:11:49.595 | [贩卖](手动)跳过保留物品 格=63 物品=紅標槍(3982) 数量=299
+2026-06-13 13:11:49.595 | [贩卖](手动)范围[50-191]内无可卖物品(已跳过保留/不可贩卖)
+2026-06-13 13:11:55.105 | [game] send CG_GAME_ALIVE
+2026-06-13 13:12:05.122 | [game] send CG_GAME_ALIVE
+2026-06-13 13:12:15.136 | [game] send CG_GAME_ALIVE
+2026-06-13 13:12:25.150 | [game] send CG_GAME_ALIVE
+2026-06-13 13:12:35.166 | [game] send CG_GAME_ALIVE
+2026-06-13 13:12:45.182 | [game] send CG_GAME_ALIVE
+2026-06-13 13:12:55.200 | [game] send CG_GAME_ALIVE
+
+===== 卖货后(等 70s) =====
+  bag_observed=True cash_observed=True
+  金币: gold_seen=True 当前金币=62,527,018
+  鱼饵(itemId=3982) 总数=793 | 召唤卷(itemId=8036) 总数=583
+  主背包占用 42 格,其中卖货区[50-191] 占用 2 格:
+    slot62  itemId=3982     count=299
+    slot63  itemId=3982     count=299
+  cash 背包占用 13 格,召唤卷格 = 4
+
+[verify] 说明:卖货 autosell_run 会本地把卖出格清零;买鱼饵不本地改数,
+[verify] 鱼饵/召唤卷的真实变化需服务端回流整桶。若上面数字未变,请重连后再看背包确认。
+2026-06-13 13:12:59.707 | [loop] stop requested; closing session
+2026-06-13 13:12:59.707 | [gongyu901121/shadowpope] 会话正常结束，准备重试
+[verify] done
