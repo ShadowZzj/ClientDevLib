@@ -1,0 +1,21 @@
+{
+  "config": {
+    "pollIntervalMs": 60000,
+    "autoEnabled": true
+  },
+  "entries": [
+    {
+      "characterName": "shadowdance",
+      "itemName": "性別隨身變",
+      "threshold": 10,
+      "buyCount": 10,
+      "minIntervalMs": 86400000,
+      "enabled": true,
+      "lastTriggered": 1783508480938,
+      "lastStatus": "error",
+      "lastResult": "角色 shadowdance 不在线",
+      "lastCashCount": 15,
+      "lastChecked": 1783876924789
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "characters": [
+    {
+      "characterName": "shadowdance",
+      "enabled": false,
+      "slotIndex": 69,
+      "itemName": "次元守護者戒指.0lv",
+      "springType": 0,
+      "targetGrade": 3,
+      "requiredAttrs": [
+        {
+          "id": 2,
+          "minValue": 33,
+          "maxN": 0
+        },
+        {
+          "id": 17,
+          "minValue": 1,
+          "maxN": 6
+        }
+      ],
+      "minMatchCount": 2,
+      "pollMs": 0,
+      "maxWashes": 0,
+      "washCount": 0,
+      "status": "running",
+      "lastGrade": 3,
+      "lastAttrs": [
+        {
+          "composite": false,
+          "id": 21,
+          "name": "減少道具配戴限制等級 - %d",
+          "percent": false,
+          "value": 5
+        },
+        {
+          "composite": true,
+          "id": 20,
+          "m": 1,
+          "n": 38,
+          "name": "精神(每級)",
+          "percent": false,
+          "value": 2490369
+        },
+        {
+          "composite": false,
+          "id": 21,
+          "name": "減少道具配戴限制等級 - %d",
+          "percent": false,
+          "value": 5
+        }
+      ],
+      "lastError": "",
+      "lastWashAt": 1781425849792
+    },
+    {
+      "characterName": "shadowsing",
+      "enabled": false,
+      "slotIndex": 81,
+      "itemName": "威武的龍手鐲",
+      "springType": 1,
+      "targetGrade": 5,
+      "requiredAttrs": [
+        {
+          "id": 14,
+          "minValue": 1,
+          "maxN": 0
+        }
+      ],
+      "minMatchCount": 1,
+      "pollMs": 0,
+      "maxWashes": 0,
+      "washCount": 95,
+      "status": "done",
+      "lastGrade": 5,
+      "lastAttrs": [
+        {
+          "composite": false,
+          "id": 23,
+          "name": "副本傷害增加 + %d%",
+          "percent": true,
+          "value": 2
+        },
+        {
+          "composite": false,
+          "id": 14,
+          "name": "減少傷害力",
+          "percent": true,
+          "value": 3
+        },
+        {
+          "composite": false,
+          "id": 8,
+          "name": "移動速度",
+          "percent": false,
+          "value": 17
+        }
+      ],
+      "lastError": "",
+      "lastWashAt": 1782921530341
+    },
+    {
+      "characterName": "一野插瓜你",
+      "enabled": false,
+      "slotIndex": 44,
+      "itemName": "拉格艾爾的戰爭巨鎚.XG",
+      "springType": 1,
+      "targetGrade": 4,
+      "requiredAttrs": [
+        {
+          "id": 14,
+          "minValue": 2,
+          "maxN": 0
+        },
+        {
+          "id": 13,
+          "minValue": 3,
+          "maxN": 0
+        },
+        {
+          "id": 23,
+          "minValue": 3,
+          "maxN": 0
+        }
+      ],
+      "minMatchCount": 1,
+      "pollMs": 0,
+      "maxWashes": 0,
+      "washCount": 270,
+      "status": "no-spring",
+      "lastGrade": 3,
+      "lastAttrs": [
+        {
+          "composite": false,
+          "id": 1,
+          "name": "攻擊力",
+          "percent": false,
+          "value": 71
+        },
+        {
+          "composite": false,
+          "id": 3,
+          "name": "命中",
+          "percent": false,
+          "value": 5
+        },
+        {
+          "composite": false,
+          "id": 21,
+          "name": "減少道具配戴限制等級 - %d",
+          "percent": false,
+          "value": 8
+        }
+      ],
+      "lastError": "背包/cash背包里没有这种发条了",
+      "lastWashAt": 1783761286366
+    }
+  ]
+}

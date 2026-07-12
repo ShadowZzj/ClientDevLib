@@ -22,9 +22,11 @@ class SkillSpeedModule : public IModule
   public:
     SkillSpeedModule() : IModule(u8"技能速度") {}
 
+    Tab GetTab() const override { return Tab::OP; }
+
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##SkillSpeed", &enabled_))
+        if (ImGui::Checkbox(u8"技能速度##SkillSpeed", &enabled_))
         {
             if (enabled_)
             {

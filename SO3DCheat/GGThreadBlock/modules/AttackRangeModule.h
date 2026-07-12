@@ -33,9 +33,11 @@ class AttackRangeModule : public IModule
   public:
     AttackRangeModule() : IModule(u8"攻击距离") {} // Attack range
 
+    Tab GetTab() const override { return Tab::OP; }
+
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##AttackRange", &enabled_))
+        if (ImGui::Checkbox(u8"攻击距离##AttackRange", &enabled_))
         {
             if (enabled_)
             {

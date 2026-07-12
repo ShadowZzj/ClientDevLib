@@ -46,7 +46,7 @@ class AutoFleeModule : public IModule
 
     void OnRender() override
     {
-        ImGui::Checkbox(u8"启用##AutoFlee", &enabled_);
+        ImGui::Checkbox(u8"自动退避打怪##AutoFlee", &enabled_);
 
         ImGui::SliderFloat(u8"触发距离(格)##AutoFlee", &triggerDistance_, 1.0f, 30.0f, "%.1f");
         ImGui::SliderFloat(u8"退避目标距离(格)##AutoFlee", &fleeDistance_,    3.0f, 50.0f, "%.1f");

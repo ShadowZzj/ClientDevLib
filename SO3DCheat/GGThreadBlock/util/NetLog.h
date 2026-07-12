@@ -34,6 +34,83 @@ void Uninstall();
 // True once both hooks have successfully attached. Diagnostic only.
 bool IsActive();
 
+// ---------- Debug 模式:网络明文日志开关 ----------
+//
+// 控制 SEND / RECV / WIRE_SEND / WIRE_RECV 四个方向是否把帧写进 net/{sendlog,recvlog}。
+// 关掉只停文件写入(连 per-packet getpeername 也省),hook 仍挂着 —— 技能/交易/钓鱼/
+// 仓库/聊天/金币这些观察器靠同一组 hook 工作,不受影响。默认开,保持旧行为。
+// 持久化在 UserConfig 的 config.json meta(per-character),登录加载时回灌本开关。
+// atomic:UI 线程写,游戏 net 线程读。
+// 注:名字避开 urlmon.h 的 IsLoggingEnabled A/W 宏(会把符号改名成 ...W 致链接失败)。
+void SetLogEnabled(bool enabled);
+bool IsLogEnabled();
+
+// ---------- Dungeon-entry protocol event stream ----------
+//
+// The ticket-assisted dungeon-entry flow can receive several authoritative
+// packets within the same millisecond. Keep them in one ordered 64-event ring
+// instead of independent "last packet" snapshots so the broker can reconstruct
+// the exact server order without blocking the remote-control thread.
+enum class DungeonEntryEventKind : uint32_t
+{
+    InstanceRegister,  // 511602: result, nInsd
+    CashSlotUpdate,    // 511325: cash slot/item/count update
+    NpcDialogConfirm,  // 521603: native client will resend dialog selection
+};
+
+struct DungeonEntryEvent
+{
+    uint64_t sequence;
+    DungeonEntryEventKind kind;
+    uint32_t proto;
+    uint32_t frameLength;
+
+    // 511602 fields.
+    uint32_t result;
+    uint32_t nInsd;
+
+    // 511325 fields. count is the decoded business count: packedCount + 1
+    // when itemId != 0, otherwise 0 (including the last-ticket empty ACK).
+    uint32_t wireSlot;
+    uint32_t itemId;
+    uint32_t packedCount;
+    uint32_t count;
+    uint64_t extra;
+    uint32_t tailCode;
+
+    // 521603 fields. The handler consumes only opt/branch; rawAux is retained
+    // as diagnostic data when the frame actually carries a third DWORD.
+    uint32_t opt;
+    uint32_t branch;
+    uint32_t rawAux;
+    bool hasRawAux;
+};
+
+// Copies all retained events with sequence > afterSequence in wire order and
+// returns the latest global sequence. truncated is set when older matching
+// history fell out of the 64-event ring.
+uint64_t QueryDungeonEntryEvents(uint64_t afterSequence, std::vector<DungeonEntryEvent> &out,
+                                 bool *truncated = nullptr);
+uint64_t GetDungeonEntryLatestSequence();
+
+// Sequence of the latest authoritative 511602 [result=5,nInsd=1] event. The
+// scoped UI hook compares it with its generation baseline before accepting the
+// exact ticket prompt.
+uint64_t GetLastDungeonTicketPromptSequence();
+
+struct DungeonDialogSelectSnapshot
+{
+    uint64_t sequence;
+    uint32_t npcId;
+    uint32_t opt;
+    uint32_t sub;
+};
+
+// Published by the plaintext send hook at entry for every 411026. The scoped
+// dungeon confirmer uses this to reject delayed 511602 prompts that predate
+// its own checked native select.
+DungeonDialogSelectSnapshot GetLastDungeonDialogSelect();
+
 // ---------- Skill-hit observer (for FireFullPower 稳健模式) ----------
 //
 // Returns GetTickCount() of the most recent proto 521056 (= GC_SKILL_CAST_RESULT,
@@ -77,6 +154,95 @@ DWORD GetLastTradePeerLockTickMs();
 // 物品内存,故只能靠这条回包。原子写在 recv hook(net 线程),worker 跨线程读。
 DWORD GetLastSpringAssign(uint32_t *outResultCode = nullptr, uint32_t *outGrade = nullptr,
                           uint32_t outIds[3] = nullptr, uint32_t outVals[3] = nullptr);
+
+// ---------- Enchant-stone full snapshot observer ----------
+//
+// Live recv verification (shadowpope, 2026-07-10): proto 511615 / 0x7CE7F is a
+// 468-byte full snapshot emitted after upgrade, option-change and count-extend.
+// The packet has three DWORD metadata fields followed by four 112-byte records.
+// A monotonically increasing sequence is used instead of GetTickCount so two
+// replies in the same millisecond cannot collapse into one observation.
+struct EnchantStoneRecord
+{
+    uint32_t color;
+    int32_t  grade; // -1 = unopened, otherwise highest opened slot (0..11)
+    uint32_t attrIds[12];
+    int32_t  values[12];
+    uint32_t remaining;
+    uint32_t max;
+};
+
+struct EnchantStoneSnapshot
+{
+    uint32_t           metadata[3];
+    EnchantStoneRecord stones[4];
+};
+
+// Copies the latest complete snapshot into out (when non-null) and returns its
+// sequence number. 0 means no 511615 packet has been observed yet.
+uint64_t GetLastEnchantStoneSnapshot(EnchantStoneSnapshot *out = nullptr);
+
+// ---------- Daily-task protocol observers ----------
+//
+// The daily-task server flow is split across five adjacent protocols:
+//   511690 full list, 511691 manage-action reply, 511692 completion/reward,
+//   511693 error, and 511694 single-slot update.  Each getter copies the most
+// recent valid packet of that type and returns its monotonic event sequence.
+// Sequence 0 means that packet type has not been observed yet.  Sequences are
+// shared across all five types, so values from different getters retain wire
+// arrival order.
+inline constexpr uint32_t kDailyTaskMaxCount = 8;
+
+struct DailyTaskFullEntry
+{
+    uint32_t taskId;
+    uint32_t state; // raw server state; full-list state 4 maps to local state 0
+    uint32_t progress;
+};
+
+struct DailyTaskFullSnapshot
+{
+    uint32_t           taskCount;
+    DailyTaskFullEntry tasks[kDailyTaskMaxCount];
+    uint32_t           rewardCount;
+    uint32_t           allClearRewarded;
+    uint32_t           changeChance;
+    uint32_t           flag;
+};
+
+struct DailyTaskManageReply
+{
+    uint32_t operation; // 0=reroll, 1=accept, 2=abandon
+    uint32_t index;     // task slot
+    uint32_t value;     // reroll's new taskId; unused by accept/abandon
+};
+
+struct DailyTaskCompletionReply
+{
+    uint32_t kind;
+    uint32_t count;
+    uint32_t indices[kDailyTaskMaxCount]; // first DWORD of each 20-byte item
+};
+
+struct DailyTaskErrorReply
+{
+    uint32_t value0;
+    uint32_t value1;
+};
+
+struct DailyTaskDelta
+{
+    uint32_t slot;
+    uint32_t taskId;
+    uint32_t state;
+    uint32_t progress;
+};
+
+uint64_t GetLastDailyTaskFull(DailyTaskFullSnapshot *out = nullptr);
+uint64_t GetLastDailyTaskManageReply(DailyTaskManageReply *out = nullptr);
+uint64_t GetLastDailyTaskCompletionReply(DailyTaskCompletionReply *out = nullptr);
+uint64_t GetLastDailyTaskErrorReply(DailyTaskErrorReply *out = nullptr);
+uint64_t GetLastDailyTaskDelta(DailyTaskDelta *out = nullptr);
 
 // ---------- Auto-fishing bait observer (for AutoFishingModule) ----------
 //

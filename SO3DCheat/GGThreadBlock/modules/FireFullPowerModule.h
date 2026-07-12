@@ -72,11 +72,12 @@ class FireFullPowerModule : public IModule
     }
 
     bool CanAutoPause() const override { return true; }
+    Tab  GetTab() const override { return Tab::OP; }
 
     void OnRender() override
     {
         bool prevEnabled = enabled_;
-        if (ImGui::Checkbox(u8"启用##FireFullPower", &enabled_))
+        if (ImGui::Checkbox(u8"火力全开##FireFullPower", &enabled_))
         {
             // 互斥:启用本模块时拍下多重施法 (同源 hook 路径会乘 N 倍掉线)
             if (enabled_ && !prevEnabled)

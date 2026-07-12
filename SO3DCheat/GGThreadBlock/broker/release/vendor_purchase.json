@@ -1,0 +1,27 @@
+{
+  "summonItemName": "摊贩",
+  "summonAliases": [
+    "攤販",
+    "呼叫卷",
+    "呼叫券",
+    "摊贩呼叫卷",
+    "攤販呼叫券"
+  ],
+  "sendOpenPacket": true,
+  "sendClosePacket": true,
+  "openDelayMs": 300,
+  "buyDelayMs": 150,
+  "closeDelayMs": 150,
+  "defaultVendorId": 2,
+  "items": [
+    {
+      "itemName": "红标枪",
+      "aliases": [
+        "紅標槍"
+      ],
+      "defaultCount": 300,
+      "vendorId": 2,
+      "token": "0xFECD2408"
+    }
+  ]
+}

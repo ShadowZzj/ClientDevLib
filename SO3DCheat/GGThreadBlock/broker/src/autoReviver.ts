@@ -3,6 +3,7 @@ import path from "path";
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { InstanceRegistry } from "./instances";
+import { classifyLocalPlayerStatus } from "./workflowSignals";
 
 // ---------------- step + config 类型 ----------------
 // 跟原前端 AutoReviveView.vue 里的 Step / ReviveConfig 同形,迁移直接 1:1 搬。
@@ -558,7 +559,10 @@ export class AutoReviver extends EventEmitter {
     async runAllDeadNow(): Promise<{ ok: boolean; results: ReviveAllResult[] }> {
         const results: ReviveAllResult[] = [];
         const online = this.registry.list()
-            .filter((inst) => !!inst.characterName && inst.status.hp === 0);
+            .filter((inst) => !!inst.characterName &&
+                inst.status.hp === 0 &&
+                inst.status.hpKnown === true &&
+                inst.status.clientClosing !== true);
 
         for (const inst of online) {
             const name = inst.characterName!;
@@ -710,7 +714,9 @@ export class AutoReviver extends EventEmitter {
                 const r = await this.registry.sendCommand(pid, "getStatus", {}, 3000);
                 if (!r.ok) continue;
                 statusObj = typeof r.detail === "string" ? JSON.parse(r.detail) : r.detail;
-                isDead = !!statusObj?.isDead;
+                const statusKind = classifyLocalPlayerStatus(statusObj);
+                if (statusKind !== "alive" && statusKind !== "dead") continue;
+                isDead = statusKind === "dead";
             } catch {
                 continue;
             }

@@ -1,0 +1,24 @@
+# redpass 出口分流(mihomo/clash,TUN 模式)。bot 会自动用 mihomo 核心加载它。
+# 按进程名把 ggs5exit{k}.exe 导到第 k 条 SOCKS5,其余直连。请勿手改。
+mixed-port: 7897
+mode: rule
+log-level: warning
+find-process-mode: always
+external-controller: 127.0.0.1:29390
+secret: "redpass-redpass"
+tun:
+  enable: true
+  stack: gvisor
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack: [any:53]
+  route-exclude-address: [81.181.174.103/32]
+dns:
+  enable: true
+  nameserver: [223.5.5.5, 119.29.29.29]
+proxies:
+  - {name: "exit1", type: socks5, server: "81.181.174.103", port: 50101, username: "handawei", password: "QURJIEe2Z5", udp: true}
+rules:
+  - IP-CIDR,81.181.174.103/32,DIRECT,no-resolve
+  - PROCESS-NAME,ggs5exit1.exe,exit1
+  - MATCH,DIRECT

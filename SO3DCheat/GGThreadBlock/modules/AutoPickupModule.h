@@ -1,6 +1,7 @@
 #pragma once
 #include "../IModule.h"
 #include "../entity/CLocalPlayer.h"
+#include "PickupFilter.h"
 #include <imgui/imgui.h>
 #include <spdlog/spdlog.h>
 #include <Windows.h>
@@ -51,7 +52,7 @@ class AutoPickupModule : public IModule
 
     void OnRender() override
     {
-        ImGui::Checkbox(u8"启用##AutoPickup", &enabled_);
+        ImGui::Checkbox(u8"自动拾取##AutoPickup", &enabled_);
         ImGui::SameLine();
         ImGui::Checkbox(u8"显示掉落列表##AutoPickup", &showList_);
 
@@ -83,7 +84,18 @@ class AutoPickupModule : public IModule
         }
 
         ImGui::Separator();
-        if (!enabled_)
+        // 过滤状态(只读 — 配置在 web 上改,全角色生效)。
+        if (PickupFilter::Instance().IsWhitelist())
+            ImGui::TextColored(ImVec4(0.9f, 0.8f, 0.4f, 1.0f),
+                               u8"过滤: 白名单 (仅捡 %d 种, web 配置)",
+                               static_cast<int>(PickupFilter::Instance().Count()));
+        else
+            ImGui::TextDisabled(u8"过滤: 全部拾取 (web 配置)");
+
+        if (!PickupFilter::Instance().UsesAutoPickup())
+            ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f),
+                               u8"游戏原生拾取模式: 直接发包已暂停");
+        else if (!enabled_)
             ImGui::TextDisabled(u8"未启用 (worker 仍在运行,但不拾取)");
         else if (IsPausedByGuard())
             ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f),
@@ -185,7 +197,12 @@ class AutoPickupModule : public IModule
         {
             if (enabled_ && !IsPausedByGuard())
             {
-                if (pickOnZ_)
+                if (!PickupFilter::Instance().UsesAutoPickup())
+                {
+                    if (GetTickCount() - lastTickMs_ >= static_cast<DWORD>(pollIntervalMs_))
+                        RefreshSnapshotOnly();
+                }
+                else if (pickOnZ_)
                 {
                     // Z 模式:电平触发发包,按住 Z 就按 pollIntervalMs_ 节流持续拾取。
                     // 空闲时(Z 未按下)也按 pollIntervalMs_ 节流的刷一下 drop snapshot,
@@ -252,12 +269,26 @@ class AutoPickupModule : public IModule
     // 走这条。不做节流判断 — 调用方负责。
     void RunPickPass()
     {
+        if (!PickupFilter::Instance().UsesAutoPickup())
+        {
+            RefreshSnapshotOnly();
+            return;
+        }
+
         auto drops = GetNearbyDropItems(distance_, /*includeUnpickable=*/false);
 
         size_t picked = 0;
         for (auto &d : drops)
         {
             if (picked >= static_cast<size_t>(maxPicksPerTick_))
+                break;
+            // 过滤拾取(白名单):mode=all 全过,mode=whitelist 仅捡列表内 itemId。配置由
+            // web broker 经 setPickupFilter 下发,全角色共用一份。列表里的掉落仍留在
+            // lastDrops_ 快照里(UI 表照常显示周围所有可拾取),只是不发拾取包。
+            if (!PickupFilter::Instance().ShouldPick(d.itemId))
+                continue;
+            // 配置可能在本轮扫描期间切换。ACK 后剩余物品必须立即停止直接发包。
+            if (!PickupFilter::Instance().UsesAutoPickup())
                 break;
             int rv = SendPickItem(d.dropId);
             if (rv > 0)

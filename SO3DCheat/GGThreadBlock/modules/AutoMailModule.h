@@ -50,7 +50,7 @@ class AutoMailModule : public IModule
 
     void OnRender() override
     {
-        ImGui::Checkbox(u8"启用##AutoMail", &enabled_);
+        ImGui::Checkbox(u8"自动邮寄##AutoMail", &enabled_);
 
         // 收件人 (16 字节槽位,引擎 strlen 后 memmove,超长会冲掉 op/money 字段)
         if (ImGui::InputText(u8"收件人##AutoMail", recipient_, sizeof(recipient_)))

@@ -72,7 +72,7 @@ class StationaryFarmModule : public IModule
         }
 
         bool prev = enabled_;
-        ImGui::Checkbox(u8"启用定点挂机##StationaryFarm", &enabled_);
+        ImGui::Checkbox(u8"定点挂机##StationaryFarm", &enabled_);
 
         if (armed && enabled_ && !prev)
         {

@@ -76,6 +76,14 @@
       >
         丢弃同名 ({{ dropByNameCount }})
       </el-button>
+      <el-button
+        v-if="batchDropping"
+        type="info"
+        :disabled="dropAbort"
+        @click="stopDrop"
+      >
+        {{ dropAbort ? '停止中…' : '停止' }}
+      </el-button>
       <span class="batch-status">{{ batchStatus }}</span>
     </div>
 
@@ -167,6 +175,7 @@ const bagRecipient = ref('')
 const selectedRows = ref<BagItem[]>([])
 const batchSending = ref(false)
 const batchDropping = ref(false)
+const dropAbort = ref(false)
 const dropIntervalMs = ref(1000)
 const batchStatus = ref('')
 const bagTableRef = ref<any>(null)
@@ -303,10 +312,12 @@ async function doBatchDrop() {
   } catch { return }
 
   batchDropping.value = true
+  dropAbort.value = false
   batchStatus.value = `丢弃中 (0/${toDrop.length})…`
-  let ok = 0, fail = 0
+  let ok = 0, fail = 0, aborted = false
 
   for (let idx = 0; idx < toDrop.length; idx++) {
+    if (dropAbort.value) { aborted = true; break }
     const item = toDrop[idx]
     batchStatus.value = `丢弃中 (${idx + 1}/${toDrop.length}) ${item.name || item.itemId}…`
     try {
@@ -321,9 +332,10 @@ async function doBatchDrop() {
     if (idx < toDrop.length - 1) await new Promise((resolve) => setTimeout(resolve, interval))
   }
 
-  batchStatus.value = `完成: 成功 ${ok}, 失败 ${fail}`
-  ElMessage[fail === 0 ? 'success' : 'warning'](`丢弃完成: ${ok} 成功, ${fail} 失败`)
+  batchStatus.value = `${aborted ? '已停止' : '完成'}: 成功 ${ok}, 失败 ${fail}`
+  ElMessage[aborted ? 'info' : (fail === 0 ? 'success' : 'warning')](`丢弃${aborted ? '已停止' : '完成'}: ${ok} 成功, ${fail} 失败`)
   batchDropping.value = false
+  dropAbort.value = false
   // 丢完刷新一下背包,把空了的格子去掉
   await refreshBag()
 }
@@ -351,10 +363,12 @@ async function doDropByName() {
   } catch { return }
 
   batchDropping.value = true
+  dropAbort.value = false
   batchStatus.value = `丢弃中 (0/${toDrop.length})…`
-  let ok = 0, fail = 0
+  let ok = 0, fail = 0, aborted = false
 
   for (let idx = 0; idx < toDrop.length; idx++) {
+    if (dropAbort.value) { aborted = true; break }
     const item = toDrop[idx]
     batchStatus.value = `丢弃中 (${idx + 1}/${toDrop.length}) ${item.name || item.itemId}…`
     try {
@@ -369,10 +383,17 @@ async function doDropByName() {
     if (idx < toDrop.length - 1) await new Promise((resolve) => setTimeout(resolve, interval))
   }
 
-  batchStatus.value = `完成: 成功 ${ok}, 失败 ${fail}`
-  ElMessage[fail === 0 ? 'success' : 'warning'](`丢弃完成: ${ok} 成功, ${fail} 失败`)
+  batchStatus.value = `${aborted ? '已停止' : '完成'}: 成功 ${ok}, 失败 ${fail}`
+  ElMessage[aborted ? 'info' : (fail === 0 ? 'success' : 'warning')](`丢弃${aborted ? '已停止' : '完成'}: ${ok} 成功, ${fail} 失败`)
   batchDropping.value = false
+  dropAbort.value = false
   await refreshBag()
+}
+
+function stopDrop() {
+  if (!batchDropping.value) return
+  dropAbort.value = true
+  batchStatus.value = '正在停止…'
 }
 
 function onRowContext(row: BagItem, _col: any, event: MouseEvent) {

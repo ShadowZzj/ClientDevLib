@@ -1,35 +1,35 @@
 [
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 7,
     "itemName": "咕咕-魔法藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 12,
     "itemName": "受祝福的金福袋(1天)",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 8,
     "itemName": "咕咕-防禦力藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 10,
     "itemName": "咕咕-閃避藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
     "pid": 43436,
@@ -128,108 +128,108 @@
     "lastUsed": 1779554675356
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 6,
     "itemName": "咕咕-力量藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 8,
     "itemName": "咕咕-防禦力藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 9,
     "itemName": "咕咕-命中藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 10,
     "itemName": "咕咕-閃避藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 11,
     "itemName": "咕咕-攻速藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 12,
     "itemName": "受祝福的金福袋(1天)",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783821372013
   },
   {
-    "pid": 63888,
+    "pid": 10548,
     "characterName": "shadowsing",
     "slotIndex": 14,
     "itemName": "天使的祝福(1天)",
     "intervalMs": 86400000,
-    "lastUsed": 1780073673458
+    "lastUsed": 1783843976899
   },
   {
-    "pid": 72748,
+    "pid": 10216,
     "characterName": "shadowdance",
     "slotIndex": 1,
     "itemName": "咕咕-防禦力藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073193115
+    "lastUsed": 1783876042877
   },
   {
-    "pid": 72748,
+    "pid": 10216,
     "characterName": "shadowdance",
     "slotIndex": 7,
     "itemName": "咕咕-魔法藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073193115
+    "lastUsed": 1783876042877
   },
   {
-    "pid": 72748,
+    "pid": 10216,
     "characterName": "shadowdance",
     "slotIndex": 9,
     "itemName": "咕咕-命中藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073193115
+    "lastUsed": 1783876042877
   },
   {
-    "pid": 72748,
+    "pid": 10216,
     "characterName": "shadowdance",
     "slotIndex": 10,
     "itemName": "咕咕-閃避藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073193115
+    "lastUsed": 1783876042877
   },
   {
-    "pid": 72748,
+    "pid": 10216,
     "characterName": "shadowdance",
     "slotIndex": 11,
     "itemName": "咕咕-攻速藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780073193115
+    "lastUsed": 1783876042877
   },
   {
-    "pid": 72748,
+    "pid": 10216,
     "characterName": "shadowdance",
     "slotIndex": 12,
     "itemName": "受祝福的金福袋(1天)",
     "intervalMs": 86400000,
-    "lastUsed": 1780073193115
+    "lastUsed": 1783876042877
   },
   {
     "pid": 12692,
@@ -240,46 +240,46 @@
     "lastUsed": 1779555025653
   },
   {
-    "pid": 75440,
+    "pid": 46348,
     "characterName": "shadowpope",
     "itemName": "咕咕-力量藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780075324672
+    "lastUsed": 1783648672285
   },
   {
-    "pid": 75440,
+    "pid": 46348,
     "characterName": "shadowpope",
     "itemName": "咕咕-防禦力藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780075324672
+    "lastUsed": 1783648672285
   },
   {
-    "pid": 75440,
+    "pid": 46348,
     "characterName": "shadowpope",
     "itemName": "咕咕-命中藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780075324672
+    "lastUsed": 1783648672285
   },
   {
-    "pid": 75440,
+    "pid": 46348,
     "characterName": "shadowpope",
     "itemName": "咕咕-閃避藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780075324672
+    "lastUsed": 1783648672285
   },
   {
-    "pid": 75440,
+    "pid": 46348,
     "characterName": "shadowpope",
     "itemName": "咕咕-攻速藥水",
     "intervalMs": 86400000,
-    "lastUsed": 1780075324672
+    "lastUsed": 1783648672285
   },
   {
-    "pid": 75440,
+    "pid": 46348,
     "characterName": "shadowpope",
     "itemName": "受祝福的金福袋(1天)",
     "intervalMs": 86400000,
-    "lastUsed": 1780075324672
+    "lastUsed": 1783648672285
   },
   {
     "pid": 63556,
@@ -364,5 +364,33 @@
     "itemName": "咕咕-攻速藥水",
     "intervalMs": 86400000,
     "lastUsed": 1779554365082
+  },
+  {
+    "pid": 10216,
+    "characterName": "shadowdance",
+    "itemName": "天使的祝福(1天)",
+    "intervalMs": 86400000,
+    "lastUsed": 1783876042877
+  },
+  {
+    "pid": 48456,
+    "characterName": "舒淇",
+    "itemName": "天使的祝福(1天)",
+    "intervalMs": 86400000,
+    "lastUsed": 1783665749048
+  },
+  {
+    "pid": 75588,
+    "characterName": "天靈神劍",
+    "itemName": "天使的祝福(1天)",
+    "intervalMs": 86400000,
+    "lastUsed": 1783667135045
+  },
+  {
+    "pid": 36408,
+    "characterName": "小肉盾",
+    "itemName": "天使的祝福(1天)",
+    "intervalMs": 86400000,
+    "lastUsed": 1783667365215
   }
 ]

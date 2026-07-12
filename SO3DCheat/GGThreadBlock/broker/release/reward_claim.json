@@ -1,0 +1,31 @@
+{
+  "characters": [
+    {
+      "characterName": "shadowdance",
+      "enabled": true,
+      "claimOnline": true,
+      "claimSignin": true,
+      "doneDate": "2026-07-13",
+      "lastAttempt": 1783875682088,
+      "lastResult": "在线 本次领1档"
+    },
+    {
+      "characterName": "shadowsing",
+      "enabled": true,
+      "claimOnline": true,
+      "claimSignin": true,
+      "doneDate": "2026-07-13",
+      "lastAttempt": 1783875682088,
+      "lastResult": "在线 本次领1档"
+    },
+    {
+      "characterName": "shadowpope",
+      "enabled": true,
+      "claimOnline": true,
+      "claimSignin": true,
+      "doneDate": "2026-07-11",
+      "lastAttempt": 1783733381324,
+      "lastResult": "在线 本次领6档 签到 本次领1项"
+    }
+  ]
+}

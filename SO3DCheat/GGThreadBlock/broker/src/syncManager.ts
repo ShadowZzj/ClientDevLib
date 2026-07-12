@@ -7,7 +7,7 @@ import { InstanceRegistry, DialogSelectEvent, TeleportEvent } from "./instances"
 // 按分组顺序抢占,后面的分组不能再要已被占用的名字。
 //
 // 同步三类动作(每组各自开关):
-//   1. 移动 —— 跟随主角色「当前位置」。复用 status 遥测(主角色每 1.5s 上报
+//   1. 移动 —— 跟随主角色「当前位置」。复用 status 遥测(主角色每 0.5s 上报
 //      posX/posY),follow tick 把主角色当前坐标 moveTo 给每个副角色,引擎寻路。
 //      主角色没动就不重发(按组去重),免得刷命令。
 //   2. NPC 对话 —— 主角色每发一次 CG_NPC_DIALOG_SELECT(411026),DLL 经 NetLog hook
@@ -64,10 +64,14 @@ const PERSIST_FILE = path.resolve(
     "sync_config.json"
 );
 
-const DEFAULT_FOLLOW_MS = 1500;
-const MIN_FOLLOW_MS = 800;
+const DEFAULT_FOLLOW_MS = 500;
+// 轮询地板。遥测每 500ms 才刷新一次坐标,轮询比数据源更快没意义,所以地板对齐
+// 到 300(略快于遥测,保证每帧新坐标都能被及时取走,不等下一拍)。
+const MIN_FOLLOW_MS = 300;
 const DEFAULT_POS_EPSILON = 1.0;
-const DEFAULT_FOLLOW_JITTER_MS = 600;
+// 错峰抖动:延迟贡献 = 均值一半。150 → 平均只加 ~75ms,同时仍把几个副角色的起步
+// 时刻打散在 150ms 窗口里,保留基本的防「齐步走」效果。
+const DEFAULT_FOLLOW_JITTER_MS = 150;
 const DEFAULT_PATH_WAYPOINTS = 2;
 const DEFAULT_PATH_OFFSET_MAX = 2.0;
 const DEFAULT_PATH_SEG_DELAY_MS = 700;
@@ -152,10 +156,11 @@ export class SyncManager {
         return this.registry.list().find((i) => i.characterName === group.masterName);
     }
 
-    // 根据主角色名找它所在的分组(每个名字只属于一个组,这里只匹配 master)。
+    // 根据主角色名找它所在的「已启用」分组。归一化保证同一角色名下最多一个 enabled 组,
+    // 所以直接返回那个;没有启用的组就返回 undefined(不镜像)。同名的其它停用组忽略。
     private groupByMaster(masterName?: string): SyncGroup | undefined {
         if (!masterName) return undefined;
-        return this.config.groups.find((g) => g.masterName === masterName);
+        return this.config.groups.find((g) => g.enabled && g.masterName === masterName);
     }
 
     private async followTick(): Promise<void> {
@@ -543,31 +548,51 @@ function normalizeConfig(c: any): SyncConfig {
         ];
     }
 
-    // 一个角色名在所有分组里只能出现一次(主或副),按分组顺序抢占。
-    const claimed = new Set<string>();
+    // 一个角色名可以出现在多个分组里(主或副),但「同时启用」的分组之间不能共用
+    // 同一个角色。归一化时只对 enabled 的分组做唯一性校验:按分组顺序,前面已启用的
+    // 组先占住它用到的名字(主+副);后面的启用组如果用到已被占的名字,就把这一组的
+    // enabled 关掉(整组停用,名字保留不动),并记一条提示。停用的组不参与占用,
+    // 所以它和别的组重叠没关系 —— 检测只在「都启用」时才发生。
+    const claimedByEnabled = new Set<string>();
+    const disabledByConflict: string[] = [];
     const groups: SyncGroup[] = [];
     for (const g of rawGroups) {
         const id = typeof g?.id === "string" && g.id ? g.id : genGroupId();
         const name = typeof g?.name === "string" && g.name ? g.name : `分组 ${groups.length + 1}`;
 
-        let masterName = typeof g?.masterName === "string" ? g.masterName : "";
-        if (masterName && claimed.has(masterName)) masterName = ""; // 已被别组占用
-        if (masterName) claimed.add(masterName);
+        const masterName = typeof g?.masterName === "string" ? g.masterName : "";
 
         const slaveRaw = Array.isArray(g?.slaveNames) ? g.slaveNames : [];
         const slaveNames: string[] = [];
+        const seen = new Set<string>();
+        if (masterName) seen.add(masterName);
         for (const n of slaveRaw) {
             if (typeof n !== "string" || !n) continue;
-            if (n === masterName) continue;     // 主不能同时是副
-            if (claimed.has(n)) continue;        // 已被占用(本组主、或其它组)
-            claimed.add(n);
+            if (n === masterName) continue; // 主不能同时是本组副
+            if (seen.has(n)) continue;      // 本组内去重
+            seen.add(n);
             slaveNames.push(n);
+        }
+
+        let enabled = g?.enabled ?? true;
+
+        // 只有想启用的组才做跨组唯一性校验。
+        if (enabled) {
+            const mine = [masterName, ...slaveNames].filter((n) => !!n);
+            const clash = mine.some((n) => claimedByEnabled.has(n));
+            if (clash) {
+                // 与某个已启用组撞了角色 —— 停用本组(保留其名字配置)。
+                enabled = false;
+                disabledByConflict.push(name);
+            } else {
+                for (const n of mine) claimedByEnabled.add(n);
+            }
         }
 
         groups.push({
             id,
             name,
-            enabled: g?.enabled ?? true,
+            enabled,
             masterName,
             slaveNames,
             mirrorPosition: g?.mirrorPosition ?? true,
@@ -578,6 +603,11 @@ function normalizeConfig(c: any): SyncConfig {
             lineSpacing: Number(g?.lineSpacing) > 0 ? Number(g.lineSpacing) : 1,
             lineAvoidPlayers: !!g?.lineAvoidPlayers,
         });
+    }
+    if (disabledByConflict.length) {
+        console.warn(
+            `[sync] 角色冲突,已自动停用分组: ${disabledByConflict.join(", ")}(与已启用分组共用了同一角色)`
+        );
     }
 
     return {

@@ -25,9 +25,11 @@ class ItemNoCDModule : public IModule
   public:
     ItemNoCDModule() : IModule(u8"物品短CD") {} // Item short-cd
 
+    Tab GetTab() const override { return Tab::OP; }
+
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##ItemShortCD", &enabled_))
+        if (ImGui::Checkbox(u8"物品短CD##ItemShortCD", &enabled_))
         {
             if (enabled_)
             {

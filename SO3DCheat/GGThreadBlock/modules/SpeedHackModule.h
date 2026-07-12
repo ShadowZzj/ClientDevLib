@@ -11,9 +11,11 @@ class SpeedHackModule : public IModule
   public:
     SpeedHackModule() : IModule(u8"加速") {}
 
+    Tab GetTab() const override { return Tab::OP; }
+
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##SpeedHack", &enabled_))
+        if (ImGui::Checkbox(u8"加速##SpeedHack", &enabled_))
         {
             if (enabled_)
             {

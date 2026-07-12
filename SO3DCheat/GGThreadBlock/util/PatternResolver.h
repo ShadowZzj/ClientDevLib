@@ -31,6 +31,14 @@ class PatternResolver
     // targetModule defaults to the host process EXE (GetModuleHandleA(nullptr)).
     static void Init(HMODULE hOwnerDll, const std::string &targetModule = "");
 
+    // Two-phase startup for packed hosts. Prepare only loads cache/fallback
+    // addresses and never scans mutable .text. ResolvePatterns performs any
+    // required scan after the unpack-complete signal.
+    static void Prepare(HMODULE hOwnerDll, const std::string &targetModule = "");
+    // allowScan=false finalizes cache/fallback values without touching packed
+    // .text (used when the stage-2 sentinel could not be armed safely).
+    static void ResolvePatterns(bool allowScan = true);
+
     static uintptr_t Get(const std::string &name);
     static uintptr_t GetModuleBase();
     static uintptr_t GetModuleSize();
@@ -51,6 +59,8 @@ class PatternResolver
     static uintptr_t moduleSize_;
     static std::vector<PatternEntry> entries_;
     static std::unordered_map<std::string, size_t> nameIndex_;
+    static bool prepared_;
+    static bool needsScan_;
     static bool initialized_;
 };
 

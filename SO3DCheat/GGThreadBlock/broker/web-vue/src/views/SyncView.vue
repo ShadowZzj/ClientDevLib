@@ -4,16 +4,21 @@
       <template #header>
         <div class="card-header">
           <span>同步 — 多分组,副角色镜像主角色的移动 / NPC 对话 / 城市传送</span>
-          <el-tag :type="enabledGroupCount > 0 ? 'success' : 'info'" size="small">
-            {{ enabledGroupCount > 0 ? `${enabledGroupCount} 组运行中` : '全部已停止' }}
-          </el-tag>
+          <div>
+            <el-tag v-if="conflictNames.size > 0" type="danger" size="small" style="margin-right: 8px">
+              {{ conflictNames.size }} 个角色冲突
+            </el-tag>
+            <el-tag :type="enabledGroupCount > 0 ? 'success' : 'info'" size="small">
+              {{ enabledGroupCount > 0 ? `${enabledGroupCount} 组运行中` : '全部已停止' }}
+            </el-tag>
+          </div>
         </div>
       </template>
 
       <el-form label-width="120px" size="default">
         <el-form-item label="跟随间隔">
-          <el-input-number v-model="config.followIntervalMs" :min="800" :max="10000" :step="100" />
-          <span class="hint">毫秒,全局共享。每隔这么久对齐一次各组位置。</span>
+          <el-input-number v-model="config.followIntervalMs" :min="300" :max="10000" :step="100" />
+          <span class="hint">毫秒,全局共享。每隔这么久对齐一次各组位置。坐标源(遥测)每 500ms 刷新,设 300~500 最跟手,再低是空转。</span>
         </el-form-item>
         <el-form-item label="位移阈值">
           <el-input-number v-model="config.posEpsilon" :min="0" :max="100" :step="0.5" />
@@ -78,6 +83,7 @@
             />
           </div>
           <div>
+            <el-tag v-if="groupHasConflict(group)" type="danger" size="small" style="margin-right: 8px">角色冲突</el-tag>
             <el-tag v-if="!group.enabled" type="info" size="small">已停止</el-tag>
             <el-tag v-else-if="masterOnline(group)" type="success" size="small">主在线</el-tag>
             <el-tag v-else type="warning" size="small">主离线</el-tag>
@@ -129,7 +135,7 @@
               :disabled="opt.disabled"
             />
           </el-select>
-          <span class="hint">这些角色镜像主角色。已属于其它分组的角色不可选。</span>
+          <span class="hint">这些角色镜像主角色。同一角色可分到多个组,但「同时启用」的组之间不能共用。</span>
         </el-form-item>
 
         <el-form-item label="镜像移动">
@@ -223,9 +229,9 @@ const saving = ref(false)
 
 function defaultConfig(): SyncConfig {
   return {
-    followIntervalMs: 1500,
+    followIntervalMs: 500,
     posEpsilon: 1.0,
-    followJitterMs: 600,
+    followJitterMs: 150,
     pathRandomize: false,
     pathWaypoints: 2,
     pathOffsetMax: 2.0,
@@ -275,36 +281,47 @@ function label(name: string): string {
   return isOnline(name) ? `${name} (在线)` : `${name} (离线)`
 }
 
-// name -> 占用它的分组 id(主或副)。用来禁用其它组里的同名选项。
-const ownerByName = computed(() => {
-  const m = new Map<string, string>()
+// 角色可以出现在多个分组里。约束只针对「同时启用(enabled)」的分组:同一个角色
+// 不能在两个都启用的组里出现。下面算出「被冲突占用」的角色名集合 —— 即出现在 2 个
+// 以上 enabled 组里的名字。用来在 UI 上高亮提示,并在保存前拦截。
+const conflictNames = computed(() => {
+  const countByName = new Map<string, number>()
   for (const g of config.value.groups) {
-    if (g.masterName && !m.has(g.masterName)) m.set(g.masterName, g.id)
-    for (const n of g.slaveNames) if (!m.has(n)) m.set(n, g.id)
+    if (!g.enabled) continue
+    const mine = new Set<string>()
+    if (g.masterName) mine.add(g.masterName)
+    for (const n of g.slaveNames) mine.add(n)
+    for (const n of mine) countByName.set(n, (countByName.get(n) ?? 0) + 1)
   }
-  return m
+  const set = new Set<string>()
+  for (const [n, c] of countByName) if (c > 1) set.add(n)
+  return set
 })
 
-// 主角色候选:本组当前 master 始终可选;其余按是否被别组占用禁用。
+// 某个启用组是否和别的启用组撞了角色(用于组头上的红标)。
+function groupHasConflict(group: SyncGroup): boolean {
+  if (!group.enabled) return false
+  if (group.masterName && conflictNames.value.has(group.masterName)) return true
+  return group.slaveNames.some((n) => conflictNames.value.has(n))
+}
+
+// 主角色候选:任何已知角色都能选。本组副不能当本组主。其它组(含启用组)不再禁用
+// —— 只有「都启用」才算冲突,交给保存校验/UI 提示,不在选项层面一刀切禁掉。
 function masterOptionsFor(group: SyncGroup) {
   return allCharacters.value.map((n) => {
-    const owner = ownerByName.value.get(n)
-    const takenByOther = owner !== undefined && owner !== group.id
-    // 本组副角色也不能当本组主
     const isOwnSlave = group.slaveNames.includes(n)
-    return { value: n, label: label(n), disabled: (takenByOther && n !== group.masterName) || isOwnSlave }
+    const dup = group.enabled && conflictNames.value.has(n) && n !== group.masterName
+    return { value: n, label: label(n) + (dup ? ' ⚠冲突' : ''), disabled: isOwnSlave }
   })
 }
 
-// 副角色候选:排除本组主;被别组占用的禁用。
+// 副角色候选:排除本组主;其余都可选(同名可跨组)。启用组间撞名加 ⚠ 提示。
 function slaveOptionsFor(group: SyncGroup) {
   return allCharacters.value
     .filter((n) => n !== group.masterName)
     .map((n) => {
-      const owner = ownerByName.value.get(n)
-      const takenByOther = owner !== undefined && owner !== group.id
-      const alreadyMine = group.slaveNames.includes(n)
-      return { value: n, label: label(n), disabled: takenByOther && !alreadyMine }
+      const dup = group.enabled && conflictNames.value.has(n) && !group.slaveNames.includes(n)
+      return { value: n, label: label(n) + (dup ? ' ⚠冲突' : ''), disabled: false }
     })
 }
 
@@ -328,9 +345,9 @@ function removeGroup(idx: number) {
 function normalize(cfg: Partial<SyncConfig>): SyncConfig {
   const groups = Array.isArray(cfg.groups) ? cfg.groups : []
   return {
-    followIntervalMs: cfg.followIntervalMs ?? 1500,
+    followIntervalMs: cfg.followIntervalMs ?? 500,
     posEpsilon: cfg.posEpsilon ?? 1.0,
-    followJitterMs: cfg.followJitterMs ?? 600,
+    followJitterMs: cfg.followJitterMs ?? 150,
     pathRandomize: cfg.pathRandomize ?? false,
     pathWaypoints: cfg.pathWaypoints ?? 2,
     pathOffsetMax: cfg.pathOffsetMax ?? 2.0,
@@ -363,10 +380,14 @@ async function reload() {
 }
 
 async function save() {
-  // 提交前本地清一遍:主不在副里。服务端还会做跨组去重归一化。
+  // 提交前本地清一遍:主不在副里。服务端会做「同时启用组」唯一性校验。
   for (const g of config.value.groups) {
     g.slaveNames = g.slaveNames.filter((n) => n !== g.masterName)
   }
+  // 记下提交前哪些组是启用的,保存后跟服务端返回比对,看哪些被自动停用。
+  const wantEnabled = new Map<string, boolean>()
+  for (const g of config.value.groups) wantEnabled.set(g.id, g.enabled)
+
   saving.value = true
   try {
     const res = await fetch('/api/sync/config', {
@@ -376,7 +397,15 @@ async function save() {
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     config.value = normalize((await res.json()) as Partial<SyncConfig>)
-    ElMessage.success('已保存')
+    // 服务端把和已启用组撞角色的组自动停用了 —— 提示用户是哪些。
+    const forced = config.value.groups
+      .filter((g) => wantEnabled.get(g.id) === true && !g.enabled)
+      .map((g) => g.name)
+    if (forced.length) {
+      ElMessage.warning(`已保存。这些分组与已启用分组共用角色,已自动停用: ${forced.join('、')}`)
+    } else {
+      ElMessage.success('已保存')
+    }
   } catch (e: any) {
     ElMessage.error(`保存失败: ${e.message}`)
   } finally {

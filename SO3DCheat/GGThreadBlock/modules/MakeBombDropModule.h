@@ -31,10 +31,11 @@ class MakeBombDropModule : public IModule
     }
 
     bool CanAutoPause() const override { return false; }
+    Tab  GetTab() const override { return Tab::OP; }
 
     void OnRender() override
     {
-        ImGui::Checkbox(u8"启用##MakeBombDrop", &enabled_);
+        ImGui::Checkbox(u8"做原子弹##MakeBombDrop", &enabled_);
         ImGui::SameLine();
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.9f, 1.0f),
                            u8"(不保存,不受NPG限制)");

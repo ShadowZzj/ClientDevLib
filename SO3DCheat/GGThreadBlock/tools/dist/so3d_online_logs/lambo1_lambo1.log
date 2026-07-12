@@ -1,0 +1,159 @@
+2026-06-11 16:47:38.849 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\dist\so3d_online_logs\lambo1_lambo1.log
+2026-06-11 16:47:38.850 | [client] account='lambo1' character='lambo1'
+2026-06-11 16:47:38.850 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-11 16:47:39.173 | [net] connected 165.154.194.121:1818
+2026-06-11 16:47:39.486 | [debug][recv:handshake] len=12 proto=2164211000 key=6
+2026-06-11 16:47:39.486 | [debug][recv:handshake] raw=0c 00 00 00 38 3d ff 80 ce 9d 65 e1
+2026-06-11 16:47:39.486 | [debug][recv:handshake] dec=0c 00 00 00 38 3d ff 80 ce 9d 65 e1
+2026-06-11 16:47:39.486 | [debug][recv:handshake] ascii=....8=....e.
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=0 proto=2782600824 firstBody=0xC441BE8E body=8e be 41 c4
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=1 proto=2799311131 firstBody=0xC740B9ED body=ed b9 40 c7
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=2 proto=2866354204 firstBody=0xCB43B8EA body=ea b8 43 cb
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=3 proto=2882870045 firstBody=0xCA4FBBEB body=eb bb 4f ca
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=4 proto=2715031326 firstBody=0xC04EB7E8 body=e8 b7 4e c0
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=5 proto=3235780114 firstBody=0xA144B6E4 body=e4 b6 44 a1
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=6 proto=2747210771 firstBody=0xC225BCE5 body=e5 bc 25 c2
+2026-06-11 16:47:39.486 | [debug][recv:handshake] xor-candidate key=7 proto=2765913369 firstBody=0xC546DDEF body=ef dd 46 c5
+2026-06-11 16:47:39.486 | [debug][recv:handshake] no XOR key produced a known SO3D proto; the SO3D client dispatcher would not handle this as a normal game packet
+2026-06-11 16:47:39.486 | [debug][recv:handshake] des-dec=38 38 03 00 c3 ea 10 1c
+2026-06-11 16:47:39.486 | [10002] handshake xor key index=6 key=2b 21 40 23
+2026-06-11 16:47:39.486 | [10002] initial handshake len=12
+2026-06-11 16:47:39.486 | [client] active xor key index=6 key=2b 21 40 23
+2026-06-11 16:47:39.487 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-11 16:47:39.487 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b3 90 41 23 2b 21 40 23 92 31 54 41 aa fe d1 f1 bd dc 3a bf e2 48 e6 c1 27 9a 59 bc 74 7c b5 ba bd dc 3a bf e2 48 e6 c1 30 14 fe 94 64 ac 64 1a 3b 7e 72 a6 09 a6 92 0d
+2026-06-11 16:47:39.487 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 b9 10 14 62 81 df 91 d2 96 fd 7a 9c c9 69 a6 e2 0c bb 19 9f 5f 5d f5 99 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-11 16:47:39.487 | [10002] send CL_LOGIN
+2026-06-11 16:47:39.842 | [debug][recv:LC_SERVER_LIST] len=48 proto=LC_LOGIN_SECONDARY key=6
+2026-06-11 16:47:39.842 | [debug][recv:LC_SERVER_LIST] raw=30 00 00 00 71 a7 43 23 29 21 40 23 2b 21 40 23 bf 32 40 23 47 40 2d 41 44 10 40 23 2b 21 40 23 2b 21 40 23 29 21 40 23 2b 21 40 23 2b 21 40 23
+2026-06-11 16:47:39.842 | [debug][recv:LC_SERVER_LIST] dec=30 00 00 00 5a 86 03 00 02 00 00 00 00 00 00 00 94 13 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:47:39.842 | [10002] recv proto=LC_LOGIN_SECONDARY len=48
+2026-06-11 16:47:39.842 | [10002] wait 5s before CL_LOGIN_SECONDARY
+2026-06-11 16:47:44.842 | [debug][send:CL_LOGIN_SECONDARY] len=40 proto=CL_LOGIN_SECONDARY xor=True
+2026-06-11 16:47:44.842 | [debug][send:CL_LOGIN_SECONDARY] raw=28 00 00 00 88 90 41 23 47 40 2d 41 44 10 40 23 2b 21 40 23 2b 21 40 23 5a 40 3a 12 19 12 40 23 2b 21 40 23 2b 21 40 23
+2026-06-11 16:47:44.842 | [debug][send:CL_LOGIN_SECONDARY] dec=28 00 00 00 a3 b1 01 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 71 61 7a 31 32 33 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:47:44.842 | [10002] send CL_LOGIN_SECONDARY
+2026-06-11 16:47:52.857 | [error] attempt 1 failed
+2026-06-11 16:47:52.859 | Traceback (most recent call last):
+2026-06-11 16:47:52.859 |   File "so3d_online_login_client.py", line 806, in run_forever
+2026-06-11 16:47:52.859 |   File "so3d_online_login_client.py", line 758, in run_with_log
+2026-06-11 16:47:52.859 |   File "so3d_online_login_client.py", line 1585, in run
+2026-06-11 16:47:52.859 |   File "so3d_online_login_client.py", line 1270, in read_game_packet
+2026-06-11 16:47:52.859 |   File "so3d_online_login_client.py", line 1259, in read_exact
+2026-06-11 16:47:52.859 | TimeoutError: timed out
+2026-06-11 16:48:02.870 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\dist\so3d_online_logs\lambo1_lambo1.log
+2026-06-11 16:48:02.870 | [client] account='lambo1' character='lambo1'
+2026-06-11 16:48:02.870 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-11 16:48:03.179 | [net] connected 165.154.194.121:1818
+2026-06-11 16:48:03.488 | [debug][recv:handshake] len=12 proto=2108359790 key=1
+2026-06-11 16:48:03.488 | [debug][recv:handshake] raw=0c 00 00 00 6e 04 ab 7d 79 27 10 b9
+2026-06-11 16:48:03.488 | [debug][recv:handshake] dec=0c 00 00 00 6e 04 ab 7d 79 27 10 b9
+2026-06-11 16:48:03.488 | [debug][recv:handshake] ascii=....n..}y'..
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=0 proto=1485776686 firstBody=0x9C340439 body=39 04 34 9c
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=1 proto=1536041037 firstBody=0x9F35035A body=5a 03 35 9f
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=2 proto=1468866890 firstBody=0x9336025D body=5d 02 36 93
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=3 proto=1451303499 firstBody=0x923A015C body=5c 01 3a 92
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=4 proto=1551904328 firstBody=0x983B0D5F body=5f 0d 3b 98
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=5 proto=1032466244 firstBody=0xF9310C53 body=53 0c 31 f9
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=6 proto=1592468805 firstBody=0x9A500652 body=52 06 50 9a
+2026-06-11 16:48:03.488 | [debug][recv:handshake] xor-candidate key=7 proto=1502102607 firstBody=0x9D336758 body=58 67 33 9d
+2026-06-11 16:48:03.488 | [debug][recv:handshake] no XOR key produced a known SO3D proto; the SO3D client dispatcher would not handle this as a normal game packet
+2026-06-11 16:48:03.488 | [debug][recv:handshake] des-dec=38 38 03 00 cb ea 81 03
+2026-06-11 16:48:03.488 | [10002] handshake xor key index=1 key=23 24 25 26
+2026-06-11 16:48:03.488 | [10002] initial handshake len=12
+2026-06-11 16:48:03.488 | [client] active xor key index=1 key=23 24 25 26
+2026-06-11 16:48:03.490 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-11 16:48:03.490 | [debug][send:CL_LOGIN] raw=3c 00 00 00 bb 95 24 26 23 24 25 26 9a 34 31 44 a2 fb b4 f4 b5 d9 5f ba ea 4d 83 c4 2f 9f 3c b9 7c 79 d0 bf b5 d9 5f ba ea 4d 83 c4 38 11 9b 91 6c a9 01 1f 33 7b 17 a3 01 a3 f7 08
+2026-06-11 16:48:03.490 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 b9 10 14 62 81 df 91 d2 96 fd 7a 9c c9 69 a6 e2 0c bb 19 9f 5f 5d f5 99 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-11 16:48:03.490 | [10002] send CL_LOGIN
+2026-06-11 16:48:03.926 | [debug][recv:LC_SERVER_LIST] len=58 proto=LC_SERVER_LIST key=1
+2026-06-11 16:48:03.926 | [debug][recv:LC_SERVER_LIST] raw=3a 00 00 00 6a 7b 26 26 22 24 25 26 12 57 40 54 55 41 57 26 03 04 05 06 03 04 05 06 22 24 25 26 5f 24 25 26 23 24 25 26 23 24 25 26 23 24 25 26 23 24 25 26 23 24 25 26 23 24
+2026-06-11 16:48:03.926 | [debug][recv:LC_SERVER_LIST] dec=3a 00 00 00 49 5f 03 00 01 00 00 00 31 73 65 72 76 65 72 00 20 20 20 20 20 20 20 20 01 00 00 00 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:03.926 | [10002] recv proto=LC_SERVER_LIST len=58
+2026-06-11 16:48:04.230 | [net] connected 123.58.197.240:1838
+2026-06-11 16:48:04.230 | [bill] send open opcode=1 len=38
+2026-06-11 16:48:07.236 | [bill] recv open-ack skipped: timed out
+2026-06-11 16:48:07.236 | [bill] send account opcode=2 len=22
+2026-06-11 16:48:07.236 | [bill] send ready opcode=3 len=6
+2026-06-11 16:48:07.533 | [bill] recv post-ready-1 47 00 02 00 01 00 00 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:07.835 | [bill] recv post-ready-2 30 00 03 00 01 00 00 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:07.835 | [debug][send:CL_GET_CHARINFO] len=16 proto=CL_GET_CHARINFO xor=True
+2026-06-11 16:48:07.835 | [debug][send:CL_GET_CHARINFO] raw=10 00 00 00 b8 95 24 26 21 24 25 26 22 24 25 26
+2026-06-11 16:48:07.835 | [debug][send:CL_GET_CHARINFO] dec=10 00 00 00 9b b1 01 00 02 00 00 00 01 00 00 00
+2026-06-11 16:48:07.835 | [10002] send CL_GET_CHARINFO server=2 channel=1
+2026-06-11 16:48:08.175 | [debug][recv:LC_CHARINFO_SUCCESS] len=388 proto=LC_CHARINFO_SUCCESS key=1
+2026-06-11 16:48:08.175 | [debug][recv:LC_CHARINFO_SUCCESS] raw=84 01 00 00 68 7b 26 26 21 24 25 26 22 24 25 26 26 24 25 26 4f 45 48 44 4c 15 25 26 23 24 25 26 23 24 25 26 22 24 25 26 86 24 25 26 26 24 25 26 21 24 25 26 25 24 25 26 23 24 25 26 88 07 25 26 2f 24 25 26 8f 07 25 26 2f 24 25 26 8e 07 25 26 2f 24 25 26 8d 07 25 26 2f 24 25 26 d6 76 25 26 23 24 25 26 23 24 25 26 23 24 25 26 1e 2b 25 26 2f 24 25 26 f5 2b 25 26 23 24 2d 24 dc db da d9 23 24 25 26 8f 3b 25 26 23 24 25 26 23 24 25 26 23 24 25 26 ee 66 25 26 23 24 25 26 23 24 25 26 ...(+228 bytes)
+2026-06-11 16:48:08.175 | [debug][recv:LC_CHARINFO_SUCCESS] dec=84 01 00 00 4b 5f 03 00 02 00 00 00 01 00 00 00 05 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 01 00 00 00 a5 00 00 00 05 00 00 00 02 00 00 00 06 00 00 00 00 00 00 00 ab 23 00 00 0c 00 00 00 ac 23 00 00 0c 00 00 00 ad 23 00 00 0c 00 00 00 ae 23 00 00 0c 00 00 00 f5 52 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3d 0f 00 00 0c 00 00 00 d6 0f 00 00 00 00 08 02 ff ff ff ff 00 00 00 00 ac 1f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 cd 42 00 00 00 00 00 00 00 00 00 00 ...(+228 bytes)
+2026-06-11 16:48:08.175 | [10002] recv proto=LC_CHARINFO_SUCCESS len=388
+2026-06-11 16:48:08.175 | [bill] send select-server opcode=4 len=10
+2026-06-11 16:48:08.175 | [debug][send:CL_GAMESERVER_CONNECT] len=32 proto=CL_GAMESERVER_CONNECT xor=True
+2026-06-11 16:48:08.175 | [debug][send:CL_GAMESERVER_CONNECT] raw=20 00 00 00 bd 95 24 26 21 24 25 26 22 24 25 26 4f 45 48 44 4c 15 25 26 23 24 25 26 23 24 25 26
+2026-06-11 16:48:08.175 | [debug][send:CL_GAMESERVER_CONNECT] dec=20 00 00 00 9e b1 01 00 02 00 00 00 01 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:08.176 | [10002] send CL_GAMESERVER_CONNECT character='lambo1'
+2026-06-11 16:48:08.596 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] len=60 proto=LC_GSERV_CONNECT_SUCCESS key=1
+2026-06-11 16:48:08.596 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] raw=3c 00 00 00 72 7b 26 26 21 24 25 26 4f 45 48 44 4c 15 25 26 23 24 25 26 23 24 25 26 12 16 12 08 12 0a 10 08 17 16 25 06 03 04 05 06 11 23 25 26 da a0 67 6b 23 24 25 26 22 24 25 26
+2026-06-11 16:48:08.596 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] dec=3c 00 00 00 51 5f 03 00 02 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 31 32 37 2e 31 2e 35 2e 34 32 00 20 20 20 20 20 32 07 00 00 f9 84 42 4d 00 00 00 00 01 00 00 00
+2026-06-11 16:48:08.596 | [10002] recv proto=LC_GSERV_CONNECT_SUCCESS len=60
+2026-06-11 16:48:08.596 | [game] lobby returned 127.1.5.42:1842 character='lambo1' seed=0x4D4284F9
+2026-06-11 16:48:08.596 | [game] host map 127.1.5.42 -> 165.154.194.124
+2026-06-11 16:48:08.596 | [game] effective server 165.154.194.124:1842 character='lambo1' seed=0x4D4284F9
+2026-06-11 16:48:08.932 | [net] connected 165.154.194.124:1842
+2026-06-11 16:48:08.934 | [debug][send:CG_PLAY_START] len=12 proto=CG_PLAY_START xor=False
+2026-06-11 16:48:08.934 | [debug][send:CG_PLAY_START] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-11 16:48:08.934 | [debug][wire:CG_PLAY_START] len=24 raw=18 00 00 00 87 49 06 00 91 46 0a 46 fc fa 6a 21 e5 1c 19 2d 08 ac 86 03
+2026-06-11 16:48:08.934 | [game] send CG_PLAY_START
+2026-06-11 16:48:08.934 | [debug][send:CG_ENTER] len=52 proto=CG_ENTER xor=False
+2026-06-11 16:48:08.934 | [debug][send:CG_ENTER] raw=34 00 00 00 7d 45 06 00 f9 84 42 4d ee 3d dc 01 13 41 66 76 c8 c5 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:08.934 | [debug][wire:CG_ENTER] len=64 raw=40 00 00 00 7d 45 06 00 a9 3f 52 60 12 27 ee 7e 92 a6 cb e8 79 75 c1 56 06 c8 5d 8f 01 11 29 22 b4 e7 eb 0a d1 17 3e 92 52 e1 88 e4 6e f1 bc b3 e1 ef 91 3d ea 42 b4 54 cd b5 5b b6 ff 1c 54 cf
+2026-06-11 16:48:08.934 | [game] send CG_ENTER
+2026-06-11 16:48:09.640 | [debug][recv:game] chunk-len=48 firstLen=48 firstProto=511416
+2026-06-11 16:48:09.640 | [debug][recv:game] raw=30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:09.640 | [debug][recv:game] ascii=0...............................................
+2026-06-11 16:48:09.690 | [debug][recv:game] chunk-len=8400 firstLen=48 firstProto=511416
+2026-06-11 16:48:09.690 | [debug][recv:game] raw=30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1c 00 00 00 34 ce 07 00 f9 c3 46 04 00 00 00 00 14 00 00 00 02 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 f7 00 00 00 d4 00 00 00 03 03 00 00 14 00 00 00 06 02 00 00 10 00 00 00 5b 01 00 00 8b 01 00 00 a4 12 00 00 bc 0b 00 00 09 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 05 00 00 00 06 00 00 00 05 00 00 00 05 00 00 00 06 00 00 00 ...(+8240 bytes)
+2026-06-11 16:48:09.690 | [debug][recv:game] ascii=0..................................................
+2026-06-11 16:48:09.690 | [chat] status source from post-enter: player_id=0x000000C3 map_id=104
+2026-06-11 16:48:09.943 | [debug][send:CG_INIT_411555] len=18 proto=CG_INIT_411555 xor=False
+2026-06-11 16:48:09.943 | [debug][send:CG_INIT_411555] raw=12 00 00 00 a3 47 06 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-11 16:48:09.943 | [debug][wire:CG_INIT_411555] len=32 raw=20 00 00 00 a3 47 06 00 0d 41 3c 5e f9 6f e7 8c e3 8d fe 8c 71 6a 16 89 60 ef eb b2 1c 12 ed 30
+2026-06-11 16:48:09.943 | [game] send CG_INIT_411555
+2026-06-11 16:48:09.943 | [debug][send:CG_INIT_411589] len=20 proto=CG_INIT_411589 xor=False
+2026-06-11 16:48:09.943 | [debug][send:CG_INIT_411589] raw=14 00 00 00 c5 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-11 16:48:09.943 | [debug][wire:CG_INIT_411589] len=32 raw=20 00 00 00 c5 47 06 00 11 c7 9b e6 1f ee ad 69 a5 f3 17 d7 01 86 34 8e 30 ef 8d 43 f0 8b 45 3a
+2026-06-11 16:48:09.943 | [game] send CG_INIT_411589
+2026-06-11 16:48:09.943 | [debug][send:CG_INIT_411595] len=20 proto=CG_INIT_411595 xor=False
+2026-06-11 16:48:09.943 | [debug][send:CG_INIT_411595] raw=14 00 00 00 cb 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-11 16:48:09.943 | [debug][wire:CG_INIT_411595] len=32 raw=20 00 00 00 cb 47 06 00 11 c7 9b e6 1f ee ad 69 a5 f3 17 d7 01 86 34 8e 30 ef 8d 43 f0 8b 45 3a
+2026-06-11 16:48:09.943 | [game] send CG_INIT_411595
+2026-06-11 16:48:09.964 | [debug][send:CG_PLAY_START_2] len=12 proto=CG_PLAY_START xor=False
+2026-06-11 16:48:09.964 | [debug][send:CG_PLAY_START_2] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-11 16:48:09.964 | [debug][wire:CG_PLAY_START_2] len=24 raw=18 00 00 00 87 49 06 00 1e 5e 57 5a 35 4e 4e aa a7 2b b3 23 e5 c3 99 07
+2026-06-11 16:48:09.964 | [game] send CG_PLAY_START_2
+2026-06-11 16:48:09.985 | [debug][send:CG_POST_ENTER_411570] len=12 proto=CG_POST_ENTER_411570 xor=False
+2026-06-11 16:48:09.985 | [debug][send:CG_POST_ENTER_411570] raw=0c 00 00 00 b2 47 06 00 04 00 00 00
+2026-06-11 16:48:09.985 | [debug][wire:CG_POST_ENTER_411570] len=24 raw=18 00 00 00 b2 47 06 00 ed 56 85 0c 68 9d 87 7d 5b 3f f6 86 c5 d1 be 22
+2026-06-11 16:48:09.985 | [game] send CG_POST_ENTER_411570
+2026-06-11 16:48:10.285 | [net] connected 123.58.197.240:3000
+2026-06-11 16:48:10.286 | [chat] send login opcode=0x00004100 len=69 raw=45 00 00 41 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 71 61 7a 31 32 33 00 00 00 00 00 00 00 00 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 1f ae 01 00 c3 00 00 00
+2026-06-11 16:48:10.286 | [chat] send map-status map=104 player=0x000000C3 opcode=0x00004110 len=39 raw=27 00 10 41 00 00 08 00 00 00 68 00 00 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c3 00 00 00
+2026-06-11 16:48:10.537 | [debug][send:CG_POST_ENTER_411625] len=12 proto=CG_POST_ENTER_411625 xor=False
+2026-06-11 16:48:10.537 | [debug][send:CG_POST_ENTER_411625] raw=0c 00 00 00 e9 47 06 00 00 00 00 00
+2026-06-11 16:48:10.537 | [debug][wire:CG_POST_ENTER_411625] len=24 raw=18 00 00 00 e9 47 06 00 64 66 95 26 fa 2f 16 93 29 95 bf 55 89 f7 57 a0
+2026-06-11 16:48:10.537 | [game] send CG_POST_ENTER_411625
+2026-06-11 16:48:10.537 | [loop] online simulation is running; Ctrl+C to stop
+2026-06-11 16:48:10.537 | [debug][recv:game] chunk-len=9161 firstLen=0 firstProto=0
+2026-06-11 16:48:10.537 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 12 4a 00 00 17 00 00 00 e9 01 00 00 f8 15 00 00 05 00 00 00 e0 a5 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+9001 bytes)
+2026-06-11 16:48:10.537 | [debug][recv:game] ascii=...................................................
+2026-06-11 16:48:11.789 | [debug][recv:game] chunk-len=568 firstLen=16 firstProto=511643
+2026-06-11 16:48:11.789 | [debug][recv:game] raw=10 00 00 00 9b ce 07 00 00 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 f7 00 00 00 d4 00 00 00 03 03 00 00 14 00 00 00 06 02 00 00 10 00 00 00 5b 01 00 00 8b 01 00 00 a4 12 00 00 bc 0b 00 00 09 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 05 00 00 00 06 00 00 00 05 00 00 00 05 00 00 00 06 00 00 00 d4 01 00 00 7f ce 07 00 00 00 00 00 50 0d 03 00 00 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+408 bytes)
+2026-06-11 16:48:11.789 | [debug][recv:game] ascii=................T....".............................
+2026-06-11 16:48:11.789 | [debug][recv:chat] chunk-len=140 firstLen=16842813 firstProto=1634467844
+2026-06-11 16:48:11.789 | [debug][recv:chat] raw=3d 00 01 01 04 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1b 00 02 01 04 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 34 00 32 01 04 00 6c 61 6d 62 6f 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-11 16:48:11.789 | [debug][recv:chat] ascii==.....lambo1...........ETC..................ETC....
+2026-06-11 16:48:14.794 | [debug][recv:chat] chunk-len=6 firstLen=4294901766
+2026-06-11 16:48:14.794 | [debug][recv:chat] raw=06 00 ff ff 0f 00
+2026-06-11 16:48:14.794 | [debug][recv:chat] ascii=......
+2026-06-11 16:48:20.551 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-11 16:48:20.551 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-11 16:48:20.551 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 1d c9 b2 ae e8 25 79 39 8a 0d 44 ee 97 09 54 d6
+2026-06-11 16:48:20.551 | [game] send CG_GAME_ALIVE
+2026-06-11 16:48:24.556 | [loop] stop requested; closing session

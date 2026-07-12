@@ -1,0 +1,46 @@
+{
+  "followIntervalMs": 300,
+  "posEpsilon": 1,
+  "followJitterMs": 100,
+  "pathRandomize": false,
+  "pathWaypoints": 2,
+  "pathOffsetMax": 2,
+  "pathSegDelayMs": 700,
+  "groups": [
+    {
+      "id": "gmq51bav60",
+      "name": "默认分组",
+      "enabled": false,
+      "masterName": "shadowsing",
+      "slaveNames": [
+        "shadowdance"
+      ],
+      "mirrorPosition": true,
+      "mirrorDialog": true,
+      "mirrorTeleport": true,
+      "formation": "overlap",
+      "lineDirection": "x+",
+      "lineSpacing": 1,
+      "lineAvoidPlayers": true
+    },
+    {
+      "id": "gmqqjyzvx3vd",
+      "name": "分组 2",
+      "enabled": false,
+      "masterName": "lalala1",
+      "slaveNames": [
+        "lalala2",
+        "lalala5",
+        "lalala3",
+        "lalala4"
+      ],
+      "mirrorPosition": true,
+      "mirrorDialog": true,
+      "mirrorTeleport": true,
+      "formation": "overlap",
+      "lineDirection": "x+",
+      "lineSpacing": 1,
+      "lineAvoidPlayers": false
+    }
+  ]
+}

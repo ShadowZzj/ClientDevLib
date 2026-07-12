@@ -6,6 +6,9 @@ import { execFile } from "child_process";
 export interface InstanceStatus {
     money?: number;
     hp?: number;
+    hpKnown?: boolean;
+    clientClosing?: boolean;
+    worldRecvIdleMs?: number;
     posX?: number;
     posY?: number;
     posZ?: number;
@@ -20,6 +23,8 @@ export interface Instance {
     windowTitle?: string;
     hostExe?: string;
     dllVersion?: string;
+    nativeNpcUiBridgeReady?: boolean;
+    nativeDropPickupReady?: boolean;
     status: InstanceStatus;
     lastSeen: number;
 }
@@ -69,6 +74,10 @@ export class InstanceRegistry extends EventEmitter {
     private byPid = new Map<number, string>(); // pid -> connId
     private instances = new Map<string, Instance>();
     private windowRefreshTimers = new Set<NodeJS.Timeout>();
+    // 工作流等长事务可独占某个 PID 的 command 通道。DLL 的 ReadLoop 本身是串行
+    // 分发，broker 若让多个 manager 同时做“查询 -> 决策 -> 动作”，中间就可能被
+    // 别的动作插入。lease 存 owner token；无 token 的旧 manager/API 在占用期间拒绝。
+    private commandLeases = new Map<number, string>();
 
     handleConnection(socket: Socket): void {
         const connId = uuid();
@@ -172,6 +181,8 @@ export class InstanceRegistry extends EventEmitter {
             pid,
             hostExe: f.hostExe,
             dllVersion: f.dllVersion,
+            nativeNpcUiBridgeReady: f.nativeNpcUiBridgeReady === true,
+            nativeDropPickupReady: f.nativeDropPickupReady === true,
             status: {},
             lastSeen: Date.now(),
         };
@@ -200,6 +211,9 @@ export class InstanceRegistry extends EventEmitter {
         inst.status = {
             money: typeof f.money === "number" ? f.money : Number(f.money) || 0,
             hp: typeof f.hp === "number" ? f.hp : undefined,
+            hpKnown: typeof f.hpKnown === "boolean" ? f.hpKnown : undefined,
+            clientClosing: typeof f.clientClosing === "boolean" ? f.clientClosing : undefined,
+            worldRecvIdleMs: typeof f.worldRecvIdleMs === "number" ? f.worldRecvIdleMs : undefined,
             posX: f.posX,
             posY: f.posY,
             posZ: f.posZ,
@@ -260,6 +274,11 @@ export class InstanceRegistry extends EventEmitter {
         const inst = this.instances.get(connId);
         if (!inst || !status || typeof status !== "object") return;
         if (typeof status.hp === "number") inst.status.hp = status.hp;
+        if (typeof status.hpKnown === "boolean") inst.status.hpKnown = status.hpKnown;
+        if (typeof status.clientClosing === "boolean") inst.status.clientClosing = status.clientClosing;
+        if (typeof status.worldRecvIdleMs === "number") {
+            inst.status.worldRecvIdleMs = status.worldRecvIdleMs;
+        }
         if (typeof status.money === "number") inst.status.money = status.money;
         if (typeof status.posX === "number") inst.status.posX = status.posX;
         if (typeof status.posY === "number") inst.status.posY = status.posY;
@@ -334,6 +353,33 @@ export class InstanceRegistry extends EventEmitter {
         return Array.from(this.instances.values());
     }
 
+    acquireCommandLease(pid: number, ownerToken: string): boolean {
+        const owner = String(ownerToken || "").trim();
+        if (!owner) return false;
+        const connId = this.byPid.get(pid);
+        if (!connId) return false;
+        const state = this.byConnId.get(connId);
+        if (!state) return false;
+
+        const current = this.commandLeases.get(pid);
+        if (current) return current === owner;
+        // 不从一个已在执行旧命令的连接中间抢 lease；调用方稍后重试/重新运行。
+        if (state.pending.size > 0) return false;
+        this.commandLeases.set(pid, owner);
+        return true;
+    }
+
+    releaseCommandLease(pid: number, ownerToken: string): boolean {
+        const owner = String(ownerToken || "").trim();
+        if (!owner || this.commandLeases.get(pid) !== owner) return false;
+        this.commandLeases.delete(pid);
+        return true;
+    }
+
+    getCommandLeaseOwner(pid: number): string | undefined {
+        return this.commandLeases.get(pid);
+    }
+
     private refreshWindowIdentity(inst: Instance, delayMs: number): void {
         const timer = setTimeout(async () => {
             this.windowRefreshTimers.delete(timer);
@@ -361,8 +407,13 @@ export class InstanceRegistry extends EventEmitter {
         pid: number,
         action: string,
         args: any,
-        timeoutMs = 5000
+        timeoutMs = 5000,
+        ownerToken?: string
     ): Promise<{ ok: boolean; detail?: string }> {
+        const leaseOwner = this.commandLeases.get(pid);
+        if (leaseOwner && leaseOwner !== ownerToken) {
+            return Promise.reject(new Error(`pid ${pid} command lease held by ${leaseOwner}`));
+        }
         const connId = this.byPid.get(pid);
         if (!connId) return Promise.reject(new Error(`unknown pid ${pid}`));
         const state = this.byConnId.get(connId);

@@ -1,0 +1,136 @@
+{
+  "characters": [
+    {
+      "characterName": "shadowdance",
+      "enabled": true,
+      "pollMs": 399,
+      "rules": [],
+      "partyRules": [
+        {
+          "id": "q20kp3rvtj",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "faith",
+          "skillId": 207,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "eq6mbz2al57",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "holyspeed",
+          "skillId": 211,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "jhymwddvyu",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "foresight",
+          "skillId": 210,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "4amptuxt8e5",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "hpbless",
+          "skillId": 135,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "czwi1d24wpe",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "apbless",
+          "skillId": 136,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "mu2sxd6fb4",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "partydivineforce",
+          "skillId": 139,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "zozp0j3yv8",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "partyprotect",
+          "skillId": 138,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "g6mu9srtcq",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "partywindrush",
+          "skillId": 140,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "r3mhxtunk8",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "partybless",
+          "skillId": 137,
+          "includeSelf": true,
+          "minRecastMs": 100,
+          "lastCast": 0,
+          "triggerNames": [],
+          "requireMonsterHp": false
+        },
+        {
+          "id": "h38yl3diq1",
+          "enabled": true,
+          "buffId": 0,
+          "buffName": "holyforce",
+          "skillId": 208,
+          "includeSelf": true,
+          "minRecastMs": 3000,
+          "lastCast": 1781084369112,
+          "triggerNames": [
+            "shadowsing"
+          ],
+          "requireMonsterHp": true
+        }
+      ],
+      "monsterHpThreshold": 500000000,
+      "monsterScanDistance": 0
+    }
+  ]
+}

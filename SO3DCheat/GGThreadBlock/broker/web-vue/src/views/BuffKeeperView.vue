@@ -33,6 +33,14 @@
             <el-input-number v-model="config.pollMs" :min="250" :max="60000" :step="250" />
             <span class="hint" style="margin-left:8px">毫秒。组队 buff 守护是一轮补一个、引擎施完补下一个,想快就调小(如 300)。</span>
           </el-form-item>
+          <el-form-item label="怪物血量闸门">
+            <el-input-number v-model="config.monsterHpThreshold" :min="0" :step="10000" :controls="false" style="width:160px" />
+            <span class="hint" style="margin-left:8px">周围存在 HP &gt; 此值的怪物时,勾了「看怪物血量」的规则才补;0 = 只要有活怪(HP&gt;0)就算开门。</span>
+          </el-form-item>
+          <el-form-item label="怪物扫描距离">
+            <el-input-number v-model="config.monsterScanDistance" :min="0" :max="150" :step="10" />
+            <span class="hint" style="margin-left:8px">格。0 = AOI 内全部怪物。只按怪物(非 NPC)判定。</span>
+          </el-form-item>
         </el-form>
 
         <el-divider content-position="left">规则</el-divider>
@@ -68,6 +76,11 @@
               <el-input-number v-model="row.minRecastMs" :min="0" :step="500" :controls="false" size="small" style="width:100px" />
             </template>
           </el-table-column>
+          <el-table-column label="看怪物血量" width="92">
+            <template #default="{ row }">
+              <el-switch v-model="row.requireMonsterHp" size="small" />
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="70">
             <template #default="{ $index }">
               <el-button link type="danger" size="small" @click="config.rules.splice($index, 1)">删除</el-button>
@@ -76,7 +89,7 @@
         </el-table>
         <div class="rule-actions">
           <el-button size="small" @click="addRule">新增规则</el-button>
-          <div class="hint">buffId &gt; 0 优先按 id 匹配;否则按 buff 名精确匹配。最小间隔应 ≥ 技能冷却,避免冷却期间刷包。</div>
+          <div class="hint">buffId &gt; 0 优先按 id 匹配;否则按 buff 名精确匹配。最小间隔应 ≥ 技能冷却,避免冷却期间刷包。「看怪物血量」打开后,只有周围存在 HP &gt; 上面阈值的怪物时这条才补(适合打 boss 前/中自动上 buff)。</div>
         </div>
 
         <el-divider content-position="left">组队 buff 规则 — 给缺 buff 的近身队友补</el-divider>
@@ -109,9 +122,30 @@
               <el-switch v-model="row.includeSelf" size="small" />
             </template>
           </el-table-column>
+          <el-table-column label="作用人物" min-width="180">
+            <template #default="{ row }">
+              <el-select
+                v-model="row.triggerNames"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                size="small"
+                placeholder="留空=始终生效;填了则需视野里有其一"
+                style="width:100%"
+              >
+                <el-option v-for="n in knownNames" :key="n" :label="n" :value="n" />
+              </el-select>
+            </template>
+          </el-table-column>
           <el-table-column label="最小间隔ms" width="120">
             <template #default="{ row }">
               <el-input-number v-model="row.minRecastMs" :min="0" :step="500" :controls="false" size="small" style="width:100px" />
+            </template>
+          </el-table-column>
+          <el-table-column label="看怪物血量" width="92">
+            <template #default="{ row }">
+              <el-switch v-model="row.requireMonsterHp" size="small" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="70">
@@ -122,7 +156,7 @@
         </el-table>
         <div class="rule-actions">
           <el-button size="small" @click="addPartyRule">新增组队规则</el-button>
-          <div class="hint">「含自己」打开后,自己缺这个 buff 也会补(targetId=0);关掉则只管队友。</div>
+          <div class="hint">「含自己」打开后,自己缺这个 buff 也会补(targetId=0);关掉则只管队友。「作用人物」留空=始终生效;填了角色名后,只有视野里有其中任一人时整条规则才生效(或的关系),生效后照常补所有缺 buff 的近身队友。「看怪物血量」与「作用人物」是「且」的关系 —— 两个门禁都过了才补。</div>
         </div>
 
         <el-form-item style="margin-top:16px">
@@ -248,6 +282,7 @@ interface BuffRule {
   targetId: number
   minRecastMs: number
   lastCast?: number
+  requireMonsterHp: boolean
 }
 interface PartyBuffRule {
   id: string
@@ -258,6 +293,8 @@ interface PartyBuffRule {
   includeSelf: boolean
   minRecastMs: number
   lastCast?: number
+  triggerNames: string[]
+  requireMonsterHp: boolean
 }
 interface BuffKeeperConfig {
   characterName: string
@@ -265,6 +302,8 @@ interface BuffKeeperConfig {
   pollMs: number
   rules: BuffRule[]
   partyRules: PartyBuffRule[]
+  monsterHpThreshold: number
+  monsterScanDistance: number
 }
 interface BuffSnapshotItem {
   buffId: number
@@ -306,7 +345,7 @@ const partyAutoRefresh = ref(true)
 let partyTimer: ReturnType<typeof setInterval> | null = null
 
 function emptyConfig(name: string): BuffKeeperConfig {
-  return { characterName: name, enabled: false, pollMs: 4000, rules: [], partyRules: [] }
+  return { characterName: name, enabled: false, pollMs: 4000, rules: [], partyRules: [], monsterHpThreshold: 0, monsterScanDistance: 0 }
 }
 
 const characterOptions = computed(() => {
@@ -337,6 +376,7 @@ function addRule() {
     skillId: 0,
     targetId: 0,
     minRecastMs: 3000,
+    requireMonsterHp: false,
   })
 }
 
@@ -349,6 +389,7 @@ function ruleFromBuff(row: BuffSnapshotItem) {
     skillId: row.skillId || 0,
     targetId: 0,
     minRecastMs: 3000,
+    requireMonsterHp: false,
   })
   ElMessage.success(`已添加规则:buffId=${row.buffId}${row.skillId ? ` skill=${row.skillId}` : '(技能待填)'}`)
 }
@@ -362,6 +403,8 @@ function addPartyRule() {
     skillId: 0,
     includeSelf: false,
     minRecastMs: 3000,
+    triggerNames: [],
+    requireMonsterHp: false,
   })
 }
 
@@ -374,6 +417,8 @@ function ruleFromPartyBuff(row: BuffSnapshotItem) {
     skillId: row.skillId || 0,
     includeSelf: false,
     minRecastMs: 3000,
+    triggerNames: [],
+    requireMonsterHp: false,
   })
   ElMessage.success(`已添加组队规则:buffId=${row.buffId}${row.skillId ? ` skill=${row.skillId}` : '(技能待填)'}`)
 }

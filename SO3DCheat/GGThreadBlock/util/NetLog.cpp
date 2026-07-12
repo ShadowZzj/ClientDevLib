@@ -90,8 +90,32 @@ std::atomic<bool>   s_attached{false};
 std::atomic<bool>   s_wireSendAttached{false};
 std::atomic<bool>   s_wireRecvAttached{false};
 std::atomic<bool>   s_filesOpen{false};
+
+// Debug 模式开关:控制四个方向是否写文件日志(详见 NetLog.h)。默认开 = 旧行为。
+std::atomic<bool>   s_loggingEnabled{true};
 std::mutex          s_loggerMutex;
 std::wstring        s_openNetDir;
+
+// Dungeon-entry packets are an ordered protocol stream. A single recv can
+// contain the initial 511602 denial, the 511325 ticket decrement, 521603's
+// native dialog retry, and the final 511602 response. The middle two can arrive
+// in either order, so preserve wire order in one bounded ring instead of
+// publishing independent last-value atomics.
+constexpr uint32_t kProtoDungeonInstanceRegister = 511602;
+constexpr uint32_t kProtoDungeonCashSlotUpdate = 511325;
+constexpr uint32_t kProtoDungeonDialogConfirm = 521603;
+constexpr size_t kDungeonEntryEventCapacity = 64;
+constexpr int kMaxDungeonEntryEventsPerRecv = 64;
+
+std::mutex s_dungeonEntryMutex;
+DungeonEntryEvent s_dungeonEntryEvents[kDungeonEntryEventCapacity]{};
+size_t s_dungeonEntryHead = 0;  // oldest retained event
+size_t s_dungeonEntryCount = 0;
+uint64_t s_dungeonEntrySequence = 0;
+std::atomic<uint64_t> s_dungeonEntryLatestSequence{0};
+std::atomic<uint64_t> s_lastDungeonTicketPromptSequence{0};
+std::mutex s_dungeonDialogSelectMutex;
+DungeonDialogSelectSnapshot s_lastDungeonDialogSelect{};
 
 // Last time the recv hook saw a proto-521056 (GC_SKILL_CAST_RESULT) packet.
 // FireFullPower 稳健模式 reads this to gate per-cast pacing — see NetLog.h
@@ -154,6 +178,61 @@ std::atomic<uint32_t> s_springResultCode{0};
 std::atomic<uint32_t> s_springGrade{0};
 std::atomic<uint32_t> s_springId[3]{};
 std::atomic<uint32_t> s_springVal[3]{};
+
+// Enchant-stone authoritative state. 511615 is a full four-color snapshot, so
+// keep it as one mutex-protected POD and publish with a monotonic sequence.
+constexpr uint32_t       kProtoEnchantStoneSnapshot = 0x7CE7F; // 511615, live wire
+constexpr uint32_t       kEnchantStonePacketSize    = 468;
+std::mutex               s_enchantStoneMutex;
+EnchantStoneSnapshot     s_enchantStoneSnapshot{};
+std::atomic<uint64_t>    s_enchantStoneSequence{0};
+
+// Daily-task packets form one ordered state stream.  Keep the most recent
+// valid packet of each type under one mutex and stamp every event from a shared
+// sequence so callers can compare arrival order across packet types.
+constexpr uint32_t kProtoDailyTaskFull       = 511690; // 0x7CECA
+constexpr uint32_t kProtoDailyTaskManage     = 511691; // 0x7CECB
+constexpr uint32_t kProtoDailyTaskCompletion = 511692; // 0x7CECC
+constexpr uint32_t kProtoDailyTaskError      = 511693; // 0x7CECD
+constexpr uint32_t kProtoDailyTaskDelta      = 511694; // 0x7CECE
+constexpr int      kMaxDailyTaskEventsPerRecv = 32;
+
+std::mutex                     s_dailyTaskMutex;
+uint64_t                       s_dailyTaskEventSequence = 0;
+uint64_t                       s_dailyTaskFullSequence = 0;
+uint64_t                       s_dailyTaskManageSequence = 0;
+uint64_t                       s_dailyTaskCompletionSequence = 0;
+uint64_t                       s_dailyTaskErrorSequence = 0;
+uint64_t                       s_dailyTaskDeltaSequence = 0;
+DailyTaskFullSnapshot          s_dailyTaskFull{};
+DailyTaskManageReply           s_dailyTaskManage{};
+DailyTaskCompletionReply       s_dailyTaskCompletion{};
+DailyTaskErrorReply            s_dailyTaskError{};
+DailyTaskDelta                 s_dailyTaskDelta{};
+
+enum class DailyTaskEventKind : uint32_t
+{
+    Full,
+    Manage,
+    Completion,
+    Error,
+    Delta,
+};
+
+union DailyTaskEventPayload
+{
+    DailyTaskFullSnapshot    full;
+    DailyTaskManageReply     manage;
+    DailyTaskCompletionReply completion;
+    DailyTaskErrorReply      error;
+    DailyTaskDelta           delta;
+};
+
+struct DailyTaskEvent
+{
+    DailyTaskEventKind    kind;
+    DailyTaskEventPayload payload;
+};
 
 // 账号共享仓库整桶(511320)/单格更新(511322)。整桶用 mutex 保护的 vector 快照(条目数
 // 不定,放不进单个 atomic),搬运后 511322 据 uid 删格保持快照新鲜。recv hook(net 线程)
@@ -422,6 +501,8 @@ std::shared_ptr<spdlog::logger> MakePacketLogger(const char *loggerName,
     auto logger = std::make_shared<spdlog::logger>(loggerName, sink);
     logger->set_pattern("%Y-%m-%d %H:%M:%S.%e | %v");
     logger->set_level(spdlog::level::info);
+    // 每条 flush:日志默认关(见 UserConfig 的 debugLog),平时不写盘无开销;一旦
+    // 手动开日志抓包就希望每条立刻落盘,方便实时 tail sendlog/recvlog。
     logger->flush_on(spdlog::level::info);
     return logger;
 }
@@ -623,28 +704,32 @@ int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
     // Log at ENTRY, before the optional XOR obfuscation (sub_5CA910) rewrites
     // the body in place via memmove(Src+8, Src, Size). pkt is
     // {u32 totalLen, u32 protocolId, body...}, plaintext at this point.
-    OpenFilesIfReady();
-    std::shared_ptr<spdlog::logger> logger;
+    // Debug 模式关闭时整段跳过(连 getpeername 都不做),只保留下面的观察器逻辑。
+    if (s_loggingEnabled.load(std::memory_order_relaxed))
     {
-        std::lock_guard<std::mutex> lk(s_loggerMutex);
-        logger = s_sendLogger;
-    }
-    if (s_filesOpen.load() && logger && pkt && len > 0)
-    {
-        uint32_t hdrLen = 0;
-        SafeReadDwordAt(pkt, hdrLen);
+        OpenFilesIfReady();
+        std::shared_ptr<spdlog::logger> logger;
+        {
+            std::lock_guard<std::mutex> lk(s_loggerMutex);
+            logger = s_sendLogger;
+        }
+        if (s_filesOpen.load() && logger && pkt && len > 0)
+        {
+            uint32_t hdrLen = 0;
+            SafeReadDwordAt(pkt, hdrLen);
 
-        // Prefer the header length when it's consistent with `len` — the
-        // caller argument can trail unused bytes; the header field is what
-        // the game itself considers the packet payload length.
-        uint32_t cap = static_cast<uint32_t>(len);
-        if (hdrLen >= 8 && hdrLen <= cap) cap = hdrLen;
+            // Prefer the header length when it's consistent with `len` — the
+            // caller argument can trail unused bytes; the header field is what
+            // the game itself considers the packet payload length.
+            uint32_t cap = static_cast<uint32_t>(len);
+            if (hdrLen >= 8 && hdrLen <= cap) cap = hdrLen;
 
-        uint32_t sockFd = 0;
-        SafeReadDwordAt(static_cast<uint8_t *>(ecx) + 0x10, sockFd);
-        PeerAddr peer = LookupPeer(static_cast<SOCKET>(sockFd));
+            uint32_t sockFd = 0;
+            SafeReadDwordAt(static_cast<uint8_t *>(ecx) + 0x10, sockFd);
+            PeerAddr peer = LookupPeer(static_cast<SOCKET>(sockFd));
 
-        WriteSendLine(logger.get(), peer, pkt, cap);
+            WriteSendLine(logger.get(), peer, pkt, cap);
+        }
     }
 
     // 同步功能:不依赖日志文件,只要连着 broker,主角色每发一次 411026 就上报。
@@ -659,6 +744,15 @@ int __fastcall HookSendPacketPT(void *ecx, void *edx, void *pkt, int len)
             SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 8, opt);
             SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 12, npc);
             SafeReadDwordAt(static_cast<uint8_t *>(pkt) + 16, sub);
+            {
+                std::lock_guard<std::mutex> lock(s_dungeonDialogSelectMutex);
+                ++s_lastDungeonDialogSelect.sequence;
+                if (s_lastDungeonDialogSelect.sequence == 0)
+                    ++s_lastDungeonDialogSelect.sequence;
+                s_lastDungeonDialogSelect.npcId = npc;
+                s_lastDungeonDialogSelect.opt = opt;
+                s_lastDungeonDialogSelect.sub = sub;
+            }
             EmitDialogSelectFrame(npc, opt, sub);
         }
     }
@@ -693,7 +787,7 @@ int WSAAPI HookWsSend(SOCKET s, const char *buf, int len, int flags)
         spdlog::info("GGTB::NetLog: HookWsSend first hit (socket={} buf={} len={} flags={})",
                      static_cast<uintptr_t>(s), static_cast<const void *>(buf), len, flags);
 
-    if (buf && len > 0)
+    if (buf && len > 0 && s_loggingEnabled.load(std::memory_order_relaxed))
         WriteWireSendLine(s, buf, static_cast<uint32_t>(len));
     return g_oWsSend(s, buf, len, flags);
 }
@@ -705,7 +799,7 @@ int WSAAPI HookWsRecv(SOCKET s, char *buf, int len, int flags)
                      static_cast<uintptr_t>(s), static_cast<void *>(buf), len, flags);
 
     int ret = g_oWsRecv(s, buf, len, flags);
-    if (ret > 0 && buf)
+    if (ret > 0 && buf && s_loggingEnabled.load(std::memory_order_relaxed))
         WriteWireRecvLine(s, buf, static_cast<uint32_t>(ret));
     return ret;
 }
@@ -825,6 +919,194 @@ static void CommitBankSnapshot(const BankEntry *hits, int count,
     }
 }
 
+static void CommitEnchantStoneSnapshot(const EnchantStoneSnapshot *snapshot)
+{
+    std::lock_guard<std::mutex> lk(s_enchantStoneMutex);
+    s_enchantStoneSnapshot = *snapshot;
+    s_enchantStoneSequence.fetch_add(1, std::memory_order_release);
+}
+
+static uint32_t ReadDailyTaskU32(const uint8_t *frame, uint32_t offset)
+{
+    uint32_t value = 0;
+    std::memcpy(&value, frame + offset, sizeof(value));
+    return value;
+}
+
+static bool ParseDailyTaskFull(const uint8_t *frame, uint32_t length,
+                               DailyTaskFullSnapshot *out)
+{
+    if (!frame || !out || length < 28)
+        return false;
+
+    DailyTaskFullSnapshot parsed{};
+    uint32_t offset = 8;
+    parsed.taskCount = ReadDailyTaskU32(frame, offset);
+    offset += 4;
+    if (parsed.taskCount > kDailyTaskMaxCount ||
+        parsed.taskCount > (length - offset) / 12)
+        return false;
+
+    for (uint32_t i = 0; i < parsed.taskCount; ++i)
+    {
+        parsed.tasks[i].taskId = ReadDailyTaskU32(frame, offset);
+        parsed.tasks[i].state = ReadDailyTaskU32(frame, offset + 4);
+        parsed.tasks[i].progress = ReadDailyTaskU32(frame, offset + 8);
+        if (parsed.tasks[i].state > 4)
+            return false;
+        offset += 12;
+    }
+
+    if (length - offset < 16)
+        return false;
+    parsed.rewardCount = ReadDailyTaskU32(frame, offset);
+    offset += 4;
+
+    // Reward entries are two DWORDs each.  The three trailing DWORDs are
+    // all-clear status, remaining rerolls and a server flag.
+    if (length - offset < 12 ||
+        parsed.rewardCount > (length - offset - 12) / 8)
+        return false;
+    offset += parsed.rewardCount * 8;
+    if (length - offset != 12)
+        return false;
+
+    parsed.allClearRewarded = ReadDailyTaskU32(frame, offset);
+    parsed.changeChance = ReadDailyTaskU32(frame, offset + 4);
+    parsed.flag = ReadDailyTaskU32(frame, offset + 8);
+    *out = parsed;
+    return true;
+}
+
+static bool ParseDailyTaskManage(const uint8_t *frame, uint32_t length,
+                                 DailyTaskManageReply *out)
+{
+    if (!frame || !out || length != 20)
+        return false;
+
+    DailyTaskManageReply parsed{};
+    parsed.operation = ReadDailyTaskU32(frame, 8);
+    parsed.index = ReadDailyTaskU32(frame, 12);
+    parsed.value = ReadDailyTaskU32(frame, 16);
+    if (parsed.operation > 2 || parsed.index >= kDailyTaskMaxCount)
+        return false;
+    *out = parsed;
+    return true;
+}
+
+static bool ParseDailyTaskCompletion(const uint8_t *frame, uint32_t length,
+                                     DailyTaskCompletionReply *out)
+{
+    if (!frame || !out || length < 16 || (length - 16) % 20 != 0)
+        return false;
+
+    DailyTaskCompletionReply parsed{};
+    parsed.kind = ReadDailyTaskU32(frame, 8);
+    parsed.count = ReadDailyTaskU32(frame, 12);
+    if (parsed.kind > 3 || parsed.count > kDailyTaskMaxCount ||
+        parsed.count != (length - 16) / 20)
+        return false;
+
+    for (uint32_t i = 0; i < parsed.count; ++i)
+        parsed.indices[i] = ReadDailyTaskU32(frame, 16 + i * 20);
+    *out = parsed;
+    return true;
+}
+
+static bool ParseDailyTaskError(const uint8_t *frame, uint32_t length,
+                                DailyTaskErrorReply *out)
+{
+    if (!frame || !out || length != 16)
+        return false;
+    out->value0 = ReadDailyTaskU32(frame, 8);
+    out->value1 = ReadDailyTaskU32(frame, 12);
+    return true;
+}
+
+static bool ParseDailyTaskDelta(const uint8_t *frame, uint32_t length,
+                                DailyTaskDelta *out)
+{
+    if (!frame || !out || length != 24)
+        return false;
+
+    DailyTaskDelta parsed{};
+    parsed.slot = ReadDailyTaskU32(frame, 8);
+    parsed.taskId = ReadDailyTaskU32(frame, 12);
+    parsed.state = ReadDailyTaskU32(frame, 16);
+    parsed.progress = ReadDailyTaskU32(frame, 20);
+    if (parsed.slot >= kDailyTaskMaxCount || parsed.state > 4)
+        return false;
+    *out = parsed;
+    return true;
+}
+
+static void CommitDailyTaskEvents(const DailyTaskEvent *events, int count)
+{
+    if (!events || count <= 0)
+        return;
+
+    std::lock_guard<std::mutex> lk(s_dailyTaskMutex);
+    for (int i = 0; i < count; ++i)
+    {
+        uint64_t sequence = ++s_dailyTaskEventSequence;
+        switch (events[i].kind)
+        {
+            case DailyTaskEventKind::Full:
+                s_dailyTaskFull = events[i].payload.full;
+                s_dailyTaskFullSequence = sequence;
+                break;
+            case DailyTaskEventKind::Manage:
+                s_dailyTaskManage = events[i].payload.manage;
+                s_dailyTaskManageSequence = sequence;
+                break;
+            case DailyTaskEventKind::Completion:
+                s_dailyTaskCompletion = events[i].payload.completion;
+                s_dailyTaskCompletionSequence = sequence;
+                break;
+            case DailyTaskEventKind::Error:
+                s_dailyTaskError = events[i].payload.error;
+                s_dailyTaskErrorSequence = sequence;
+                break;
+            case DailyTaskEventKind::Delta:
+                s_dailyTaskDelta = events[i].payload.delta;
+                s_dailyTaskDeltaSequence = sequence;
+                break;
+        }
+    }
+}
+
+static void CommitDungeonEntryEvents(const DungeonEntryEvent *events, int count)
+{
+    if (!events || count <= 0) return;
+
+    std::lock_guard<std::mutex> lk(s_dungeonEntryMutex);
+    for (int i = 0; i < count; ++i)
+    {
+        DungeonEntryEvent event = events[i];
+        event.sequence = ++s_dungeonEntrySequence;
+
+        size_t index = 0;
+        if (s_dungeonEntryCount < kDungeonEntryEventCapacity)
+        {
+            index = (s_dungeonEntryHead + s_dungeonEntryCount) % kDungeonEntryEventCapacity;
+            ++s_dungeonEntryCount;
+        }
+        else
+        {
+            index = s_dungeonEntryHead;
+            s_dungeonEntryHead = (s_dungeonEntryHead + 1) % kDungeonEntryEventCapacity;
+        }
+        s_dungeonEntryEvents[index] = event;
+
+        if (event.kind == DungeonEntryEventKind::InstanceRegister && event.result == 5 &&
+            event.nInsd == 1)
+        {
+            s_lastDungeonTicketPromptSequence.store(event.sequence, std::memory_order_release);
+        }
+    }
+    s_dungeonEntryLatestSequence.store(s_dungeonEntrySequence, std::memory_order_release);
+}
+
 int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
 {
     if (!s_diagRecvFired.exchange(true))
@@ -882,6 +1164,12 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
             bool           bankBulkSeen  = false;
             uint32_t       bankRemovedUids[16] = {};
             int            bankRemovedCount = 0;
+            EnchantStoneSnapshot enchantStoneHit{};
+            bool                 enchantStoneSeen = false;
+            DailyTaskEvent dailyTaskEvents[kMaxDailyTaskEventsPerRecv]{};
+            int            dailyTaskEventCount = 0;
+            DungeonEntryEvent dungeonEntryEvents[kMaxDungeonEntryEventsPerRecv]{};
+            int               dungeonEntryEventCount = 0;
             __try
             {
                 const uint8_t *base  = reinterpret_cast<const uint8_t *>(bufAddr);
@@ -892,10 +1180,100 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                 {
                     uint32_t pktLen = 0, proto = 0;
                     std::memcpy(&pktLen, chunk, 4);
-                    std::memcpy(&proto,  chunk + 4, 4);
+                    std::memcpy(&proto, chunk + 4, 4);
                     if (pktLen < 8 || pktLen > remaining) break;
 
                     const bool newlyCompleted = frameOffset + pktLen > oldFill;
+
+                    // Capture the ticket-entry protocols as POD in wire order.
+                    // Publication (mutex/ring/sequence) stays outside __try.
+                    if (newlyCompleted && dungeonEntryEventCount < kMaxDungeonEntryEventsPerRecv)
+                    {
+                        DungeonEntryEvent *event = &dungeonEntryEvents[dungeonEntryEventCount];
+                        bool parsed = false;
+                        event->proto = proto;
+                        event->frameLength = pktLen;
+                        switch (proto)
+                        {
+                            case kProtoDungeonInstanceRegister:
+                                if (pktLen >= 16)
+                                {
+                                    event->kind = DungeonEntryEventKind::InstanceRegister;
+                                    std::memcpy(&event->result, chunk + 8, 4);
+                                    std::memcpy(&event->nInsd, chunk + 12, 4);
+                                    parsed = true;
+                                }
+                                break;
+                            case kProtoDungeonCashSlotUpdate:
+                                if (pktLen >= 32)
+                                {
+                                    event->kind = DungeonEntryEventKind::CashSlotUpdate;
+                                    std::memcpy(&event->wireSlot, chunk + 8, 4);
+                                    std::memcpy(&event->itemId, chunk + 12, 4);
+                                    std::memcpy(&event->packedCount, chunk + 16, 4);
+                                    std::memcpy(&event->extra, chunk + 20, 8);
+                                    std::memcpy(&event->tailCode, chunk + 28, 4);
+                                    event->count = event->itemId != 0 ? event->packedCount + 1 : 0;
+                                    parsed = true;
+                                }
+                                break;
+                            case kProtoDungeonDialogConfirm:
+                                if (pktLen >= 16)
+                                {
+                                    event->kind = DungeonEntryEventKind::NpcDialogConfirm;
+                                    std::memcpy(&event->opt, chunk + 8, 4);
+                                    std::memcpy(&event->branch, chunk + 12, 4);
+                                    if (pktLen >= 20)
+                                    {
+                                        std::memcpy(&event->rawAux, chunk + 16, 4);
+                                        event->hasRawAux = true;
+                                    }
+                                    parsed = true;
+                                }
+                                break;
+                        }
+                        if (parsed) ++dungeonEntryEventCount;
+                    }
+
+                    // Keep all daily-task packet types in their exact frame order.
+                    // Only POD parsing happens here; mutex publication is deferred
+                    // until after the SEH block to keep HookRawRecv C2712-safe.
+                    if (newlyCompleted &&
+                        dailyTaskEventCount < kMaxDailyTaskEventsPerRecv)
+                    {
+                        DailyTaskEvent *event = &dailyTaskEvents[dailyTaskEventCount];
+                        bool parsed = false;
+                        switch (proto)
+                        {
+                            case kProtoDailyTaskFull:
+                                event->kind = DailyTaskEventKind::Full;
+                                parsed = ParseDailyTaskFull(
+                                    chunk, pktLen, &event->payload.full);
+                                break;
+                            case kProtoDailyTaskManage:
+                                event->kind = DailyTaskEventKind::Manage;
+                                parsed = ParseDailyTaskManage(
+                                    chunk, pktLen, &event->payload.manage);
+                                break;
+                            case kProtoDailyTaskCompletion:
+                                event->kind = DailyTaskEventKind::Completion;
+                                parsed = ParseDailyTaskCompletion(
+                                    chunk, pktLen, &event->payload.completion);
+                                break;
+                            case kProtoDailyTaskError:
+                                event->kind = DailyTaskEventKind::Error;
+                                parsed = ParseDailyTaskError(
+                                    chunk, pktLen, &event->payload.error);
+                                break;
+                            case kProtoDailyTaskDelta:
+                                event->kind = DailyTaskEventKind::Delta;
+                                parsed = ParseDailyTaskDelta(
+                                    chunk, pktLen, &event->payload.delta);
+                                break;
+                        }
+                        if (parsed)
+                            ++dailyTaskEventCount;
+                    }
 
                     if (newlyCompleted && proto == kProtoSkillCastResult && pktLen >= 12)
                     {
@@ -986,6 +1364,27 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                         s_lastSpringMs.store(GetTickCount(), std::memory_order_release);
                     }
 
+                    // All stone operations converge on this full snapshot. Records start
+                    // at packet+0x14 after the 8-byte frame header and 3 DWORD metadata.
+                    if (newlyCompleted && proto == kProtoEnchantStoneSnapshot &&
+                        pktLen >= kEnchantStonePacketSize)
+                    {
+                        std::memcpy(enchantStoneHit.metadata, chunk + 8,
+                                    sizeof(enchantStoneHit.metadata));
+                        for (int color = 0; color < 4; ++color)
+                        {
+                            const uint8_t *record = chunk + 20 + color * 112;
+                            EnchantStoneRecord *dst = &enchantStoneHit.stones[color];
+                            std::memcpy(&dst->color, record, 4);
+                            std::memcpy(&dst->grade, record + 4, 4);
+                            std::memcpy(dst->attrIds, record + 8, 48);
+                            std::memcpy(dst->values, record + 56, 48);
+                            std::memcpy(&dst->remaining, record + 104, 4);
+                            std::memcpy(&dst->max, record + 108, 4);
+                        }
+                        enchantStoneSeen = true;
+                    }
+
                     // 仓库整桶 511320:body+4 条目数,每条 24B(+0 uid/+8 itemId/+12 packed)。
                     // 重建快照(空条目跳过)。可堆叠真实数量=packed+1(攤販呼叫券等计数物品)。
                     if (newlyCompleted && proto == kProtoBankBulk && pktLen >= 16)
@@ -1038,6 +1437,9 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
                 bankBulkSeen = false;
                 bankHitCount = 0;
                 bankRemovedCount = 0;
+                enchantStoneSeen = false;
+                dailyTaskEventCount = 0;
+                dungeonEntryEventCount = 0;
             }
 
             if (chatHitCount > 0)
@@ -1050,9 +1452,17 @@ int __fastcall HookRawRecv(void *ecx, void *edx, int tSec, int tUsec)
             if (bankBulkSeen || bankRemovedCount > 0)
                 CommitBankSnapshot(bankHits, bankHitCount, bankRemovedUids,
                                    bankRemovedCount, bankBulkSeen);
+            if (enchantStoneSeen)
+                CommitEnchantStoneSnapshot(&enchantStoneHit);
+            if (dailyTaskEventCount > 0)
+                CommitDailyTaskEvents(dailyTaskEvents, dailyTaskEventCount);
+            if (dungeonEntryEventCount > 0)
+                CommitDungeonEntryEvents(dungeonEntryEvents, dungeonEntryEventCount);
 
-            WriteRecvLineWithCurrentLogger(
-                peer, reinterpret_cast<void *>(bufAddr + oldFill), bytes);
+            // 观察器(技能/交易/钓鱼/仓库/聊天/金币)上面都已处理完;文件日志才受 Debug 开关控制。
+            if (s_loggingEnabled.load(std::memory_order_relaxed))
+                WriteRecvLineWithCurrentLogger(
+                    peer, reinterpret_cast<void *>(bufAddr + oldFill), bytes);
         }
     }
 
@@ -1301,6 +1711,55 @@ void Uninstall()
 
 bool IsActive() { return s_attached.load(); }
 
+void SetLogEnabled(bool enabled)
+{
+    bool prev = s_loggingEnabled.exchange(enabled, std::memory_order_relaxed);
+    if (prev != enabled)
+        spdlog::info("GGTB::NetLog: debug logging {}", enabled ? "ENABLED" : "DISABLED");
+}
+
+bool IsLogEnabled() { return s_loggingEnabled.load(std::memory_order_relaxed); }
+
+uint64_t QueryDungeonEntryEvents(uint64_t afterSequence, std::vector<DungeonEntryEvent> &out,
+                                 bool *truncated)
+{
+    std::lock_guard<std::mutex> lk(s_dungeonEntryMutex);
+    out.clear();
+    out.reserve(s_dungeonEntryCount);
+
+    bool lostHistory = false;
+    if (s_dungeonEntryCount > 0)
+    {
+        const uint64_t oldestSequence = s_dungeonEntryEvents[s_dungeonEntryHead].sequence;
+        lostHistory = oldestSequence > 1 && afterSequence < oldestSequence - 1;
+
+        for (size_t i = 0; i < s_dungeonEntryCount; ++i)
+        {
+            size_t index = (s_dungeonEntryHead + i) % kDungeonEntryEventCapacity;
+            if (s_dungeonEntryEvents[index].sequence > afterSequence)
+                out.push_back(s_dungeonEntryEvents[index]);
+        }
+    }
+    if (truncated) *truncated = lostHistory;
+    return s_dungeonEntrySequence;
+}
+
+uint64_t GetDungeonEntryLatestSequence()
+{
+    return s_dungeonEntryLatestSequence.load(std::memory_order_acquire);
+}
+
+uint64_t GetLastDungeonTicketPromptSequence()
+{
+    return s_lastDungeonTicketPromptSequence.load(std::memory_order_acquire);
+}
+
+DungeonDialogSelectSnapshot GetLastDungeonDialogSelect()
+{
+    std::lock_guard<std::mutex> lock(s_dungeonDialogSelectMutex);
+    return s_lastDungeonDialogSelect;
+}
+
 DWORD GetLastSkillResultTickMs(uint32_t *outSkillId)
 {
     if (outSkillId)
@@ -1327,6 +1786,54 @@ DWORD GetLastSpringAssign(uint32_t *outResultCode, uint32_t *outGrade,
         if (outVals) outVals[k] = s_springVal[k].load(std::memory_order_relaxed);
     }
     return t;
+}
+
+uint64_t GetLastEnchantStoneSnapshot(EnchantStoneSnapshot *out)
+{
+    std::lock_guard<std::mutex> lk(s_enchantStoneMutex);
+    if (out)
+        *out = s_enchantStoneSnapshot;
+    return s_enchantStoneSequence.load(std::memory_order_acquire);
+}
+
+uint64_t GetLastDailyTaskFull(DailyTaskFullSnapshot *out)
+{
+    std::lock_guard<std::mutex> lk(s_dailyTaskMutex);
+    if (out)
+        *out = s_dailyTaskFull;
+    return s_dailyTaskFullSequence;
+}
+
+uint64_t GetLastDailyTaskManageReply(DailyTaskManageReply *out)
+{
+    std::lock_guard<std::mutex> lk(s_dailyTaskMutex);
+    if (out)
+        *out = s_dailyTaskManage;
+    return s_dailyTaskManageSequence;
+}
+
+uint64_t GetLastDailyTaskCompletionReply(DailyTaskCompletionReply *out)
+{
+    std::lock_guard<std::mutex> lk(s_dailyTaskMutex);
+    if (out)
+        *out = s_dailyTaskCompletion;
+    return s_dailyTaskCompletionSequence;
+}
+
+uint64_t GetLastDailyTaskErrorReply(DailyTaskErrorReply *out)
+{
+    std::lock_guard<std::mutex> lk(s_dailyTaskMutex);
+    if (out)
+        *out = s_dailyTaskError;
+    return s_dailyTaskErrorSequence;
+}
+
+uint64_t GetLastDailyTaskDelta(DailyTaskDelta *out)
+{
+    std::lock_guard<std::mutex> lk(s_dailyTaskMutex);
+    if (out)
+        *out = s_dailyTaskDelta;
+    return s_dailyTaskDeltaSequence;
 }
 
 DWORD GetLastTradePeerLockTickMs()

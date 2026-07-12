@@ -14,7 +14,7 @@ namespace GGTB::InputInjector
 //
 // 优点:不依赖窗口前台、不解析 InputSystem*、不 race 引擎写状态;OS API 边界稳。
 // 缺点:进程内所有 GetAsyncKeyState 调用都受影响 — 包括 HackThread 自己的热键
-// 轮询 (VK_OEM_4 切菜单、VK_END 退出),所以 SendVks 内置黑名单挡掉这俩,免得
+// 轮询 (VK_OEM_6 切菜单、VK_END 退出),所以 SendVks 内置黑名单挡掉这俩,免得
 // web 一发就把宿主关了。
 //
 // 时序:每个 VK 标"按下到 expire tick"为止(默认 80ms)。Tick 单位是

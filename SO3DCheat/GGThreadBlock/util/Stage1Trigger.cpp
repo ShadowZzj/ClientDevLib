@@ -62,9 +62,9 @@ BOOL WINAPI HookDeleteFileA(LPCSTR lpFileName)
 }
 } // anonymous
 
-void Install()
+bool Install()
 {
-    if (s_installed.load()) return;
+    if (s_installed.load()) return true;
 
     g_oDeleteFileA = ::DeleteFileA;
 
@@ -76,11 +76,12 @@ void Install()
     {
         spdlog::error("GGTB::Stage1Trigger: DeleteFileA detour failed: commit={} attach={}",
                       err, e);
-        return;
+        return false;
     }
 
     s_installed.store(true);
     spdlog::info("GGTB::Stage1Trigger: armed; waiting for WinMain error.txt");
+    return true;
 }
 
 void Register(std::function<void()> callback)
@@ -116,16 +117,29 @@ void Register(std::function<void()> callback)
     }
 }
 
+bool CancelPending()
+{
+    // The fired check and vector clear must be one operation with respect to
+    // FireAll's swap. If fired is already true, the caller must keep every
+    // callback-owned resource alive until the callback batch completes.
+    std::lock_guard<std::mutex> lk(s_mtx);
+    if (s_fired.load())
+        return false;
+    s_callbacks.clear();
+    return true;
+}
+
 void Uninstall()
 {
-    if (!s_installed.load()) return;
+    if (s_installed.load())
+    {
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        DetourDetach(reinterpret_cast<PVOID *>(&g_oDeleteFileA), HookDeleteFileA);
+        DetourTransactionCommit();
 
-    DetourTransactionBegin();
-    DetourUpdateThread(GetCurrentThread());
-    DetourDetach(reinterpret_cast<PVOID *>(&g_oDeleteFileA), HookDeleteFileA);
-    DetourTransactionCommit();
-
-    s_installed.store(false);
+        s_installed.store(false);
+    }
 
     std::lock_guard<std::mutex> lk(s_mtx);
     s_callbacks.clear();

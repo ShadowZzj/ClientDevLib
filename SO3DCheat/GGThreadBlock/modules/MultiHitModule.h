@@ -37,10 +37,11 @@ class MultiHitModule : public IModule
     }
 
     bool CanAutoPause() const override { return true; }
+    Tab  GetTab() const override { return Tab::OP; }
 
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##MultiHit", &enabled_))
+        if (ImGui::Checkbox(u8"多段攻击##MultiHit", &enabled_))
         {
             if (enabled_)
             {

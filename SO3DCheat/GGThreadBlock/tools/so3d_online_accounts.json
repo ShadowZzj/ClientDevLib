@@ -4,19 +4,19 @@
       "account": "beifeng1",
       "password": "zxczxczxc",
       "character": "asdasd",
-      "fishing_enabled": true
+      "fishing_enabled": false
     },
     {
       "account": "beifeng2",
       "password": "zxczxczxc",
       "character": "dasdasd",
-      "fishing_enabled": true
+      "fishing_enabled": false
     },
     {
       "account": "beifeng3",
       "password": "zxczxc",
       "character": "sadasdsadas",
-      "fishing_enabled": true
+      "fishing_enabled": false
     },
     {
       "account": "gongyu901121",

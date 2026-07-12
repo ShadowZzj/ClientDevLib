@@ -14,9 +14,11 @@ class AttackSpeedModule : public IModule
   public:
     AttackSpeedModule() : IModule(u8"攻击速度") {} // 攻击速度
 
+    Tab GetTab() const override { return Tab::OP; }
+
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##AttackSpeed", &enabled_))
+        if (ImGui::Checkbox(u8"攻击速度##AttackSpeed", &enabled_))
         {
             if (enabled_)
             {

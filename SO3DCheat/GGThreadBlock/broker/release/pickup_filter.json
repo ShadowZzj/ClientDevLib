@@ -1,0 +1,27 @@
+{
+  "pickupExecutionMode": "nativeGame",
+  "mode": "whitelist",
+  "items": [
+    {
+      "itemId": 26420,
+      "name": "凝結的嚕啦族之息"
+    },
+    {
+      "itemId": 26417,
+      "name": "渾沌的炙卡爾 碎片"
+    },
+    {
+      "itemId": 26418,
+      "name": "純白的坦柏特 碎片"
+    },
+    {
+      "itemId": 27037,
+      "name": "別的世界的灰色核"
+    }
+  ],
+  "fuzzyKeywords": [
+    "未開放",
+    "純白",
+    "渾沌"
+  ]
+}

@@ -43,7 +43,7 @@ class AutoDelegationModule : public IModule
 
     void OnRender() override
     {
-        ImGui::Checkbox(u8"启用##AutoDelegation", &enabled_);
+        ImGui::Checkbox(u8"自动委托##AutoDelegation", &enabled_);
         ImGui::SameLine();
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.9f, 1.0f),
                            u8"(不持久化, 不受NPG影响)");

@@ -17,11 +17,19 @@ uintptr_t PatternResolver::moduleBase_ = 0;
 uintptr_t PatternResolver::moduleSize_ = 0;
 std::vector<PatternEntry> PatternResolver::entries_;
 std::unordered_map<std::string, size_t> PatternResolver::nameIndex_;
+bool PatternResolver::prepared_ = false;
+bool PatternResolver::needsScan_ = false;
 bool PatternResolver::initialized_ = false;
 
 void PatternResolver::Init(HMODULE hOwnerDll, const std::string &targetModule)
 {
-    if (initialized_)
+    Prepare(hOwnerDll, targetModule);
+    ResolvePatterns();
+}
+
+void PatternResolver::Prepare(HMODULE hOwnerDll, const std::string &targetModule)
+{
+    if (prepared_)
         return;
 
     char dllPath[MAX_PATH]{};
@@ -49,32 +57,77 @@ void PatternResolver::Init(HMODULE hOwnerDll, const std::string &targetModule)
     auto modInfo  = memory.GetModuleInfo(baseName);
     moduleSize_   = modInfo ? modInfo->modBaseSize : 0;
 
-    zzj::MD5::GetFileMD5(modName, moduleMd5_);
+    const bool md5Ready = zzj::MD5::GetFileMD5(modName, moduleMd5_) &&
+                          !moduleMd5_.empty();
     spdlog::info("GGTB::PatternResolver: target={}, MD5={}, base={:x}, size={:x}",
                  baseName, moduleMd5_, moduleBase_, moduleSize_);
+    if (!moduleSize_)
+        spdlog::error("GGTB::PatternResolver: target module size is zero; pattern scan disabled");
+    if (!md5Ready)
+        spdlog::warn("GGTB::PatternResolver: target MD5 unavailable; cache disabled");
 
     RegisterAll();
 
     if (entries_.empty())
     {
         spdlog::info("GGTB::PatternResolver: no patterns registered (skeleton mode)");
+        prepared_ = true;
         initialized_ = true;
         return;
     }
 
-    if (!LoadCache())
+    needsScan_ = moduleSize_ != 0 && (!md5Ready || !LoadCache());
+    for (auto &e : entries_)
+        if (!e.resolved)
+            e.resolved = moduleBase_ + e.fallbackRVA;
+
+    prepared_ = true;
+    if (needsScan_)
+        spdlog::info("GGTB::PatternResolver: cache incomplete; scan deferred until stage-2");
+}
+
+void PatternResolver::ResolvePatterns(bool allowScan)
+{
+    if (initialized_)
+        return;
+    if (!prepared_)
     {
-        spdlog::info("GGTB::PatternResolver: cache miss, scanning...");
+        spdlog::error("GGTB::PatternResolver: ResolvePatterns called before Prepare");
+        return;
+    }
+
+    if (needsScan_ && allowScan)
+    {
+        spdlog::info("GGTB::PatternResolver: stage-2 scanning...");
+        // A partial cache may already have populated some patterned entries.
+        // Rescan them transactionally so stale/cache fallback values cannot be
+        // mistaken for a signature hit in the refreshed cache.
+        for (auto &e : entries_)
+            if (!e.pattern.empty())
+                e.resolved = 0;
         ScanAll();
+        // Save only actual signature hits. Unmatched patterns receive their
+        // fallback after the write and remain absent, so they are retried at
+        // the next post-unpack stage instead of being certified by the cache.
         SaveCache();
+        for (auto &e : entries_)
+            if (!e.resolved)
+                e.resolved = moduleBase_ + e.fallbackRVA;
+        needsScan_ = false;
+    }
+    else if (needsScan_)
+    {
+        spdlog::warn("GGTB::PatternResolver: stage-2 unavailable; keeping cache/fallback addresses without scanning");
+        for (auto &e : entries_)
+            if (!e.pattern.empty())
+                e.resolved = moduleBase_ + e.fallbackRVA;
+        needsScan_ = false;
     }
 
     for (auto &e : entries_)
     {
-        if (!e.resolved)
-            e.resolved = moduleBase_ + e.fallbackRVA;
         spdlog::info("  {} = {:x}{}", e.name, e.resolved,
-                     (e.resolved == moduleBase_ + e.fallbackRVA) ? " (fallback)" : "");
+                      (e.resolved == moduleBase_ + e.fallbackRVA) ? " (fallback)" : "");
     }
 
     initialized_ = true;
@@ -227,6 +280,10 @@ void PatternResolver::RegisterAll()
     //   return 1;
     // Saved ECX at entry is dead — safe to call as plain stdcall regardless of ECX.
     Register("SendPickItemPacketFn", "", 0x1FEC90);
+    // CItemContainer::LookupDropItemById(dropId) -> DropItem*. Used by the
+    // native pickup bridge for exact presence checks; unlike a full list walk,
+    // a null result cannot be caused by truncating a torn `next` chain.
+    Register("LookupDropItemById",    "", 0x3A3410);
     // g_pItemContainer — *(CItemContainer**). Drop list head at container+0x6C
     // (DropItem next at +0x88, dropId@+0x0, itemId@+0x4, x/y/z@+0x14/+0x18/+0x1C,
     // canPick@+0x2E byte).
@@ -304,11 +361,57 @@ void PatternResolver::RegisterAll()
     //             skipping every animation/skill ID equality test.
     //   0x7570FD: jbe short loc_75711D (2B `76 1E`) — TraceMove second timer gate
     //             (+0x2BCC). Flip `76 -> EB`.
-    Register("ActionMoveSetAfterActionGate", "", 0x3539FE);
-    Register("ActionMoveInstantCastStartup",  "", 0x356331);
-    Register("ActionMoveTraceMoveGate1",     "", 0x356FAA);
-    Register("ActionMoveTraceMoveOrChain",   "", 0x356FCD);
-    Register("ActionMoveTraceMoveGate2",     "", 0x3570FD);
+    //   0xB2DF81: jg short loc_B2DF8A (2B `7F 07`) — the SERVER move-sync gate inside
+    //             SendPlayerMoveSyncPacket. `if (m_bCanMove[+0x304] <= 0) return 0`
+    //             (no packet -> server rubber-bands you back). The 5 sites above only
+    //             unlock the LOCAL pipeline; this 6th site is what lets the snipingmode
+    //             buff(426)/狙击姿态 — and any &8 BitFlag stance that does --m_bCanMove
+    //             (see Condition_OnAdd_BitFlagDispatch @0x950246) — actually move on the
+    //             server. Flip `7F -> EB` so move-sync keeps flowing while m_bCanMove<=0.
+    //   0x757135: jle short loc_757155 (2B `7E 1E`) — TraceMove 内层门
+    //             `if (CUser__GetAbnormalStatusValue(uid, 21) <= 0)`。idx 21 = 定身/
+    //             移动锁,由狙击姿态(skill 357 / buff 426)置位。>0 时直接 return 1 不移动,
+    //             导致已排队的点地移动(pending +0x2BC8=1)永远不前进。前 5 个站点只开了
+    //             TraceMove 的“入口门”,这道内层门没覆盖到。Flip `7E -> EB`。
+    // Split SetAfterAction gates (370C SkillMode discrimination, see CLocalPlayer.h):
+    //   0x353A80: loc_753A80 non-skill continue (370C∉{3,5,8}) — `mov eax, g_pLocalUser`
+    //             (5B `A1 CC C0 E0 00`). Overwrite with `E9 3F 02 00 00` = jmp 0x753CC4.
+    //   0x353A54: loc_753A54 skill-mode reject block (only reached when 370C∈{3,5,8})
+    //             (5B `8B 45 FC 8B 88`). Overwrite with `E9 6B 02 00 00` = jmp 0x753CC4.
+    Register("AttackMoveGate",          "", 0x353A80);
+    Register("SkillMoveGate",           "", 0x353A54);
+    // 0x3539FE: jle short loc_753A22 (2B `7E 22`) — SetAfterAction stun(18) gate.
+    //   Flip `7E -> EB` so a stunned click falls THROUGH to gate 2 (370C skill/attack
+    //   discrimination) instead of rejecting. NOT a jmp-to-success, so no leak.
+    Register("SharedMoveStunGate",      "", 0x3539FE);
+    Register("SharedMoveTraceGate1",    "", 0x356FAA);
+    Register("SharedMoveTraceOrChain",  "", 0x356FCD);
+    Register("SharedMoveTraceGate2",    "", 0x3570FD);
+    Register("SharedMoveSyncGate",      "", 0x72DF81);
+    Register("SharedMoveStatus21Gate",  "", 0x357135);
+
+    // ---------- No-Shift player attack ----------
+    // CLocalUser__CheckPkAttackEligible @ 0x9585D0. The stable bytes around the
+    // DIK_LSHIFT read resolve 0x9586A4 even after live 123.dll replaces that read
+    // with a VM-protected jump. NoShiftAttack redirects this site to the original
+    // Shift-success block at +0x27; the wildcarded bytes belong to the live hook.
+    Register("NoShiftAttackShiftReadSite",
+             "89 45 F0 B9 01 00 00 00 6B D1 2A A1 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? "
+             "85 C9 ?? 1B 8B 55 08 83 BA D8 2D 00 00 65 74 0F",
+             0x5586A4, 0, 16);
+
+    // ---------- Ignore crowd-control (眩晕/沉默 bypass) ----------
+    // 三个动作入口用 CUser__GetAbnormalStatusValue(uid, idx) 拦操作:18=眩晕,
+    // 19=沉默。翻 4 个 CC 相关分支让 gate 失效(服务端仍校验)。详见
+    // CLocalPlayer.{h,cpp}。RVA = linear - 0x400000。
+    //   0x9A4865: CLocalUser__OnUseItem 状态 18 门,`7E 05` jle -> `EB 05` jmp。
+    //   0x9A6410: OnSkillShortcutKey 状态 18 门,`7F 1A` jg -> `90 90` nop nop。
+    //   0x9A642A: OnSkillShortcutKey 状态 19 门,`7E 05` jle -> `EB 05` jmp。
+    //   0x9A646E: OnSkillShortcutKey +0x3468 stunTime 门,`76 05` jbe -> `EB 05` jmp。
+    Register("IgnoreCCItemStunGate",     "", 0x5A4865);
+    Register("IgnoreCCCastStunGate",     "", 0x5A6410);
+    Register("IgnoreCCCastSilenceGate",  "", 0x5A642A);
+    Register("IgnoreCCCastStunTimeGate", "", 0x5A646E);
 
     // ---------- Fire-full-power ----------
     // SkillManager singleton — *(SkillManager**)0xED2F3C (g_pSkillManager).
@@ -324,6 +427,11 @@ void PatternResolver::RegisterAll()
     // it writes no header; it just hands back the client used as ecx/this for the
     // subsequent __thiscall body writers. Linear 0xB2B580 (RVA 0x72B580).
     Register("NetBeginSend",       "", 0x72B580);
+    // CG_SendVisitStreetStall_411042 — __thiscall(client=NetBeginSend(), userId,
+    // stallType, Src=0). 点开别人个人摊位的发包器:写帧 [len28][411042][userId][16×0]。
+    // 内部门控 client+12/对话框/FindUserById(userId) 的摊位标志 CUser+0x2DEC。
+    // Linear 0xB2B650 (RVA 0x72B650). 见 OpenStreetStall / GetNearbyStallPlayers。
+    Register("StreetStallVisitSend", "", 0x72B650);
     // GameClientPtr — the CGameClient singleton pointer itself: client =
     // *(void**)0x18B3138. RVA 0x14B3138 (imagebase 0x400000). Same object
     // Net__BeginSend returns; AutoFishing reads it directly to pass as the
@@ -397,6 +505,20 @@ void PatternResolver::RegisterAll()
     // StringTableCopy(id, dst, cap) -> localized Big5 text. The client itself
     // displays profession text as StringTableCopy(sub_978880(prof)+0x198).
     Register("StringTableCopy", "", 0x1BF8E0);
+
+    // ---------- Enchant-stone automation ----------
+    // These helpers are the same table/config paths used by CStoneEnchant's UI.
+    // The two lookup functions only read this+0x68 (color) besides global user
+    // state, so EnchantStoneControl can call them with a small POD proxy and get
+    // the current live table33/table34 row without opening the dialog.
+    Register("StoneEnchantLookupUpgradeRequirement", "", 0x5BAF50); // VA 0x9BAF50
+    Register("StoneEnchantLookupChangeRequirement",  "", 0x5BB020); // VA 0x9BB020
+    Register("StoneItemConfigGetInstance", "", 0x535E30); // VA 0x935E30
+    // StoneMaintainOptionCashItem membership predicate. This includes regular
+    // and event fixed-coupon item ids and is safer than hard-coding one id.
+    Register("StoneEnchantIsMaintainCouponItem", "", 0x537110); // VA 0x937110
+    // Configured StoneOptionChangeCountCashItem id (currently 26422).
+    Register("StoneEnchantGetRechargeTicketItemId", "", 0x5361D0); // VA 0x9361D0
 
     // ---------- Hardware-fingerprint spoof ----------
     // HwFp_FillBuffer — __thiscall(this=SYSTEMTIME*, outPkt). Linear 0xBCCBF0
@@ -473,6 +595,19 @@ void PatternResolver::RegisterAll()
     // Sister of NetSendTriple — same caller pattern (BeginSend → mov ecx,eax →
     // call sub_B2C930) but emits one extra DWORD on the wire.
     Register("NetSendDialogSelect", "", 0x72C930);
+
+    // Net__SendPacket20B_3DW_NoTrack - __thiscall(this=netBuf, proto, w0, w1, w2).
+    // 通用 20 字节/3-DWORD body 明文发包 {u32 20, proto, w0, w1, w2}。与
+    // NetSendDialogSelect(0x72C930) 共享底层但 **没有** client+133 dialog 闸,也不调
+    // Net__OnSendDialogStateTrack —— 技能宝石合成 411606 走这条,不污染对话状态。
+    // VA 0xB2C810 -> RVA 0x72C810。
+    Register("NetSendPacket20B3DW", "", 0x72C810);
+
+    // CSealTableManager 单例 + 表元素取值,用于技能宝石等级键(GetTableElem(55, recipeId)
+    // 的 elem+0x14)。GetInstance: __cdecl()->mgr。GetTableElem: __thiscall(mgr,type,index,a4)
+    // ->elem|0。VA 0xB6C6C0/0xB6D450 -> RVA 0x76C6C0/0x76D450。
+    Register("SealTableMgrGetInstance",  "", 0x76C6C0);
+    Register("SealTableMgrGetTableElem", "", 0x76D450);
 
     // Net__SendFiveDword - __thiscall(this=netBuf, protocolId, a1, a2, a3, a4, a5).
     // Generic 28-byte packet builder with five DWORD body fields. Current
@@ -562,18 +697,35 @@ void PatternResolver::RegisterAll()
     // the truncation at the call site.
     //
     // Note: SetAfterAction internally runs gates (m_bCanMove, stunTime, anim/skill ID
-    // whitelist, …). The ActionMove patch @ 0x7539FE skips them in one shot, so
-    // MoveTo() works in any state when ActionMove is enabled. Without it the engine
-    // still accepts most idle/walk states.
+    // whitelist, …). 普攻移动 (AttackMoveGate @ 0x753A80) and 技能移动 (SkillMoveGate
+    // @ 0x753A54) bypass the non-skill and skill reject paths respectively, so MoveTo()
+    // works in any action state when both are enabled. Without them the engine still
+    // accepts most idle/walk states.
     Register("SetAfterAction", "", 0x3539E0);
 
-    // dword_DFD518 — global "after-action intent" (1 = walk-click, 3 = walk+attack).
+    // OnPlayerMoveClick — __thiscall(this=inputCtrl, worldX, worldY). Linear
+    // 0x871D10 (RVA 0x471D10). The single chokepoint for ground click/drag
+    // movement: OnGroundDragMove_Dispatch (0x871EE0) resolves the mouse-picked
+    // ground cell via Cursor_GetGroundWorldXY(0) and calls this with the
+    // truncated-int (x, y); it then calls SetAfterAction(g_pLocalUser, x, y, 1, 0).
+    // The TeleportModule detours THIS so that, when teleport is on, a ground
+    // click warps the avatar instead of pathing. x/y are ground-plane only — NO Z
+    // (engine derives vertical +0x40 from terrain).
+    Register("OnPlayerMoveClick", "", 0x471D10);
+
+    // dword_DFD518 — global after-action intent (1=walk, 3=attack, 4=pick drop).
     // OnPlayerMoveClick sets it to 1 before SetAfterAction and back to 0 after.
     // Linear 0xDFD518, RVA 0x9FD518.
     Register("AfterActionIntent", "", 0x9FD518);
     // byte_DFD4E6 — secondary flag also cleared by OnPlayerMoveClick after the
     // SetAfterAction call. Linear 0xDFD4E6, RVA 0x9FD4E6.
     Register("AfterActionFlag2", "", 0x9FD4E6);
+
+    // g_TargetDropItemId — the drop selected by a real world click. The native
+    // action-4 handler re-looks it up every frame, follows its current position,
+    // and emits 411011 only after X/Y are each within one tile.
+    // Linear 0x18B2A0C, RVA 0x14B2A0C.
+    Register("TargetDropItemId", "", 0x14B2A0C);
 
     // ---------- Walk-and-talk-to-NPC ----------
     // EntityManager::FindCreatureById — __thiscall(this=*g_pCreatureMgr, id) -> CCreature*.
@@ -591,6 +743,35 @@ void PatternResolver::RegisterAll()
     Register("TargetCreatureId", "", 0x14B2A08);
 
     // ---------- NPC dialog ----------
+    // CSO3D::GameLoop — the real game/UI thread rendezvous. Unlike the external
+    // ImGui D3D9Hook, this function owns input polling and foreground UI dispatch.
+    // It is also entered recursively by modal/count dialogs, so callers must use
+    // a one-shot queue plus a re-entry guard. Live bytes verified 2026-07-11.
+    Register(
+        "GameLoop",
+        "55 8B EC 81 EC 08 04 00 00 A1 ?? ?? ?? ?? 33 C5 89 45 FC 56 89 8D BC FC FF FF "
+        "8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? "
+        "8B C8 E8 ?? ?? ?? ?? F3 0F 10 45 0C",
+        0x56C8C0);
+
+    // CUIManager__UpdateAutoQuestDialog(state, dt, &pendingScript). GameLoop UI
+    // case 10 consumes this function's exact return value: nonzero keeps the
+    // local dialog open; zero + pending invokes the normal validation/send path.
+    Register("NpcDialogUpdate", "", 0x4FC690);
+
+    // The five-button interaction wheel used by 越過次元的修道士 (foreground
+    // UI 88). dword_ED3428 holds CNewMakeDIsassembTalkMenu*. Its `exchange_ok`
+    // button calls 0x87E0C0, which loads the ordinary NPC dialog and switches to
+    // UI 10. This callback has no null guards, so the bridge revalidates target,
+    // wheel+0x38 and creature identity before invoking it on GameLoop.
+    Register("NpcInteractionWheelObject", "", 0xAD3428);
+    Register(
+        "NpcInteractionWheelTalkCallback",
+        "55 8B EC 83 EC 0C 89 4D F4 A1 ?? ?? ?? ?? 50 8B 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? "
+        "89 45 FC 8B 0D ?? ?? ?? ?? 8B 55 FC 8B 42 70 89 81 F8 03 00 00 8B 4D FC "
+        "8B 91 68 03 00 00 8B 82 EC 00 00 00 50",
+        0x47E0C0);
+
     // Npc__LoadDialogScript(state, monsterTblId) -> bool. Linear 0x8F7FA0, RVA 0x4F7FA0.
     // The engine's CANONICAL NPC discriminator: returns nonzero iff `monsterTblId` has
     // a dialog script in npctalk.dat / quest.txt. Used by every NPC-click path to
@@ -606,13 +787,26 @@ void PatternResolver::RegisterAll()
     // the dialog-script linked list — guaranteed garbage, always returns 0, every
     // creature ends up classified as monster. See CLocalPlayer.cpp CreatureIsNpc for
     // the correct deref pattern.
+    //
+    // WARNING — Npc__LoadDialogScript is SIDE-EFFECTING when the template IS an NPC:
+    // it writes quest text into the dialog UI table, sets the global dialog-mode flag
+    // dword_DFD528=4, and lazily creates a D3DX texture. Do NOT use it as a mere
+    // discriminator polled every frame. Use NpcDialogScriptLookup below — that is the
+    // PURE inner lookup Npc__LoadDialogScript calls first, with identical NPC-vs-monster
+    // verdict and zero side effects.
     Register("NpcLoadDialogScript", "", 0x4F7FA0);
 
-    // Npc__OpenDialogByCreatureRef(creatureMgr, &creatureIdRef, dialogState, dialogUI,
-    //                              p1, p2) -> bool. Linear 0xB3A3F0, RVA 0x73A3F0.
-    // Opens the NPC dialog UI immediately given a creatureId in g_TargetCreatureId. No
-    // distance check — pure local UI bootstrap. Used by the engine's per-frame click
-    // handler at sub_9EA090.
+    // Npc__FindDialogScriptByTemplate(state, monsterTblId) -> node* (nonzero == NPC).
+    // Linear 0x8FAA70, RVA 0x4FAA70. Pure linked-list walk over the dialog scripts at
+    // state[257] (state+0x404); returns the node whose [+4]==monsterTblId, else 0. This
+    // is exactly the NPC-vs-monster test Npc__LoadDialogScript does before its side
+    // effects, so we call this directly as the poll-safe discriminator. Same __thiscall
+    // convention + g_NpcDialogState deref requirement as NpcLoadDialogScript above.
+    Register("NpcDialogScriptLookup", "", 0x4FAA70);
+
+    // Internal continuation used only after UIManager_ProcessMarkedClose has torn down
+    // the active type-10 content. It is not a first-click NPC entry and must never be
+    // invoked from RemoteControl/worker threads. Native clicks queue action=5 instead.
     Register("NpcOpenDialogByCreatureRef", "", 0x73A3F0);
 
     // g_NpcDialogState — dialog state object. Linear 0xED347C, RVA 0xAD347C.
@@ -642,12 +836,14 @@ void PatternResolver::RegisterAll()
     //   3) 在本地 build 出下一屏菜单(如果有 sub-script)
     // 最后调 OnNpcDialogOption_Quest 发包并清理 g_NpcDialogState UI 状态。
 
-    // Npc__ConfirmDialogOptionLocal @ 0x8F9EE0. __thiscall(state, &resultOut).
-    // 等于「在 UI 上点一下当前 state+1044 指向的选项」: 内部根据 state[1044]
-    // 走完所有本地 state-machine 转换,然后(如果选项有 quest tag)把数值写进
-    // 调用者传入的 result 指针 —— 即 dword_ED3DC4。返回 1=对话框继续打开
-    // (下一菜单已构建),0=对话结束(本地关闭)。
+    // Mode 1 / Next callback @ 0x8F9EE0. __thiscall(state, &resultOut).
+    // It advances state+0x414 and returns the exact keep-open value consumed by
+    // GameLoop. It must not be used for a mode-2 text option.
     Register("NpcConfirmDialogOption", "", 0x4F9EE0);
+
+    // Mode 2 / s_buttonNN callback @ 0x8FAAB0.
+    // __thiscall(state, &resultOut, zeroBasedIndex); walks state+0x41C.
+    Register("NpcChooseDialogOption", "", 0x4FAAB0);
 
     // OnNpcDialogOption_Quest @ 0x992160. __thiscall(uiThis, dialogResult, mode).
     // 这才是真正发 411026 包的入口。mode=0 = 用户点选项,mode=1 = 一些特殊
@@ -696,6 +892,26 @@ void PatternResolver::RegisterAll()
     // A* 寻路、target-spec 检查全都funnel through 它。
     Register("CurMapPtr", "", 0x149E070);
 
+    // Map__IsBlocked(this=g_pCurMap, int tileX, int tileY) -> int. __thiscall.
+    // Linear 0xA97080 (RVA 0x697080). Returns the collision-grid value at
+    // grid[x + width*y]: 0 = walkable, nonzero = blocked; out-of-bounds and
+    // null-grid both return 1 (blocked). EVERY reachability check funnels here:
+    // click-landing validity (sub_871030 — shows the red "X" cursor when the
+    // target and its neighborhood are all blocked), A* pathing, target-spec.
+    // WallHackModule detours this and returns 0 when enabled so any tile counts
+    // as walkable → the avatar can path to "unreachable" spots (穿墙).
+    Register("MapIsBlocked", "", 0x697080);
+
+    // TerrainHeightAt(this=g_pCurMap, float worldX, float worldY) -> float Z.
+    // __thiscall (ecx=g_pCurMap, two float args on stack). Linear 0xA976B0
+    // (RVA 0x6976B0). Ray-picks the terrain mesh at (X,Y) and returns the
+    // vertical/Z (+0x40) the avatar should sit at. The engine calls it every
+    // frame from sub_682E60 (TraceMove tail): `*(this+0x40) = TerrainHeightAt(
+    // *(this+0x3C), *(this+0x44))`. Teleport must call it after snapping X/Y
+    // so the avatar lands on the ground instead of keeping the source Z (which
+    // looked like "falling underground" when warping to lower terrain).
+    Register("TerrainHeightAt", "", 0x6976B0);
+
     // ---------- Auto-trade: local exchange-window open ----------
     // 自动接受交易时复刻「点接受按钮」的本地动作。手动 accept 在
     // Trade_RequestPopup (0x721080) 里先调 Trade_OpenLocalExchangeWindow(ctrl)
@@ -715,6 +931,29 @@ void PatternResolver::RegisterAll()
     Register("UIManagerIsContentOpen", "", 0x5EC570); // sub_9EC570(id), true when UI content id is open
     Register("UIManagerCloseActiveContent", "", 0x5EA090); // sub_9EA090(renderer), processes marked-close UI content
     Register("RendererPtr", "", 0x149DC08); // dword_189DC08, pushed before sub_9EA090 in the UI frame path
+
+    // ---------- Daily tasks (content 96) ----------
+    // Faithful local UI actions used by the daily-task broker.  QuestAction
+    // sends 411626 with op 0=reroll / 1=accept / 2=abandon and also maintains
+    // the content entry's pending state. RewardAction op 0 sends 411627 to
+    // finish a ready task. Signatures and RVAs were verified against the live
+    // 2026-07-10 client; do not replace these with a naked final packet send.
+    Register("DailyTaskQuestAction",
+             "55 8B EC 83 EC 30 A1 ?? ?? ?? ?? 33 C5 89 45 FC 89 4D D4 83 7D 08 00 7C 10 8B 4D D4 83 C1 38 E8 ?? ?? ?? ?? 39 45 08 76 05",
+             0x2AD6C0);
+    Register("DailyTaskRewardAction",
+             "55 8B EC 83 EC 3C A1 ?? ?? ?? ?? 33 C5 89 45 FC 89 4D D0 83 7D 0C 03 74 21 83 7D 0C 02 74 1B 83 7D 08 00 7C 10",
+             0x2AD560);
+
+    // ---------- 组队列表 / 自动组队 (Party board, CMessenger op 0x44xx) ----------
+    // 浏览组队列表 + 按 partyId 加入。content = GetUIContent(mgr, 17)。详见 CLocalPlayer.h。
+    // RVA = linear - 0x400000。IDA 实证 2026-06-23(shadowdance)。
+    Register("MessengerPtr",                "", 0xAD344C); // g_pMessenger (CMessenger 单例指针变量,需解引用)
+    Register("CMessengerSendOpenPartyList", "", 0x446050); // op 0x4400, __thiscall(messenger)
+    Register("CMessengerReqPartyListPage",  "", 0x445F60); // op 0x4402, __thiscall(messenger, u16 page)
+    Register("CMessengerJoinPartyById",     "", 0x449D00); // op 0x4413, __thiscall(messenger, int partyId)
+    Register("CMessengerLeaveParty",        "", 0x446680); // op 0x440B, __thiscall(messenger),空 body;内部 g_PartySelfRole>0 才发
+    Register("PartySelfRole",               "", 0xA28894); // g_PartySelfRole (int 直接全局),>0=在队伍,-1=不在
 
     // ---------- Daily rewards: 在线奖励(Access, content 62) / 签到奖励(Attendance, content 61) ----------
     // 自动领每日奖励。开窗调游戏自身的 __stdcall 开窗 call(内部先建本地 UI 再发 CG 开窗包,
@@ -789,6 +1028,9 @@ void PatternResolver::ScanAll()
 
 bool PatternResolver::LoadCache()
 {
+    if (moduleMd5_.empty() || !moduleSize_)
+        return false;
+
     std::ifstream ifs(cachePath_);
     if (!ifs.is_open())
         return false;
@@ -804,8 +1046,12 @@ bool PatternResolver::LoadCache()
             return false;
         }
 
+        if (!j.contains("addresses") || !j["addresses"].is_object())
+            return false;
+
         auto &addrs = j["addresses"];
         int loaded  = 0;
+        bool missingPatternEntry = false;
         for (auto &entry : entries_)
         {
             if (entry.pattern.empty())
@@ -816,13 +1062,28 @@ bool PatternResolver::LoadCache()
             }
             if (addrs.contains(entry.name))
             {
-                entry.resolved = std::stoull(addrs[entry.name].get<std::string>(),
-                                             nullptr, 16);
+                uintptr_t cached = static_cast<uintptr_t>(
+                    std::stoull(addrs[entry.name].get<std::string>(), nullptr, 16));
+                if (cached < moduleBase_ || cached - moduleBase_ >= moduleSize_)
+                {
+                    spdlog::warn("GGTB::PatternResolver: cached {} address {:x} is outside target module",
+                                 entry.name, cached);
+                    missingPatternEntry = true;
+                    continue;
+                }
+                entry.resolved = cached;
                 ++loaded;
+            }
+            else
+            {
+                // A cache from the same executable can predate a newly added
+                // resolver entry. Force one complete scan so the new signature
+                // is resolved and persisted instead of silently using its RVA.
+                missingPatternEntry = true;
             }
         }
         spdlog::info("GGTB::PatternResolver: loaded {} addresses from cache", loaded);
-        return true;
+        return !missingPatternEntry;
     }
     catch (const std::exception &e)
     {
@@ -833,6 +1094,12 @@ bool PatternResolver::LoadCache()
 
 void PatternResolver::SaveCache()
 {
+    if (moduleMd5_.empty() || !moduleSize_)
+    {
+        spdlog::warn("GGTB::PatternResolver: cache write skipped without valid module identity");
+        return;
+    }
+
     nlohmann::json j;
     j["module_md5"] = moduleMd5_;
 

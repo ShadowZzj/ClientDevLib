@@ -22,10 +22,11 @@ class BlockLevelUpModule : public IModule
     BlockLevelUpModule() : IModule(u8"禁止升级") {}
 
     bool CanAutoPause() const override { return false; }
+    bool IsCompact() const override { return true; }
 
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##BlockLevelUp", &enabled_))
+        if (ImGui::Checkbox(u8"禁止升级##BlockLevelUp", &enabled_))
         {
             if (enabled_)
             {
@@ -45,13 +46,11 @@ class BlockLevelUpModule : public IModule
             }
         }
 
-        if (enabled_)
-        {
-            ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f),
-                               u8"已屏蔽 CG_LEVEL_UP_CHECK (412016)");
-            ImGui::TextDisabled(
-                u8"经验继续累积,但客户端不会请求升级。关闭即恢复。");
-        }
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip(
+                enabled_
+                    ? u8"已屏蔽 CG_LEVEL_UP_CHECK (412016) — 经验继续累积,客户端不请求升级"
+                    : u8"勾选后客户端不再请求升级,经验继续累积,关闭即恢复");
     }
 
     void OnShutdown() override

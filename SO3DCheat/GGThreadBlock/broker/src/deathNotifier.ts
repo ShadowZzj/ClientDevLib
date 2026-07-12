@@ -102,6 +102,7 @@ export class DeathNotifier {
 
         for (const inst of online) {
             if (!inst.characterName || inst.status.hp === undefined) continue;
+            if (inst.status.hpKnown !== true || inst.status.clientClosing === true) continue;
             if (!this.config.enabledCharacters.includes(inst.characterName)) continue;
 
             let st = this.states.get(inst.pid);

@@ -55,11 +55,12 @@ class MultiCastModule : public IModule
     }
 
     bool CanAutoPause() const override { return true; }
+    Tab  GetTab() const override { return Tab::OP; }
 
     void OnRender() override
     {
         bool prevEnabled = enabled_;
-        if (ImGui::Checkbox(u8"启用##MultiCast", &enabled_))
+        if (ImGui::Checkbox(u8"多重施法##MultiCast", &enabled_))
         {
             if (enabled_ && !prevEnabled)
                 ActivateExclusively();
@@ -339,8 +340,8 @@ class MultiCastModule : public IModule
             if (info.skill.leftCoolDown > 0.0f)
                 return; // 还在 CD,等下个 tick
 
-            // 背包炸弹已满 300 则不再制作
-            if (GetTotalBombCount() >= 300)
+            // 背包炸弹已满 9000 则不再制作
+            if (GetTotalBombCount() >= 9000)
                 return;
 
             LockCast();

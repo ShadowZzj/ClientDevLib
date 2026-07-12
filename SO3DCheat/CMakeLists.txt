@@ -104,6 +104,10 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/util/DisconnectWatchdog.cpp
     GGThreadBlock/util/RemoteControl.h
     GGThreadBlock/util/RemoteControl.cpp
+    GGThreadBlock/util/EnchantStoneControl.h
+    GGThreadBlock/util/EnchantStoneControl.cpp
+    GGThreadBlock/util/DailyTaskControl.h
+    GGThreadBlock/util/DailyTaskControl.cpp
     GGThreadBlock/util/InputInjector.h
     GGThreadBlock/util/InputInjector.cpp
     GGThreadBlock/util/LoginBridge.h
@@ -115,7 +119,8 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/modules/SpeedHackModule.h
     GGThreadBlock/modules/ItemNoCDModule.h
     GGThreadBlock/modules/AttackRangeModule.h
-    GGThreadBlock/modules/ActionMoveModule.h
+    GGThreadBlock/modules/AttackMoveModule.h
+    GGThreadBlock/modules/SkillMoveModule.h
     GGThreadBlock/modules/AutoPickupModule.h
     GGThreadBlock/modules/FireFullPowerModule.h
     GGThreadBlock/modules/AutoConfirmModule.h
@@ -124,7 +129,8 @@ add_library(GGThreadBlock SHARED
     GGThreadBlock/modules/StationaryFarmModule.h
     GGThreadBlock/modules/BlockLevelUpModule.h
     GGThreadBlock/modules/NearbyPlayerGuardModule.h
-    GGThreadBlock/modules/PlayerESPModule.h)
+    GGThreadBlock/modules/PlayerESPModule.h
+    GGThreadBlock/modules/ScreenOverlay.h)
 target_link_libraries(GGThreadBlock ClientDevLib ${WINDOWS_UTIL_LIB_FILES} d3d9.lib)
 target_include_directories(GGThreadBlock PRIVATE
     ${WINDOWS_UTIL_INCLUDE_DIRS}

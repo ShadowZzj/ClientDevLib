@@ -14,6 +14,13 @@ const SHOP_CACHE_FILE = path.resolve(
     "paodian_shop_cache.json"
 );
 
+// 购买记录(含批量)持久化:每条记录一次购买尝试的结果,重启后仍可在「购买记录」tab 看到。
+const RECORDS_FILE = path.resolve(
+    process.env.GGTB_DATA_DIR || path.dirname(process.execPath),
+    "paodian_purchase_records.json"
+);
+const MAX_RECORDS = 2000; // 只保留最近这么多条,防止文件无限增长
+
 const LOGIN_URL = "https://shop2.guguseal.com/api/login";
 const WEBSHOP_DATA_URL = "https://shop2.guguseal.com/api/webshop-data";
 const PURCHASE_URL = "https://shop2.guguseal.com/api/purchase";
@@ -66,6 +73,31 @@ export interface PaodianShopItem {
 export interface PaodianPurchaseResult {
     message: string;
     account: PaodianAccountView;
+}
+
+// 一条购买记录:单账号单次下单的结果(批量购买会为每个账号各写一条)。
+export interface PaodianPurchaseRecord {
+    id: string;          // 唯一 id(时间戳 + 随机后缀)
+    time: number;        // 下单时间
+    username: string;
+    itemID: number;
+    itemName: string;
+    itemCount: number;
+    bubblePrice: number; // 单价(下单时)
+    totalBubble: number; // 本次合计泡点 = bubblePrice * itemCount
+    batchId: string;     // 同一次批量购买共享;单账号购买也有,便于按批查看
+    ok: boolean;
+    message: string;     // 成功消息或错误信息
+}
+
+// 批量购买的整体结果。每个账号一条 PaodianPurchaseRecord。
+export interface PaodianBatchPurchaseResult {
+    batchId: string;
+    requested: number;   // 请求的账号数
+    ok: number;          // 成功数
+    fail: number;        // 失败数
+    records: PaodianPurchaseRecord[];
+    accounts: PaodianAccountView[]; // 受影响账号刷新后的最新视图
 }
 
 function emptyState(username: string): PaodianState {
@@ -223,10 +255,12 @@ export class PaodianMonitor {
     private timer: NodeJS.Timeout | null = null;
     private shopItems: PaodianShopItem[] = [];
     private shopItemsFetchedAt = 0;
+    private records: PaodianPurchaseRecord[] = [];
 
     constructor() {
         this.load();
         this.loadShopCache();
+        this.loadRecords();
         this.start();
     }
 
@@ -254,6 +288,63 @@ export class PaodianMonitor {
         } catch (e: any) {
             console.warn(`[paodian] shop cache save failed: ${e.message}`);
         }
+    }
+
+    private loadRecords(): void {
+        try {
+            if (!fs.existsSync(RECORDS_FILE)) return;
+            const parsed = JSON.parse(fs.readFileSync(RECORDS_FILE, "utf8"));
+            const arr = Array.isArray(parsed?.records) ? parsed.records : Array.isArray(parsed) ? parsed : null;
+            if (!arr) return;
+            this.records = arr
+                .filter((r: any) => r && typeof r === "object")
+                .map((r: any) => ({
+                    id: String(r.id ?? ""),
+                    time: asNumber(r.time),
+                    username: String(r.username ?? ""),
+                    itemID: asNumber(r.itemID),
+                    itemName: String(r.itemName ?? ""),
+                    itemCount: asNumber(r.itemCount),
+                    bubblePrice: asNumber(r.bubblePrice),
+                    totalBubble: asNumber(r.totalBubble),
+                    batchId: String(r.batchId ?? ""),
+                    ok: !!r.ok,
+                    message: String(r.message ?? ""),
+                }))
+                .filter((r: PaodianPurchaseRecord) => r.username.length > 0);
+            console.log(`[paodian] loaded ${this.records.length} purchase records`);
+        } catch (e: any) {
+            console.warn(`[paodian] records load failed: ${e.message}`);
+            this.records = [];
+        }
+    }
+
+    private saveRecords(): void {
+        try {
+            fs.writeFileSync(
+                RECORDS_FILE,
+                JSON.stringify({ updated: Date.now(), records: this.records }, null, 2),
+                "utf8"
+            );
+        } catch (e: any) {
+            console.warn(`[paodian] records save failed: ${e.message}`);
+        }
+    }
+
+    private addRecord(record: PaodianPurchaseRecord): void {
+        this.records.unshift(record); // 最新的排前面
+        if (this.records.length > MAX_RECORDS) this.records.length = MAX_RECORDS;
+    }
+
+    listRecords(): PaodianPurchaseRecord[] {
+        return this.records.slice();
+    }
+
+    clearRecords(): number {
+        const n = this.records.length;
+        this.records = [];
+        this.saveRecords();
+        return n;
     }
 
     private load(): void {
@@ -422,20 +513,128 @@ export class PaodianMonitor {
             throw new Error("item not found");
         }
 
-        const data = await postJson(PURCHASE_URL, {
-            username: account.username,
-            password: account.password,
-            itemID: item.itemid,
-            itemCount: String(cleanCount),
-            itemname: item.name,
-            bubblePrice: item.bubble_price,
-        });
-
-        const updated = await this.refresh(account.username);
+        const batchId = this.newId();
+        const result = await this.purchaseOne(account, item, cleanCount, batchId);
+        if (!result.ok) {
+            throw new Error(result.record.message || "购买失败");
+        }
         return {
-            message: String(data?.message ?? "购买完成"),
-            account: updated,
+            message: result.record.message,
+            account: result.account,
         };
+    }
+
+    // 批量购买:对多个账号执行同一商品 + 同一数量。先做余额预检,任一账号泡点不足则
+    // 整体不执行(抛错,列出不足的账号),满足"不够就提示且不执行"。预检通过后逐个下单,
+    // 每个账号写一条购买记录。账号离线也能买(走 HTTP 登录态下单)。
+    async purchaseBatch(
+        usernames: string[],
+        itemID: number,
+        itemCount: number
+    ): Promise<PaodianBatchPurchaseResult> {
+        const cleanItemID = Math.trunc(Number(itemID));
+        const cleanCount = Math.trunc(Number(itemCount));
+        if (!Number.isFinite(cleanItemID) || cleanItemID <= 0) throw new Error("invalid itemID");
+        if (!Number.isFinite(cleanCount) || cleanCount <= 0) throw new Error("invalid itemCount");
+
+        const names = Array.from(
+            new Set((Array.isArray(usernames) ? usernames : []).map((u) => String(u || "").trim()).filter(Boolean))
+        );
+        if (names.length === 0) throw new Error("no accounts selected");
+
+        const accounts = names.map((n) => this.findAccount(n)); // 任一不存在直接抛错
+
+        const items = await this.getShopItems();
+        const item = items.find((x) => x.itemid === cleanItemID);
+        if (!item) throw new Error("item not found");
+
+        const needed = item.bubble_price * cleanCount;
+
+        // 余额预检:有不足的就整体拒绝。用 viewFor 读已缓存的泡点(离线账号也有上次余额)。
+        const insufficient: string[] = [];
+        for (const account of accounts) {
+            const have = this.viewFor(account).paodian;
+            if (have < needed) {
+                insufficient.push(`${account.username}(${have}/${needed})`);
+            }
+        }
+        if (insufficient.length > 0) {
+            throw new Error(
+                `泡点不足,已取消(单价${item.bubble_price}×${cleanCount}=需${needed}):` +
+                insufficient.join("、")
+            );
+        }
+
+        const batchId = this.newId();
+        const records: PaodianPurchaseRecord[] = [];
+        const accountViews: PaodianAccountView[] = [];
+        let okCount = 0;
+        let failCount = 0;
+
+        // 串行下单,避免同时打爆登录/购买接口;预检已通过,这里只关心实际下单结果。
+        for (const account of accounts) {
+            const r = await this.purchaseOne(account, item, cleanCount, batchId);
+            records.push(r.record);
+            accountViews.push(r.account);
+            if (r.ok) okCount++;
+            else failCount++;
+        }
+
+        return {
+            batchId,
+            requested: accounts.length,
+            ok: okCount,
+            fail: failCount,
+            records,
+            accounts: accountViews,
+        };
+    }
+
+    // 单账号单次下单 + 写记录 + 刷新余额。purchase / purchaseBatch 共用。
+    // 不抛错:失败也返回 ok=false 的记录,方便批量里继续处理其它账号。
+    private async purchaseOne(
+        account: PaodianAccount,
+        item: PaodianShopItem,
+        count: number,
+        batchId: string
+    ): Promise<{ ok: boolean; record: PaodianPurchaseRecord; account: PaodianAccountView }> {
+        const base = {
+            id: this.newId(),
+            time: Date.now(),
+            username: account.username,
+            itemID: item.itemid,
+            itemName: item.name,
+            itemCount: count,
+            bubblePrice: item.bubble_price,
+            totalBubble: item.bubble_price * count,
+            batchId,
+        };
+        try {
+            const data = await postJson(PURCHASE_URL, {
+                username: account.username,
+                password: account.password,
+                itemID: item.itemid,
+                itemCount: String(count),
+                itemname: item.name,
+                bubblePrice: item.bubble_price,
+            });
+            const message = String(data?.message ?? "购买完成");
+            const record: PaodianPurchaseRecord = { ...base, ok: true, message };
+            this.addRecord(record);
+            this.saveRecords();
+            const account2 = await this.refresh(account.username);
+            return { ok: true, record, account: account2 };
+        } catch (e: any) {
+            const message = e?.message || String(e);
+            const record: PaodianPurchaseRecord = { ...base, ok: false, message };
+            this.addRecord(record);
+            this.saveRecords();
+            return { ok: false, record, account: this.viewFor(account) };
+        }
+    }
+
+    private newId(): string {
+        return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
     }
 
     // 用显式账号/密码购买,不查 paodian_accounts.json、不刷新余额。供"监控购买"用从游戏

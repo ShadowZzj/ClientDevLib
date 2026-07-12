@@ -40,18 +40,13 @@
   "autobuy_count": 3000,
   "autobuy_open_delay": 0.6,
   "autobuy_buy_delay": 0.6,
-  "fishing_reel_interval": 45.0,
-  "cash_use_schedule": [
-    {
-      "item": "黃金釣鉤",
-      "interval": 28800
-    }
-  ],
+  "fishing_reel_interval": 36.0,
+  "cash_use_schedule": [],
   "cash_low_stock_threshold": 10,
   "automail_enabled": true,
   "automail_recipient": "shadowsing",
-  "automail_money_threshold": 100000000,
-  "automail_amount": 80000000,
+  "automail_money_threshold": 60000000,
+  "automail_amount": 50000000,
   "automail_poll_interval": 60.0,
   "restock_enabled": true,
   "restock_schedule": [
@@ -66,5 +61,12 @@
       "buy": 300
     }
   ],
-  "automail_whitelist": "shadowdance"
+  "automail_whitelist": "shadowdance",
+  "buff_monitor_schedule": [
+    {
+      "buff": "黃金釣鉤",
+      "item": "黃金釣鉤",
+      "interval": 300
+    }
+  ]
 }

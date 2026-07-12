@@ -1,0 +1,32 @@
+{
+  "ruins": [
+    {
+      "id": "ruins-echo-valley",
+      "name": "废墟回声谷",
+      "dialogOption": 10282,
+      "viaCityMode": 2,
+      "walkX": 226,
+      "walkY": 155,
+      "npcId": 19129,
+      "dialogSub": 1,
+      "settleMs": 3000,
+      "walkTimeoutMs": 15000,
+      "reissueMs": 2000,
+      "arriveDist": 1
+    },
+    {
+      "id": "ruins-paradise-town",
+      "name": "废墟乐园镇",
+      "dialogOption": 10281,
+      "viaCityMode": 2,
+      "walkX": 226,
+      "walkY": 155,
+      "npcId": 19129,
+      "dialogSub": 1,
+      "settleMs": 3000,
+      "walkTimeoutMs": 15000,
+      "reissueMs": 2000,
+      "arriveDist": 1
+    }
+  ]
+}

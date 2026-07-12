@@ -14,6 +14,7 @@ class StatusModule : public IModule
     StatusModule() : IModule(u8"状态") {}
 
     bool CanAutoPause() const override { return false; }
+    bool RenderInHeader() const override { return true; }
 
     void OnRender() override
     {

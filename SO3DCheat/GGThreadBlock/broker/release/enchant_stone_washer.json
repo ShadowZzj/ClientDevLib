@@ -1,0 +1,1905 @@
+{
+  "version": 2,
+  "configs": [
+    {
+      "characterName": "shadowsing",
+      "waitMs": 1500,
+      "colors": [
+        {
+          "color": 0,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 10,
+            "minValue": 0
+          }
+        },
+        {
+          "color": 1,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 11,
+            "minValue": 0
+          }
+        },
+        {
+          "color": 2,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 12,
+            "minValue": 0
+          }
+        },
+        {
+          "color": 3,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 13,
+            "minValue": 0
+          }
+        }
+      ]
+    },
+    {
+      "characterName": "shadowpope",
+      "waitMs": 1500,
+      "colors": [
+        {
+          "color": 0,
+          "enabled": true,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 60
+          },
+          "specialTarget": {
+            "attrId": 10,
+            "minValue": 4
+          }
+        },
+        {
+          "color": 1,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 11,
+            "minValue": 0
+          }
+        },
+        {
+          "color": 2,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 12,
+            "minValue": 0
+          }
+        },
+        {
+          "color": 3,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 0
+          },
+          "specialTarget": {
+            "attrId": 13,
+            "minValue": 0
+          }
+        }
+      ]
+    },
+    {
+      "characterName": "6677",
+      "waitMs": 150,
+      "colors": [
+        {
+          "color": 0,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 60
+          },
+          "specialTarget": {
+            "attrId": 10,
+            "minValue": 3
+          }
+        },
+        {
+          "color": 1,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 60
+          },
+          "specialTarget": {
+            "attrId": 11,
+            "minValue": 4
+          }
+        },
+        {
+          "color": 2,
+          "enabled": false,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 58
+          },
+          "specialTarget": {
+            "attrId": 12,
+            "minValue": 3
+          }
+        },
+        {
+          "color": 3,
+          "enabled": true,
+          "normalTarget": {
+            "attrId": 1,
+            "minValue": 58
+          },
+          "specialTarget": {
+            "attrId": 13,
+            "minValue": 3
+          }
+        }
+      ]
+    }
+  ],
+  "states": [
+    {
+      "characterName": "shadowsing",
+      "running": false,
+      "status": "idle",
+      "currentColor": null,
+      "currentSlot": null,
+      "lastAction": "",
+      "lastMessage": "",
+      "lastErrorCode": "",
+      "lastError": "",
+      "actionCount": 0,
+      "optionChangeCount": 0,
+      "upgradeCount": 0,
+      "extendCount": 0,
+      "startedAt": 0,
+      "stoppedAt": 0,
+      "lastOperationStartedAt": 0,
+      "lastConfirmedAt": 0,
+      "nextOperationAt": 0,
+      "awaitingStateChange": false,
+      "updatedAt": 1783653480838,
+      "lastSnapshot": {
+        "stones": [
+          {
+            "color": 0,
+            "grade": 11,
+            "remaining": 26,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 86
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 68
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 10,
+                "value": 3
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 67
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 70
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 10,
+                "value": 3
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 70
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 78
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 10,
+                "value": 5
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 57
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 78
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 10,
+                "value": 3
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 70,
+                "required": 16,
+                "selectedCount": 70,
+                "slotIndex": 17,
+                "wire": 30
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 1,
+            "grade": 11,
+            "remaining": 108,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 81
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 75
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 75
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 61
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 99
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 63
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 72
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 81
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 70,
+                "required": 16,
+                "selectedCount": 70,
+                "slotIndex": 17,
+                "wire": 30
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 2,
+            "grade": 11,
+            "remaining": 34,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 69
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 64
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 1,
+                "value": 81
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 79
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 67
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 12,
+                "value": 4
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 67
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 59
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 12,
+                "value": 3
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 60
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 59
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 70,
+                "required": 16,
+                "selectedCount": 70,
+                "slotIndex": 17,
+                "wire": 30
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 3,
+            "grade": 11,
+            "remaining": 13,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 84
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 87
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 13,
+                "value": 3
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 75
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 85
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 13,
+                "value": 3
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 65
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 13,
+                "value": 4
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 73
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 69
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 13,
+                "value": 3
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 70,
+                "required": 16,
+                "selectedCount": 70,
+                "slotIndex": 17,
+                "wire": 30
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          }
+        ],
+        "resources": {
+          "fixedCoupon": {
+            "enough": true,
+            "itemId": 26421,
+            "owned": 105,
+            "required": 1,
+            "selectedCount": 105,
+            "slotIndex": 4,
+            "wire": 4
+          },
+          "money": 4627663618,
+          "rechargeTicket": {
+            "enough": false,
+            "itemId": 0,
+            "owned": 0,
+            "required": 1,
+            "selectedCount": 0,
+            "slotIndex": -1,
+            "wire": 0
+          },
+          "requirements": [
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 70,
+                  "required": 16,
+                  "selectedCount": 70,
+                  "slotIndex": 17,
+                  "wire": 30
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 0,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            },
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 70,
+                  "required": 16,
+                  "selectedCount": 70,
+                  "slotIndex": 17,
+                  "wire": 30
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 1,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            },
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 70,
+                  "required": 16,
+                  "selectedCount": 70,
+                  "slotIndex": 17,
+                  "wire": 30
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 2,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            },
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 70,
+                  "required": 16,
+                  "selectedCount": 70,
+                  "slotIndex": 17,
+                  "wire": 30
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 3,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            }
+          ],
+          "shiningCrystal": {
+            "itemId": 26322,
+            "owned": 70,
+            "selectedCount": 70,
+            "slotIndex": 17,
+            "wire": 30
+          },
+          "rainbowPowder": {
+            "itemId": 26323,
+            "owned": 380,
+            "selectedCount": 300,
+            "slotIndex": 18,
+            "wire": 31
+          }
+        },
+        "queriedAt": 1783653480836
+      }
+    },
+    {
+      "characterName": "shadowpope",
+      "running": false,
+      "status": "stopped",
+      "currentColor": 0,
+      "currentSlot": 4,
+      "lastAction": "enchantStoneOptionChange",
+      "lastMessage": "用户停止",
+      "lastErrorCode": "",
+      "lastError": "",
+      "actionCount": 108,
+      "optionChangeCount": 105,
+      "upgradeCount": 3,
+      "extendCount": 0,
+      "startedAt": 1783655179248,
+      "stoppedAt": 1783655202472,
+      "lastOperationStartedAt": 0,
+      "lastConfirmedAt": 0,
+      "nextOperationAt": 0,
+      "awaitingStateChange": false,
+      "updatedAt": 1783655341482,
+      "lastSnapshot": {
+        "stones": [
+          {
+            "color": 0,
+            "grade": 4,
+            "remaining": 132,
+            "max": 300,
+            "topIndex": 4,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 79
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 10,
+                "value": 4
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 72
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 28
+              },
+              {
+                "index": 5,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 6,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 7,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 8,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 9,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 10,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 11,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              }
+            ],
+            "upgrade": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 140,
+                "required": 12,
+                "selectedCount": 140,
+                "slotIndex": 45,
+                "wire": 58
+              },
+              "moneyEnough": true,
+              "moneyRequired": 4000000,
+              "nextGrade": 6,
+              "optionPool": 2,
+              "rainbowPowder": {
+                "enough": true,
+                "itemId": 26323,
+                "owned": 15,
+                "required": 10,
+                "selectedCount": 15,
+                "slotIndex": 46,
+                "wire": 59
+              },
+              "resolved": true,
+              "successBasisPoints": 6000,
+              "successPercent": 60
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 140,
+                "required": 2,
+                "selectedCount": 140,
+                "slotIndex": 45,
+                "wire": 58
+              },
+              "moneyEnough": true,
+              "moneyRequired": 200000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 1,
+            "grade": -1,
+            "remaining": 300,
+            "max": 300,
+            "topIndex": -1,
+            "slots": [
+              {
+                "index": 0,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 1,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 2,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 3,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 4,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 5,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 6,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 7,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 8,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 9,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 10,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 11,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              }
+            ],
+            "upgrade": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 140,
+                "required": 5,
+                "selectedCount": 140,
+                "slotIndex": 45,
+                "wire": 58
+              },
+              "moneyEnough": true,
+              "moneyRequired": 1000000,
+              "nextGrade": 1,
+              "optionPool": 3,
+              "rainbowPowder": {
+                "enough": true,
+                "itemId": 26323,
+                "owned": 15,
+                "required": 1,
+                "selectedCount": 15,
+                "slotIndex": 46,
+                "wire": 59
+              },
+              "resolved": true,
+              "successBasisPoints": 10000,
+              "successPercent": 100
+            },
+            "change": {
+              "resolved": false
+            }
+          },
+          {
+            "color": 2,
+            "grade": -1,
+            "remaining": 300,
+            "max": 300,
+            "topIndex": -1,
+            "slots": [
+              {
+                "index": 0,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 1,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 2,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 3,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 4,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 5,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 6,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 7,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 8,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 9,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 10,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 11,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              }
+            ],
+            "upgrade": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 140,
+                "required": 5,
+                "selectedCount": 140,
+                "slotIndex": 45,
+                "wire": 58
+              },
+              "moneyEnough": true,
+              "moneyRequired": 1000000,
+              "nextGrade": 1,
+              "optionPool": 5,
+              "rainbowPowder": {
+                "enough": true,
+                "itemId": 26323,
+                "owned": 15,
+                "required": 1,
+                "selectedCount": 15,
+                "slotIndex": 46,
+                "wire": 59
+              },
+              "resolved": true,
+              "successBasisPoints": 10000,
+              "successPercent": 100
+            },
+            "change": {
+              "resolved": false
+            }
+          },
+          {
+            "color": 3,
+            "grade": -1,
+            "remaining": 300,
+            "max": 300,
+            "topIndex": -1,
+            "slots": [
+              {
+                "index": 0,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 1,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 2,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 3,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 4,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 5,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 6,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 7,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 8,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 9,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 10,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              },
+              {
+                "index": 11,
+                "opened": false,
+                "attrId": 0,
+                "value": -1
+              }
+            ],
+            "upgrade": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 140,
+                "required": 5,
+                "selectedCount": 140,
+                "slotIndex": 45,
+                "wire": 58
+              },
+              "moneyEnough": true,
+              "moneyRequired": 1000000,
+              "nextGrade": 1,
+              "optionPool": 5,
+              "rainbowPowder": {
+                "enough": true,
+                "itemId": 26323,
+                "owned": 15,
+                "required": 1,
+                "selectedCount": 15,
+                "slotIndex": 46,
+                "wire": 59
+              },
+              "resolved": true,
+              "successBasisPoints": 10000,
+              "successPercent": 100
+            },
+            "change": {
+              "resolved": false
+            }
+          }
+        ],
+        "resources": {
+          "fixedCoupon": {
+            "enough": true,
+            "itemId": 26421,
+            "owned": 19,
+            "required": 1,
+            "selectedCount": 19,
+            "slotIndex": 28,
+            "wire": 28
+          },
+          "money": 56087296,
+          "rechargeTicket": {
+            "enough": true,
+            "itemId": 26422,
+            "owned": 22,
+            "required": 1,
+            "selectedCount": 22,
+            "slotIndex": 14,
+            "wire": 14
+          },
+          "requirements": [
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 140,
+                  "required": 2,
+                  "selectedCount": 140,
+                  "slotIndex": 45,
+                  "wire": 58
+                },
+                "moneyEnough": true,
+                "moneyRequired": 200000,
+                "resolved": true
+              },
+              "color": 0,
+              "upgrade": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 140,
+                  "required": 12,
+                  "selectedCount": 140,
+                  "slotIndex": 45,
+                  "wire": 58
+                },
+                "moneyEnough": true,
+                "moneyRequired": 4000000,
+                "nextGrade": 6,
+                "optionPool": 2,
+                "rainbowPowder": {
+                  "enough": true,
+                  "itemId": 26323,
+                  "owned": 15,
+                  "required": 10,
+                  "selectedCount": 15,
+                  "slotIndex": 46,
+                  "wire": 59
+                },
+                "resolved": true,
+                "successBasisPoints": 6000,
+                "successPercent": 60
+              }
+            },
+            {
+              "change": {
+                "resolved": false
+              },
+              "color": 1,
+              "upgrade": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 140,
+                  "required": 5,
+                  "selectedCount": 140,
+                  "slotIndex": 45,
+                  "wire": 58
+                },
+                "moneyEnough": true,
+                "moneyRequired": 1000000,
+                "nextGrade": 1,
+                "optionPool": 3,
+                "rainbowPowder": {
+                  "enough": true,
+                  "itemId": 26323,
+                  "owned": 15,
+                  "required": 1,
+                  "selectedCount": 15,
+                  "slotIndex": 46,
+                  "wire": 59
+                },
+                "resolved": true,
+                "successBasisPoints": 10000,
+                "successPercent": 100
+              }
+            },
+            {
+              "change": {
+                "resolved": false
+              },
+              "color": 2,
+              "upgrade": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 140,
+                  "required": 5,
+                  "selectedCount": 140,
+                  "slotIndex": 45,
+                  "wire": 58
+                },
+                "moneyEnough": true,
+                "moneyRequired": 1000000,
+                "nextGrade": 1,
+                "optionPool": 5,
+                "rainbowPowder": {
+                  "enough": true,
+                  "itemId": 26323,
+                  "owned": 15,
+                  "required": 1,
+                  "selectedCount": 15,
+                  "slotIndex": 46,
+                  "wire": 59
+                },
+                "resolved": true,
+                "successBasisPoints": 10000,
+                "successPercent": 100
+              }
+            },
+            {
+              "change": {
+                "resolved": false
+              },
+              "color": 3,
+              "upgrade": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 140,
+                  "required": 5,
+                  "selectedCount": 140,
+                  "slotIndex": 45,
+                  "wire": 58
+                },
+                "moneyEnough": true,
+                "moneyRequired": 1000000,
+                "nextGrade": 1,
+                "optionPool": 5,
+                "rainbowPowder": {
+                  "enough": true,
+                  "itemId": 26323,
+                  "owned": 15,
+                  "required": 1,
+                  "selectedCount": 15,
+                  "slotIndex": 46,
+                  "wire": 59
+                },
+                "resolved": true,
+                "successBasisPoints": 10000,
+                "successPercent": 100
+              }
+            }
+          ],
+          "shiningCrystal": {
+            "itemId": 26322,
+            "owned": 140,
+            "selectedCount": 140,
+            "slotIndex": 45,
+            "wire": 58
+          },
+          "rainbowPowder": {
+            "itemId": 26323,
+            "owned": 15,
+            "selectedCount": 15,
+            "slotIndex": 46,
+            "wire": 59
+          }
+        },
+        "queriedAt": 1783655341480
+      }
+    },
+    {
+      "characterName": "6677",
+      "running": false,
+      "status": "done",
+      "currentColor": null,
+      "currentSlot": null,
+      "lastAction": "enchantStoneOptionChange",
+      "lastMessage": "所有已启用颜色均已洗到第 12 格并达标",
+      "lastErrorCode": "",
+      "lastError": "",
+      "actionCount": 423,
+      "optionChangeCount": 396,
+      "upgradeCount": 25,
+      "extendCount": 2,
+      "startedAt": 1783659614984,
+      "stoppedAt": 1783659811734,
+      "lastOperationStartedAt": 1783659811274,
+      "lastConfirmedAt": 1783659811455,
+      "nextOperationAt": 1783659811605,
+      "awaitingStateChange": false,
+      "updatedAt": 1783659811734,
+      "lastSnapshot": {
+        "stones": [
+          {
+            "color": 0,
+            "grade": 11,
+            "remaining": 13,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 63
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 70
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 10,
+                "value": 3
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 83
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 67
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 10,
+                "value": 4
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 65
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 10,
+                "value": 3
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 70
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 10,
+                "value": 3
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 934,
+                "required": 16,
+                "selectedCount": 934,
+                "slotIndex": 31,
+                "wire": 44
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 1,
+            "grade": 11,
+            "remaining": 16,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 69
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 70
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 80
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 72
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 66
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 86
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 67
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 11,
+                "value": 4
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 934,
+                "required": 16,
+                "selectedCount": 934,
+                "slotIndex": 31,
+                "wire": 44
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 2,
+            "grade": 11,
+            "remaining": 46,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 61
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 63
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 12,
+                "value": 4
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 59
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 61
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 12,
+                "value": 3
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 65
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 72
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 12,
+                "value": 4
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 79
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 58
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 12,
+                "value": 4
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 934,
+                "required": 16,
+                "selectedCount": 934,
+                "slotIndex": 31,
+                "wire": 44
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          },
+          {
+            "color": 3,
+            "grade": 11,
+            "remaining": 4,
+            "max": 300,
+            "topIndex": 11,
+            "slots": [
+              {
+                "index": 0,
+                "opened": true,
+                "attrId": 1,
+                "value": 59
+              },
+              {
+                "index": 1,
+                "opened": true,
+                "attrId": 1,
+                "value": 62
+              },
+              {
+                "index": 2,
+                "opened": true,
+                "attrId": 13,
+                "value": 3
+              },
+              {
+                "index": 3,
+                "opened": true,
+                "attrId": 1,
+                "value": 69
+              },
+              {
+                "index": 4,
+                "opened": true,
+                "attrId": 1,
+                "value": 70
+              },
+              {
+                "index": 5,
+                "opened": true,
+                "attrId": 13,
+                "value": 4
+              },
+              {
+                "index": 6,
+                "opened": true,
+                "attrId": 1,
+                "value": 62
+              },
+              {
+                "index": 7,
+                "opened": true,
+                "attrId": 1,
+                "value": 97
+              },
+              {
+                "index": 8,
+                "opened": true,
+                "attrId": 13,
+                "value": 3
+              },
+              {
+                "index": 9,
+                "opened": true,
+                "attrId": 1,
+                "value": 96
+              },
+              {
+                "index": 10,
+                "opened": true,
+                "attrId": 1,
+                "value": 69
+              },
+              {
+                "index": 11,
+                "opened": true,
+                "attrId": 13,
+                "value": 3
+              }
+            ],
+            "upgrade": {
+              "nextGrade": 13,
+              "resolved": false
+            },
+            "change": {
+              "crystal": {
+                "enough": true,
+                "itemId": 26322,
+                "owned": 934,
+                "required": 16,
+                "selectedCount": 934,
+                "slotIndex": 31,
+                "wire": 44
+              },
+              "moneyEnough": true,
+              "moneyRequired": 500000,
+              "resolved": true
+            }
+          }
+        ],
+        "resources": {
+          "fixedCoupon": {
+            "enough": true,
+            "itemId": 26421,
+            "owned": 1219,
+            "required": 1,
+            "selectedCount": 169,
+            "slotIndex": 23,
+            "wire": 23
+          },
+          "money": 763170130,
+          "rechargeTicket": {
+            "enough": true,
+            "itemId": 26422,
+            "owned": 71,
+            "required": 1,
+            "selectedCount": 71,
+            "slotIndex": 28,
+            "wire": 28
+          },
+          "requirements": [
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 934,
+                  "required": 16,
+                  "selectedCount": 934,
+                  "slotIndex": 31,
+                  "wire": 44
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 0,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            },
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 934,
+                  "required": 16,
+                  "selectedCount": 934,
+                  "slotIndex": 31,
+                  "wire": 44
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 1,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            },
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 934,
+                  "required": 16,
+                  "selectedCount": 934,
+                  "slotIndex": 31,
+                  "wire": 44
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 2,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            },
+            {
+              "change": {
+                "crystal": {
+                  "enough": true,
+                  "itemId": 26322,
+                  "owned": 934,
+                  "required": 16,
+                  "selectedCount": 934,
+                  "slotIndex": 31,
+                  "wire": 44
+                },
+                "moneyEnough": true,
+                "moneyRequired": 500000,
+                "resolved": true
+              },
+              "color": 3,
+              "upgrade": {
+                "nextGrade": 13,
+                "resolved": false
+              }
+            }
+          ]
+        },
+        "queriedAt": 1783659811734
+      }
+    }
+  ]
+}

@@ -24,6 +24,7 @@ export interface BuffRule {
     targetId: number;       // 0 = 自身 / 无目标
     minRecastMs: number;    // 同规则两次施放最小间隔,防冷却期间刷包
     lastCast: number;       // epoch ms,0 = 从未(运行时态,持久化也存)
+    requireMonsterHp: boolean; // true=受角色级「怪物血量闸门」控制:周围没 HP>阈值 的怪就本轮跳过
 }
 
 // 组队成员 buff 规则。target 在运行时按缺 buff 的成员 userId 决定,所以没有 targetId 字段。
@@ -36,6 +37,11 @@ export interface PartyBuffRule {
     includeSelf: boolean;   // true 时自己缺 buff 也补(targetId=0);false 只管队友
     minRecastMs: number;    // 整条规则一个节流(不分成员)
     lastCast: number;       // epoch ms,0 = 从未
+    // 作用人物(门禁):非空时,只有列表里至少一个角色名在视野(nearby 队友)里,本规则
+    // 才整体生效 —— 生效后照常给所有缺 buff 的近身成员补(不限于列表里的人)。列表里
+    // 一个都不在视野则整条规则本轮跳过。空列表=无门禁,始终生效(旧行为)。按角色名匹配。
+    triggerNames: string[];
+    requireMonsterHp: boolean; // true=受角色级「怪物血量闸门」控制;与 triggerNames 是 AND 关系
 }
 
 export interface BuffKeeperCharacterConfig {
@@ -44,6 +50,11 @@ export interface BuffKeeperCharacterConfig {
     pollMs: number;         // 该角色轮询间隔
     rules: BuffRule[];
     partyRules: PartyBuffRule[];
+    // 怪物血量闸门(角色级共用):周围存在 HP>monsterHpThreshold 的「怪物」(attackable=true,
+    // NPC/宠物/树不算)时闸门开,勾了 requireMonsterHp 的规则才放行补 buff;否则本轮跳过。没勾的规则
+    // 不受影响。threshold<=0 = 只要有活怪(HP>0)就算闸门开。
+    monsterHpThreshold: number;
+    monsterScanDistance: number; // getNearbyNpcs 扫描距离(格);0 = AOI 内全部
 }
 
 interface PersistShape {
@@ -89,6 +100,18 @@ interface PartySnapshot {
     members: PartyMemberSnapshot[];
 }
 
+// getNearbyNpcs 返回的单条(只取闸门要用的字段)。buffGateMonster 是 DLL
+// 专门为 BuffKeeper 计算的保守普通敌怪语义,与通用 attackable 分离。
+interface NearbyNpcItem {
+    hp: number;
+    buffGateMonster?: boolean;
+}
+
+export function hasHighHpBuffGateMonster(items: NearbyNpcItem[], threshold: number): boolean {
+    return items.some((n) =>
+        n.buffGateMonster === true && typeof n.hp === "number" && n.hp > threshold);
+}
+
 export class BuffKeeper {
     private configs: BuffKeeperCharacterConfig[] = [];
     private timer: NodeJS.Timeout | null = null;
@@ -98,6 +121,8 @@ export class BuffKeeper {
     private inFlight = new Set<string>();
     // 组队规则节流:key = `${ruleId}:${memberUserId}`,运行时态(队友会变,不持久化)。
     private partyCastAt = new Map<string, number>();
+    // 旧 DLL 不返回 buffGateMonster;每 PID 只警告一次并保持闸门关闭。
+    private missingBuffGateFieldWarned = new Set<number>();
 
     constructor(registry: InstanceRegistry) {
         this.registry = registry;
@@ -111,11 +136,13 @@ export class BuffKeeper {
                 const raw = fs.readFileSync(PERSIST_FILE, "utf8");
                 const parsed = JSON.parse(raw) as PersistShape;
                 const list = Array.isArray(parsed.characters) ? parsed.characters : [];
-                // 旧配置没有 partyRules / rules 字段,补成空数组,后续访问不用每处判空。
+                // 旧配置没有 partyRules / rules / 怪物闸门字段,补默认值,后续访问不用每处判空。
                 this.configs = list.map((c) => ({
                     ...c,
                     rules: Array.isArray(c.rules) ? c.rules : [],
                     partyRules: Array.isArray(c.partyRules) ? c.partyRules : [],
+                    monsterHpThreshold: Number(c.monsterHpThreshold ?? 0) || 0,
+                    monsterScanDistance: Number(c.monsterScanDistance ?? 0) || 0,
                 }));
                 console.log(`[buffKeeper] loaded ${this.configs.length} character configs`);
             }
@@ -171,24 +198,67 @@ export class BuffKeeper {
     }
 
     private async runCharacter(cfg: BuffKeeperCharacterConfig, pid: number): Promise<void> {
+        // 怪物血量闸门:任一启用规则勾了 requireMonsterHp 就先查一次周围怪物,算出闸门开没开,
+        // 传给两个 runner 复用(一轮只查一次)。查询失败 → 闸门按「关」处理,gated 规则本轮跳过;
+        // 没勾的规则不受影响。没有任何 gated 规则时压根不查,省一次往返。
+        let monsterGateOpen = false;
+        const needMonsterGate =
+            cfg.rules.some((r) => r.enabled && r.requireMonsterHp) ||
+            (cfg.partyRules ?? []).some((r) => r.enabled && r.requireMonsterHp);
+        if (needMonsterGate) {
+            monsterGateOpen = await this.checkMonsterGate(cfg, pid);
+        }
+
         // 引擎一次只施一个法,自身 + 组队共用这一个施法名额:本轮发了一个就停,
         // 下一轮(MIN_POLL_MS 后)引擎空了再发下一个。自身优先于组队。
         let dirty = false;
         let cast = false;
         if (cfg.rules.some((r) => r.enabled)) {
-            const r = await this.runSelfRules(cfg, pid);
+            const r = await this.runSelfRules(cfg, pid, monsterGateOpen);
             dirty = r.dirty;
             cast = r.cast;
         }
         if (!cast && (cfg.partyRules ?? []).some((r) => r.enabled)) {
-            await this.runPartyRules(cfg, pid);
+            await this.runPartyRules(cfg, pid, monsterGateOpen);
         }
         if (dirty) this.save();
     }
 
+    // 周围是否存在 HP>阈值 的普通敌怪。走 getNearbyNpcs 的 buffGateMonster 字段,
+    // 不复用 attackable,避免机关/任务目标改变 BuffKeeper 闸门。
+    // 只读命令,失败/异常返回 false(闸门关)—— 跟 queryBuffs/queryParty 一样,拿不准就不放行,不误放。
+    private async checkMonsterGate(cfg: BuffKeeperCharacterConfig, pid: number): Promise<boolean> {
+        const threshold = cfg.monsterHpThreshold > 0 ? cfg.monsterHpThreshold : 0;
+        const maxDistance = cfg.monsterScanDistance > 0 ? cfg.monsterScanDistance : 0;
+        try {
+            const r = await this.registry.sendCommand(pid, "getNearbyNpcs", { maxDistance }, 3000);
+            if (!r.ok) {
+                console.warn(`[buffKeeper] getNearbyNpcs failed for ${cfg.characterName}: ${r.detail} — gate closed`);
+                return false;
+            }
+            const parsed = JSON.parse(r.detail || "[]");
+            if (!Array.isArray(parsed)) throw new Error("getNearbyNpcs returned non-array detail");
+            const arr = parsed as NearbyNpcItem[];
+            if (arr.some((n) => typeof n.buffGateMonster !== "boolean")) {
+                if (!this.missingBuffGateFieldWarned.has(pid)) {
+                    this.missingBuffGateFieldWarned.add(pid);
+                    console.warn(
+                        `[buffKeeper] getNearbyNpcs missing buffGateMonster for ${cfg.characterName}; ` +
+                        "update GGThreadBlock.dll to >=0.14 and restart the game client — gate closed");
+                }
+                return false;
+            }
+            this.missingBuffGateFieldWarned.delete(pid);
+            return hasHighHpBuffGateMonster(arr, threshold);
+        } catch (e: any) {
+            console.warn(`[buffKeeper] getNearbyNpcs error ${cfg.characterName}: ${e.message} — gate closed`);
+            return false;
+        }
+    }
+
     // 守护自身 buff:queryBuffs 查自己,缺的就 castSkill targetId=0(或规则指定 targetId)。
     // 一轮最多发一个(引擎一次一个法),返回 { dirty: 是否动了持久化字段, cast: 是否用掉施法名额 }。
-    private async runSelfRules(cfg: BuffKeeperCharacterConfig, pid: number): Promise<{ dirty: boolean; cast: boolean }> {
+    private async runSelfRules(cfg: BuffKeeperCharacterConfig, pid: number, monsterGateOpen: boolean): Promise<{ dirty: boolean; cast: boolean }> {
         let buffs: BuffSnapshotItem[];
         try {
             const r = await this.registry.sendCommand(pid, "queryBuffs", { kind: -1 }, 3000);
@@ -213,6 +283,7 @@ export class BuffKeeper {
         for (const rule of cfg.rules) {
             if (!rule.enabled) continue;
             if (!rule.skillId || rule.skillId <= 0) continue;
+            if (rule.requireMonsterHp && !monsterGateOpen) continue; // 怪物血量闸门未开
 
             const present =
                 rule.buffId > 0 ? hasById.has(rule.buffId) : hasByName.has(rule.buffName);
@@ -251,7 +322,7 @@ export class BuffKeeper {
     // 关键:引擎一次只施一个法,所以本轮**最多发一个 cast 就返回**,靠密轮询(MIN_POLL_MS)
     // 在引擎施完后立刻补下一个 —— 一轮狂发 9 个只会被引擎吞掉 8 个、白刷日志。
     // 返回 true 表示本轮已经用掉施法名额(调用方据此不再发自身/其它 cast)。
-    private async runPartyRules(cfg: BuffKeeperCharacterConfig, pid: number): Promise<boolean> {
+    private async runPartyRules(cfg: BuffKeeperCharacterConfig, pid: number, monsterGateOpen: boolean): Promise<boolean> {
         let snap: PartySnapshot;
         try {
             const r = await this.registry.sendCommand(pid, "queryParty", { buffs: true }, 3000);
@@ -270,7 +341,16 @@ export class BuffKeeper {
         for (const rule of cfg.partyRules) {
             if (!rule.enabled) continue;
             if (!rule.skillId || rule.skillId <= 0) continue;
+            if (rule.requireMonsterHp && !monsterGateOpen) continue; // 怪物血量闸门未开
             const minRecast = rule.minRecastMs > 0 ? rule.minRecastMs : DEFAULT_MIN_RECAST_MS;
+
+            // 门禁:配了「作用人物」就得列表里至少一个角色名在视野(nearby)里才放;
+            // 一个都不在视野则整条规则本轮跳过。空列表=无门禁。
+            const triggers = rule.triggerNames ?? [];
+            if (triggers.length > 0) {
+                const gateOpen = snap.members.some((m) => m.nearby && triggers.includes(m.name));
+                if (!gateOpen) continue;
+            }
 
             for (const m of snap.members) {
                 if (!m.nearby) continue;                          // 不在视野,引擎加不到
@@ -333,6 +413,8 @@ export class BuffKeeper {
             pollMs: Math.max(MIN_POLL_MS, Number(body.pollMs ?? existing?.pollMs ?? DEFAULT_POLL_MS)),
             rules,
             partyRules,
+            monsterHpThreshold: Math.max(0, Number(body.monsterHpThreshold ?? existing?.monsterHpThreshold ?? 0)) || 0,
+            monsterScanDistance: Math.max(0, Number(body.monsterScanDistance ?? existing?.monsterScanDistance ?? 0)) || 0,
         };
         if (existing) {
             this.configs[this.configs.indexOf(existing)] = cfg;
@@ -369,6 +451,7 @@ function normalizeRule(r: Partial<BuffRule>): BuffRule {
         targetId: Number(r.targetId ?? 0) || 0,
         minRecastMs: Number(r.minRecastMs ?? DEFAULT_MIN_RECAST_MS) || DEFAULT_MIN_RECAST_MS,
         lastCast: Number(r.lastCast ?? 0) || 0,
+        requireMonsterHp: r.requireMonsterHp ?? false,
     };
 }
 
@@ -382,5 +465,9 @@ function normalizePartyRule(r: Partial<PartyBuffRule>): PartyBuffRule {
         includeSelf: r.includeSelf ?? false,
         minRecastMs: Number(r.minRecastMs ?? DEFAULT_MIN_RECAST_MS) || DEFAULT_MIN_RECAST_MS,
         lastCast: Number(r.lastCast ?? 0) || 0,
+        triggerNames: Array.isArray(r.triggerNames)
+            ? r.triggerNames.filter((n) => typeof n === "string" && n)
+            : [],
+        requireMonsterHp: r.requireMonsterHp ?? false,
     };
 }

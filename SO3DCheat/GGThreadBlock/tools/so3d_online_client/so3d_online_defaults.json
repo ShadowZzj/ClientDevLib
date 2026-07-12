@@ -1,0 +1,103 @@
+{
+  "server_id": 2,
+  "channel_id": 1,
+  "debug_packets": true,
+  "log_max_mb": 50,
+  "log_max_files": 3,
+  "retry_delay": 10,
+  "max_retries": 0,
+  "run_seconds": 0,
+  "chat_enabled": true,
+  "chat_status_enabled": true,
+  "encoding": "cp950",
+  "game_host_map": {
+    "127.1.5.41": "128.14.237.136",
+    "127.1.5.42": "165.154.194.124",
+    "127.1.5.43": "165.154.160.118",
+    "127.1.5.48": "165.154.194.124",
+    "127.1.5.49": "165.154.194.121",
+    "127.1.5.51": "165.154.194.121"
+  },
+  "fishing_enabled": true,
+  "fishing_bait_item_id": "紅標槍",
+  "fishing_bait_slot": -1,
+  "fishing_special_bait": false,
+  "fishing_recast_delay": 3.0,
+  "fishing_cast_interval": 1.5,
+  "fishing_coord_x": 0,
+  "fishing_coord_y": 0,
+  "fishing_actor_id": 0,
+  "autosell_enabled": true,
+  "autosell_min_free_slots": 5,
+  "autosell_start_slot": 61,
+  "autosell_end_slot": 191,
+  "autosell_keep_item_ids": [],
+  "autosell_per_packet_delay": 0.5,
+  "autobuy_enabled": true,
+  "autobuy_min_bait": 50,
+  "autobuy_summon_slot": -1,
+  "autobuy_item_id": 0,
+  "autobuy_count": 3000,
+  "autobuy_open_delay": 0.6,
+  "autobuy_buy_delay": 0.6,
+  "fishing_reel_interval": 36.0,
+  "cash_use_schedule": [
+    {
+      "item": "背包擴充卷1",
+      "interval": 60
+    },
+    {
+      "item": "背包擴充卷2",
+      "interval": 60
+    },
+    {
+      "item": "背包擴充卷3",
+      "interval": 60
+    }
+  ],
+  "cash_low_stock_threshold": 10,
+  "automail_enabled": true,
+  "automail_recipient": "shadowsing",
+  "automail_money_threshold": 60000000,
+  "automail_amount": 50000000,
+  "automail_poll_interval": 60.0,
+  "restock_enabled": true,
+  "restock_schedule": [
+    {
+      "item": "攤販呼叫券",
+      "threshold": 10,
+      "buy": 300
+    },
+    {
+      "item": "黃金釣鉤",
+      "threshold": 10,
+      "buy": 300
+    },
+    {
+      "item": "進階擺攤",
+      "threshold": 1,
+      "buy": 1,
+      "shop": "進階擺攤(7天)"
+    }
+  ],
+  "automail_whitelist": "shadowdance",
+  "buff_monitor_schedule": [
+    {
+      "buff": "黃金釣鉤",
+      "item": "黃金釣鉤",
+      "interval": 300
+    },
+    {
+      "buff": "進階擺攤",
+      "item": "進階擺攤",
+      "interval": 300
+    }
+  ],
+  "boss_watch": "次元",
+  "autosell_extra_item_ids": [
+    "錢包(5500)"
+  ],
+  "proxy_host": "auto",
+  "proxy_max_per_node": 70,
+  "login_concurrency": 20
+}

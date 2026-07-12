@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { InstanceRegistry } from "./instances";
+import { classifyLocalPlayerStatus } from "./workflowSignals";
 
 export interface CashScheduleEntry {
     pid: number;
@@ -85,8 +86,13 @@ export class CashScheduler {
                     continue;
                 }
                 const status = JSON.parse(statusResult.detail || "{}");
-                if (status.isDead === true || status.hp === 0) {
+                const statusKind = classifyLocalPlayerStatus(status);
+                if (statusKind === "dead") {
                     console.log(`[cashScheduler] ${entry.characterName} is dead, defer use of "${entry.itemName}"`);
+                    continue;
+                }
+                if (statusKind !== "alive") {
+                    console.warn(`[cashScheduler] ${entry.characterName} player status is ${statusKind}, skip this tick`);
                     continue;
                 }
             } catch (e: any) {

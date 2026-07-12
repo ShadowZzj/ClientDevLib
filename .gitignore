@@ -3,3 +3,5 @@ MacOS/build
 Windows/DriverInput/build
 SO3DCheat/build
 SO3DCheat/GGThreadBlock/tools/so3d_online_logs
+*.pyc
+SO3DCheat/buildx86Release

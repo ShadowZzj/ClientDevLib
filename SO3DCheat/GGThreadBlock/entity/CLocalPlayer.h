@@ -127,33 +127,139 @@ inline constexpr size_t kSkillRangePatchSize = 6; // B8 XX XX XX XX C3
 bool PatchSkillRange(uint32_t tiles);
 bool RestoreSkillRange();
 
-// ---------- Action-time movement bypass ----------
+// ---------- Move-while-acting (split: 普攻移动 / 技能移动) ----------
 //
-// Removes the "can't move while attacking / casting" lock by patching 5 sites:
+// SetAfterAction (0x7539E0) is the click-to-move queue. After the stun gate it
+// discriminates by SkillMode (this+0x370C): values {3,5,8} = a skill is in
+// progress, and the move is rejected at "gate 2" (loc_753A54). A normal attack /
+// combo runs with SkillMode==0 (CLocalUser__UpdateAttackAction resets it to 0),
+// so it FALLS THROUGH gate 2 to loc_753A80 and is rejected later by the generic
+// ready-factor / m_bCanMove / animation gates. Because the engine already routes
+// skill vs attack into two different reject paths, the split is independent with
+// NO leak between the two toggles:
 //
-//   SetAfterActionGate  @ 0x7539FE: 5-byte `E9 C1 02 00 00` overwrites the first
-//                                   `jle short loc_753A22` and unconditionally
-//                                   jumps to the success path at 0x753CC4. Skips
-//                                   every reject gate inside SetAfterAction.
-//   InstantCastStartup  @ 0x756331: 6-byte `E9 C1 00 00 00 90` overwrites
-//                                   `jbe loc_7563F7` and always jumps to the
-//                                   immediate-send branch. Skips the preTime
-//                                   mode=3 raise-hand/start-cast branch.
-//   TraceMoveGate1      @ 0x756FAA: flip `76 -> EB` so the per-frame stunTime
-//                                   check (+0x3468) is always skipped.
-//   TraceMoveOrChain    @ 0x756FCD: 5-byte `E9 19 01 00 00` jumps to
-//                                   TraceMove_PostGateChain (0x7570EB), skipping
-//                                   the long animation/skill ID OR-chain.
-//   TraceMoveGate2      @ 0x7570FD: flip `76 -> EB` so the +0x2BCC per-frame
-//                                   timer check is always skipped.
-inline constexpr size_t kActionMoveSetAfterActionGateSize = 5; // jle short -> jmp near
-inline constexpr size_t kActionMoveInstantCastStartupSize  = 6; // jbe near -> jmp near + nop
-inline constexpr size_t kActionMoveTraceMoveGate1Size     = 1; // jbe short -> jmp short
-inline constexpr size_t kActionMoveTraceMoveOrChainSize   = 5; // cmp imm32 -> jmp near
-inline constexpr size_t kActionMoveTraceMoveGate2Size     = 1; // jbe short -> jmp short
+//   SkillMoveGate  @ 0x753A54: skill-mode reject block, only reached when
+//                              370C∈{3,5,8}. A 5-byte `E9 rel32` redirects it to a
+//                              code cave (VirtualAlloc'd at runtime) that branches
+//                              on comboState (this+0x2BDC): ==0 (plain skill) jumps
+//                              to 0x753CC4 (success) so move-while-cast works; >0
+//                              runs the ORIGINAL reject. NOTE: a 连续技/combo runs in
+//                              attack-state (370C==0), so it goes through AttackMove
+//                              gate, NOT here — this cave's >0 branch is a near-dead
+//                              edge case. The actual anti-burst is at the shared
+//                              TraceMove recovery gates (see TraceMoveGate1/2 below),
+//                              not here. 0x2BDC is the combo encoding the HUD's
+//                              ComboNum indicator draws from (written only by the
+//                              combo subsystem, never by skill-cast).
+//   AttackMoveGate @ 0x753A80: the non-skill continue path (370C∉{3,5,8}). 5-byte
+//                              `E9 3F 02 00 00` = jmp 0x753CC4 (success) — lets a
+//                              queued move through for normal attack/combo (and
+//                              idle) ONLY.
+//
+// Both jump to the same success block (0x753CC4), which re-reads x/y from the ebp
+// frame, so jumping there from either site is frame-safe. The stun gate
+// (0x7539FE) must NOT jump to success wholesale (as the old combined ActionMove
+// did) — that skips gate 2 and leaks skill-move into the attack toggle. Instead
+// it is a SHARED site flipped to FALL THROUGH to gate 2 (jle -> jmp short, same
+// 0x22 disp), so a stunned move still runs the skill/attack discrimination and
+// stays leak-free (see StunGate below).
+//
+// Anti-burst lives in the shared TraceMove recovery gates, not the SetAfterAction
+// split above. A combo advances via 123.dll driving ExecuteComboSkill (0x97D200),
+// whose throttle is `+0x3468 <= 0` (per-cast recovery). TraceMove gates movement on
+// that same +0x3468 (and +0x2BCC); a blanket bypass of those gates let a forced
+// move cancel the recovery so the next cast fired immediately -> burst -> DC. That
+// bypass is shared by BOTH toggles, which is why both bursted. The fix is to make
+// the two TraceMove recovery gates comboState-conditional (see TraceMoveGate1/2).
+//
+// The 6 sites below are SHARED and refcounted (patch when either toggle is on,
+// restore when both off). The TraceMove/MoveSync/Status21 ones are execution-path
+// gates that only ever advance a move SetAfterAction already QUEUED; StunGate is
+// the SetAfterAction entry gate but only FALLS THROUGH to gate 2 (never to
+// success). Either way an un-queued move never executes and gate 2 still
+// discriminates, so sharing them does NOT leak.
+//   StunGate         @ 0x7539FE: flip `7E -> EB` (jle -> jmp short, keep 0x22 disp)
+//                                so a stunned click falls through to gate 2 instead
+//                                of rejecting — lets you queue a move while stunned
+//                                without skipping the skill/attack discrimination.
+//   TraceMoveGate1   @ 0x756FAA: comiss+jbe on the per-frame stunTime/recovery
+//                                (+0x3468). Redirected (9-byte E9 hook at 0x756FA3,
+//                                overwriting comiss+jbe) to a combo-gate cave: honor
+//                                the recovery while a combo chain is live
+//                                (comboState +0x2BDC > 0), bypass it otherwise. This
+//                                is what actually stops 123.dll's auto-combo from
+//                                bursting — a blanket `76->EB` here let movement
+//                                cancel the per-cast recovery and both 普攻/技能移动
+//                                flooded the server. See CLocalPlayer.cpp.
+//   TraceMoveOrChain @ 0x756FCD: 5-byte `E9 19 01 00 00` jmp 0x7570EB, skip the
+//                                animation/skill-ID OR-chain.
+//   TraceMoveGate2   @ 0x7570FD: comiss+jbe on the +0x2BCC per-frame timer. Same
+//                                9-byte combo-gate cave redirect (hook at 0x7570F6)
+//                                as TraceMoveGate1, so during a combo TraceMove
+//                                behaves exactly like vanilla (no forced move).
+//   MoveSyncGate     @ 0xB2DF81: flip `7F -> EB` on the m_bCanMove (+0x304) gate in
+//                                SendPlayerMoveSyncPacket — keeps the SERVER move-sync
+//                                packet flowing while m_bCanMove<=0 (else rubber-band).
+//                                Needed for snipingmode buff(426)/狙击姿态 and any &8
+//                                BitFlag stance that does --m_bCanMove on add.
+//   Status21Gate     @ 0x757135: flip `7E -> EB` on the inner status-21 (定身/移动锁,
+//                                set by snipingmode skill 357 / buff 426) gate in
+//                                TraceMove; else a queued click-move never advances.
+inline constexpr size_t kAttackMoveGateSize         = 5; // jmp near (replaces mov eax, g_pLocalUser)
+inline constexpr size_t kSkillMoveGateSize          = 5; // jmp near (replaces mov eax,[ebp-4]; mov ecx,..)
+inline constexpr size_t kSharedMoveStunGateSize     = 1; // jle short -> jmp short (fall through to gate 2)
+inline constexpr size_t kSharedMoveTraceGate1Size   = 9; // comiss+jbe -> E9 rel32 to combo-gate cave + 4 NOP
+inline constexpr size_t kSharedMoveTraceOrChainSize = 5; // cmp imm32 -> jmp near
+inline constexpr size_t kSharedMoveTraceGate2Size   = 9; // comiss+jbe -> E9 rel32 to combo-gate cave + 4 NOP
+inline constexpr size_t kSharedMoveSyncGateSize     = 1; // jg short  -> jmp short
+inline constexpr size_t kSharedMoveStatus21GateSize = 1; // jle short -> jmp short
 
-bool PatchActionMove();
-bool RestoreActionMove();
+bool PatchAttackMove();
+bool RestoreAttackMove();
+bool PatchSkillMove();
+bool RestoreSkillMove();
+
+// ---------- No-Shift player attack ----------
+//
+// WorldClick__DispatchTargetOrGround calls CLocalUser__CheckPkAttackEligible before
+// setting the player target and queuing SetAfterAction(action=8). The live 123.dll
+// replaces the DIK_LSHIFT read at 0x9586A4 with a VM-protected jump and, when Shift
+// is up, can leave the predicate before it reaches the visible branch at 0x9586AE.
+// Patch that hook entry with a direct jump to the original Shift-success block at
+// 0x9586CB. All map/PK/target gates before the input read and the level >= 30 gates
+// after the success block remain intact; no keyboard state is synthesized.
+inline constexpr size_t    kNoShiftAttackEntryPatchSize = 5;    // E9 rel32
+inline constexpr uintptr_t kNoShiftAttackAcceptOffset   = 0x27; // 0x9586CB - 0x9586A4
+
+bool PatchNoShiftAttack();
+bool RestoreNoShiftAttack();
+
+// ---------- Ignore crowd-control (眩晕/沉默 bypass) ----------
+//
+// 客户端在三个动作入口用 CUser__GetAbnormalStatusValue(uid, idx) 查异常状态来
+// 拦截操作。idx 18=眩晕(stun), 19=沉默(silence)。本补丁翻 4 个分支让这些 gate
+// 失效(服务端仍校验 — client bypass, server validates):
+//
+//   ItemStunGate     @ 0x9A4865: CLocalUser__OnUseItem 的唯一管制门。
+//                                `7E 05` (jle 用道具) -> `EB 05` (jmp): 眩晕也能吃药。
+//   CastStunGate     @ 0x9A6410: OnSkillShortcutKey 状态 18(眩晕) gate。
+//                                `7F 1A` (jg 退出) -> `90 90` (nop): 不再因眩晕退出,
+//                                落到沉默检查。
+//   CastSilenceGate  @ 0x9A642A: OnSkillShortcutKey 状态 19(沉默) gate。
+//                                `7E 05` (jle 继续) -> `EB 05` (jmp): 沉默也放行。
+//   CastStunTimeGate @ 0x9A646E: OnSkillShortcutKey 的 +0x3468 stunTime 浮点门
+//                                (眩晕另设的倒计时,沉默不置位)。`76 05` (jbe 继续)
+//                                -> `EB 05` (jmp): 眩晕计时未清零也放行。
+//
+// 只翻这 4 个 CC 相关分支 —— +0x5F88/IsDead/+0x2FAC/+0x3010 等门保持原样,死亡/
+// 未就绪等仍正常拦截。状态查询本身不动,UI 上的眩晕/沉默图标照常显示(更隐蔽)。
+inline constexpr size_t kIgnoreCCItemStunGateSize     = 1; // jle short -> jmp short
+inline constexpr size_t kIgnoreCCCastStunGateSize     = 2; // jg short  -> nop nop
+inline constexpr size_t kIgnoreCCCastSilenceGateSize  = 1; // jle short -> jmp short
+inline constexpr size_t kIgnoreCCCastStunTimeGateSize = 1; // jbe short -> jmp short
+
+bool PatchIgnoreCC();
+bool RestoreIgnoreCC();
 
 // ---------- Block level-up (CLocalPlayer__UpdateExp send-gate flip) ----------
 //
@@ -226,6 +332,53 @@ std::vector<NearbyPlayer> GetAroundPlayers(const std::string &localName,
 std::string LookupAroundPlayerNameById(uint32_t userId);
 bool LookupAroundPlayerById(uint32_t userId, NearbyPlayer &out);
 
+// ---------- Visit nearby street stalls (打开附近玩家的个人摆摊) ----------
+//
+// IDA 实证 2026-06-25 (unpackd_so3d.exe):点开别人摊位 = CG 411042
+// (CG_SendVisitStreetStall_411042 @ 0xB2B650)。摊主信息存在该 CUser 上(本地/远程
+// 同一 CUser 布局,见 CUser 构造 0x9F8310 与 OpenStreetStall_Type2 0x9BFE90):
+//   CUser+0x2DEC(11756) byte != 0  -> 该玩家正在摆个人摊(开摊置 1,收摊/构造清 0)
+//   CUser+0x2DED(11757) 32B 字符串 -> 店铺名(账号编码 Big5,与开摊 411040 的 32B 名同字段)
+//   CUser+0x2E14(11796) dword      -> 摊位类型(个人摊 0/2/3)
+//   CUser+0x70(112)     dword      -> userId(411042 包体首字段,= kUserSelfIdOffset)
+// 打开走 faithful 点击路径(sub_9941A0 @ 0x994693),不是裸发包,故不卡角色移动:
+//   client = NetBeginSend();
+//   CG_SendVisitStreetStall_411042(client, userId, stallType, 0);  // 写 [len28][411042][userId][16×0]
+//   GetUIContent(GetSingleton(), 28) 的 +0x38 写入 userId;  // 28=买摊窗口,记住被访摊主
+// 服务器随后回 511555/511589/511595 填充并弹出买摊窗口。
+inline constexpr uintptr_t kUserStallFlagOffset           = 11756; // 0x2DEC byte: 正在摆摊
+inline constexpr uintptr_t kUserStallNameOffset           = 11757; // 0x2DED 32B: 店铺名 (Big5)
+inline constexpr uintptr_t kUserStallTypeOffset           = 11796; // 0x2E14 dword: 摊位类型
+inline constexpr size_t    kUserStallNameMaxLen           = 32;
+inline constexpr int       kStallBuyContentId             = 28;    // GetUIContent(mgr, 28) = 买摊窗口
+inline constexpr uintptr_t kStallBuyContentOwnerIdOffset  = 0x38;  // content28+0x38 = 被访摊主 userId
+inline constexpr int       kProtocolVisitStreetStall      = 411042;
+inline constexpr int       kProtocolStreetStallWarp       = 411597; // CG_REQ_STREETSTALL_WARP {x,y}
+
+struct StallPlayer
+{
+    std::string name;      // 摊主角色名 (UTF-8)
+    std::string stallName; // 店铺名 (UTF-8)
+    uint32_t    userId   = 0;
+    uint32_t    stallType = 0;
+    float       distance = 0.0f;
+    float       x = 0, y = 0, z = 0;
+};
+
+// 走 EntityManager AOI 单链表,筛出正在摆个人摊的玩家(CUser+0x2DEC!=0),
+// 按距离升序返回 maxDistance 内的摊主。SEH 包裹,跨线程读安全。
+std::vector<StallPlayer> GetNearbyStallPlayers(float maxDistance);
+
+// 打开指定 userId 的个人摊位(faithful 点击路径,见上)。成功(发包成功)返回 true。
+// stallType 取摊主 CUser+0x2E14;调用方一般直接用 GetNearbyStallPlayers 给出的值。
+bool OpenStreetStall(uint32_t userId, uint32_t stallType);
+
+// 传送到地图格坐标 (x, y) —— CG 411597。复刻引擎街摊「传送到摊主」发包
+// (CStreetStallSearch::SendWarpToDealer @ 0x9CCA00):拼 [len16][411597][x][y]
+// 经最底层明文发送 Net__SendPacket_Plaintext 发出。x/y 是整数地图格坐标(非世界浮点
+// 坐标,后者是 float 且布局 X,Z,Y)。发包成功返回 true。
+bool WarpToCoordinate(int x, int y);
+
 // ---------- Drop-item iteration (auto-pickup) ----------
 //
 // Layout verified across LookupDropItemById, the DropItem allocator
@@ -262,12 +415,25 @@ struct DropItemInfo
     bool     canPick;
 };
 
+enum class DropItemLookupState : uint32_t
+{
+    Unavailable,
+    Missing,
+    Present,
+};
+
 // SEH-safe walk of CItemContainer's drop list. Returns drops within
 // `maxDistance` of the local player (or all drops if maxDistance <= 0),
 // sorted ascending by distance. Filters out canPick==0 entries by default
 // (controlled by includeUnpickable).
 std::vector<DropItemInfo> GetNearbyDropItems(float maxDistance,
-                                             bool  includeUnpickable = false);
+                                             bool  includeUnpickable = false,
+                                             bool *ready = nullptr);
+
+// Exact engine lookup by dropId. Missing is authoritative; Unavailable means
+// the container/function/local position could not be read and must not be
+// interpreted as a successful pickup.
+DropItemLookupState QueryDropItemById(uint32_t dropId, DropItemInfo &out);
 
 // Fires SendPickItemPacket(dropId) on the engine helper. SEH-wrapped because
 // engine state may transiently invalidate the container or the drop. Returns
@@ -453,13 +619,11 @@ inline constexpr uint32_t  kSkillMaxArrayLen  = 8192;
 //   +0x368          statTable (ptr)     — null for half-initialised entries
 //   +0x370          next (CCreature*)   — singly-linked list pointer
 //
-// kind LIVES INSIDE StatTable, NOT on CCreature itself:
-//   *(StatTable + 0xDC) = kind   (7 = NPC, 8 = pet, other = monster)
-// i.e.  *(_DWORD *)(*(_DWORD *)(cre + 0x368) + 0xDC). Verified against
-// Creature__MatchesTargetSpec @ 0x5FCE40 which is what AutoTarget uses for its
-// own kind filter. An earlier version of this header had `cre + 0xDC` and
-// silently broke NPC detection — cre+0xDC reads as 0 for every entry, so the
-// kind!=7/!=8 filters always passed (monsters worked by luck, NPCs never showed).
+// The creature `type` LIVES INSIDE StatTable, NOT on CCreature itself:
+//   *(StatTable + 0xDC) = type
+// i.e.  *(_DWORD *)(*(_DWORD *)(cre + 0x368) + 0xDC). Live table24 dumping
+// shows that this is an AI/behavior kind, not a complete monster-vs-object enum.
+// NPC/talkables use kind 3, while many combat kinds exist beyond kMonsterTypes.
 inline constexpr uintptr_t kCreaturePosXOffset      = 0x3C;
 inline constexpr uintptr_t kCreaturePosZOffset      = 0x40; // vertical
 inline constexpr uintptr_t kCreaturePosYOffset      = 0x44; // ground-plane Y
@@ -468,9 +632,16 @@ inline constexpr uintptr_t kCreatureQueuedXOffset   = 0x19C;
 inline constexpr uintptr_t kCreatureQueuedYOffset   = 0x1A0;
 inline constexpr uintptr_t kCreatureIdOffset        = 0x70;
 inline constexpr uintptr_t kMonsterLevelOffset      = 0xA0;
-// kind is at *(statTable + 0xDC), not cre+0xDC. Read via the StatTable indirection.
-inline constexpr uintptr_t kStatTableKindOffset     = 0xDC;
-// MonsterTblId (NPC vs monster data-key) at *(statTable + 236).
+// Stable monster.edt/table24 row index from the 0x114-byte stat-table entry.
+inline constexpr uintptr_t kStatTableIndexOffset    = 0x04;
+// type is at *(statTable + 0xDC), not cre+0xDC. Read via the StatTable indirection.
+inline constexpr uintptr_t kStatTableTypeOffset     = 0xDC;
+// Creature__MatchesTargetSpec reads this as a signed int and, with AutoHunt's
+// default exclude mask, rejects the row when the value is >0. Live table24 data
+// confirms that ordinary NPC/protected rows use positive values here.
+inline constexpr uintptr_t kStatTableAutoTargetExcludeOffset = 0xF0;
+// Legacy runtime data-key at statTable+0xEC. This is NOT the table24 row index
+// at +0x04 and must not be used for the BuffKeeper denylist.
 inline constexpr uintptr_t kStatTableMonsterTblIdOffset = 236;
 // Localized creature name at statTable+8, char[100], Big5 encoded, null-terminated.
 // Verified against MonsterTblEntry loader sub_B77EB0 which `memcpy_s_41(entry+8, 0x64, ...)`
@@ -478,8 +649,130 @@ inline constexpr uintptr_t kStatTableMonsterTblIdOffset = 236;
 // alive CCreature (NPC or monster) carries its display name here.
 inline constexpr uintptr_t kStatTableNameOffset     = 0x8;
 inline constexpr size_t    kStatTableNameMaxLen     = 100;
-inline constexpr uint32_t  kMonsterKindNpc          = 7;
-inline constexpr uint32_t  kMonsterKindPet          = 8;
+// Full/template HP lives on StatTable (int64 at statTable+0xA8), NOT on
+// CCreature. Verified in CMsg_OnCrtDamage @ 0x94F120: the engine's "event
+// monster back to full HP?" check compares the live curHP int64 at
+// creature+0x320 against *(int64*)(statTable+0xA8) via its lo/hi halves
+// (statTable+168 / +172). That value is the max HP loaded from the monster
+// template, so we surface it as maxHp. Best-effort; 0 when the entry is torn.
+inline constexpr uintptr_t kStatTableMaxHpOffset    = 0xA8;
+// Combat fields from the 0x114-byte MonsterStatTable layout. Live table24
+// records for gift boxes, treasure chests, trees, seals, eggs and other
+// non-combat objectives use 0/1 sentinels across attack/hit/miss. BuffKeeper
+// requires at least one real combat signal (>1) so those rows fail closed.
+inline constexpr uintptr_t kStatTableAttackOffset   = 0xBC;
+inline constexpr uintptr_t kStatTableHitRateOffset  = 0xC8;
+inline constexpr uintptr_t kStatTableMissRateOffset = 0xCC;
+// Creature type @ *(statTable + 0xDC). NPCs and teleport points are kind 3.
+// kMonsterTypes is retained only for legacy attack-selection consumers; it is
+// not complete enough for the buff-keeper's ordinary-enemy gate.
+inline constexpr uint32_t  kCreatureTypeTalkable    = 3;    // NPC / teleport / interactable
+inline constexpr uint32_t  kCreatureTypeTree        = 0xA;  // gatherable resource
+// Attackable-monster type values, empirical from the old cheat's IsMonster()
+// and live captures. Type 37 was confirmed on the Sage Tower Another BOSS.
+// Kept as a set so new live-confirmed monster types can be added explicitly.
+inline constexpr uint32_t  kMonsterTypes[]          = {0, 1, 37, 38, 60, 69, 71, 73};
+inline bool IsMonsterType(uint32_t type)
+{
+    for (uint32_t v : kMonsterTypes)
+        if (type == v)
+            return true;
+    return false;
+}
+
+// Confirmed non-ordinary rows which otherwise look combat-capable. These are
+// task components, a disguised NPC, or test/placeholder templates in the
+// current table24 dump. Keep this purpose-specific and fail closed for them.
+inline constexpr bool IsBuffGateExcludedTableIndex(uint32_t tableIndex)
+{
+    return tableIndex == 344 ||
+           (tableIndex >= 2150 && tableIndex <= 2155) || // quest target: 奧客的命根
+           (tableIndex >= 2159 && tableIndex <= 2161) || // quest target: 黛安娜之眼
+           (tableIndex >= 2165 && tableIndex <= 2167) || // quest target: 黛安娜之心
+           (tableIndex >= 2183 && tableIndex <= 2185) || // quest target: 石碑之火
+           (tableIndex >= 3235 && tableIndex <= 3237) || // AI test rows
+           (tableIndex >= 3629 && tableIndex <= 3631) || // disguised rental-office NPC
+           (tableIndex >= 6532 && tableIndex <= 6534) || // experience test monsters
+           (tableIndex >= 6665 && tableIndex <= 6670) || // generic test rows
+           (tableIndex >= 7411 && tableIndex <= 7413);   // DummyForDroptest
+}
+
+// Conservative, purpose-specific classification for BuffKeeper. The list is
+// derived from the current live table24 dump and intentionally includes only
+// kinds whose F0-eligible, combat-capable rows are ordinary monsters/BOSSes.
+// Mixed/objective kinds, sentinel-stat objects, unknown test kinds, NPCs and
+// resources fail closed. This does NOT drive attack target selection.
+inline constexpr bool IsBuffGateMonster(uint32_t tableIndex, uint32_t type,
+                                        int32_t autoTargetExclude,
+                                        uint32_t attack, uint32_t hitRate,
+                                        uint32_t missRate)
+{
+    if (autoTargetExclude > 0 || IsBuffGateExcludedTableIndex(tableIndex) ||
+        (attack <= 1 && hitRate <= 1 && missRate <= 1))
+        return false;
+
+    switch (type)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 11:
+    case 13:
+    case 15:
+    case 19:
+    case 21:
+    case 22:
+    case 26:
+    case 33:
+    case 37:
+    case 38:
+    case 39:
+    case 40:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 46:
+    case 47:
+    case 48:
+    case 49:
+    case 50:
+    case 56:
+    case 57:
+    case 59:
+    case 60:
+    case 61:
+    case 62:
+    case 63:
+    case 64:
+    case 65:
+    case 66:
+    case 67:
+    case 69:
+    case 70:
+    case 71:
+    case 72:
+    case 73:
+    case 75:
+    case 76:
+    case 77:
+    case 79:
+        return true;
+    default:
+        return false;
+    }
+}
+
+static_assert(IsBuffGateMonster(1, 0, 0, 11, 34, 2));
+static_assert(IsBuffGateMonster(6325, 37, 0, 100, 100, 100));
+static_assert(!IsBuffGateMonster(2150, 1, 0, 10, 480, 320)); // quest component
+static_assert(!IsBuffGateMonster(1, kCreatureTypeTalkable, 0, 100, 100, 100));
+static_assert(!IsBuffGateMonster(1, 23, 0, 100, 100, 100)); // mixed objective kind
+static_assert(!IsBuffGateMonster(1, 35, 0, 100, 100, 100)); // minigame targets
+static_assert(!IsBuffGateMonster(1, 68, 0, 100, 100, 100)); // BOSS components
+static_assert(!IsBuffGateMonster(4149, 0, 0, 1, 1, 1));    // gift box sentinel
+static_assert(!IsBuffGateMonster(5531, 51, 0, 100, 100, 100)); // bomb mechanic
+static_assert(!IsBuffGateMonster(6325, 37, 1, 100, 100, 100)); // native F0 exclusion
 inline constexpr uintptr_t kCreatureStateOffset     = 0x194;
 inline constexpr uint32_t  kCreatureStateDead       = 4;
 inline constexpr uintptr_t kCreatureHpOffset        = 0x320;
@@ -492,16 +785,16 @@ inline constexpr uintptr_t kCreatureMgrListHeadOffset = 0x0C;
 
 struct NearbyMonster
 {
-    uint32_t  monsterId;
-    uint32_t  kind;
-    uint32_t  level;
-    float     distance;
-    float     x, y, z;
-    int64_t   hp;
-    uintptr_t addr; // CCreature* at snapshot time; recheck state/hp before use
-                    // — engine can kill or despawn the entry between the
-                    // snapshot walk and the send, especially when other
-                    // packets in the same tick land the killing blow.
+    uint32_t    monsterId;
+    uint32_t    kind;
+    uint32_t    level;
+    float       distance;
+    float       x, y, z;
+    int64_t     hp;
+    uintptr_t   addr;  // CCreature* at snapshot time; recheck state/hp before use
+                       // — engine can kill or despawn the entry between the
+                       // snapshot walk and the send, especially when other
+                       // packets in the same tick land the killing blow.
 };
 
 // Snapshots SkillManager's learned-skill array. SEH-wrapped per element so a
@@ -616,6 +909,7 @@ inline constexpr uint32_t  kProfessionBlacksmith = 6;
 // returns `*(container + 0xEB8 + i*0x118 + 0)` = item+0x00 = bagId.
 // MUST be set to a valid bomb's bagId (item+0x00) before each skill-83 cast.
 inline constexpr uintptr_t kUserSelectedItemIdOffset = 0x3578;
+inline constexpr uintptr_t kUserSkillModeOffset       = 0x370C;
 
 // Skill IDs used by the bomber branch — both verified in IDA:
 //   83   = 投掷炸弹 (ThrowBomb). Variant 6 (item-skill) in SkillTable+0x110;
@@ -761,6 +1055,13 @@ int DropAllBombsInBag();
 // 不做 GetItemClass 过滤 (任何可丢的格子都能丢)。SEH-wrapped。
 bool DropBagItem(uint32_t wireBagId, uint32_t count);
 
+// 分解宝石 (CG_SendDismantleGem, proto 411571) —— 自动分解模块用。
+// wireBagId = BagItemInfo::bagId (item+0x00,已是 wire 格式 slotIndex+13,不要再 +13)。
+// count = 本次分解数量,调用方自行 clamp。复用 NetSendTriple(411571, wireBagId, count):
+// 游戏原生分解 (idb sub_71D300) 发的就是 [16][411571][(slot&0x7FFF)+13][count],字节完全一致。
+// SEH-wrapped。
+bool SendDecomposeGem(uint32_t wireBagId, uint32_t count);
+
 // ---------- Local player wallet (CLocalUser+0x3498, int64) ----------
 //
 // Verified in trade UI sub_71F9D0 @ 0x71F9D0: the "myMoney" field is rendered
@@ -779,6 +1080,9 @@ inline constexpr uintptr_t kHpXorKeyAddr      = 0xD67CE0;
 // resolved yet. SEH-wrapped — torn during scene transitions.
 int64_t GetLocalMoney();
 
+// Reads HP without conflating a valid zero (dead) with an unavailable local
+// player during login, map transitions, or client teardown.
+bool TryGetLocalHp(int64_t &hp);
 int64_t GetLocalHp();
 
 // CLocalUser identifier offset — g_pLocalUser + 112. Engine's UI_OnReviveDialogButton
@@ -813,9 +1117,7 @@ struct LoginCredentials
 // 读 localUser 里的明文账号/密码。SEH 安全。失败(localUser 未就绪/账号空)返回 false。
 bool GetLoginCredentials(LoginCredentials &out);
 
-// Returns true iff the local player is currently dead (HP <= 0). Cheap;
-// equivalent to GetLocalHp() <= 0. Web UI uses this to enable/disable the
-// Revive button.
+// Returns true iff HP was read successfully and is exactly zero.
 bool IsLocalDead();
 
 // ---------- Current map id ----------
@@ -957,13 +1259,12 @@ bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption, uint32_t sub = 1);
 //                              — this is the a4 we feed to SendDialogSelect.
 //   state[261] (+0x414 /1044)  in mode==1: ptr to current confirm-entry.
 //                              ((char*)entry + 4) = body text (Big5)
-//   state[263] (+0x418 /1052)  in mode==2: head of multi-choice linked list.
+//   state[263] (+0x41C /1052)  in mode==2: head of multi-choice linked list.
 //                              Each node:
 //                                +0x04 (char[]) Big5 option label
 //                                +0x188 (392) next ptr (0 = end)
 //                                +0x18C (396) target script tag
-//   state[264] (+0x41C /1056)  in mode==2 with a "wrapper" parent: single-
-//                              option ctrl head; same node layout.
+//   state[264] (+0x420 /1056)  confirm-wrapper list used while building mode 1.
 //
 // Walk order — UI labels for selectable rows in mode==2 are written into
 // "select%02d" UI controls starting at i=0; we send back option_index =
@@ -972,22 +1273,21 @@ bool SendDialogSelect(uint32_t npcId, uint32_t dialogOption, uint32_t sub = 1);
 inline constexpr uintptr_t kDialogStateModeOffset           = 0x3F4;
 inline constexpr uintptr_t kDialogStateMonsterTblIdOffset   = 0x008;
 inline constexpr uintptr_t kDialogStateNpcInteractIdOffset  = 0x3F8;
+inline constexpr uintptr_t kDialogStateSelectedScriptOffset = 0x410;
 inline constexpr uintptr_t kDialogStateConfirmEntryOffset   = 0x414;
-inline constexpr uintptr_t kDialogStateChoiceHeadOffset     = 0x418;
-inline constexpr uintptr_t kDialogStateWrapperHeadOffset    = 0x41C;
+inline constexpr uintptr_t kDialogStateChoiceHeadOffset     = 0x41C;
+inline constexpr uintptr_t kDialogStateWrapperHeadOffset    = 0x420;
 inline constexpr uintptr_t kDialogOptionTextOffset          = 0x004; // Big5
 inline constexpr uintptr_t kDialogOptionNextOffset          = 0x188; // 392
-inline constexpr uintptr_t kDialogOptionTagOffset           = 0x18C; // 396 — scriptEntry*
-// opt = *(*(option_node+396) + 12) + 332 — 真正发给服务器的 dialogOption。
-// 链路: option_node +396 -> scriptEntry, scriptEntry +12 -> scriptCtx,
-//        scriptCtx +332 -> opt (DWORD)。验证: OnNpcDialogOption_Quest 把
-//        v10 = *(*(dword_ED3DC4+12)+332) 作为 Net__SendDialogSelect 的 a3。
-//        抓包 opt=10216 来源即此。
-inline constexpr uintptr_t kDialogScriptEntryCtxOffset      = 0x00C; // scriptEntry +12
-inline constexpr uintptr_t kDialogScriptCtxOptOffset        = 0x14C; // scriptCtx  +332
-inline constexpr int       kDialogMaxOptions                = 64;    // safety
-inline constexpr size_t    kDialogOptionTextMaxLen          = 256;   // Big5 char[]
-inline constexpr size_t    kDialogBodyTextMaxLen            = 1024;  // Big5 char[]
+inline constexpr uintptr_t kDialogOptionTagOffset           = 0x18C; // scriptEntry*
+// Native CG_NPC_DIALOG_SELECT metadata:
+// option+396 -> scriptEntry, scriptEntry+12 -> scriptCtx.
+inline constexpr uintptr_t kDialogScriptEntryCtxOffset      = 0x00C;
+inline constexpr uintptr_t kDialogScriptCtxOptOffset        = 0x14C; // scriptCtx+332
+inline constexpr uintptr_t kDialogScriptCtxWarpKeyOffset    = 0x188; // scriptCtx+392
+inline constexpr int       kDialogMaxOptions                = 64;
+inline constexpr size_t    kDialogOptionTextMaxLen          = 256;
+inline constexpr size_t    kDialogBodyTextMaxLen            = 1024;
 
 enum class DialogMode : uint32_t
 {
@@ -998,17 +1298,52 @@ enum class DialogMode : uint32_t
 
 struct DialogOption
 {
-    uint32_t    index;     // 0-based; this is what we send back as `dialogOption`
-    std::string text;      // UTF-8, converted from Big5 (engine label)
-    uint32_t    tag;       // option+396 — engine-internal script branch tag (diagnostic)
-    uint32_t    opt;       // *(*(option+396)+12)+332 — 真正发给服务器的 opt 数值
-                           // (Net__SendDialogSelect 的 a3, 抓包里 opt=10216 即此)
-                           // 0 表示无 quest tag / 读取失败 — 多见于纯本地子菜单。
+    uint32_t    index;       // 0-based visible option index
+    std::string text;        // UTF-8, converted from Big5
+    uint32_t    tag;         // option+396, engine-internal scriptEntry*
+    uint32_t    opt;         // scriptCtx+332; 0 means no server opt on this step
+    uint32_t    warpKey;     // scriptCtx+392
+    uint32_t    warpTableId; // table 11 element+8; Another entry is 564
+};
+
+struct DialogAdvanceResult
+{
+    bool        ok;
+    bool        retryable;
+    bool        found;
+    bool        advanced;
+    uint32_t    optionIndex;
+    uint32_t    warpKey;
+    uint32_t    warpTableId;
+    std::string error;
+};
+
+struct NpcWheelDialogResult
+{
+    bool        ok;
+    bool        retryable;
+    bool        callbackInvoked;
+    bool        alreadyOpen;
+    uint32_t    foregroundUiId;
+    uint32_t    npcId;
+    std::string error;
+};
+
+struct NativeDropPickupResult
+{
+    bool        ok = false;
+    bool        alreadyGone = false;
+    bool        actionQueued = false;
+    bool        executionAmbiguous = false;
+    uint32_t    dropId = 0;
+    uint32_t    itemId = 0;
+    float       distance = 0.0f;
+    std::string error;
 };
 
 struct DialogSnapshot
 {
-    bool                       open;             // mode != 0
+    bool                       open;             // foreground UI 10 and mode != 0
     DialogMode                 mode;
     uint32_t                   npcInteractId;    // state+1016
     uint32_t                   monsterTblId;     // state+8
@@ -1018,23 +1353,59 @@ struct DialogSnapshot
     std::vector<DialogOption>  options;          // [] in Closed mode
 };
 
-// Reads g_NpcDialogState snapshot. SEH-wrapped; returns {open=false} on any
-// read failure (state pointer null, layout torn, etc).
+// Reads g_NpcDialogState snapshot. SEH-wrapped; returns {open=false} unless the
+// ordinary NPC dialog is the foreground UI or when any state read fails.
 DialogSnapshot GetDialogSnapshot();
 
-// Sends `dialogOption` THROUGH THE ENGINE'S OWN CLICK PATH so client UI state
-// stays in sync. Directly calling Net__SendDialogSelect bypasses local state
-// updates (state+1044 stays on the old option, sub-menu rebuild fails). What
-// this does instead:
-//   1) Walks the option linked list (state+1052 / state+1056) to the nth node
-//   2) Writes state+1044 = that node (mimics "cursor on this option")
-//   3) Calls Npc__ConfirmDialogOptionLocal — engine writes branch tag to
-//      g_DialogOptionPendingResult, and either descends into a sub-menu
-//      locally OR signals "ready to send"
-//   4) Calls OnNpcDialogOption_Quest — sends 411026 (when there's a tag) and
-//      cleans up g_NpcDialogState (clears highlight sprite, etc.)
-// Returns false only on pattern-resolve failure or torn state.
+// Installs the two native UI hooks used by broker-driven NPC interaction:
+// GameLoop is the game thread rendezvous for the radial interaction wheel, and
+// CUIManager__UpdateAutoQuestDialog is intercepted for exactly one requested
+// Next/choice click so the surrounding GameLoop keeps its normal validation and
+// CG_NPC_DIALOG_SELECT path. Call after PatternResolver stage 2 and before the
+// RemoteControl pipe starts accepting commands.
+bool InstallNativeUiBridge();
+void StopNativeUiBridge();
+bool UninstallNativeUiBridge();
+void RequestNativeUiBridgeStopNoWait();
+bool IsNativeUiBridgeReady();
+bool IsNativeDropPickupReady();
+
+// Mirrors the real world-drop click on GameLoop: select g_TargetDropItemId,
+// retain intent=4, then queue SetAfterAction(x,y,4,0). The engine itself walks
+// and sends the pickup packet at range. Callers must confirm exact dropId
+// disappearance; actionQueued only reports SetAfterAction's immediate result.
+NativeDropPickupResult SelectDropForPickupOnGameThread(
+    uint32_t dropId, uint32_t expectedItemId, uint32_t expectedMapId,
+    float maxDistance);
+
+// The special five-button interaction wheel used by 越過次元的修道士 is UI 88.
+// This invokes its real `exchange_ok` (對話) callback once on GameLoop after
+// revalidating the dynamic creature id and wheel target. The callback itself
+// transitions to ordinary NPC dialog UI 10.
+NpcWheelDialogResult OpenNpcDialogFromInteractionWheel(uint32_t npcId);
+
+// Sends `dialogOption` through the same per-mode callback used by the real UI.
+// Mode 1 calls Npc__ConfirmDialogPage; mode 2 calls Npc__ChooseDialogOption.
+// The callback is injected from CUIManager__UpdateAutoQuestDialog on GameLoop,
+// so its actual return value and pending script pointer continue through the
+// game's own validation/send/cleanup code. No direct 411026 is emitted here.
 bool SelectDialogOption(uint32_t dialogOption);
+
+// Advances exactly one local dialog step toward targetOpt. Confirm mode uses
+// the engine's current state+0x414 entry; Choice mode recursively selects the
+// unique visible branch whose script subtree contains targetOpt. It never
+// sends a non-target server opt. When targetOpt is visible it returns found
+// without clicking it.
+DialogAdvanceResult AdvanceDialogTowardOpt(uint32_t npcId, uint32_t targetOpt,
+                                           bool allowAdvance = true);
+
+// Final critical transaction used by dungeonEntry. Revalidates npc/opt/warp at
+// the target choice, preserves the engine's retained pending script while it
+// drains confirm-only child pages, and succeeds only after the surrounding
+// GameLoop has emitted the exact npc/opt/sub packet. It never chooses a child
+// branch or permits a different positive opt.
+bool SelectDialogOptionChecked(uint32_t npcId, uint32_t targetOpt,
+                               uint32_t dialogOption, uint32_t expectedWarpTableId);
 
 // Convenience for mode==1 single-confirm dialogs — same as
 // SelectDialogOption(0) because the engine pre-points state+1044 at the
@@ -1277,6 +1648,49 @@ bool WashSpring(uint32_t equipSlotIndex, int springType, std::string *errOut = n
 // 未知 id 返回空串。
 std::string GetSpringAttrName(uint32_t attrId, bool *isPercentOut = nullptr);
 
+// ---------- 技能宝石合成 (Compose / 三合一) ----------
+//
+// 合成界面 = unpackd_so3d Compose_* 系列(IDA 已命名)。三合一规则:3 个同等级宝石产
+// 出 1 个高一级宝石(N→G→DG→XG→SG)。
+//
+// 发包:proto 411606 (0x647D6),20 字节帧 {u32 len=20, u32 411606, w0, w1, w2}。每个
+//   wi = 背包 slotIndex(0..191) + 13(同丢弃/用品的 wire 槽编码)。三个槽可以是同一堆叠
+//   (抓包实测 9F 9F 9F),也可以是 3 个不同 itemId 的同等级宝石(引擎 Compose_AutoFillByGrade
+//   自身就跨 itemId 同级混合)。走 Net__SendPacket20B_3DW_NoTrack(0xB2C810),无 dialog
+//   状态副作用 —— 不要用 NetSendDialogSelect(它有 client+133 dialog 闸 + 状态追踪)。
+//
+// 等级识别(引擎表驱动,不写死 itemId):
+//   宝石判定: itemTable(=*(item+0x20)) 的 +0x110(subtype) ∈ {72,73,90} (Compose_IsSkillGem)。
+//   等级键:   gradeKey = GetTableElem(55, *(itemTable+0x454))[+0x14];不可再合成(顶级)返回 4。
+//   同 gradeKey 的宝石可互相凑 3 合 1(即使 itemId 不同)—— 引擎自身的分组依据。
+inline constexpr int       kProtocolCompose      = 411606; // 0x647D6
+inline constexpr uint32_t  kComposeWireSlotBase  = 13;     // wire = slotIndex + 13
+inline constexpr uintptr_t kItemRecipeFieldOffset = 0x454; // itemTable+0x454: table55 索引
+inline constexpr int       kSealTableTypeGemGrade = 55;    // GetTableElem(55, recipeId)
+inline constexpr uintptr_t kGemGradeTableElemOffset = 0x14; // elem+0x14 = gradeKey
+inline constexpr int       kComposeNoGrade       = 4;      // gradeKey==4: 顶级/不可合成
+
+// 背包里一类(同 gradeKey)可合成宝石的聚合视图。slotIndices 是该组所有宝石所在的
+// 背包 arrayIndex 列表(按出现顺序;同一可堆叠槽会按其 count 展开成多份,合成按"件"计)。
+struct ComposeGemGroup
+{
+    uint32_t                gradeKey;     // GetTableElem(55,...) 出的等级键(同键可混合)
+    uint32_t                sampleItemId; // 该组第一个宝石的 itemId(展示用)
+    std::string             sampleName;   // 该组第一个宝石的 UTF-8 名(含 (N)/(G)... 标记)
+    uint32_t                totalCount;   // 该组宝石总件数(跨槽求和)
+    std::vector<uint32_t>   wireSlots;    // 每"件"一个 wire 槽(slotIndex+13);len==totalCount
+};
+
+// 扫整背包(192 格)聚合出所有"可合成"(gradeKey!=4)的技能宝石组。SEH 安全。每槽按
+// count 展开(可堆叠宝石一槽多件)。totalCount<3 的组也返回(让上层显示),由调用方决定
+// 是否够合。
+std::vector<ComposeGemGroup> ListComposeGemGroups();
+
+// 直接发一次三合一:body=[slotA+13, slotB+13, slotC+13]。三个 slot 是背包 arrayIndex
+// (0..191);可以全相同(同堆叠)或不同(同等级混合)。只负责发包,不等回包、不校验
+// 数量(由上层 broker 在两次合成之间重读背包确认)。资源未解析/SEH 返回 false。
+bool ComposeSendRaw(uint32_t slotA, uint32_t slotB, uint32_t slotC, std::string *errOut = nullptr);
+
 // ---------- Active buffs (BuffHelper) ----------
 //
 // All buffs are owned by a single engine singleton, BuffHelper (g_BuffHelper @
@@ -1486,6 +1900,70 @@ struct PartySnapshot
 // Returns inParty=false / empty members when solo.
 PartySnapshot GetPartyMembers(bool includeBuffs = true);
 
+// ---------- 组队列表浏览 / 自动组队 (Party board, CMessenger op 0x44xx) ----------
+//
+// IDA 实证 2026-06-23 (unpackd_so3d.exe / shadowdance):点开「组队搜索」窗口会发两包,
+// 服务端回流整页队伍列表,填进 CUIManager::GetUIContent(mgr, 17) 那个 party-board content。
+//   开列表: CMessenger_SendOpenPartyList(g_pMessenger)  -> op 0x4400, wire 06 00 00 44 00 00
+//   取某页: CMessenger_SendRequestPartyListPage(g_pMessenger, page) -> op 0x4402, +<page:u16>
+//   开窗:  CUIManager::BeginContent(mgr, 17, renderer) —— 走本地 UI call(内部调
+//          PartyWindow_Open 建本地 content 并发 0x4402(page1)),不裸发包,不卡移动。
+//   加入:  CMessenger_SendJoinPartyById(partyId) -> op 0x4413, body {u32 2, u32 partyId}
+//   关窗:  UIContentMarkClose(content) + CUIManager::CloseActiveContent(mgr, renderer)
+//
+// content(=GetUIContent(17))行布局,每页 8 行,stride 0x40,行 i 基址 = content+0x38+i*0x40:
+//   +0x38(56) u32 partyId  +0x3C(60) u16 distribution  +0x3E(62) u16 gender
+//   +0x40(64) u16 curMembers  +0x42(66) u16 maxMembers  +0x44(68) u16 mapId
+//   +0x46(70) char partyName[33] (Big5)  +0x67(103) char leaderName[17] (Big5, 队长/创建人)
+// content 翻页字段: +0x346(838) u16 curPage, +0x348(840) u16 maxPage。partyId==0 = 空行。
+// distribution 取值待实测(疑似 0/1/2 = 自由/平均/随机),先原样透出由 web 解释。
+inline constexpr int       kPartyBoardContentEnum   = 17;
+inline constexpr size_t    kPartyBoardRowsPerPage   = 8;
+inline constexpr uintptr_t kPartyBoardRowBase       = 0x38; // content+56
+inline constexpr uintptr_t kPartyBoardRowStride     = 0x40; // 64
+inline constexpr uintptr_t kPartyBoardOffPartyId    = 0x00; // +56
+inline constexpr uintptr_t kPartyBoardOffDistrib    = 0x04; // +60 u16
+inline constexpr uintptr_t kPartyBoardOffCurMembers = 0x08; // +64 u16
+inline constexpr uintptr_t kPartyBoardOffMaxMembers = 0x0A; // +66 u16
+inline constexpr uintptr_t kPartyBoardOffMapId      = 0x0C; // +68 u16
+inline constexpr uintptr_t kPartyBoardOffName       = 0x0E; // +70 char[33]
+inline constexpr size_t    kPartyBoardNameLen       = 33;
+inline constexpr uintptr_t kPartyBoardOffLeader     = 0x2F; // +103 char[17]
+inline constexpr size_t    kPartyBoardLeaderLen     = 17;
+inline constexpr uintptr_t kPartyBoardOffCurPage    = 0x346; // content+838 u16
+inline constexpr uintptr_t kPartyBoardOffMaxPage    = 0x348; // content+840 u16
+
+struct PartyBoardEntry
+{
+    uint32_t    partyId      = 0;
+    uint16_t    distribution = 0; // 分配规则(原始值,web 翻译)
+    uint16_t    curMembers   = 0;
+    uint16_t    maxMembers   = 0;
+    uint16_t    mapId        = 0;
+    std::string partyName;        // UTF-8
+    std::string leaderName;       // UTF-8 (创建人/队长)
+};
+
+struct PartyBoardSnapshot
+{
+    bool                         ok      = false; // content 取到且已回流
+    int                          curPage = 0;
+    int                          maxPage = 0;
+    std::vector<PartyBoardEntry> entries;
+};
+
+// 打开组队列表(BeginContent 17 本地开窗 + 发 0x4400/0x4402),轮询等服务端回流,把
+// 所有页抓全合并返回,然后关窗。命令线程同步执行(内部有 ~秒级轮询)。失败 ok=false。
+PartyBoardSnapshot FetchPartyBoard();
+
+// 直接按 partyId 发加入包(op 0x4413)。只发包不开窗。
+bool SendJoinPartyById(uint32_t partyId);
+
+// 抓列表 -> 找 leaderName(创建人,UTF-8,精确匹配)对应队伍 -> 发加入包。命中并发包
+// 返回 true,outJoinedId 填命中的 partyId;未命中 false + outErr 说明。
+bool JoinPartyByLeaderName(const std::string &leaderNameUtf8, uint32_t *outJoinedId,
+                           std::string *outErr);
+
 // ---------- MailBox::SendItemMail (proto 411524, op=1) ----------
 //
 // Engine helper at 0x7F4F80 — __stdcall(int op, const char *recipient,
@@ -1520,10 +1998,11 @@ bool SendItemMail(const char *recipient, uint32_t itemBagId,
 // targetId: 0 for pure walk; creature/user id when action=3.
 //
 // Gates: SetAfterAction runs through ~7 reject conditions (m_bCanMove,
-// stunTime, animation lock, skill mode, …). The ActionMoveModule patch
-// @ 0x7539FE skips them all — when that module is ON, MoveTo works in any
-// state. Without the patch, idle/walking states still succeed; mid-cast may
-// reject. UI tells the user; this layer doesn't auto-enable the patch.
+// stunTime, animation lock, skill mode, …). 普攻移动 bypasses the non-skill
+// path (370C==0 @ 0x753A80) and 技能移动 the skill path (370C∈{3,5,8} @
+// 0x753A54) — with both ON, MoveTo works in any action state. Without them,
+// idle/walking states still succeed; mid-attack/cast may reject. UI tells the
+// user; this layer doesn't auto-enable the patch.
 //
 // Returns true if the engine accepted the request (SetAfterAction returned
 // non-zero / fell through). SEH-wrapped to survive torn g_pLocalUser during
@@ -1535,47 +2014,67 @@ bool SendItemMail(const char *recipient, uint32_t itemBagId,
 // run engine code from non-main threads without issue.
 bool MoveTo(float worldX, float worldY, int action = 1, uint32_t targetId = 0);
 
+// ---------- Teleport (instant warp to a ground point) ----------
+//
+// SetAfterAction's success path (0x753CC4) writes the move target into these
+// four fields and arms the per-frame mover with the pending flag:
+//   +0x32F0 targetX (int)   +0x32F4 targetY (int)
+//   +0x32FC action          +0x32F8 targetId
+//   +0x2BC8 pending = 1  -> TraceMove (0x756F10) interpolates visible pos toward target
+// Teleport short-circuits the interpolation: it writes the VISIBLE position
+// (+0x3C worldX / +0x44 worldY) straight to the destination, mirrors the target
+// fields to the same point, clears the pending flag so TraceMove treats the move
+// as already complete, then fires SendPlayerMoveSyncPacket(411000) to push the
+// absolute coords to the server. Movement is ground-plane only — Z (+0x40) is
+// left for the engine to re-derive from terrain on the next frame.
+inline constexpr uintptr_t kAfterActionTargetXOffset = 0x32F0; // int
+inline constexpr uintptr_t kAfterActionTargetYOffset = 0x32F4; // int
+inline constexpr uintptr_t kAfterActionPendingOffset = 0x2BC8; // byte (1 = move queued)
+
+// Instantly relocates the local player to (worldX, worldY) and syncs the new
+// position to the server. Returns true if the position was written (the sync
+// packet is best-effort — the server still validates the jump distance, so an
+// over-long teleport may be rejected/rubber-banded server-side). SEH-wrapped.
+// MUST be called on the game's main / D3D9-present thread.
+bool Teleport(float worldX, float worldY);
+
+
 // ---------- Walk-and-talk-to-NPC ----------
 //
-// "Click a creature and let the game decide what to do" — the same behavior as
-// the user clicking the in-world creature with the mouse, which is what
-// `OnTargetCreatureClick_TalkOrAttack` @ 0x9584A0 does, but ALWAYS treating the
-// target as a fight target. For NPCs, that path is wrong: it sends an attack
-// packet and the server despawns/refuses the NPC.
-//
-// The correct two-path implementation, drawn from the engine's per-frame click
-// dispatcher at sub_9EA090 + Npc__OpenDialogByCreatureRef @ 0xB3A3F0:
-//
-//   - NPC discriminator: call `Npc__LoadDialogScript(state, monsterTblId)`.
-//     Nonzero return means "this creature has a dialog script" — i.e. it's a
-//     real NPC. This is the engine's OWN test (used in 4+ places) — much more
-//     reliable than the >=50000 monsterTblId heuristic which doesn't hold up
-//     across maps (you have NPCs at 1080, 1781, etc).
-//
-//   - If NPC:
-//       1) MoveTo(npcX, npcY, action=1) — walk close (need to be in range)
-//       2) g_TargetCreatureId = npcId
-//       3) Npc__OpenDialogByCreatureRef(mgr, &g_TargetCreatureId,
-//                                       g_NpcDialogState, dialogUITable, p1, p2)
-//      The engine itself only opens the dialog AFTER arrival in its sub_9EA090
-//      path, but we cheat by calling the opener directly — for in-range NPCs
-//      this works immediately; for too-far NPCs the dialog still opens but the
-//      server will reject any subsequent action until in range. Acceptable.
-//
-//   - If monster:
-//       Mirrors OnTargetCreatureClick_TalkOrAttack: write g_TargetCreatureId,
-//       g_AfterActionIntent=3, then SetAfterAction(action=3, target=0). The
-//       engine walks the player to the monster and starts attacking.
+// "Click a creature and let the game decide what to do" — mirrors
+// WorldClick__DispatchTargetOrGround @ 0x9941A0: write g_TargetCreatureId and
+// queue action=5 for a talkable NPC or action=3 for a combat creature. The game
+// loop opens the NPC dialog or starts attacking after interaction distance is
+// reached. Never call lower-level Npc__OpenDialogByCreatureRef from a
+// broker/worker thread.
 //
 // MoveTo() vs TalkOrAttack()
 // - MoveTo: pure "go to (x,y)", no target reference
-// - TalkOrAttack: takes a creatureId; auto-dispatches NPC dialog vs combat.
+// - TalkOrAttack: takes a creatureId; the game loop dispatches dialog vs combat.
 //
 // Returns true if the engine accepted the request (the appropriate path was
 // dispatched). SEH-wrapped to survive torn g_pLocalUser/creature pointer.
 //
 // MUST be called on the game's main / D3D9-present thread, like MoveTo.
 bool TalkOrAttack(uint32_t creatureId);
+
+// Broker-safe wrapper: schedules TalkOrAttack on the real GameLoop thread and
+// waits for that frame to finish. Use this from RemoteControl handlers.
+bool TalkOrAttackOnGameThread(uint32_t creatureId, std::string *error = nullptr);
+
+struct MonsterTargetSelectionResult
+{
+    uint32_t creatureId = 0;
+    uint32_t creatureType = 0;
+    int64_t hp = 0;
+    bool targetSelected = false;
+    bool attackQueued = false;
+};
+
+// Monster-only combat path used by workflow combat nodes. It selects the
+// creature and queues action=3 without routing through NPC interaction logic.
+bool SelectMonsterForAttack(uint32_t creatureId, MonsterTargetSelectionResult &result,
+                            std::string *error = nullptr);
 
 // ---------- City teleport ("/狮子城" chat command, proto 411076) ----------
 //
@@ -1609,25 +2108,24 @@ int  ResolveTeleportDestId(const char *cityNameUtf8);
 bool SendTeleportToDest(int destId);
 bool TeleportByCityName(const char *cityNameUtf8);
 
-// Snapshot wrapper around the engine's CreatureMgr list, filtered to entries
-// the user could "talk to" — kind != Pet, alive, has a creature id. Includes
-// both NPCs AND monsters because the engine doesn't distinguish them
-// structurally (both kind==3 in this build) — the discriminator is the
-// data-table id at statTable+236 (MonsterTblId). NPC templates are usually in
-// [50000, 99999] in this game's data files; UI uses that range to label/filter.
-// Sorted ascending by distance.
+// Snapshot wrapper around the engine's CreatureMgr list — every alive entry
+// with a creature id (NPCs, monsters, trees, teleports). `isNpc` drives the
+// talk-vs-attack affordance; legacy `attackable` remains the existing attack
+// whitelist verdict. `buffGateMonster` is the separate conservative ordinary-
+// enemy verdict used only by BuffKeeper. Sorted by distance.
 struct NearbyNpc
 {
     uint32_t    creatureId;
-    uint32_t    kind;         // 0=special, 3=NPC OR monster (see hasDialog), 7/8=pet (filtered)
-    uint32_t    monsterTblId; // statTable+236 — data-table row id (template). Used as the
-                              // key into Npc__LoadDialogScript to determine NPC vs monster.
-    bool        hasDialog;    // true iff engine's Npc__LoadDialogScript returns nonzero
-                              // for this template. THE canonical NPC discriminator.
+    uint32_t    kind;         // raw AI/behavior kind @ statTable+0xDC
+    uint32_t    monsterTblId; // legacy statTable+0xEC data-key, for UI/debug only
+    bool        isNpc;        // type==3 (Talkable) — talk affordance (对话 vs 攻击)
+    bool        attackable;   // legacy IsMonsterType(type), kept for existing attack consumers
+    bool        buffGateMonster; // conservative ordinary enemy for BuffKeeper only
     uint32_t    level;
     float       distance;
     float       x, y, z;
     int64_t     hp;
+    int64_t     maxHp;        // full/template HP from statTable+0xA8; 0 if unread (many NPCs).
     std::string name;         // UTF-8, converted from statTable+8 (Big5). Empty on read failure.
     uintptr_t   addr;         // CCreature*, for diagnostics only
 };
@@ -1659,6 +2157,65 @@ bool IsTileWalkable(int tileX, int tileY);
 bool RaycastFurthestWalkable(int sx, int sy, int dx, int dy,
                              int &outX, int &outY);
 
+// ---------- Grid A* path walker (自写网格 A*, DLL worker 线程) ----------
+//
+// 背景:引擎原生点击移动(OnPlayerMoveClick @ 0x871D10 -> SetAfterAction @
+// 0x7539E0 -> TraceMove @ 0x756F10)只存「单个」目标 +0x32F0/+0x32F4,pending
+// +0x2BC8=1。TraceMove 每 tile 用 CalcDirToAfterActionTarget(@0x748E70,纯直线
+// 算 8 方向,无绕障)朝那个固定目标推进一格,撞到第一个阻挡 tile 就清 pending 停
+// 下。所以一次喂一个远目标,人常常走两步卡墙不动 —— 这正是「自动寻路只 call 一次
+// 远坐标就没用」的根因。
+//
+// PathWalker 在 DLL 内起一条 worker 线程,自己在碰撞表(Map__IsBlocked @ 0xA97080,
+// 经 TileBlocked 读)上跑网格 A* 算出绕障路径,不依赖引擎 navmesh:
+//   1) PathPlanGrid:8 邻域 A*,octile 启发,拒绝对角穿墙角。先在起点/终点外扩
+//      48 格的 bbox 内搜索；找不到时自动扩到 96、192，最后在 maxCells 允许时
+//      搜全图。流程只给最终目标，不需要为迷宫手填途经点。
+//   2) PathSmooth:对 A* 折线做 string-pull(用 RaycastFurthestWalkable 直线可达性
+//      合并),并把每段限制在 24 tile 内；这些中间点由算法生成,流程不用手填。
+//   3) 逐 waypoint MoveTo + 轮询。SetAfterAction 返回 0 只按「动作闸暂忙」退避
+//      重试,不触发 A*；只有命令已受理但持续没有位移才算路线段失败。
+//   4) 真路线段失败时惩罚本次失败 tile 并在预算允许时搜全图,自动选择另一条路；
+//      30 秒内任意 tile 位移都会刷新 watchdog,不会再靠累计 replan 次数误判失败。
+//
+// 这是真的绕障 A*,凸障碍、U 型凹墙和需要大回环的迷宫都能绕；只有全图碰撞网格
+// 确认真不可达,或整图超过安全预算时才放弃。
+//
+// 线程:worker 调 MoveTo/GetLocalPosition/读碰撞表,全部 SEH 包过,和现有 moveTo 命令
+// 一样跑在非主线程,issue 速率很温和(每段秒级)。StartPathTo 会先停掉上一条路径再起
+// 新的。DLL 卸载路径必须调 PathWalkerShutdown() 把 worker join 掉,否则卸载时
+// worker 还在跑引擎代码会崩。
+enum class PathState
+{
+    Idle,
+    Walking,
+    Arrived,
+    Failed
+};
+
+struct PathProgress
+{
+    PathState   state;
+    float       targetX, targetY; // 最终目标(固定)
+    float       curX, curY;       // 最近一次读到的玩家坐标
+    int         segments;         // 已发出的中途段数
+    std::string error;            // Failed 时的原因(UTF-8)
+};
+
+// 启动寻路走到 (worldX, worldY)。action/targetId 只在「最后一段」生效(action=3 +
+// targetId 用于走到后接战;中途段一律 action=1 纯走)。会先取消上一条路径。返回
+// false 仅当 g_pLocalUser 未就绪 / 起点 tile 不可走(切图未就绪)。
+bool StartPathTo(float worldX, float worldY, int action = 1, uint32_t targetId = 0);
+
+// 取消当前寻路(置 stop 并 join worker)。幂等;无路径在跑时是空操作。
+void StopPath();
+
+// 读当前寻路进度快照(mutex 保护)。
+PathProgress GetPathProgress();
+
+// DLL 退出路径调用:停 worker 并 join。幂等。
+void PathWalkerShutdown();
+
 // 读 g_TargetCreatureId — 当前选中的怪物 / NPC ID。0 表示未选,-1 在引擎里也
 // 偶尔被写入表示 "无目标",用 0 等价处理。
 uint32_t GetTargetCreatureId();
@@ -1669,7 +2226,7 @@ struct CreatureSnapshot
 {
     uintptr_t addr;
     uint32_t  id;
-    uint32_t  kind;       // statTable+0xDC. 7=NPC, 8=pet, 其他=monster
+    uint32_t  kind;       // raw statTable+0xDC type; 3=NPC, kMonsterTypes=monster
     int64_t   hp;
     float     x, y, z;
 };

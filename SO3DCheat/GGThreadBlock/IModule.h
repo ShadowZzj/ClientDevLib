@@ -6,6 +6,18 @@
 namespace GGTB
 {
 
+// 右侧标签页归属。Common=常用(不破坏平衡的工具),Teleport=传送(回城/瞬移类),
+// OP=变态(破坏平衡的作弊),PK=对战(暂空),Monster=怪物(只读内存的周围怪物列表)。
+// 默认 Common —— 新模块默认进常用,不会误塞进变态页。
+enum class Tab
+{
+    Common,
+    Teleport,
+    OP,
+    PK,
+    Monster,
+};
+
 class IModule
 {
   public:
@@ -17,6 +29,16 @@ class IModule
     virtual void OnShutdown() {}
     virtual void OnResume() {}
     virtual bool CanAutoPause() const { return true; }
+
+    // 该模块画在哪个标签页。RenderInHeader() 的模块不进任何标签页,而是常驻在
+    // 窗口顶部状态区(如 StatusModule)。
+    virtual Tab  GetTab() const { return Tab::Common; }
+    virtual bool RenderInHeader() const { return false; }
+
+    // 纯单 checkbox 的模块返回 true:Setting 会把它们横向流式排到标签页顶部(一行
+    // 塞多个),不再每个独占一列。契约 —— compact 模块的 OnRender 必须只画"一行"
+    // (一个 checkbox),说明文字放进 hover tooltip,否则流式换行会算错宽度。
+    virtual bool IsCompact() const { return false; }
 
     const std::string &GetName() const { return name_; }
     bool IsEnabled() const { return enabled_; }

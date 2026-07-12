@@ -1,0 +1,818 @@
+2026-06-30 18:56:43.247 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 18:56:43.248 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 18:56:43.248 | [client] account='baligei6' character='baligei6'
+2026-06-30 18:56:43.248 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 19:00:18.420 | [net] connected 127.2.57.2:10002
+2026-06-30 19:00:18.594 | [debug][recv:handshake] len=12 proto=4243152988 key=5
+2026-06-30 19:00:18.594 | [debug][recv:handshake] raw=0c 00 00 00 5c 60 e9 fc 82 95 4e 06
+2026-06-30 19:00:18.594 | [debug][recv:handshake] dec=0c 00 00 00 5c 60 e9 fc 82 95 4e 06
+2026-06-30 19:00:18.594 | [debug][recv:handshake] ascii=....\`....N.
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=0 proto=3654107932 firstBody=0x236AB6C2 body=c2 b6 6a 23
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=1 proto=3670819967 firstBody=0x206BB1A1 body=a1 b1 6b 20
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=2 proto=3603907960 firstBody=0x2C68B0A6 body=a6 b0 68 2c
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=3 proto=3619899001 firstBody=0x2D64B3A7 body=a7 b3 64 2d
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=4 proto=3720497786 firstBody=0x2765BFA4 body=a4 bf 65 27
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=5 proto=3167243126 firstBody=0x466FBEA8 body=a8 be 6f 46
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=6 proto=3752411511 firstBody=0x250EB4A9 body=a9 b4 0e 25
+2026-06-30 19:00:18.594 | [debug][recv:handshake] xor-candidate key=7 proto=3637125245 firstBody=0x226DD5A3 body=a3 d5 6d 22
+2026-06-30 19:00:18.594 | [debug][recv:handshake] no XOR key produced a known SO3D proto; the SO3D client dispatcher would not handle this as a normal game packet
+2026-06-30 19:00:18.594 | [debug][recv:handshake] des-dec=38 38 03 00 3b bd 9d 1a
+2026-06-30 19:00:18.594 | [10002] handshake xor key index=5 key=2a 2b 21 40
+2026-06-30 19:00:18.594 | [10002] initial handshake len=12
+2026-06-30 19:00:18.594 | [client] active xor key index=5 key=2a 2b 21 40
+2026-06-30 19:00:18.595 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 19:00:18.595 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b2 9a 20 40 2a 2b 21 40 f7 86 0a 45 06 e8 69 68 bc d6 5b dc e3 42 87 a2 26 f5 8f b1 d9 94 f5 94 bc d6 5b dc e3 42 87 a2 31 1e 9f f7 65 a6 05 79 3a 74 13 c5 08 ac f3 6e
+2026-06-30 19:00:18.595 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 19:00:18.595 | [10002] send CL_LOGIN
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] len=58 proto=1778667847 key=5
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] raw=3a 00 00 00 6d 7a 25 2a 25 25 26 2a 15 56 43 58 52 40 54 2a 04 05 06 0a 04 05 06 0a 25 25 26 2a b3 24 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] dec=3a 00 00 00 47 51 04 6a 0f 0e 07 6a 3f 7d 62 18 78 6b 75 6a 2e 2e 27 4a 2e 2e 27 4a 0f 0e 07 6a 99 0f 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] ascii=:...GQ.j...j?}b.xkuj..'J..'J...j...j...j...j...j...
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=0 proto=251746605 firstBody=0x0F020665 body=65 06 02 0f 55 75 67 7d 12 63 70 0f 44 26 22 2f 44 26 22 2f 65 06 02 0f f3 07 02 0f 64 06 02 0f
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=1 proto=201350734 firstBody=0x0C030106 body=06 01 03 0c 36 72 66 7e 71 64 71 0c 27 21 23 2c 27 21 23 2c 06 01 03 0c 90 00 03 0c 07 01 03 0c
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=2 proto=LC_SERVER_LIST firstBody=0x00000001 body=01 00 00 00 31 73 65 72 76 65 72 00 20 20 20 20 20 20 20 20 01 00 00 00 97 01 00 00 00 00 00 00
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=3 proto=17783880 firstBody=0x010C0300 body=00 03 0c 01 30 70 69 73 77 66 7e 01 21 23 2c 21 21 23 2c 21 00 03 0c 01 96 02 0c 01 01 03 0c 01
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=4 proto=185487435 firstBody=0x0B0D0F03 body=03 0f 0d 0b 33 7c 68 79 74 6a 7f 0b 22 2f 2d 2b 22 2f 2d 2b 03 0f 0d 0b 95 0e 0d 0b 02 0f 0d 0b
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=5 proto=1778667847 firstBody=0x6A070E0F body=0f 0e 07 6a 3f 7d 62 18 78 6b 75 6a 2e 2e 27 4a 2e 2e 27 4a 0f 0e 07 6a 99 0f 07 6a 0e 0e 07 6a
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=6 proto=157637446 firstBody=0x0966040E body=0e 04 66 09 3e 77 03 7b 79 61 14 09 2f 24 46 29 2f 24 46 29 0e 04 66 09 98 05 66 09 0f 04 66 09
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] xor-candidate key=7 proto=235289164 firstBody=0x0E056504 body=04 65 05 0e 34 16 60 7c 73 00 77 0e 25 45 25 2e 25 45 25 2e 04 65 05 0e 92 64 05 0e 05 65 05 0e
+2026-06-30 19:00:18.776 | [debug][recv:LC_SERVER_LIST] known-candidates key=2 LC_SERVER_LIST
+2026-06-30 19:00:18.776 | [10002] layer-2 key fallback 5->2 proto=LC_SERVER_LIST
+2026-06-30 19:00:18.776 | [10002] recv proto=LC_SERVER_LIST len=58
+2026-06-30 19:00:18.777 | [net] connected 127.2.57.2:1838
+2026-06-30 19:00:18.777 | [bill] send open opcode=1 len=38
+2026-06-30 19:00:21.779 | [bill] recv open-ack skipped: timed out
+2026-06-30 19:00:21.779 | [bill] send account opcode=2 len=22
+2026-06-30 19:00:21.779 | [bill] send ready opcode=3 len=6
+2026-06-30 19:00:21.860 | [bill] recv post-ready-1 47 00 02 00 01 00 00 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-30 19:00:21.860 | [bill] recv post-ready-2 30 00 03 00 01 00 00 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-30 19:00:21.860 | [debug][send:CL_GET_CHARINFO] len=16 proto=CL_GET_CHARINFO xor=True
+2026-06-30 19:00:21.860 | [debug][send:CL_GET_CHARINFO] raw=10 00 00 00 b1 9a 20 40 28 2b 21 40 2b 2b 21 40
+2026-06-30 19:00:21.860 | [debug][send:CL_GET_CHARINFO] dec=10 00 00 00 9b b1 01 00 02 00 00 00 01 00 00 00
+2026-06-30 19:00:21.860 | [10002] send CL_GET_CHARINFO server=2 channel=1
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] len=388 proto=1778667845 key=5
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] raw=84 01 00 00 6f 7a 25 2a 26 25 26 2a 25 25 26 2a 21 25 26 2a 46 44 4a 43 43 40 4f 1c 24 25 26 2a 24 25 26 2a 25 25 26 2a 25 25 26 2a 21 25 26 2a 26 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 65 32 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a db da d9 d5 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a 24 25 26 2a ...(+228 bytes)
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] dec=84 01 00 00 45 51 04 6a 0c 0e 07 6a 0f 0e 07 6a 0b 0e 07 6a 6c 6f 6b 03 69 6b 6e 5c 0e 0e 07 6a 0e 0e 07 6a 0f 0e 07 6a 0f 0e 07 6a 0b 0e 07 6a 0c 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 4f 19 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a f1 f1 f8 95 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a ...(+228 bytes)
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] ascii=....EQ.j...j...j...jlok.ikn\...j...j...j...j...j...
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=0 proto=251746607 firstBody=0x0F020666 body=66 06 02 0f 65 06 02 0f 61 06 02 0f 06 67 6e 66 03 63 6b 39 64 06 02 0f 64 06 02 0f 65 06 02 0f
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=1 proto=201350732 firstBody=0x0C030105 body=05 01 03 0c 06 01 03 0c 02 01 03 0c 65 60 6f 65 60 64 6a 3a 07 01 03 0c 07 01 03 0c 06 01 03 0c
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=2 proto=LC_CHARINFO_SUCCESS firstBody=0x00000002 body=02 00 00 00 01 00 00 00 05 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 01 00 00 00
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=3 proto=17783882 firstBody=0x010C0303 body=03 03 0c 01 00 03 0c 01 04 03 0c 01 63 62 60 68 66 66 65 37 01 03 0c 01 01 03 0c 01 00 03 0c 01
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=4 proto=185487433 firstBody=0x0B0D0F00 body=00 0f 0d 0b 03 0f 0d 0b 07 0f 0d 0b 60 6e 61 62 65 6a 64 3d 02 0f 0d 0b 02 0f 0d 0b 03 0f 0d 0b
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=5 proto=1778667845 firstBody=0x6A070E0C body=0c 0e 07 6a 0f 0e 07 6a 0b 0e 07 6a 6c 6f 6b 03 69 6b 6e 5c 0e 0e 07 6a 0e 0e 07 6a 0f 0e 07 6a
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=6 proto=157637444 firstBody=0x0966040D body=0d 04 66 09 0e 04 66 09 0a 04 66 09 6d 65 0a 60 68 61 0f 3f 0f 04 66 09 0f 04 66 09 0e 04 66 09
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] xor-candidate key=7 proto=235289166 firstBody=0x0E056507 body=07 65 05 0e 04 65 05 0e 00 65 05 0e 67 04 69 67 62 00 6c 38 05 65 05 0e 05 65 05 0e 04 65 05 0e
+2026-06-30 19:00:22.033 | [debug][recv:LC_CHARINFO_SUCCESS] known-candidates key=2 LC_CHARINFO_SUCCESS
+2026-06-30 19:00:22.033 | [10002] layer-2 key fallback 5->2 proto=LC_CHARINFO_SUCCESS
+2026-06-30 19:00:22.033 | [10002] recv proto=LC_CHARINFO_SUCCESS len=388
+2026-06-30 19:00:22.033 | [bill] send select-server opcode=4 len=10
+2026-06-30 19:00:22.033 | [debug][send:CL_GAMESERVER_CONNECT] len=32 proto=CL_GAMESERVER_CONNECT xor=True
+2026-06-30 19:00:22.033 | [debug][send:CL_GAMESERVER_CONNECT] raw=20 00 00 00 b4 9a 20 40 28 2b 21 40 2b 2b 21 40 48 4a 4d 29 4d 4e 48 76 2a 2b 21 40 2a 2b 21 40
+2026-06-30 19:00:22.033 | [debug][send:CL_GAMESERVER_CONNECT] dec=20 00 00 00 9e b1 01 00 02 00 00 00 01 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00
+2026-06-30 19:00:22.033 | [10002] send CL_GAMESERVER_CONNECT character='baligei6'
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] len=60 proto=1778667871 key=5
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] raw=3c 00 00 00 75 7a 25 2a 26 25 26 2a 46 44 4a 43 43 40 4f 1c 24 25 26 2a 24 25 26 2a 15 17 11 04 15 0b 13 04 10 17 26 0a 04 05 06 0a 16 22 26 2a ae 1b 06 47 24 25 26 2a 25 25 26 2a
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] dec=3c 00 00 00 5f 51 04 6a 0c 0e 07 6a 6c 6f 6b 03 69 6b 6e 5c 0e 0e 07 6a 0e 0e 07 6a 3f 3c 30 44 3f 20 32 44 3a 3c 07 4a 2e 2e 27 4a 3c 09 07 6a 84 30 27 07 0e 0e 07 6a 0f 0e 07 6a
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] ascii=<..._Q.j...jlok.ikn\...j...j?<0D? 2D:<.J..'J<..j...
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=0 proto=251746613 firstBody=0x0F020666 body=66 06 02 0f 06 67 6e 66 03 63 6b 39 64 06 02 0f 64 06 02 0f 55 34 35 21 55 28 37 21 50 34 02 2f
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=1 proto=201350742 firstBody=0x0C030105 body=05 01 03 0c 65 60 6f 65 60 64 6a 3a 07 01 03 0c 07 01 03 0c 36 33 34 22 36 2f 36 22 33 33 03 2c
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=2 proto=LC_GSERV_CONNECT_SUCCESS firstBody=0x00000002 body=02 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 31 32 37 2e 31 2e 35 2e 34 32 00 20
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=3 proto=17783888 firstBody=0x010C0303 body=03 03 0c 01 63 62 60 68 66 66 65 37 01 03 0c 01 01 03 0c 01 30 31 3b 2f 30 2d 39 2f 35 31 0c 21
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=4 proto=185487443 firstBody=0x0B0D0F00 body=00 0f 0d 0b 60 6e 61 62 65 6a 64 3d 02 0f 0d 0b 02 0f 0d 0b 33 3d 3a 25 33 21 38 25 36 3d 0d 2b
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=5 proto=1778667871 firstBody=0x6A070E0C body=0c 0e 07 6a 6c 6f 6b 03 69 6b 6e 5c 0e 0e 07 6a 0e 0e 07 6a 3f 3c 30 44 3f 20 32 44 3a 3c 07 4a
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=6 proto=157637470 firstBody=0x0966040D body=0d 04 66 09 6d 65 0a 60 68 61 0f 3f 0f 04 66 09 0f 04 66 09 3e 36 51 27 3e 2a 53 27 3b 36 66 29
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] xor-candidate key=7 proto=235289172 firstBody=0x0E056507 body=07 65 05 0e 67 04 69 67 62 00 6c 38 05 65 05 0e 05 65 05 0e 34 57 32 20 34 4b 30 20 31 57 05 2e
+2026-06-30 19:00:22.519 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] known-candidates key=2 LC_GSERV_CONNECT_SUCCESS
+2026-06-30 19:00:22.519 | [10002] layer-2 key fallback 5->2 proto=LC_GSERV_CONNECT_SUCCESS
+2026-06-30 19:00:22.519 | [10002] recv proto=LC_GSERV_CONNECT_SUCCESS len=60
+2026-06-30 19:00:22.519 | [game] lobby returned 127.1.5.42:1842 character='baligei6' seed=0x6D203E8A
+2026-06-30 19:00:22.519 | [game] host override 127.1.5.42 -> 127.2.57.2
+2026-06-30 19:00:22.519 | [game] effective server 127.2.57.2:1842 character='baligei6' seed=0x6D203E8A
+2026-06-30 19:00:22.520 | [net] connected 127.2.57.2:1842
+2026-06-30 19:00:22.520 | [debug][send:CG_PLAY_START] len=12 proto=CG_PLAY_START xor=False
+2026-06-30 19:00:22.520 | [debug][send:CG_PLAY_START] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-30 19:00:22.520 | [debug][wire:CG_PLAY_START] len=24 raw=18 00 00 00 87 49 06 00 a6 ec 45 a7 42 7d 6d 45 b4 48 4b f9 83 3a 9e 5f
+2026-06-30 19:00:22.520 | [game] send CG_PLAY_START
+2026-06-30 19:00:22.520 | [debug][send:CG_ENTER] len=52 proto=CG_ENTER xor=False
+2026-06-30 19:00:22.520 | [debug][send:CG_ENTER] raw=34 00 00 00 7d 45 06 00 8a 3e 20 6d ee 3d dc 01 13 41 66 76 c8 c5 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00
+2026-06-30 19:00:22.520 | [debug][wire:CG_ENTER] len=64 raw=40 00 00 00 7d 45 06 00 ec e6 96 11 6b 69 b4 71 3e 6d 0c 57 4b 05 15 8e 02 d8 24 76 b0 66 36 af e0 81 b7 98 79 60 b7 cb a4 16 21 21 7a c3 d5 6d da 35 14 db 38 40 6c 71 96 af b4 22 d0 1d 66 01
+2026-06-30 19:00:22.520 | [game] send CG_ENTER
+2026-06-30 19:00:22.672 | [debug][recv:game] chunk-len=48 firstLen=48 firstProto=511416
+2026-06-30 19:00:22.672 | [debug][recv:game] raw=30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-30 19:00:22.672 | [debug][recv:game] ascii=0...............................................
+2026-06-30 19:00:22.773 | [debug][recv:game] chunk-len=6484 firstLen=48 firstProto=511416
+2026-06-30 19:00:22.773 | [debug][recv:game] raw=30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1c 00 00 00 34 ce 07 00 00 00 00 00 00 00 00 00 14 00 00 00 02 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 1c 00 00 00 1e 00 00 00 08 00 00 00 03 00 00 00 2f 01 00 00 01 00 00 00 10 00 00 00 2b 00 00 00 bd 01 00 00 9b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 05 00 00 00 06 00 00 00 05 00 00 00 05 00 00 00 06 00 00 00 ...(+6324 bytes)
+2026-06-30 19:00:22.773 | [debug][recv:game] ascii=0..................................................
+2026-06-30 19:00:22.773 | [chat] status source from post-enter: player_id=0x0000006E map_id=109
+2026-06-30 19:00:22.873 | [debug][recv:game] chunk-len=8576 firstLen=0 firstProto=0
+2026-06-30 19:00:22.873 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+8416 bytes)
+2026-06-30 19:00:22.873 | [debug][recv:game] ascii=...................................................
+2026-06-30 19:00:22.924 | [debug][recv:game] chunk-len=9112 firstLen=0 firstProto=0
+2026-06-30 19:00:22.924 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 d3 00 00 00 7a 7a 78 78 63 63 00 00 00 00 00 00 00 00 00 00 b8 00 00 00 10 01 00 00 ae 00 00 00 ...(+8952 bytes)
+2026-06-30 19:00:22.924 | [debug][recv:game] ascii=...................................................
+2026-06-30 19:00:22.975 | [debug][recv:game] chunk-len=9825 firstLen=0 firstProto=0
+2026-06-30 19:00:22.975 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 ac 1f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+9665 bytes)
+2026-06-30 19:00:22.975 | [debug][recv:game] ascii=...................................................
+2026-06-30 19:00:23.076 | [debug][recv:game] chunk-len=8388 firstLen=16 firstProto=511646
+2026-06-30 19:00:23.076 | [debug][recv:game] raw=10 00 00 00 9e ce 07 00 00 e1 f5 05 00 00 00 00 14 00 00 00 a8 ce 07 00 bd 01 00 00 9b 00 00 00 00 00 00 00 2c 00 00 00 a9 ce 07 00 bd 01 00 00 9b 00 00 00 06 00 00 00 10 27 00 00 20 4e 00 00 21 4e 00 00 22 4e 00 00 23 4e 00 00 11 27 00 00 14 00 00 00 aa ce 07 00 00 00 00 00 01 00 00 00 00 00 00 00 b0 0f 00 00 bf ce 07 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+8228 bytes)
+2026-06-30 19:00:23.076 | [debug][recv:game] ascii=....................................,..............
+2026-06-30 19:00:23.528 | [debug][send:CG_INIT_411555] len=18 proto=CG_INIT_411555 xor=False
+2026-06-30 19:00:23.528 | [debug][send:CG_INIT_411555] raw=12 00 00 00 a3 47 06 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-30 19:00:23.528 | [debug][wire:CG_INIT_411555] len=32 raw=20 00 00 00 a3 47 06 00 42 ac a7 36 7a 92 32 48 d1 08 c6 a6 ab 26 ae 6e c2 2d 7c de 17 46 ff f7
+2026-06-30 19:00:23.528 | [game] send CG_INIT_411555
+2026-06-30 19:00:23.528 | [debug][send:CG_INIT_411589] len=20 proto=CG_INIT_411589 xor=False
+2026-06-30 19:00:23.528 | [debug][send:CG_INIT_411589] raw=14 00 00 00 c5 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-30 19:00:23.528 | [debug][wire:CG_INIT_411589] len=32 raw=20 00 00 00 c5 47 06 00 a3 d9 c3 d2 c9 27 1e 5c 1f e0 d9 c3 3c d4 f9 1e 0f db 06 42 5c 98 f3 bb
+2026-06-30 19:00:23.528 | [game] send CG_INIT_411589
+2026-06-30 19:00:23.528 | [debug][send:CG_INIT_411595] len=20 proto=CG_INIT_411595 xor=False
+2026-06-30 19:00:23.528 | [debug][send:CG_INIT_411595] raw=14 00 00 00 cb 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-30 19:00:23.528 | [debug][wire:CG_INIT_411595] len=32 raw=20 00 00 00 cb 47 06 00 a3 d9 c3 d2 c9 27 1e 5c 1f e0 d9 c3 3c d4 f9 1e 0f db 06 42 5c 98 f3 bb
+2026-06-30 19:00:23.528 | [game] send CG_INIT_411595
+2026-06-30 19:00:23.549 | [debug][send:CG_PLAY_START_2] len=12 proto=CG_PLAY_START xor=False
+2026-06-30 19:00:23.549 | [debug][send:CG_PLAY_START_2] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-30 19:00:23.549 | [debug][wire:CG_PLAY_START_2] len=24 raw=18 00 00 00 87 49 06 00 d8 1b 0c 2f 20 fc 45 72 a5 a5 be 83 93 1e 7a 2a
+2026-06-30 19:00:23.549 | [game] send CG_PLAY_START_2
+2026-06-30 19:00:23.570 | [debug][send:CG_POST_ENTER_411570] len=12 proto=CG_POST_ENTER_411570 xor=False
+2026-06-30 19:00:23.570 | [debug][send:CG_POST_ENTER_411570] raw=0c 00 00 00 b2 47 06 00 04 00 00 00
+2026-06-30 19:00:23.570 | [debug][wire:CG_POST_ENTER_411570] len=24 raw=18 00 00 00 b2 47 06 00 10 d1 2e fe bc 89 61 70 98 0b 3c 1e 2a 30 fc 3b
+2026-06-30 19:00:23.570 | [game] send CG_POST_ENTER_411570
+2026-06-30 19:00:23.570 | [net] connected 127.2.57.2:3000
+2026-06-30 19:00:23.571 | [chat] send login opcode=0x00004100 len=69 raw=45 00 00 41 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 71 77 65 71 77 65 00 00 00 00 00 00 00 00 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 01 00 00 00 1f ae 01 00 6e 00 00 00
+2026-06-30 19:00:23.571 | [chat] send map-status map=109 player=0x0000006E opcode=0x00004110 len=39 raw=27 00 10 41 00 00 08 00 00 00 6d 00 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 00 00 00 00 6e 00 00 00
+2026-06-30 19:00:23.821 | [debug][send:CG_POST_ENTER_411625] len=12 proto=CG_POST_ENTER_411625 xor=False
+2026-06-30 19:00:23.821 | [debug][send:CG_POST_ENTER_411625] raw=0c 00 00 00 e9 47 06 00 00 00 00 00
+2026-06-30 19:00:23.821 | [debug][wire:CG_POST_ENTER_411625] len=24 raw=18 00 00 00 e9 47 06 00 21 dd af 7a 47 29 a8 e4 31 3a c0 1f ff 11 78 59
+2026-06-30 19:00:23.821 | [game] send CG_POST_ENTER_411625
+2026-06-30 19:00:23.821 | [loop] online simulation is running; Ctrl+C to stop
+2026-06-30 19:00:23.821 | [金币] 当前金币=200000(来源 char-load)
+2026-06-30 19:00:23.821 | [挂机] 钓鱼=False 贩卖=True 购买=True
+2026-06-30 19:00:23.821 | [debug][recv:game] chunk-len=568 firstLen=16 firstProto=511643
+2026-06-30 19:00:23.821 | [debug][recv:game] raw=10 00 00 00 9b ce 07 00 00 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 1c 00 00 00 1e 00 00 00 08 00 00 00 03 00 00 00 2f 01 00 00 01 00 00 00 10 00 00 00 2b 00 00 00 bd 01 00 00 9b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 05 00 00 00 06 00 00 00 05 00 00 00 05 00 00 00 06 00 00 00 d4 01 00 00 7f ce 07 00 00 00 00 00 40 0d 03 00 00 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+408 bytes)
+2026-06-30 19:00:23.821 | [debug][recv:game] ascii=................T...."................../..........
+2026-06-30 19:00:23.821 | [debug][recv:chat] chunk-len=140 firstLen=16842813 firstProto=1633812484
+2026-06-30 19:00:23.821 | [debug][recv:chat] raw=3d 00 01 01 04 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1b 00 02 01 04 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 00 00 00 00 34 00 32 01 04 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-30 19:00:23.821 | [debug][recv:chat] ascii==.....baligei6.........ETC..................ETC....
+2026-06-30 19:00:23.821 | [debug][send:CG_USE_CASH_ITEM] len=16 proto=CG_USE_CASH_ITEM xor=False
+2026-06-30 19:00:23.821 | [debug][send:CG_USE_CASH_ITEM] raw=10 00 00 00 14 46 06 00 29 00 00 00 00 00 00 00
+2026-06-30 19:00:23.821 | [debug][wire:CG_USE_CASH_ITEM] len=32 raw=20 00 00 00 14 46 06 00 c8 6a 99 c0 58 04 2e fe 42 66 f1 4f 6b b4 c2 8d 61 2f 8d 89 db d9 fe a1
+2026-06-30 19:00:23.821 | [game] send CG_USE_CASH_ITEM
+2026-06-30 19:00:23.821 | [Cash定时](间隔60s)使用 背包擴充卷1(19113) cash格=28
+2026-06-30 19:00:23.821 | [debug][send:CG_USE_CASH_ITEM] len=16 proto=CG_USE_CASH_ITEM xor=False
+2026-06-30 19:00:23.821 | [debug][send:CG_USE_CASH_ITEM] raw=10 00 00 00 14 46 06 00 2a 00 00 00 00 00 00 00
+2026-06-30 19:00:23.821 | [debug][wire:CG_USE_CASH_ITEM] len=32 raw=20 00 00 00 14 46 06 00 a0 3d 0d 7f 9f 5d ff 1b 01 14 8e 03 d0 62 5e 58 0f d3 15 6d 8e bb be 68
+2026-06-30 19:00:23.822 | [game] send CG_USE_CASH_ITEM
+2026-06-30 19:00:23.822 | [Cash定时](间隔60s)使用 背包擴充卷2(21471) cash格=29
+2026-06-30 19:00:23.822 | [debug][send:CG_USE_CASH_ITEM] len=16 proto=CG_USE_CASH_ITEM xor=False
+2026-06-30 19:00:23.822 | [debug][send:CG_USE_CASH_ITEM] raw=10 00 00 00 14 46 06 00 2b 00 00 00 00 00 00 00
+2026-06-30 19:00:23.822 | [debug][wire:CG_USE_CASH_ITEM] len=32 raw=20 00 00 00 14 46 06 00 5b d3 b1 b0 a2 c3 f6 1d d9 65 85 4e f3 23 a2 53 75 33 05 4f 71 52 59 b3
+2026-06-30 19:00:23.822 | [game] send CG_USE_CASH_ITEM
+2026-06-30 19:00:23.822 | [Cash定时](间隔60s)使用 背包擴充卷3(23189) cash格=30
+2026-06-30 19:00:24.928 | [补货](進階擺攤 cash0<1)泡点购买失败 网店id=7899:HTTP Error 400: Bad Request
+2026-06-30 19:00:25.179 | [debug][recv:game] chunk-len=160 firstLen=12 firstProto=521564
+2026-06-30 19:00:25.179 | [debug][recv:game] raw=0c 00 00 00 5c f5 07 00 18 00 00 00 20 00 00 00 5d cd 07 00 29 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 0c 00 00 00 5c f5 07 00 58 00 00 00 20 00 00 00 5d cd 07 00 2a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 0c 00 00 00 5c f5 07 00 98 00 00 00 20 00 00 00 5d cd 07 00 2b 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 1c 00 00 00 38 cc 07 00 84 0f 00 00 b5 00 00 00 12 01 00 00 b6 00 00 00 11 01 00 00
+2026-06-30 19:00:25.179 | [debug][recv:game] ascii=....\....... ...]...)..............................
+2026-06-30 19:00:27.683 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:27.683 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 71 0f 00 00 c8 00 00 00 eb 00 00 00 c9 00 00 00 ec 00 00 00
+2026-06-30 19:00:27.683 | [debug][recv:game] ascii=....8...q...................
+2026-06-30 19:00:28.935 | [Cash定时] 确认 背包擴充卷1(19113) 已消耗(剩 0)
+2026-06-30 19:00:28.936 | [Cash定时] 确认 背包擴充卷2(21471) 已消耗(剩 0)
+2026-06-30 19:00:28.936 | [Cash定时] 确认 背包擴充卷3(23189) 已消耗(剩 0)
+2026-06-30 19:00:29.187 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:29.187 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 82 0f 00 00 c0 00 00 00 f4 00 00 00 bf 00 00 00 f3 00 00 00
+2026-06-30 19:00:29.187 | [debug][recv:game] ascii=....8.......................
+2026-06-30 19:00:31.190 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:31.190 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 84 0f 00 00 b6 00 00 00 11 01 00 00 b7 00 00 00 10 01 00 00
+2026-06-30 19:00:31.190 | [debug][recv:game] ascii=....8.......................
+2026-06-30 19:00:33.193 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:33.193 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 71 0f 00 00 c9 00 00 00 ec 00 00 00 ca 00 00 00 ec 00 00 00
+2026-06-30 19:00:33.193 | [debug][recv:game] ascii=....8...q...................
+2026-06-30 19:00:35.447 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:35.447 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 82 0f 00 00 bf 00 00 00 f3 00 00 00 be 00 00 00 f3 00 00 00
+2026-06-30 19:00:35.447 | [debug][recv:game] ascii=....8.......................
+2026-06-30 19:00:36.950 | [debug][recv:game] chunk-len=104 firstLen=28 firstProto=511000
+2026-06-30 19:00:36.950 | [debug][recv:game] raw=1c 00 00 00 18 cc 07 00 bd 01 00 00 00 00 00 00 c9 00 00 00 d8 00 00 00 f0 01 00 00 1c 00 00 00 56 cc 07 00 f0 00 00 00 bd 01 00 00 05 00 00 00 c9 00 00 00 d8 00 00 00 10 00 00 00 7b ce 07 00 bd 01 00 00 5f 9e 02 00 20 00 00 00 61 f3 07 00 f0 00 00 00 bd 01 00 00 bd 01 00 00 96 00 00 00 3f 00 00 00 60 ea 00 00
+2026-06-30 19:00:36.950 | [debug][recv:game] ascii=................................V..................
+2026-06-30 19:00:37.701 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:37.701 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 84 0f 00 00 b7 00 00 00 10 01 00 00 b6 00 00 00 11 01 00 00
+2026-06-30 19:00:37.701 | [debug][recv:game] ascii=....8.......................
+2026-06-30 19:00:38.954 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=GC_CRT_MOVE
+2026-06-30 19:00:38.954 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 71 0f 00 00 ca 00 00 00 ec 00 00 00 c9 00 00 00 ed 00 00 00
+2026-06-30 19:00:38.954 | [debug][recv:game] ascii=....8...q...................
+2026-06-30 19:00:39.705 | [loop] stop requested; closing session
+2026-06-30 20:04:42.274 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:04:42.275 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:04:42.275 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:04:42.275 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:05:23.713 | [net] connected 127.2.57.2:10002
+2026-06-30 20:05:25.332 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:05:25.332 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:05:25.332 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:05:25.334 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:05:25.337 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:05:25.337 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:05:25.340 | [error] attempt 1 failed
+2026-06-30 20:05:25.340 | Traceback (most recent call last):
+2026-06-30 20:05:25.341 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:05:25.341 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:05:25.341 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:05:25.341 |     run(args)
+2026-06-30 20:05:25.341 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:05:25.341 |     login.sendall(packet)
+2026-06-30 20:05:25.341 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:05:35.351 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:05:35.353 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:05:35.353 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:05:35.353 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:05:35.353 | [net] connected 127.2.57.2:10002
+2026-06-30 20:05:37.357 | [10002] no initial handshake before login: timed out
+2026-06-30 20:05:37.357 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:05:37.358 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:05:37.358 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:05:37.359 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:05:37.359 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:05:37.359 | [10002] send CL_LOGIN
+2026-06-30 20:05:45.370 | [error] attempt 2 failed
+2026-06-30 20:05:45.370 | Traceback (most recent call last):
+2026-06-30 20:05:45.371 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:05:45.371 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:05:45.371 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:05:45.371 |     run(args)
+2026-06-30 20:05:45.371 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:05:45.371 |     first_login_reply = recv_until_proto(
+2026-06-30 20:05:45.371 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:05:45.371 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 131, in recv_until_proto
+2026-06-30 20:05:45.371 |     raise TimeoutError(f"timed out waiting for proto {proto_name(proto)}; seen={suffix}{extra}") from None
+2026-06-30 20:05:45.371 | TimeoutError: timed out waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:05:55.383 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:05:55.386 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:05:55.386 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:05:55.386 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:05:55.386 | [net] connected 127.2.57.2:10002
+2026-06-30 20:05:55.582 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:05:55.582 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:05:55.583 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:05:55.585 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:05:55.587 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:05:55.588 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:05:55.590 | [error] attempt 3 failed
+2026-06-30 20:05:55.591 | Traceback (most recent call last):
+2026-06-30 20:05:55.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:05:55.592 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:05:55.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:05:55.592 |     run(args)
+2026-06-30 20:05:55.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:05:55.592 |     login.sendall(packet)
+2026-06-30 20:05:55.592 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:06:05.598 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:06:05.602 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:06:05.602 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:06:05.602 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:06:05.603 | [net] connected 127.2.57.2:10002
+2026-06-30 20:06:07.588 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:06:07.588 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:06:07.588 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:06:07.590 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:06:07.593 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:06:07.593 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:06:07.595 | [error] attempt 4 failed
+2026-06-30 20:06:07.596 | Traceback (most recent call last):
+2026-06-30 20:06:07.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:06:07.596 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:06:07.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:06:07.596 |     run(args)
+2026-06-30 20:06:07.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:06:07.597 |     login.sendall(packet)
+2026-06-30 20:06:07.597 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:06:17.613 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:06:17.615 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:06:17.615 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:06:17.615 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:06:17.615 | [net] connected 127.2.57.2:10002
+2026-06-30 20:06:19.622 | [10002] no initial handshake before login: timed out
+2026-06-30 20:06:19.622 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:06:19.622 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:06:19.623 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:06:19.623 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:06:19.623 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:06:19.623 | [10002] send CL_LOGIN
+2026-06-30 20:06:19.623 | [error] attempt 5 failed
+2026-06-30 20:06:19.623 | Traceback (most recent call last):
+2026-06-30 20:06:19.623 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 125, in recv_until_proto
+2026-06-30 20:06:19.623 |     raw, decoded = read_game_packet(sock, xor=True, key_index=key_index, timeout=remaining, bridge=bridge)
+2026-06-30 20:06:19.623 |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:06:19.623 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 32, in read_game_packet
+2026-06-30 20:06:19.623 |     header = read_exact(sock, 4)
+2026-06-30 20:06:19.623 |              ^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:06:19.623 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 21, in read_exact
+2026-06-30 20:06:19.623 |     chunk = sock.recv(size - len(chunks))
+2026-06-30 20:06:19.623 |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:06:19.623 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:06:19.623 | 
+2026-06-30 20:06:19.623 | The above exception was the direct cause of the following exception:
+2026-06-30 20:06:19.623 | 
+2026-06-30 20:06:19.623 | Traceback (most recent call last):
+2026-06-30 20:06:19.623 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:06:19.623 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:06:19.623 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:06:19.625 |     run(args)
+2026-06-30 20:06:19.625 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:06:19.625 |     first_login_reply = recv_until_proto(
+2026-06-30 20:06:19.625 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:06:19.625 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 134, in recv_until_proto
+2026-06-30 20:06:19.625 |     raise ConnectionError(
+2026-06-30 20:06:19.625 | ConnectionError: socket closed while waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:06:29.632 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:06:29.633 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:06:29.633 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:06:29.633 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:06:29.633 | [net] connected 127.2.57.2:10002
+2026-06-30 20:06:30.595 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:06:30.596 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:06:30.597 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:06:30.602 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:06:30.606 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:06:30.607 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:06:30.609 | [error] attempt 6 failed
+2026-06-30 20:06:30.610 | Traceback (most recent call last):
+2026-06-30 20:06:30.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:06:30.611 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:06:30.612 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:06:30.612 |     run(args)
+2026-06-30 20:06:30.612 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:06:30.613 |     login.sendall(packet)
+2026-06-30 20:06:30.613 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:06:40.627 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:06:40.629 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:06:40.629 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:06:40.630 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:06:40.630 | [net] connected 127.2.57.2:10002
+2026-06-30 20:06:42.633 | [10002] no initial handshake before login: timed out
+2026-06-30 20:06:42.633 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:06:42.634 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:06:42.637 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:06:42.638 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:06:42.638 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:06:42.638 | [10002] send CL_LOGIN
+2026-06-30 20:06:50.647 | [error] attempt 7 failed
+2026-06-30 20:06:50.648 | Traceback (most recent call last):
+2026-06-30 20:06:50.648 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:06:50.648 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:06:50.650 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:06:50.650 |     run(args)
+2026-06-30 20:06:50.650 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:06:50.651 |     first_login_reply = recv_until_proto(
+2026-06-30 20:06:50.651 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:06:50.651 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 131, in recv_until_proto
+2026-06-30 20:06:50.651 |     raise TimeoutError(f"timed out waiting for proto {proto_name(proto)}; seen={suffix}{extra}") from None
+2026-06-30 20:06:50.651 | TimeoutError: timed out waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:07:00.666 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:07:00.668 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:07:00.668 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:07:00.668 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:07:00.669 | [net] connected 127.2.57.2:10002
+2026-06-30 20:07:02.676 | [10002] no initial handshake before login: timed out
+2026-06-30 20:07:02.676 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:07:02.676 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:07:02.676 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:07:02.677 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:07:02.677 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:07:02.677 | [10002] send CL_LOGIN
+2026-06-30 20:07:10.692 | [error] attempt 8 failed
+2026-06-30 20:07:10.692 | Traceback (most recent call last):
+2026-06-30 20:07:10.692 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:07:10.692 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:07:10.692 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:07:10.692 |     run(args)
+2026-06-30 20:07:10.692 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:07:10.692 |     first_login_reply = recv_until_proto(
+2026-06-30 20:07:10.692 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:07:10.692 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 131, in recv_until_proto
+2026-06-30 20:07:10.692 |     raise TimeoutError(f"timed out waiting for proto {proto_name(proto)}; seen={suffix}{extra}") from None
+2026-06-30 20:07:10.692 | TimeoutError: timed out waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:07:20.701 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:07:20.701 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:07:20.701 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:07:20.701 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:07:20.716 | [net] connected 127.2.57.2:10002
+2026-06-30 20:07:21.576 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:07:21.576 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:07:21.576 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:07:21.577 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:07:21.580 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:07:21.580 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:07:21.581 | [error] attempt 9 failed
+2026-06-30 20:07:21.582 | Traceback (most recent call last):
+2026-06-30 20:07:21.582 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:07:21.582 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:07:21.582 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:07:21.582 |     run(args)
+2026-06-30 20:07:21.582 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:07:21.582 |     login.sendall(packet)
+2026-06-30 20:07:21.582 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:07:31.584 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:07:31.585 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:07:31.585 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:07:31.586 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:07:31.586 | [net] connected 127.2.57.2:10002
+2026-06-30 20:07:32.576 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:07:32.576 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:07:32.576 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:07:32.577 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:07:32.577 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:07:32.577 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:07:32.578 | [error] attempt 10 failed
+2026-06-30 20:07:32.578 | Traceback (most recent call last):
+2026-06-30 20:07:32.579 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:07:32.579 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:07:32.579 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:07:32.579 |     run(args)
+2026-06-30 20:07:32.579 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:07:32.579 |     login.sendall(packet)
+2026-06-30 20:07:32.579 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:09:42.278 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:09:42.280 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:09:42.280 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:09:42.280 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:09:42.280 | [net] connected 127.2.57.2:10002
+2026-06-30 20:09:43.581 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:09:43.581 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:09:43.581 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:09:43.586 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:09:43.586 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:09:43.586 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:09:43.589 | [error] attempt 11 failed
+2026-06-30 20:09:43.589 | Traceback (most recent call last):
+2026-06-30 20:09:43.590 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:09:43.590 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:09:43.590 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:09:43.590 |     run(args)
+2026-06-30 20:09:43.590 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:09:43.590 |     login.sendall(packet)
+2026-06-30 20:09:43.590 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:09:53.608 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:09:53.609 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:09:53.609 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:09:53.609 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:09:53.609 | [net] connected 127.2.57.2:10002
+2026-06-30 20:09:53.761 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:09:53.761 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:09:53.761 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:09:53.763 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:09:53.768 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:09:53.772 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:09:53.773 | [error] attempt 12 failed
+2026-06-30 20:09:53.774 | Traceback (most recent call last):
+2026-06-30 20:09:53.775 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:09:53.777 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:09:53.778 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:09:53.778 |     run(args)
+2026-06-30 20:09:53.778 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:09:53.778 |     login.sendall(packet)
+2026-06-30 20:09:53.778 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:03.797 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:10:03.802 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:10:03.803 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:10:03.803 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:10:03.803 | [net] connected 127.2.57.2:10002
+2026-06-30 20:10:05.806 | [10002] no initial handshake before login: timed out
+2026-06-30 20:10:05.806 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:10:05.809 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:10:05.813 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:10:05.816 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:10:05.816 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:10:05.816 | [10002] send CL_LOGIN
+2026-06-30 20:10:13.828 | [error] attempt 13 failed
+2026-06-30 20:10:13.831 | Traceback (most recent call last):
+2026-06-30 20:10:13.833 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:10:13.833 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:10:13.835 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:10:13.835 |     run(args)
+2026-06-30 20:10:13.835 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:10:13.835 |     first_login_reply = recv_until_proto(
+2026-06-30 20:10:13.835 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:10:13.835 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 131, in recv_until_proto
+2026-06-30 20:10:13.836 |     raise TimeoutError(f"timed out waiting for proto {proto_name(proto)}; seen={suffix}{extra}") from None
+2026-06-30 20:10:13.836 | TimeoutError: timed out waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:10:23.843 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:10:23.849 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:10:23.849 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:10:23.849 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:10:23.849 | [net] connected 127.2.57.2:10002
+2026-06-30 20:10:25.588 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:25.588 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:10:25.589 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:10:25.592 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:10:25.593 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:10:25.595 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:10:25.597 | [error] attempt 14 failed
+2026-06-30 20:10:25.598 | Traceback (most recent call last):
+2026-06-30 20:10:25.599 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:10:25.599 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:10:25.599 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:10:25.599 |     run(args)
+2026-06-30 20:10:25.599 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:10:25.599 |     login.sendall(packet)
+2026-06-30 20:10:25.599 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:35.606 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:10:35.608 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:10:35.608 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:10:35.608 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:10:35.608 | [net] connected 127.2.57.2:10002
+2026-06-30 20:10:36.586 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:36.586 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:10:36.587 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:10:36.589 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:10:36.591 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:10:36.591 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:10:36.593 | [error] attempt 15 failed
+2026-06-30 20:10:36.593 | Traceback (most recent call last):
+2026-06-30 20:10:36.594 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:10:36.594 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:10:36.594 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:10:36.594 |     run(args)
+2026-06-30 20:10:36.594 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:10:36.595 |     login.sendall(packet)
+2026-06-30 20:10:36.595 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:46.599 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:10:46.602 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:10:46.602 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:10:46.602 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:10:46.603 | [net] connected 127.2.57.2:10002
+2026-06-30 20:10:47.588 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:47.588 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:10:47.589 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:10:47.593 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:10:47.593 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:10:47.594 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:10:47.595 | [error] attempt 16 failed
+2026-06-30 20:10:47.595 | Traceback (most recent call last):
+2026-06-30 20:10:47.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:10:47.596 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:10:47.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:10:47.596 |     run(args)
+2026-06-30 20:10:47.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:10:47.596 |     login.sendall(packet)
+2026-06-30 20:10:47.596 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:57.605 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:10:57.609 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:10:57.609 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:10:57.609 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:10:57.609 | [net] connected 127.2.57.2:10002
+2026-06-30 20:10:59.612 | [10002] no initial handshake before login: timed out
+2026-06-30 20:10:59.612 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:10:59.612 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:10:59.613 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:10:59.613 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:10:59.613 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:10:59.614 | [10002] send CL_LOGIN
+2026-06-30 20:10:59.615 | [error] attempt 17 failed
+2026-06-30 20:10:59.615 | Traceback (most recent call last):
+2026-06-30 20:10:59.615 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 125, in recv_until_proto
+2026-06-30 20:10:59.615 |     raw, decoded = read_game_packet(sock, xor=True, key_index=key_index, timeout=remaining, bridge=bridge)
+2026-06-30 20:10:59.615 |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:10:59.615 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 32, in read_game_packet
+2026-06-30 20:10:59.615 |     header = read_exact(sock, 4)
+2026-06-30 20:10:59.615 |              ^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:10:59.615 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 21, in read_exact
+2026-06-30 20:10:59.615 |     chunk = sock.recv(size - len(chunks))
+2026-06-30 20:10:59.615 |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:10:59.615 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:10:59.615 | 
+2026-06-30 20:10:59.615 | The above exception was the direct cause of the following exception:
+2026-06-30 20:10:59.615 | 
+2026-06-30 20:10:59.615 | Traceback (most recent call last):
+2026-06-30 20:10:59.615 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:10:59.616 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:10:59.616 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:10:59.616 |     run(args)
+2026-06-30 20:10:59.616 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:10:59.616 |     first_login_reply = recv_until_proto(
+2026-06-30 20:10:59.616 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:10:59.616 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 134, in recv_until_proto
+2026-06-30 20:10:59.616 |     raise ConnectionError(
+2026-06-30 20:10:59.616 | ConnectionError: socket closed while waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:11:09.628 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:11:09.628 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:11:09.628 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:11:09.628 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:11:09.629 | [net] connected 127.2.57.2:10002
+2026-06-30 20:11:10.514 | [debug][recv:handshake] len=12 proto=4008219525 key=5
+2026-06-30 20:11:10.514 | [debug][recv:handshake] raw=0c 00 00 00 85 93 e8 ee d7 e1 3e 69
+2026-06-30 20:11:10.515 | [debug][recv:handshake] dec=0c 00 00 00 85 93 e8 ee d7 e1 3e 69
+2026-06-30 20:11:10.515 | [debug][recv:handshake] ascii=..........>i
+2026-06-30 20:11:10.515 | [debug][recv:handshake] xor-candidate key=0 proto=3419189445 firstBody=0x4C1AC297 body=97 c2 1a 4c
+2026-06-30 20:11:10.515 | [debug][recv:handshake] xor-candidate key=1 proto=3368925094 firstBody=0x4F1BC5F4 body=f4 c5 1b 4f
+2026-06-30 20:11:10.515 | [debug][recv:handshake] xor-candidate key=2 proto=3301881505 firstBody=0x4318C4F3 body=f3 c4 18 43
+2026-06-30 20:11:10.515 | [debug][recv:handshake] xor-candidate key=3 proto=3317872032 firstBody=0x4214C7F2 body=f2 c7 14 42
+2026-06-30 20:11:10.515 | [debug][recv:handshake] xor-candidate key=4 proto=3485710755 firstBody=0x4815CBF1 body=f1 cb 15 48
+2026-06-30 20:11:10.516 | [debug][recv:handshake] xor-candidate key=5 proto=2932455599 firstBody=0x291FCAFD body=fd ca 1f 29
+2026-06-30 20:11:10.516 | [debug][recv:handshake] xor-candidate key=6 proto=3450385070 firstBody=0x4A7EC0FC body=fc c0 7e 4a
+2026-06-30 20:11:10.516 | [debug][recv:handshake] xor-candidate key=7 proto=3402355620 firstBody=0x4D1DA1F6 body=f6 a1 1d 4d
+2026-06-30 20:11:10.516 | [debug][recv:handshake] no XOR key produced a known SO3D proto; the SO3D client dispatcher would not handle this as a normal game packet
+2026-06-30 20:11:10.516 | [debug][recv:handshake] des-dec=38 38 03 00 05 b0 47 0a
+2026-06-30 20:11:10.516 | [10002] handshake xor key index=5 key=2a 2b 21 40
+2026-06-30 20:11:10.516 | [10002] initial handshake len=12
+2026-06-30 20:11:10.516 | [client] active xor key index=5 key=2a 2b 21 40
+2026-06-30 20:11:10.518 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:11:10.518 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b2 9a 20 40 2a 2b 21 40 f7 86 0a 45 06 e8 69 68 bc d6 5b dc e3 42 87 a2 26 f5 8f b1 d9 94 f5 94 bc d6 5b dc e3 42 87 a2 31 1e 9f f7 65 a6 05 79 3a 74 13 c5 08 ac f3 6e
+2026-06-30 20:11:10.521 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:11:10.522 | [10002] send CL_LOGIN
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] len=48 proto=1778681940 key=5
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] raw=30 00 00 00 7e a3 25 2a 26 25 26 2a 24 25 26 2a 20 0e 26 2a 46 44 4a 43 43 40 4f 1c 24 25 26 2a 24 25 26 2a 26 25 26 2a 24 25 26 2a 24 25 26 2a
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] dec=30 00 00 00 54 88 04 6a 0c 0e 07 6a 0e 0e 07 6a 0a 25 07 6a 6c 6f 6b 03 69 6b 6e 5c 0e 0e 07 6a 0e 0e 07 6a 0c 0e 07 6a 0e 0e 07 6a 0e 0e 07 6a
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] ascii=0...T..j...j...j.%.jlok.ikn\...j...j...j...j...j
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=0 proto=251756606 firstBody=0x0F020666 body=66 06 02 0f 64 06 02 0f 60 2d 02 0f 06 67 6e 66 03 63 6b 39 64 06 02 0f 64 06 02 0f 66 06 02 0f
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=1 proto=201361245 firstBody=0x0C030105 body=05 01 03 0c 07 01 03 0c 03 2a 03 0c 65 60 6f 65 60 64 6a 3a 07 01 03 0c 07 01 03 0c 05 01 03 0c
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=2 proto=LC_LOGIN_SECONDARY firstBody=0x00000002 body=02 00 00 00 00 00 00 00 04 2b 00 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 02 00 00 00
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=3 proto=17794395 firstBody=0x010C0303 body=03 03 0c 01 01 03 0c 01 05 28 0c 01 63 62 60 68 66 66 65 37 01 03 0c 01 01 03 0c 01 03 03 0c 01
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=4 proto=185502040 firstBody=0x0B0D0F00 body=00 0f 0d 0b 02 0f 0d 0b 06 24 0d 0b 60 6e 61 62 65 6a 64 3d 02 0f 0d 0b 02 0f 0d 0b 00 0f 0d 0b
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=5 proto=1778681940 firstBody=0x6A070E0C body=0c 0e 07 6a 0e 0e 07 6a 0a 25 07 6a 6c 6f 6b 03 69 6b 6e 5c 0e 0e 07 6a 0e 0e 07 6a 0c 0e 07 6a
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=6 proto=157647445 firstBody=0x0966040D body=0d 04 66 09 0f 04 66 09 0b 2f 66 09 6d 65 0a 60 68 61 0f 3f 0f 04 66 09 0f 04 66 09 0d 04 66 09
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] xor-candidate key=7 proto=235332447 firstBody=0x0E056507 body=07 65 05 0e 05 65 05 0e 01 4e 05 0e 67 04 69 67 62 00 6c 38 05 65 05 0e 05 65 05 0e 07 65 05 0e
+2026-06-30 20:11:11.582 | [debug][recv:LC_SERVER_LIST] known-candidates key=2 LC_LOGIN_SECONDARY
+2026-06-30 20:11:11.582 | [10002] layer-2 key fallback 5->2 proto=LC_LOGIN_SECONDARY
+2026-06-30 20:11:11.582 | [10002] recv proto=LC_LOGIN_SECONDARY len=48
+2026-06-30 20:11:11.582 | [10002] wait 5s before CL_LOGIN_SECONDARY
+2026-06-30 20:11:16.582 | [debug][send:CL_LOGIN_SECONDARY] len=40 proto=CL_LOGIN_SECONDARY xor=True
+2026-06-30 20:11:16.582 | [debug][send:CL_LOGIN_SECONDARY] raw=28 00 00 00 89 9a 20 40 48 4a 4d 29 4d 4e 48 76 2a 2b 21 40 2a 2b 21 40 5b 5c 44 31 5d 4e 21 40 2a 2b 21 40 2a 2b 21 40
+2026-06-30 20:11:16.582 | [debug][send:CL_LOGIN_SECONDARY] dec=28 00 00 00 a3 b1 01 00 62 61 6c 69 67 65 69 36 00 00 00 00 00 00 00 00 71 77 65 71 77 65 00 00 00 00 00 00 00 00 00 00
+2026-06-30 20:11:16.582 | [10002] send CL_LOGIN_SECONDARY
+2026-06-30 20:11:24.591 | [error] attempt 18 failed
+2026-06-30 20:11:24.592 | Traceback (most recent call last):
+2026-06-30 20:11:24.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 647, in run
+2026-06-30 20:11:24.592 |     raw, decoded = read_game_packet(login, xor=False, key_index=key_index, timeout=args.timeout, bridge=login_bridge)
+2026-06-30 20:11:24.592 |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:24.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 32, in read_game_packet
+2026-06-30 20:11:24.592 |     header = read_exact(sock, 4)
+2026-06-30 20:11:24.592 |              ^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:24.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 21, in read_exact
+2026-06-30 20:11:24.592 |     chunk = sock.recv(size - len(chunks))
+2026-06-30 20:11:24.592 |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:24.592 | TimeoutError: timed out
+2026-06-30 20:11:24.592 | 
+2026-06-30 20:11:24.592 | The above exception was the direct cause of the following exception:
+2026-06-30 20:11:24.592 | 
+2026-06-30 20:11:24.592 | Traceback (most recent call last):
+2026-06-30 20:11:24.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:11:24.592 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:11:24.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:11:24.592 |     run(args)
+2026-06-30 20:11:24.592 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 674, in run
+2026-06-30 20:11:24.592 |     raise SecondaryLoginStuck(
+2026-06-30 20:11:24.592 | so3dclient.session.SecondaryLoginStuck: CL_LOGIN_SECONDARY 流程未完成(账号疑似已在线/顶号未清)
+2026-06-30 20:11:34.608 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:11:34.609 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:11:34.609 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:11:34.609 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:11:34.610 | [net] connected 127.2.57.2:10002
+2026-06-30 20:11:36.589 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:11:36.591 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:11:36.592 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:11:36.594 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:11:36.594 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:11:36.594 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:11:36.595 | [error] attempt 19 failed
+2026-06-30 20:11:36.596 | Traceback (most recent call last):
+2026-06-30 20:11:36.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:11:36.596 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:11:36.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:11:36.596 |     run(args)
+2026-06-30 20:11:36.596 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:11:36.596 |     login.sendall(packet)
+2026-06-30 20:11:36.598 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:11:46.607 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:11:46.609 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:11:46.609 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:11:46.609 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:11:46.609 | [net] connected 127.2.57.2:10002
+2026-06-30 20:11:47.037 | [10002] no initial handshake before login: socket closed
+2026-06-30 20:11:47.038 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:11:47.039 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:11:47.040 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:11:47.044 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:11:47.047 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:11:47.048 | [10002] send CL_LOGIN
+2026-06-30 20:11:47.051 | [error] attempt 20 failed
+2026-06-30 20:11:47.053 | Traceback (most recent call last):
+2026-06-30 20:11:47.054 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 125, in recv_until_proto
+2026-06-30 20:11:47.054 |     raw, decoded = read_game_packet(sock, xor=True, key_index=key_index, timeout=remaining, bridge=bridge)
+2026-06-30 20:11:47.054 |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:47.055 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 32, in read_game_packet
+2026-06-30 20:11:47.055 |     header = read_exact(sock, 4)
+2026-06-30 20:11:47.055 |              ^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:47.055 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 21, in read_exact
+2026-06-30 20:11:47.055 |     chunk = sock.recv(size - len(chunks))
+2026-06-30 20:11:47.055 |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:47.055 | ConnectionAbortedError: [WinError 10053] 你的主机中的软件中止了一个已建立的连接。
+2026-06-30 20:11:47.055 | 
+2026-06-30 20:11:47.055 | The above exception was the direct cause of the following exception:
+2026-06-30 20:11:47.056 | 
+2026-06-30 20:11:47.056 | Traceback (most recent call last):
+2026-06-30 20:11:47.056 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:11:47.056 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:11:47.056 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:11:47.057 |     run(args)
+2026-06-30 20:11:47.057 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:11:47.057 |     first_login_reply = recv_until_proto(
+2026-06-30 20:11:47.057 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:11:47.057 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 134, in recv_until_proto
+2026-06-30 20:11:47.057 |     raise ConnectionError(
+2026-06-30 20:11:47.058 | ConnectionError: socket closed while waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:14:42.275 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:14:42.277 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:14:42.277 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:14:42.277 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:14:42.277 | [net] connected 127.2.57.2:10002
+2026-06-30 20:14:43.570 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:14:43.571 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:14:43.572 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:14:43.576 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:14:43.576 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:14:43.576 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:14:43.577 | [error] attempt 21 failed
+2026-06-30 20:14:43.578 | Traceback (most recent call last):
+2026-06-30 20:14:43.578 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:14:43.579 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:14:43.579 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:14:43.579 |     run(args)
+2026-06-30 20:14:43.579 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:14:43.579 |     login.sendall(packet)
+2026-06-30 20:14:43.579 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:14:53.592 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:14:53.605 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:14:53.605 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:14:53.606 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:14:53.606 | [net] connected 127.2.57.2:10002
+2026-06-30 20:14:55.608 | [10002] no initial handshake before login: timed out
+2026-06-30 20:14:55.608 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:14:55.608 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:14:55.609 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:14:55.609 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:14:55.609 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:14:55.609 | [10002] send CL_LOGIN
+2026-06-30 20:14:55.610 | [error] attempt 22 failed
+2026-06-30 20:14:55.611 | Traceback (most recent call last):
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 125, in recv_until_proto
+2026-06-30 20:14:55.611 |     raw, decoded = read_game_packet(sock, xor=True, key_index=key_index, timeout=remaining, bridge=bridge)
+2026-06-30 20:14:55.611 |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 32, in read_game_packet
+2026-06-30 20:14:55.611 |     header = read_exact(sock, 4)
+2026-06-30 20:14:55.611 |              ^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 21, in read_exact
+2026-06-30 20:14:55.611 |     chunk = sock.recv(size - len(chunks))
+2026-06-30 20:14:55.611 |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-30 20:14:55.611 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:14:55.611 | 
+2026-06-30 20:14:55.611 | The above exception was the direct cause of the following exception:
+2026-06-30 20:14:55.611 | 
+2026-06-30 20:14:55.611 | Traceback (most recent call last):
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:14:55.611 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:14:55.611 |     run(args)
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 627, in run
+2026-06-30 20:14:55.611 |     first_login_reply = recv_until_proto(
+2026-06-30 20:14:55.611 |                         ^^^^^^^^^^^^^^^^^
+2026-06-30 20:14:55.611 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\netio.py", line 134, in recv_until_proto
+2026-06-30 20:14:55.611 |     raise ConnectionError(
+2026-06-30 20:14:55.611 | ConnectionError: socket closed while waiting for proto LC_SERVER_LIST; seen=none
+2026-06-30 20:15:05.615 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:15:05.615 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:15:05.615 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:15:05.615 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:15:13.653 | [net] connected 127.2.57.2:10002
+2026-06-30 20:15:14.586 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:15:14.586 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:15:14.586 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:15:14.588 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:15:14.589 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:15:14.589 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:15:14.590 | [error] attempt 23 failed
+2026-06-30 20:15:14.591 | Traceback (most recent call last):
+2026-06-30 20:15:14.591 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:15:14.591 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:15:14.591 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:15:14.591 |     run(args)
+2026-06-30 20:15:14.591 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:15:14.591 |     login.sendall(packet)
+2026-06-30 20:15:14.591 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:15:24.595 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3d_online_logs\baligei6_baligei6.log
+2026-06-30 20:15:24.596 | [prod] 已连接 123.dll 解密 bridge (pid=49472); 代理 host=127.2.57.2 login=10002 bill=1838 chat=3000
+2026-06-30 20:15:24.596 | [client] account='baligei6' character='baligei6'
+2026-06-30 20:15:24.596 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-30 20:15:24.596 | [net] connected 127.2.57.2:10002
+2026-06-30 20:15:25.594 | [10002] no initial handshake before login: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+2026-06-30 20:15:25.595 | [10002] fallback xor key index=7 key=21 40 23 24
+2026-06-30 20:15:25.597 | [client] active xor key index=7 key=21 40 23 24
+2026-06-30 20:15:25.601 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-30 20:15:25.602 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 fc ed 08 21 0d 83 6b 0c b7 bd 59 b8 e8 29 85 c6 2d 9e 8d d5 d2 ff f7 f0 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-30 20:15:25.602 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 dd ad 2b 05 2c c3 48 28 96 fd 7a 9c c9 69 a6 e2 0c de ae f1 f3 bf d4 d4 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-30 20:15:25.607 | [error] attempt 24 failed
+2026-06-30 20:15:25.607 | Traceback (most recent call last):
+2026-06-30 20:15:25.608 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 261, in _run_forever_inner
+2026-06-30 20:15:25.608 |     run_with_log(args, log_dir, console=console)
+2026-06-30 20:15:25.608 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 176, in run_with_log
+2026-06-30 20:15:25.608 |     run(args)
+2026-06-30 20:15:25.609 |   File "E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\so3d_online_client\so3dclient\session.py", line 625, in run
+2026-06-30 20:15:25.609 |     login.sendall(packet)
+2026-06-30 20:15:25.609 | ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。

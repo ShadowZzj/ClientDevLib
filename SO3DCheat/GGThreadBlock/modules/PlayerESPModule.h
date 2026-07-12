@@ -21,7 +21,7 @@ class PlayerESPModule : public IModule
 
     void OnRender() override
     {
-        ImGui::Checkbox(u8"启用##ESP", &enabled_);
+        ImGui::Checkbox(u8"玩家屏幕标记(ESP)##ESP", &enabled_);
         ImGui::SameLine();
         ImGui::TextDisabled(u8"(在附近玩家列表中勾选要标记的人)");
 

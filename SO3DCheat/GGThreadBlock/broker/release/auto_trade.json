@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "acceptAll": false,
+  "autoLockConfirm": true,
+  "acceptDelayMs": 600,
+  "confirmDelayMs": 300,
+  "whitelist": [
+    "shadowsing",
+    "shadowdance",
+    "一野插瓜你",
+    "shadowpope"
+  ]
+}

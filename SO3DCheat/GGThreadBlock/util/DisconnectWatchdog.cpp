@@ -28,6 +28,7 @@ constexpr auto kPollInterval = std::chrono::seconds(10);
 std::atomic<bool>     s_installed{false};
 std::atomic<bool>     s_stopRequested{false};
 std::atomic<bool>     s_armed{false};         // flips true on first non-channel recv
+std::atomic<bool>     s_closeTriggered{false};
 std::atomic<int64_t>  s_lastRecvTickMs{0};    // GetTickCount64() of last non-channel recv
 std::thread           s_thread;
 
@@ -64,6 +65,7 @@ HWND FindHostMainWindow()
 
 void TriggerClose(const char *reason)
 {
+    s_closeTriggered.store(true);
     spdlog::warn("GGTB::DisconnectWatchdog: triggering close — {}", reason);
 
     HWND hwnd = FindHostMainWindow();
@@ -137,6 +139,7 @@ void Install()
     if (s_installed.exchange(true)) return;
     s_stopRequested.store(false);
     s_armed.store(false);
+    s_closeTriggered.store(false);
     s_lastRecvTickMs.store(static_cast<int64_t>(::GetTickCount64()));
     s_thread = std::thread(WatchdogLoop);
     spdlog::info("GGTB::DisconnectWatchdog: armed, 1-min idle window on non-channel game traffic (ignoring port {})", kExcludedPort);
@@ -165,5 +168,21 @@ void OnRecv(uint16_t port, uint32_t bytes)
     if (!s_armed.exchange(true))
         spdlog::info("GGTB::DisconnectWatchdog: armed on first non-channel recv "
                      "(port={}, bytes={})", port, bytes);
+}
+
+bool IsDisconnectCloseTriggered()
+{
+    return s_closeTriggered.load();
+}
+
+int64_t GetWorldRecvIdleMs()
+{
+    if (!s_armed.load())
+        return -1;
+    const int64_t now  = static_cast<int64_t>(::GetTickCount64());
+    const int64_t last = s_lastRecvTickMs.load();
+    if (last <= 0)
+        return -1;
+    return now > last ? now - last : 0;
 }
 } // namespace GGTB::DisconnectWatchdog

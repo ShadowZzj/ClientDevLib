@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ProxifierProfile version="101" platform="Windows" product_id="0" product_minver="310">
+  <Options>
+    <Resolve><AutoModeDetection enabled="true"/><ViaProxy enabled="false"><TryLocalDnsFirst enabled="false"/></ViaProxy><ExclusionList>%ComputerName%; localhost; *.local</ExclusionList></Resolve>
+  </Options>
+  <ProxyList>
+    <Proxy id="100" type="SOCKS5"><Address>81.181.174.103</Address><Port>50101</Port><Options>48</Options><Authentication enabled="true"><Username>handawei</Username><Password></Password></Authentication></Proxy>
+  </ProxyList>
+  <RuleList>
+    <Rule enabled="true"><Name>ggs5exit1.exe</Name><Applications>ggs5exit1.exe</Applications><Action type="Proxy">100</Action></Rule>
+    <Rule enabled="true"><Name>Localhost</Name><Targets>localhost; 127.0.0.0/8; ::1</Targets><Action type="Direct"/></Rule>
+    <Rule enabled="true"><Name>Default</Name><Action type="Direct"/></Rule>
+  </RuleList>
+</ProxifierProfile>

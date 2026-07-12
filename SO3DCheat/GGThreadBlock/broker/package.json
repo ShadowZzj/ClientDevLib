@@ -6,6 +6,7 @@
   "bin": "dist/server.js",
   "scripts": {
     "build": "tsc",
+    "test": "node --test -r ts-node/register src/workflowSignals.test.ts",
     "dev": "ts-node src/server.ts",
     "start": "node dist/server.js",
     "pack": "pkg . --output release/ggtb-broker.exe"
@@ -15,7 +16,8 @@
       "node20-win-x64"
     ],
     "assets": [
-      "web-dist/**/*"
+      "web-dist/**/*",
+      "web-vue/src/data/mapNames.json"
     ],
     "outputPath": "release"
   },

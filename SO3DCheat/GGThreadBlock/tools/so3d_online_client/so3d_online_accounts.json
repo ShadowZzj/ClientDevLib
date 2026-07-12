@@ -1,0 +1,94 @@
+{
+  "accounts": [
+    {
+      "account": "beifeng1",
+      "password": "zxczxczxc",
+      "character": "asdasd",
+      "fishing_enabled": false
+    },
+    {
+      "account": "beifeng2",
+      "password": "zxczxczxc",
+      "character": "dasdasd",
+      "fishing_enabled": false
+    },
+    {
+      "account": "beifeng3",
+      "password": "zxczxc",
+      "character": "sadasdsadas",
+      "fishing_enabled": false
+    },
+    {
+      "account": "gongyu901121",
+      "password": "901121",
+      "character": "shadowpope",
+      "fishing_enabled": false
+    },
+    {
+      "account": "gongyu9011213",
+      "password": "901121",
+      "character": "shadowdance",
+      "fishing_enabled": false
+    },
+    {
+      "account": "shouliga1",
+      "password": "qweqwe",
+      "character": "shouliga1",
+      "enabled": false
+    },
+    {
+      "account": "shouliga2",
+      "password": "qweqwe",
+      "character": "shouliga2",
+      "enabled": false
+    },
+    {
+      "account": "shouliga3",
+      "password": "qweqwe",
+      "character": "shouliga3",
+      "enabled": false
+    },
+    {
+      "account": "shouliga4",
+      "password": "qweqwe",
+      "character": "shouliga4",
+      "enabled": false
+    },
+    {
+      "account": "shouliga5",
+      "password": "qweqwe",
+      "character": "shouliga5",
+      "enabled": false
+    },
+    {
+      "account": "shouliga6",
+      "password": "qweqwe",
+      "character": "shouliga6",
+      "enabled": false
+    },
+    {
+      "account": "shouliga7",
+      "password": "qweqwe",
+      "character": "shouliga7",
+      "enabled": false
+    },
+    {
+      "account": "shouliga8",
+      "password": "qweqwe",
+      "character": "shouliga8",
+      "enabled": false
+    },
+    {
+      "account": "shouliga9",
+      "password": "qweqwe",
+      "character": "shouliga9",
+      "enabled": false
+    },
+    {
+      "account": "shouliga10",
+      "password": "qweqwe",
+      "character": "shouliga10",
+      "enabled": false
+    }
+  ]
+}

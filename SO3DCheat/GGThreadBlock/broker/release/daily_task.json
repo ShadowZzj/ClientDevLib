@@ -1,0 +1,39 @@
+{
+  "characters": [
+    {
+      "characterName": "舒淇",
+      "enabled": true,
+      "minGrade": "SS"
+    },
+    {
+      "characterName": "天靈神劍",
+      "enabled": true,
+      "minGrade": "SS"
+    },
+    {
+      "characterName": "小肉盾",
+      "enabled": true,
+      "minGrade": "SS"
+    },
+    {
+      "characterName": "shadowsing",
+      "enabled": true,
+      "minGrade": "SS"
+    },
+    {
+      "characterName": "shadowdance",
+      "enabled": true,
+      "minGrade": "SS"
+    },
+    {
+      "characterName": "一野插瓜你",
+      "enabled": true,
+      "minGrade": "SS"
+    },
+    {
+      "characterName": "shadowpope",
+      "enabled": true,
+      "minGrade": "SS"
+    }
+  ]
+}

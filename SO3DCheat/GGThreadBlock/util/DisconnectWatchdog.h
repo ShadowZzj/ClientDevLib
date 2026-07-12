@@ -27,6 +27,11 @@ namespace GGTB::DisconnectWatchdog
 void Install();
 void Uninstall();
 
+// Exposes watchdog teardown state so status consumers do not report an
+// unreadable local player as dead while the client is closing.
+bool    IsDisconnectCloseTriggered();
+int64_t GetWorldRecvIdleMs();
+
 // Called from NetLog's recv hook on every completed recv. port is host-order.
 // Zero-byte recvs and the channel/login port (3000) are filtered internally;
 // anything else counts as a keep-alive.

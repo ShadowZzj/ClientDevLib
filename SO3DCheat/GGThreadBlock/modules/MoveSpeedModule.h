@@ -12,9 +12,11 @@ class MoveSpeedModule : public IModule
   public:
     MoveSpeedModule() : IModule(u8"移动速度") {}
 
+    Tab GetTab() const override { return Tab::OP; }
+
     void OnRender() override
     {
-        if (ImGui::Checkbox(u8"启用##MoveSpeed", &enabled_))
+        if (ImGui::Checkbox(u8"移动速度##MoveSpeed", &enabled_))
         {
             if (enabled_)
             {

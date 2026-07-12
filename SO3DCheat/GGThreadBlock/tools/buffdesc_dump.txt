@@ -1,0 +1,104 @@
+
+=== pid 54656  SO3DPlus.exe base=0x00400000  BuffDescTable=0x7114B920 count=516 ===
+
+  [ 指定 buffId ]
+     id | cat | name
+  --------------------------------------------------
+    159 |   4 | premiumselling   [Cash]
+
+  [ 全表扫描:category∈{0,4}(cash 栏)的所有行 ]
+      0 |   0 | itemautopickuparea
+    139 |   4 | partyblessletter
+    140 |   4 | partyblessletter1
+    141 |   4 | partyblessletter2
+    142 |   4 | partyblessletter3
+    143 |   4 | partyblessletter4
+    144 |   4 | partyblessletter5
+    145 |   4 | partyblessletter6
+    152 |   4 | insdnticket
+    153 |   4 | gatorade
+    154 |   4 | autohunt
+    156 |   4 | cashpolymorph
+    159 |   4 | premiumselling
+    175 |   4 | cashfishing
+    209 |   4 | bpetcashexpup100
+    210 |   4 | bpetcashexpup50
+    211 |   4 | bpetcashexpup150
+    214 |   4 | itembuffautohunt
+    215 |   4 | itembuffautohuntarea
+    216 |   4 | itembuffskillslot
+    217 |   4 | itemattackskillslot
+    218 |   4 | bpetcashautoslot
+    436 |   4 | partyblessletterb
+    437 |   4 | partyblessletterb1
+    438 |   4 | partyblessletterb2
+    439 |   4 | partyblessletterb3
+    440 |   4 | partyblessletterb4
+    441 |   4 | partyblessletterb5
+    442 |   4 | partyblessletterb6
+    444 |   4 | partyblessletters
+    445 |   4 | partyblessletters1
+    446 |   4 | partyblessletters2
+    447 |   4 | partyblessletters3
+    448 |   4 | partyblessletters4
+    449 |   4 | partyblessletters5
+    450 |   4 | partyblessletters6
+    463 |   4 | bpetcashexpshare10
+    464 |   4 | bpetcashexpshare20
+    465 |   4 | bpetcashexpshare50
+    466 |   4 | bpetloyaltyup100
+    467 |   4 | test
+    514 |   4 | itemautopickup
+    515 |   4 | itemautopickuparea
+
+=== pid 26132  SO3DPlus.exe base=0x00400000  BuffDescTable=0x70F68A98 count=516 ===
+
+  [ 指定 buffId ]
+     id | cat | name
+  --------------------------------------------------
+    159 |   4 | premiumselling   [Cash]
+
+  [ 全表扫描:category∈{0,4}(cash 栏)的所有行 ]
+      0 |   0 | itemautopickuparea
+    139 |   4 | partyblessletter
+    140 |   4 | partyblessletter1
+    141 |   4 | partyblessletter2
+    142 |   4 | partyblessletter3
+    143 |   4 | partyblessletter4
+    144 |   4 | partyblessletter5
+    145 |   4 | partyblessletter6
+    152 |   4 | insdnticket
+    153 |   4 | gatorade
+    154 |   4 | autohunt
+    156 |   4 | cashpolymorph
+    159 |   4 | premiumselling
+    175 |   4 | cashfishing
+    209 |   4 | bpetcashexpup100
+    210 |   4 | bpetcashexpup50
+    211 |   4 | bpetcashexpup150
+    214 |   4 | itembuffautohunt
+    215 |   4 | itembuffautohuntarea
+    216 |   4 | itembuffskillslot
+    217 |   4 | itemattackskillslot
+    218 |   4 | bpetcashautoslot
+    436 |   4 | partyblessletterb
+    437 |   4 | partyblessletterb1
+    438 |   4 | partyblessletterb2
+    439 |   4 | partyblessletterb3
+    440 |   4 | partyblessletterb4
+    441 |   4 | partyblessletterb5
+    442 |   4 | partyblessletterb6
+    444 |   4 | partyblessletters
+    445 |   4 | partyblessletters1
+    446 |   4 | partyblessletters2
+    447 |   4 | partyblessletters3
+    448 |   4 | partyblessletters4
+    449 |   4 | partyblessletters5
+    450 |   4 | partyblessletters6
+    463 |   4 | bpetcashexpshare10
+    464 |   4 | bpetcashexpshare20
+    465 |   4 | bpetcashexpshare50
+    466 |   4 | bpetloyaltyup100
+    467 |   4 | test
+    514 |   4 | itemautopickup
+    515 |   4 | itemautopickuparea

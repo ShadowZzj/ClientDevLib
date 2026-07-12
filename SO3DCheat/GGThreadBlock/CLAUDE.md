@@ -5,7 +5,7 @@
 GGThreadBlock 是注入到 `unpackd_so3d.exe` / `so3dplus.exe` (SO3D Plus 游戏客户端) 的功能性 DLL。它同时承担两种角色：
 
 1. **GameGuard 抑制层**：Detour `CreateThread` 拦截来源于 `GameGuardDll.dll` 的 worker 线程，把它们重定向到一个永远 `Sleep(INFINITE)` 的 dummy 过程；同时 detour `SetWindowsHookExA/W` + `UnhookWindowsHookEx`，返回 sentinel HHOOK 让宿主 EXE 的 `WH_KEYBOARD_LL` 安装"成功"但实际没生效，从而夺回 Win 键 / 任务切换；并一次性把 `NPmsg.dll+0x103D3` 的 `jng` 改成 `jmp`。
-2. **游戏功能模块宿主**：以 `SO3DCheat` 为蓝本的 ImGui/D3D9Hook 外挂骨架，载入一组 `IModule` (MoveSpeed, AttackSpeed, SkillSpeed, SpeedHack, ItemShortCD, AttackRange, ActionMove, AutoPickup, FireFullPower, AutoConfirm, AutoDelegation, StationaryFarm, PlayerESP, NearbyPlayerGuard, Status)。
+2. **游戏功能模块宿主**：以 `SO3DCheat` 为蓝本的 ImGui/D3D9Hook 外挂骨架，载入一组 `IModule` (MoveSpeed, AttackSpeed, SkillSpeed, SpeedHack, ItemShortCD, AttackRange, AttackMove, SkillMove, AutoPickup, FireFullPower, AutoConfirm, AutoDelegation, StationaryFarm, PlayerESP, NearbyPlayerGuard, Status)。
 
 此外还带一个附属 exe [`Starter.cpp`](Starter.cpp)：批量登录器，读账号列表启动多个 `so3dplus.exe`，按 `GGTB_HWFP_GROUP` 把账号分组到共享的假硬件指纹。
 
@@ -50,7 +50,8 @@ GGThreadBlock/
     ├── SpeedHackModule.h        封装 SpeedHack 工具
     ├── ItemNoCDModule.h         物品 CD 缩到固定极短值
     ├── AttackRangeModule.h      攻击距离字段 + cap 放宽
-    ├── ActionMoveModule.h       攻击/施法时允许移动
+    ├── AttackMoveModule.h       普攻/连击时允许移动 (370C==0 非技能路 @ 0x753A80)
+    ├── SkillMoveModule.h        技能时允许移动 (370C∈{3,5,8} 技能路 @ 0x753A54)
     ├── AutoPickupModule.h       独立 worker 扫 CItemContainer 自动捡取
     ├── FireFullPowerModule.h    全程全威力 (热键 N 切换)
     ├── AutoConfirmModule.h      自动点确认弹窗
@@ -66,9 +67,9 @@ GGThreadBlock/
 
 1. **DllMain (DLL_PROCESS_ATTACH)**：`DisableThreadLibraryCalls` → `InstallDetour`（CreateThread + SetWindowsHookExA/W + UnhookWindowsHookEx）→ 起 `HackThread` 和 `NPmsgPatcherThread`。**禁止在 DllMain 里做文件 IO 或 spdlog 调用**（loader lock + registry mutex 死锁）。
 2. **HackThread**：`UserConfig::Bootstrap` (建 `_bootstrap/` 日志) → `PatternResolver::Init` → `Stage1Trigger::Install` → `NetLog::Install`、`HwFpSpoof::Install`、`DisconnectWatchdog::Install`（后三者把真实 detour 延后到 stage-2 回调）→ 构造 `Setting`，按序注册模块（**NPG 最后注册**，这样 `Setting::GetModules()` 能看到所有被守护者）→ 循环 `Sleep(100)` 里 pump 热键 (`VK_END` 退出、`N` toggle FireFullPower) 和 `UserConfig::Tick`。
-3. **D3D9Hook EndScene**：首次调用时 lazy 触发 `Setting::Init`（加载 CJK 字体、`mod->OnInit()`），之后每帧 `Setting::Render` 遍历模块画 UI，并对比 snapshot 决定是否 `UserConfig::MarkDirty()`。
-4. **UserConfig::Tick**：Setting 初始化完 + 本地玩家加载出角色名后，把 logger 切到 `<character>/ggtb.log`，读 config.json，对每个模块 `LoadState`。此后 ~1 秒 debounce 回写。
-5. **退出路径**：`VK_END` 跳出主循环 → `UserConfig::SaveModuleStates`（在 `setting->End()` 之前，避免 `OnShutdown` 覆盖值）→ 各 util `Uninstall` → `D3D9Hook::Destroy` → `FreeLibraryAndExitThread`。
+3. **D3D9Hook EndScene**：首次调用时 lazy 触发 `Setting::Init`（加载 CJK 字体、`mod->OnInit()`），之后每帧 `Setting::Render` 画 UI —— 左侧 profile 管理栏 + 右侧三标签页（常用/变态/PK，按 `IModule::GetTab()` 分流，双列紧凑布局），并靠 `ConfigGeneration()` 对齐基线、用 snapshot diff 算"未保存改动"脏标记。
+4. **UserConfig::Tick**：Setting 初始化完 + 本地玩家加载出角色名后，把 logger 切到 `<character>/ggtb.log`，读 config.json（meta：manualWhitelist + activeProfile），加载活动 profile（`profiles/<name>.json`，仅含模块状态）并对每个模块 `LoadState`。白名单/activeProfile 改动 ~1 秒 debounce 回写 config.json；**模块状态只在点「保存」(`SaveProfile`) 时写 profile 文件**，从不自动落盘。
+5. **退出路径**：`VK_END` 跳出主循环 → `UserConfig::FlushConfigMeta`（只刷 config.json meta，不写模块状态）→ 各 util `Uninstall` → `D3D9Hook::Destroy` → `FreeLibraryAndExitThread`。
 
 ### IModule 契约要点
 

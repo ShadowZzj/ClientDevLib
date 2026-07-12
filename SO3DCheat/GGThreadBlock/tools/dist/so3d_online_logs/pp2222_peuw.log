@@ -1,0 +1,757 @@
+2026-06-05 16:32:19.212 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\dist\so3d_online_logs\pp2222_peuw.log
+2026-06-05 16:32:19.212 | [client] account='pp2222' character='peuw'
+2026-06-05 16:32:19.212 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-05 16:32:20.519 | [net] connected 165.154.194.121:1818
+2026-06-05 16:32:20.824 | [debug][recv:handshake] len=12 proto=1700868654 key=6
+2026-06-05 16:32:20.824 | [debug][recv:handshake] raw=0c 00 00 00 2e 32 61 65 5e 08 84 39
+2026-06-05 16:32:20.824 | [debug][recv:handshake] dec=0c 00 00 00 2e 32 61 65 5e 08 84 39
+2026-06-05 16:32:20.824 | [debug][recv:handshake] ascii=.....2ae^..9
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=0 proto=1078268270 firstBody=0x1CA02B1E body=1e 2b a0 1c
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=1 proto=1128535565 firstBody=0x1FA12C7D body=7d 2c a1 1f
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=2 proto=1330059018 firstBody=0x13A22D7A body=7a 2d a2 13
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=3 proto=1313543179 firstBody=0x12AE2E7B body=7b 2e ae 12
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=4 proto=1145706504 firstBody=0x18AF2278 body=78 22 af 18
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=5 proto=624957700 firstBody=0x79A52374 body=74 23 a5 79
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=6 proto=1176572677 firstBody=0x1AC42975 body=75 29 c4 1a
+2026-06-05 16:32:20.824 | [debug][recv:handshake] xor-candidate key=7 proto=1094873615 firstBody=0x1DA7487F body=7f 48 a7 1d
+2026-06-05 16:32:20.824 | [debug][recv:handshake] no XOR key produced a known SO3D proto; the SO3D client dispatcher would not handle this as a normal game packet
+2026-06-05 16:32:20.824 | [debug][recv:handshake] des-dec=38 38 03 00 3a 20 64 1c
+2026-06-05 16:32:20.824 | [10002] handshake xor key index=6 key=2b 21 40 23
+2026-06-05 16:32:20.824 | [10002] initial handshake len=12
+2026-06-05 16:32:20.824 | [client] active xor key index=6 key=2b 21 40 23
+2026-06-05 16:32:20.825 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-05 16:32:20.825 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b3 90 41 23 2b 21 40 23 9c ab e0 6b 07 32 2b a8 bd dc 3a bf e2 48 e6 c1 9a 5c a5 0e 92 86 e0 a0 bd dc 3a bf e2 48 e6 c1 30 14 fe 94 64 ac 64 1a 3b 7e 72 a6 09 a6 92 0d
+2026-06-05 16:32:20.825 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 b7 8a a0 48 2c 13 6b 8b 96 fd 7a 9c c9 69 a6 e2 b1 7d e5 2d b9 a7 a0 83 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-05 16:32:20.825 | [10002] send CL_LOGIN
+2026-06-05 16:32:21.259 | [debug][recv:LC_SERVER_LIST] len=58 proto=LC_SERVER_LIST key=6
+2026-06-05 16:32:21.259 | [debug][recv:LC_SERVER_LIST] raw=3a 00 00 00 62 7e 43 23 2a 21 40 23 1a 52 25 51 5d 44 32 23 0b 01 60 03 0b 01 60 03 2a 21 40 23 fe 21 40 23 2b 21 40 23 2b 21 40 23 2b 21 40 23 2b 21 40 23 2b 21 40 23 2b 21
+2026-06-05 16:32:21.259 | [debug][recv:LC_SERVER_LIST] dec=3a 00 00 00 49 5f 03 00 01 00 00 00 31 73 65 72 76 65 72 00 20 20 20 20 20 20 20 20 01 00 00 00 d5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:21.260 | [10002] recv proto=LC_SERVER_LIST len=58
+2026-06-05 16:32:21.556 | [net] connected 123.58.197.240:1838
+2026-06-05 16:32:21.556 | [bill] send open opcode=1 len=38
+2026-06-05 16:32:24.570 | [bill] recv open-ack skipped: timed out
+2026-06-05 16:32:24.570 | [bill] send account opcode=2 len=22
+2026-06-05 16:32:24.570 | [bill] send ready opcode=3 len=6
+2026-06-05 16:32:25.728 | [bill] recv post-ready-1 47 00 02 00 01 00 00 00 00 00 70 70 32 32 32 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:25.728 | [bill] recv post-ready-2 30 00 03 00 01 00 00 00 00 00 70 70 32 32 32 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:25.729 | [debug][send:CL_GET_CHARINFO] len=16 proto=CL_GET_CHARINFO xor=True
+2026-06-05 16:32:25.729 | [debug][send:CL_GET_CHARINFO] raw=10 00 00 00 b0 90 41 23 29 21 40 23 2a 21 40 23
+2026-06-05 16:32:25.729 | [debug][send:CL_GET_CHARINFO] dec=10 00 00 00 9b b1 01 00 02 00 00 00 01 00 00 00
+2026-06-05 16:32:25.729 | [10002] send CL_GET_CHARINFO server=2 channel=1
+2026-06-05 16:32:26.065 | [debug][recv:LC_CHARINFO_SUCCESS] len=388 proto=LC_CHARINFO_SUCCESS key=6
+2026-06-05 16:32:26.065 | [debug][recv:LC_CHARINFO_SUCCESS] raw=84 01 00 00 60 7e 43 23 29 21 40 23 2a 21 40 23 2e 21 40 23 5b 44 35 54 2b 21 40 23 2b 21 40 23 2b 21 40 23 2a 21 40 23 bc 21 40 23 29 21 40 23 29 21 40 23 2a 21 40 23 2b 21 40 23 80 02 40 23 27 21 40 23 87 02 40 23 27 21 40 23 86 02 40 23 27 21 40 23 85 02 40 23 27 21 40 23 d9 73 40 23 2b 21 40 23 2b 21 40 23 2b 21 40 23 16 2e 40 23 27 21 40 23 fd 2e 40 23 2b 21 40 23 d4 de bf dc 2b 21 40 23 87 3e 40 23 2b 21 40 23 2b 21 40 23 2b 21 40 23 ea 63 40 23 2b 21 40 23 2b 21 40 23 ...(+228 bytes)
+2026-06-05 16:32:26.065 | [debug][recv:LC_CHARINFO_SUCCESS] dec=84 01 00 00 4b 5f 03 00 02 00 00 00 01 00 00 00 05 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 97 00 00 00 02 00 00 00 02 00 00 00 01 00 00 00 00 00 00 00 ab 23 00 00 0c 00 00 00 ac 23 00 00 0c 00 00 00 ad 23 00 00 0c 00 00 00 ae 23 00 00 0c 00 00 00 f2 52 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3d 0f 00 00 0c 00 00 00 d6 0f 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 ac 1f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c1 42 00 00 00 00 00 00 00 00 00 00 ...(+228 bytes)
+2026-06-05 16:32:26.065 | [10002] recv proto=LC_CHARINFO_SUCCESS len=388
+2026-06-05 16:32:26.066 | [bill] send select-server opcode=4 len=10
+2026-06-05 16:32:26.066 | [debug][send:CL_GAMESERVER_CONNECT] len=32 proto=CL_GAMESERVER_CONNECT xor=True
+2026-06-05 16:32:26.066 | [debug][send:CL_GAMESERVER_CONNECT] raw=20 00 00 00 b5 90 41 23 29 21 40 23 2a 21 40 23 5b 44 35 54 2b 21 40 23 2b 21 40 23 2b 21 40 23
+2026-06-05 16:32:26.066 | [debug][send:CL_GAMESERVER_CONNECT] dec=20 00 00 00 9e b1 01 00 02 00 00 00 01 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:26.066 | [10002] send CL_GAMESERVER_CONNECT character='peuw'
+2026-06-05 16:32:26.533 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] len=60 proto=LC_GSERV_CONNECT_SUCCESS key=6
+2026-06-05 16:32:26.533 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] raw=3c 00 00 00 7a 7e 43 23 29 21 40 23 5b 44 35 54 2b 21 40 23 2b 21 40 23 2b 21 40 23 1a 13 77 0d 1a 0f 75 0d 1f 10 40 03 0b 01 60 03 1a 26 40 23 ce b2 41 5c 2b 21 40 23 2a 21 40 23
+2026-06-05 16:32:26.533 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] dec=3c 00 00 00 51 5f 03 00 02 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 31 32 37 2e 31 2e 35 2e 34 31 00 20 20 20 20 20 31 07 00 00 e5 93 01 7f 00 00 00 00 01 00 00 00
+2026-06-05 16:32:26.533 | [10002] recv proto=LC_GSERV_CONNECT_SUCCESS len=60
+2026-06-05 16:32:26.533 | [game] lobby returned 127.1.5.41:1841 character='peuw' seed=0x7F0193E5
+2026-06-05 16:32:26.533 | [game] host map 127.1.5.41 -> 128.14.237.136
+2026-06-05 16:32:26.533 | [game] effective server 128.14.237.136:1841 character='peuw' seed=0x7F0193E5
+2026-06-05 16:32:26.819 | [net] connected 128.14.237.136:1841
+2026-06-05 16:32:26.820 | [debug][send:CG_PLAY_START] len=12 proto=CG_PLAY_START xor=False
+2026-06-05 16:32:26.820 | [debug][send:CG_PLAY_START] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-05 16:32:26.820 | [debug][wire:CG_PLAY_START] len=24 raw=18 00 00 00 87 49 06 00 52 e1 6a fe e3 7d 05 1c 51 e5 3d c0 9a 50 99 a6
+2026-06-05 16:32:26.820 | [game] send CG_PLAY_START
+2026-06-05 16:32:26.820 | [debug][send:CG_ENTER] len=52 proto=CG_ENTER xor=False
+2026-06-05 16:32:26.820 | [debug][send:CG_ENTER] raw=34 00 00 00 7d 45 06 00 e5 93 01 7f ee 3d dc 01 13 41 66 76 c8 c5 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:26.820 | [debug][wire:CG_ENTER] len=64 raw=40 00 00 00 7d 45 06 00 c5 59 6c cd ff 38 fd 86 33 b1 7a 2d 9c 2b 2b 38 03 db de 94 47 77 c4 94 94 c6 6d 77 5f d1 f4 da 83 7c b0 f5 10 60 2d 8b 44 52 6e 39 a3 63 86 59 62 f4 0f ff bd 33 94 bd
+2026-06-05 16:32:26.820 | [game] send CG_ENTER
+2026-06-05 16:32:27.778 | [debug][recv:game] chunk-len=12648 firstLen=48 firstProto=511416
+2026-06-05 16:32:27.778 | [debug][recv:game] raw=30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1c 00 00 00 34 ce 07 00 52 cd 96 03 00 00 00 00 14 00 00 00 02 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 3c 01 00 00 3f 00 00 00 03 03 00 00 14 00 00 00 fe 01 00 00 15 00 00 00 37 01 00 00 ...(+12488 bytes)
+2026-06-05 16:32:27.778 | [debug][recv:game] ascii=0..................................................
+2026-06-05 16:32:27.778 | [chat] status source from post-enter: player_id=0x00000034 map_id=8
+2026-06-05 16:32:27.829 | [debug][send:CG_INIT_411555] len=18 proto=CG_INIT_411555 xor=False
+2026-06-05 16:32:27.829 | [debug][send:CG_INIT_411555] raw=12 00 00 00 a3 47 06 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-05 16:32:27.829 | [debug][wire:CG_INIT_411555] len=32 raw=20 00 00 00 a3 47 06 00 58 ce 3b 3c cc 68 31 46 57 ed 6c 9b c4 b3 ab 7e 90 6f d2 56 1a 20 bb d8
+2026-06-05 16:32:27.829 | [game] send CG_INIT_411555
+2026-06-05 16:32:27.829 | [debug][send:CG_INIT_411589] len=20 proto=CG_INIT_411589 xor=False
+2026-06-05 16:32:27.829 | [debug][send:CG_INIT_411589] raw=14 00 00 00 c5 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-05 16:32:27.829 | [debug][wire:CG_INIT_411589] len=32 raw=20 00 00 00 c5 47 06 00 8c 0a 40 22 ff bd d3 0a c3 27 fd 6f c4 7b 0a cb 29 f9 35 d3 8d fb 99 8a
+2026-06-05 16:32:27.829 | [game] send CG_INIT_411589
+2026-06-05 16:32:27.829 | [debug][send:CG_INIT_411595] len=20 proto=CG_INIT_411595 xor=False
+2026-06-05 16:32:27.829 | [debug][send:CG_INIT_411595] raw=14 00 00 00 cb 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-05 16:32:27.829 | [debug][wire:CG_INIT_411595] len=32 raw=20 00 00 00 cb 47 06 00 8c 0a 40 22 ff bd d3 0a c3 27 fd 6f c4 7b 0a cb 29 f9 35 d3 8d fb 99 8a
+2026-06-05 16:32:27.829 | [game] send CG_INIT_411595
+2026-06-05 16:32:27.850 | [debug][send:CG_PLAY_START_2] len=12 proto=CG_PLAY_START xor=False
+2026-06-05 16:32:27.850 | [debug][send:CG_PLAY_START_2] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-05 16:32:27.850 | [debug][wire:CG_PLAY_START_2] len=24 raw=18 00 00 00 87 49 06 00 4e 0f 28 05 df fa b6 e9 92 2d e4 23 9f 9a 3f 3a
+2026-06-05 16:32:27.850 | [game] send CG_PLAY_START_2
+2026-06-05 16:32:27.870 | [debug][send:CG_POST_ENTER_411570] len=12 proto=CG_POST_ENTER_411570 xor=False
+2026-06-05 16:32:27.870 | [debug][send:CG_POST_ENTER_411570] raw=0c 00 00 00 b2 47 06 00 04 00 00 00
+2026-06-05 16:32:27.870 | [debug][wire:CG_POST_ENTER_411570] len=24 raw=18 00 00 00 b2 47 06 00 6e 86 c4 61 d1 08 5b d4 db 1b 2b 8b 84 93 ca e0
+2026-06-05 16:32:27.870 | [game] send CG_POST_ENTER_411570
+2026-06-05 16:32:28.159 | [net] connected 123.58.197.240:3000
+2026-06-05 16:32:28.159 | [chat] send login opcode=0x00004100 len=69 raw=45 00 00 41 00 00 70 70 32 32 32 32 00 00 00 00 00 00 00 00 00 00 00 61 73 64 71 77 65 00 00 00 00 00 00 00 00 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 1f ae 01 00 34 00 00 00
+2026-06-05 16:32:28.159 | [chat] send map-status map=8 player=0x00000034 opcode=0x00004110 len=39 raw=27 00 10 41 00 00 08 00 00 00 08 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 34 00 00 00
+2026-06-05 16:32:28.410 | [debug][send:CG_POST_ENTER_411625] len=12 proto=CG_POST_ENTER_411625 xor=False
+2026-06-05 16:32:28.410 | [debug][send:CG_POST_ENTER_411625] raw=0c 00 00 00 e9 47 06 00 00 00 00 00
+2026-06-05 16:32:28.410 | [debug][wire:CG_POST_ENTER_411625] len=24 raw=18 00 00 00 e9 47 06 00 a1 90 79 39 f3 73 c8 ae eb 60 73 be 7a d5 f6 54
+2026-06-05 16:32:28.410 | [game] send CG_POST_ENTER_411625
+2026-06-05 16:32:28.410 | [loop] online simulation is running; Ctrl+C to stop
+2026-06-05 16:32:28.410 | [debug][recv:game] chunk-len=18200 firstLen=0 firstProto=30440
+2026-06-05 16:32:28.410 | [debug][recv:game] raw=00 00 00 00 e8 76 00 00 09 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ef 9b 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 8c 96 00 00 00 00 00 00 00 00 00 00 00 00 00 00 8d 96 00 00 00 00 00 00 00 00 00 00 00 00 00 00 8e 96 00 00 00 00 00 00 00 00 00 00 ...(+18040 bytes)
+2026-06-05 16:32:28.410 | [debug][recv:game] ascii=.....v.............................................
+2026-06-05 16:32:28.661 | [debug][recv:game] chunk-len=1400 firstLen=0 firstProto=0
+2026-06-05 16:32:28.661 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+1240 bytes)
+2026-06-05 16:32:28.661 | [debug][recv:game] ascii=...................................................
+2026-06-05 16:32:28.912 | [debug][recv:game] chunk-len=5241 firstLen=0 firstProto=0
+2026-06-05 16:32:28.912 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+5081 bytes)
+2026-06-05 16:32:28.912 | [debug][recv:game] ascii=...................................................
+2026-06-05 16:32:29.162 | [debug][recv:game] chunk-len=600 firstLen=16 firstProto=511643
+2026-06-05 16:32:29.162 | [debug][recv:game] raw=10 00 00 00 9b ce 07 00 00 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 3c 01 00 00 3f 00 00 00 03 03 00 00 14 00 00 00 fe 01 00 00 15 00 00 00 37 01 00 00 04 01 00 00 e0 15 00 00 1f 07 00 00 09 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 07 00 00 00 05 00 00 00 05 00 00 00 05 00 00 00 05 00 00 00 d4 01 00 00 7f ce 07 00 00 00 00 00 50 0d 03 00 00 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ...(+440 bytes)
+2026-06-05 16:32:29.162 | [debug][recv:game] ascii=................T...."..<...?......................
+2026-06-05 16:32:29.413 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:29.413 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:29.413 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:29.413 | [debug][recv:chat] chunk-len=140 firstLen=16842813 firstProto=1701838852
+2026-06-05 16:32:29.413 | [debug][recv:chat] raw=3d 00 01 01 04 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1b 00 02 01 04 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 34 00 32 01 04 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:29.413 | [debug][recv:chat] ascii==.....peuw.............ETC..................ETC....
+2026-06-05 16:32:29.914 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:29.914 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ec 00 00 00 43 01 00 00 eb 00 00 00 42 01 00 00
+2026-06-05 16:32:29.914 | [debug][recv:game] ascii=....8...........C.......B...
+2026-06-05 16:32:30.916 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:30.916 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 ed 00 00 00 13 01 00 00 ee 00 00 00 14 01 00 00
+2026-06-05 16:32:30.916 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:32:31.417 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:31.417 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:31.417 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:31.918 | [debug][recv:game] chunk-len=120 firstLen=120 firstProto=511030
+2026-06-05 16:32:31.918 | [debug][recv:game] raw=78 00 00 00 36 cc 07 00 77 08 00 00 d8 00 00 00 2c 01 00 00 8e 0a 00 00 08 00 00 00 1f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:31.918 | [debug][recv:game] ascii=x...6...w.......,..................................
+2026-06-05 16:32:32.418 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:32.418 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 de 00 00 00 2a 01 00 00 dd 00 00 00 2b 01 00 00
+2026-06-05 16:32:32.418 | [debug][recv:game] ascii=....8...........*.......+...
+2026-06-05 16:32:33.420 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:33.420 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:33.420 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:35.674 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:35.674 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 12 01 00 00 fe 00 00 00 12 01 00 00
+2026-06-05 16:32:35.674 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:32:35.924 | [debug][recv:game] chunk-len=112 firstLen=28 firstProto=511032
+2026-06-05 16:32:35.924 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 00 01 00 00 34 01 00 00 01 01 00 00 34 01 00 00 1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 1c 00 00 00 38 cc 07 00 f6 08 00 00 eb 00 00 00 42 01 00 00 eb 00 00 00 43 01 00 00 1c 00 00 00 38 cc 07 00 b1 08 00 00 e6 00 00 00 1d 01 00 00 e5 00 00 00 1c 01 00 00
+2026-06-05 16:32:35.924 | [debug][recv:game] ascii=....8...........4.......4.......P...b..............
+2026-06-05 16:32:37.426 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:37.426 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:37.426 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:38.178 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:38.178 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 ee 00 00 00 14 01 00 00 ee 00 00 00 13 01 00 00
+2026-06-05 16:32:38.178 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:32:38.178 | [debug][recv:chat] chunk-len=146 firstLen=1114258 firstProto=65540
+2026-06-05 16:32:38.178 | [debug][recv:chat] raw=92 00 11 00 04 00 01 00 00 00 31 36 3a 33 32 3a 34 30 20 b5 e6 c0 59 aa ba be 75 c5 5c a4 70 a7 cc 20 a6 62 20 a7 c6 ba b8 af 53 c3 e4 b9 d2 20 ad ab a5 cd a4 46 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:32:38.178 | [debug][recv:chat] ascii=..........16:32:40 ...Y...u.\.p.. .b .....S.... ...
+2026-06-05 16:32:38.428 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:32:38.428 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:32:38.428 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 d2 0f 82 cc a4 7b bb 81 23 5b 65 6b a4 b2 63 e4
+2026-06-05 16:32:38.428 | [game] send CG_GAME_ALIVE
+2026-06-05 16:32:38.679 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:38.679 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 77 08 00 00 d8 00 00 00 2c 01 00 00 d9 00 00 00 2c 01 00 00
+2026-06-05 16:32:38.679 | [debug][recv:game] ascii=....8...w.......,.......,...
+2026-06-05 16:32:39.430 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:39.430 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:39.430 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:39.680 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:39.680 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fe 00 00 00 12 01 00 00 fd 00 00 00 12 01 00 00
+2026-06-05 16:32:39.680 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:32:40.181 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:40.181 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 dd 00 00 00 2b 01 00 00 dc 00 00 00 2c 01 00 00
+2026-06-05 16:32:40.181 | [debug][recv:game] ascii=....8...........+.......,...
+2026-06-05 16:32:41.433 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:41.433 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:41.433 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:41.684 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:32:41.684 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 01 01 00 00 34 01 00 00 02 01 00 00 34 01 00 00 1c 00 00 00 38 cc 07 00 f6 08 00 00 eb 00 00 00 43 01 00 00 ec 00 00 00 43 01 00 00
+2026-06-05 16:32:41.684 | [debug][recv:game] ascii=....8...........4.......4.......8...........C......
+2026-06-05 16:32:42.436 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:42.436 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 e5 00 00 00 1c 01 00 00 e4 00 00 00 1b 01 00 00
+2026-06-05 16:32:42.436 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:32:43.188 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:32:43.188 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 74 18 00 00 a6 00 00 00 02 00 00 00
+2026-06-05 16:32:43.188 | [debug][recv:game] ascii=,...?...b...............G...<...t...........
+2026-06-05 16:32:45.191 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:45.191 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 ee 00 00 00 13 01 00 00 ed 00 00 00 12 01 00 00
+2026-06-05 16:32:45.191 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:32:45.442 | [debug][recv:game] chunk-len=72 firstLen=44 firstProto=521023
+2026-06-05 16:32:45.442 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 cc 1a 00 00 a6 00 00 00 00 00 00 00 1c 00 00 00 38 cc 07 00 c4 08 00 00 dc 00 00 00 2c 01 00 00 dc 00 00 00 2b 01 00 00
+2026-06-05 16:32:45.442 | [debug][recv:game] ascii=,...?...b...............G...<......................
+2026-06-05 16:32:45.692 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:45.692 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 77 08 00 00 d9 00 00 00 2c 01 00 00 da 00 00 00 2c 01 00 00
+2026-06-05 16:32:45.692 | [debug][recv:game] ascii=....8...w.......,.......,...
+2026-06-05 16:32:46.193 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:46.193 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 12 01 00 00 fd 00 00 00 11 01 00 00
+2026-06-05 16:32:46.193 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:32:46.444 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:46.444 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 02 01 00 00 34 01 00 00 01 01 00 00 33 01 00 00
+2026-06-05 16:32:46.444 | [debug][recv:game] ascii=....8...........4.......3...
+2026-06-05 16:32:46.944 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:46.944 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ec 00 00 00 43 01 00 00 ed 00 00 00 42 01 00 00
+2026-06-05 16:32:46.944 | [debug][recv:game] ascii=....8...........C.......B...
+2026-06-05 16:32:47.194 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:47.194 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:47.194 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:48.445 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:48.445 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 e4 00 00 00 1b 01 00 00 e5 00 00 00 1c 01 00 00
+2026-06-05 16:32:48.445 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:32:48.445 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:32:48.445 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:32:48.445 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 93 b0 31 66 3b 47 9e b7 19 1c ea df 4e 7e 87 41
+2026-06-05 16:32:48.445 | [game] send CG_GAME_ALIVE
+2026-06-05 16:32:49.197 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:49.197 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:49.197 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:51.200 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:51.200 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:51.200 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:51.701 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:51.701 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 ed 00 00 00 12 01 00 00 ed 00 00 00 13 01 00 00
+2026-06-05 16:32:51.701 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:32:51.952 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:51.952 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 01 01 00 00 33 01 00 00 00 01 00 00 34 01 00 00
+2026-06-05 16:32:51.952 | [debug][recv:game] ascii=....8...........3.......4...
+2026-06-05 16:32:52.202 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:52.202 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ed 00 00 00 42 01 00 00 ee 00 00 00 43 01 00 00
+2026-06-05 16:32:52.202 | [debug][recv:game] ascii=....8...........B.......C...
+2026-06-05 16:32:52.703 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:52.703 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 dc 00 00 00 2b 01 00 00 db 00 00 00 2c 01 00 00
+2026-06-05 16:32:52.703 | [debug][recv:game] ascii=....8...........+.......,...
+2026-06-05 16:32:52.954 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:52.954 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 11 01 00 00 fc 00 00 00 11 01 00 00
+2026-06-05 16:32:52.954 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:32:53.204 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:53.204 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 77 08 00 00 da 00 00 00 2c 01 00 00 da 00 00 00 2b 01 00 00
+2026-06-05 16:32:53.204 | [debug][recv:game] ascii=....8...w.......,.......+...
+2026-06-05 16:32:53.705 | [debug][recv:game] chunk-len=72 firstLen=44 firstProto=521023
+2026-06-05 16:32:53.705 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 90 1a 00 00 a6 00 00 00 00 00 00 00 1c 00 00 00 38 cc 07 00 b1 08 00 00 e5 00 00 00 1c 01 00 00 e6 00 00 00 1d 01 00 00
+2026-06-05 16:32:53.705 | [debug][recv:game] ascii=,...?...b...............G...<......................
+2026-06-05 16:32:55.207 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:55.207 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:55.207 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:57.209 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:32:57.209 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:32:57.209 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:32:57.960 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:57.960 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ee 00 00 00 43 01 00 00 ef 00 00 00 43 01 00 00
+2026-06-05 16:32:57.960 | [debug][recv:game] ascii=....8...........C.......C...
+2026-06-05 16:32:58.461 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:32:58.461 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:32:58.461 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 b6 66 73 b9 81 0b 9e b6 32 67 0c ad 86 6e b9 0d
+2026-06-05 16:32:58.461 | [game] send CG_GAME_ALIVE
+2026-06-05 16:32:58.962 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:58.962 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fc 00 00 00 11 01 00 00 fd 00 00 00 12 01 00 00
+2026-06-05 16:32:58.962 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:32:59.213 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:59.213 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 77 08 00 00 da 00 00 00 2b 01 00 00 d9 00 00 00 2a 01 00 00
+2026-06-05 16:32:59.213 | [debug][recv:game] ascii=....8...w.......+.......*...
+2026-06-05 16:32:59.463 | [debug][recv:game] chunk-len=84 firstLen=28 firstProto=531024
+2026-06-05 16:32:59.463 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 1c 00 00 00 38 cc 07 00 c4 08 00 00 db 00 00 00 2c 01 00 00 db 00 00 00 2b 01 00 00 1c 00 00 00 38 cc 07 00 9b 08 00 00 ed 00 00 00 13 01 00 00 ed 00 00 00 14 01 00 00
+2026-06-05 16:32:59.463 | [debug][recv:game] ascii=....P...b...............G.......8...........,......
+2026-06-05 16:32:59.964 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:32:59.964 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 00 01 00 00 34 01 00 00 01 01 00 00 35 01 00 00
+2026-06-05 16:32:59.964 | [debug][recv:game] ascii=....8...........4.......5...
+2026-06-05 16:33:00.716 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:00.716 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 e6 00 00 00 1d 01 00 00 e6 00 00 00 1e 01 00 00
+2026-06-05 16:33:00.716 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:33:01.216 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:33:01.216 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 54 1a 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:33:01.216 | [debug][recv:game] ascii=,...?...b...............G...<...T...........
+2026-06-05 16:33:01.216 | [debug][recv:chat] chunk-len=6 firstLen=4294901766
+2026-06-05 16:33:01.216 | [debug][recv:chat] raw=06 00 ff ff 0f 00
+2026-06-05 16:33:01.216 | [debug][recv:chat] ascii=......
+2026-06-05 16:33:03.219 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:33:03.219 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:33:03.219 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:33:05.223 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:05.223 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ef 00 00 00 43 01 00 00 ef 00 00 00 44 01 00 00
+2026-06-05 16:33:05.223 | [debug][recv:game] ascii=....8...........C.......D...
+2026-06-05 16:33:05.724 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:33:05.724 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 18 1a 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:33:05.724 | [debug][recv:game] ascii=,...?...b...............G...<...............
+2026-06-05 16:33:05.975 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:33:05.975 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 db 00 00 00 2b 01 00 00 dc 00 00 00 2c 01 00 00 1c 00 00 00 38 cc 07 00 f8 08 00 00 01 01 00 00 35 01 00 00 00 01 00 00 34 01 00 00
+2026-06-05 16:33:05.975 | [debug][recv:game] ascii=....8...........+.......,.......8...........5......
+2026-06-05 16:33:06.475 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:06.475 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 12 01 00 00 fc 00 00 00 12 01 00 00
+2026-06-05 16:33:06.475 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:33:06.976 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:06.976 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 ed 00 00 00 14 01 00 00 ec 00 00 00 15 01 00 00
+2026-06-05 16:33:06.976 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:33:07.477 | [debug][recv:game] chunk-len=72 firstLen=28 firstProto=511032
+2026-06-05 16:33:07.477 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 77 08 00 00 d9 00 00 00 2a 01 00 00 d9 00 00 00 29 01 00 00 2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 dc 19 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:33:07.477 | [debug][recv:game] ascii=....8...w.......*.......)...,...?...b..............
+2026-06-05 16:33:08.479 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:33:08.479 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:33:08.479 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 d3 58 df fd 7a a6 e9 fe 28 af a8 7d f1 50 fe 7c
+2026-06-05 16:33:08.479 | [game] send CG_GAME_ALIVE
+2026-06-05 16:33:09.230 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:33:09.230 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:33:09.230 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:33:10.733 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:10.733 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ef 00 00 00 44 01 00 00 f0 00 00 00 44 01 00 00
+2026-06-05 16:33:10.733 | [debug][recv:game] ascii=....8...........D.......D...
+2026-06-05 16:33:11.233 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:33:11.233 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:33:11.233 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:33:12.486 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:12.486 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 dc 00 00 00 2c 01 00 00 dd 00 00 00 2d 01 00 00
+2026-06-05 16:33:12.486 | [debug][recv:game] ascii=....8...........,.......-...
+2026-06-05 16:33:12.737 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:33:12.737 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 e6 00 00 00 1e 01 00 00 e7 00 00 00 1f 01 00 00
+2026-06-05 16:33:12.737 | [debug][recv:game] ascii=....8.......................
+2026-06-05 16:33:13.238 | [error] attempt 1 failed
+2026-06-05 16:33:13.238 | Traceback (most recent call last):
+2026-06-05 16:33:13.239 |   File "so3d_online_login_client.py", line 691, in run_forever
+2026-06-05 16:33:13.239 |     run_with_log(args, log_dir, console=console)
+2026-06-05 16:33:13.239 |   File "so3d_online_login_client.py", line 679, in run_with_log
+2026-06-05 16:33:13.239 |     run(args)
+2026-06-05 16:33:13.239 |   File "so3d_online_login_client.py", line 1617, in run
+2026-06-05 16:33:13.239 |     drain_socket(login, "lobby", enabled=debug)
+2026-06-05 16:33:13.239 |   File "so3d_online_login_client.py", line 1181, in drain_socket
+2026-06-05 16:33:13.239 |     readable, _writable, _errored = select.select([sock], [], [], 0)
+2026-06-05 16:33:13.239 |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05 16:33:13.239 | ValueError: file descriptor cannot be a negative integer (-1)
+2026-06-05 16:38:17.296 | [log] writing E:\VS_REPO\red-pass\redpass-daemon\ClientDevLib\SO3DCheat\GGThreadBlock\tools\dist\so3d_online_logs\pp2222_peuw.log
+2026-06-05 16:38:17.297 | [client] account='pp2222' character='peuw'
+2026-06-05 16:38:17.297 | [client] file info high=0x01DC3DEE low=0x76664113 size=0x007CC5C8
+2026-06-05 16:38:17.602 | [net] connected 165.154.194.121:1818
+2026-06-05 16:38:17.906 | [debug][recv:handshake] len=12 proto=3192420602 key=7
+2026-06-05 16:38:17.906 | [debug][recv:handshake] raw=0c 00 00 00 fa 78 48 be 54 85 c6 92
+2026-06-05 16:38:17.906 | [debug][recv:handshake] dec=0c 00 00 00 fa 78 48 be 54 85 c6 92
+2026-06-05 16:38:17.906 | [debug][recv:handshake] ascii=.....xH.T...
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=0 proto=2607569850 firstBody=0xB7E2A614 body=14 a6 e2 b7
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=1 proto=2557304025 firstBody=0xB4E3A177 body=77 a1 e3 b4
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=2 proto=2490260958 firstBody=0xB8E0A070 body=70 a0 e0 b8
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=3 proto=2506251999 firstBody=0xB9ECA371 body=71 a3 ec b9
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=4 proto=2674086620 firstBody=0xB3EDAF72 body=72 af ed b3
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=5 proto=4268315600 firstBody=0xD2E7AE7E body=7e ae e7 d2
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=6 proto=2634570193 firstBody=0xB186A47F body=7f a4 86 b1
+2026-06-05 16:38:17.906 | [debug][recv:handshake] xor-candidate key=7 proto=2590718171 firstBody=0xB6E5C575 body=75 c5 e5 b6
+2026-06-05 16:38:17.906 | [debug][recv:handshake] no XOR key produced a known SO3D proto; the SO3D client dispatcher would not handle this as a normal game packet
+2026-06-05 16:38:17.906 | [debug][recv:handshake] des-dec=38 38 03 00 92 b8 7a 11
+2026-06-05 16:38:17.906 | [10002] handshake xor key index=7 key=21 40 23 24
+2026-06-05 16:38:17.906 | [10002] initial handshake len=12
+2026-06-05 16:38:17.906 | [client] active xor key index=7 key=21 40 23 24
+2026-06-05 16:38:17.907 | [debug][send:CL_LOGIN] len=60 proto=CL_LOGIN xor=True
+2026-06-05 16:38:17.907 | [debug][send:CL_LOGIN] raw=3c 00 00 00 b9 f1 22 24 21 40 23 24 96 ca 83 6c 0d 53 48 af b7 bd 59 b8 e8 29 85 c6 90 3d c6 09 98 e7 83 a7 b7 bd 59 b8 e8 29 85 c6 3a 75 9d 93 6e cd 07 1d 31 1f 11 a1 03 c7 f1 0a
+2026-06-05 16:38:17.907 | [debug][send:CL_LOGIN] dec=3c 00 00 00 98 b1 01 00 00 00 00 00 b7 8a a0 48 2c 13 6b 8b 96 fd 7a 9c c9 69 a6 e2 b1 7d e5 2d b9 a7 a0 83 96 fd 7a 9c c9 69 a6 e2 1b 35 be b7 4f 8d 24 39 10 5f 32 85 22 87 d2 2e
+2026-06-05 16:38:17.907 | [10002] send CL_LOGIN
+2026-06-05 16:38:18.224 | [debug][recv:LC_SERVER_LIST] len=58 proto=LC_SERVER_LIST key=7
+2026-06-05 16:38:18.224 | [debug][recv:LC_SERVER_LIST] raw=3a 00 00 00 68 1f 20 24 20 40 23 24 10 33 46 56 57 25 51 24 01 60 03 04 01 60 03 04 20 40 23 24 f4 40 23 24 21 40 23 24 21 40 23 24 21 40 23 24 21 40 23 24 21 40 23 24 21 40
+2026-06-05 16:38:18.224 | [debug][recv:LC_SERVER_LIST] dec=3a 00 00 00 49 5f 03 00 01 00 00 00 31 73 65 72 76 65 72 00 20 20 20 20 20 20 20 20 01 00 00 00 d5 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:18.224 | [10002] recv proto=LC_SERVER_LIST len=58
+2026-06-05 16:38:18.522 | [net] connected 123.58.197.240:1838
+2026-06-05 16:38:18.522 | [bill] send open opcode=1 len=38
+2026-06-05 16:38:21.535 | [bill] recv open-ack skipped: timed out
+2026-06-05 16:38:21.535 | [bill] send account opcode=2 len=22
+2026-06-05 16:38:21.535 | [bill] send ready opcode=3 len=6
+2026-06-05 16:38:21.829 | [bill] recv post-ready-1 47 00 02 00 01 00 00 00 00 00 70 70 32 32 32 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:22.126 | [bill] recv post-ready-2 30 00 03 00 01 00 00 00 00 00 70 70 32 32 32 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:22.126 | [debug][send:CL_GET_CHARINFO] len=16 proto=CL_GET_CHARINFO xor=True
+2026-06-05 16:38:22.126 | [debug][send:CL_GET_CHARINFO] raw=10 00 00 00 ba f1 22 24 23 40 23 24 20 40 23 24
+2026-06-05 16:38:22.126 | [debug][send:CL_GET_CHARINFO] dec=10 00 00 00 9b b1 01 00 02 00 00 00 01 00 00 00
+2026-06-05 16:38:22.126 | [10002] send CL_GET_CHARINFO server=2 channel=1
+2026-06-05 16:38:22.469 | [debug][recv:LC_CHARINFO_SUCCESS] len=388 proto=LC_CHARINFO_SUCCESS key=7
+2026-06-05 16:38:22.469 | [debug][recv:LC_CHARINFO_SUCCESS] raw=84 01 00 00 6a 1f 20 24 23 40 23 24 20 40 23 24 24 40 23 24 51 25 56 53 21 40 23 24 21 40 23 24 21 40 23 24 20 40 23 24 b6 40 23 24 23 40 23 24 23 40 23 24 20 40 23 24 21 40 23 24 8a 63 23 24 2d 40 23 24 8d 63 23 24 2d 40 23 24 8c 63 23 24 2d 40 23 24 8f 63 23 24 2d 40 23 24 d3 12 23 24 21 40 23 24 21 40 23 24 21 40 23 24 1c 4f 23 24 2d 40 23 24 f7 4f 23 24 21 40 23 24 de bf dc db 21 40 23 24 8d 5f 23 24 21 40 23 24 21 40 23 24 21 40 23 24 e0 02 23 24 21 40 23 24 21 40 23 24 ...(+228 bytes)
+2026-06-05 16:38:22.469 | [debug][recv:LC_CHARINFO_SUCCESS] dec=84 01 00 00 4b 5f 03 00 02 00 00 00 01 00 00 00 05 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 97 00 00 00 02 00 00 00 02 00 00 00 01 00 00 00 00 00 00 00 ab 23 00 00 0c 00 00 00 ac 23 00 00 0c 00 00 00 ad 23 00 00 0c 00 00 00 ae 23 00 00 0c 00 00 00 f2 52 00 00 00 00 00 00 00 00 00 00 00 00 00 00 3d 0f 00 00 0c 00 00 00 d6 0f 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 ac 1f 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c1 42 00 00 00 00 00 00 00 00 00 00 ...(+228 bytes)
+2026-06-05 16:38:22.469 | [10002] recv proto=LC_CHARINFO_SUCCESS len=388
+2026-06-05 16:38:22.469 | [bill] send select-server opcode=4 len=10
+2026-06-05 16:38:22.469 | [debug][send:CL_GAMESERVER_CONNECT] len=32 proto=CL_GAMESERVER_CONNECT xor=True
+2026-06-05 16:38:22.469 | [debug][send:CL_GAMESERVER_CONNECT] raw=20 00 00 00 bf f1 22 24 23 40 23 24 20 40 23 24 51 25 56 53 21 40 23 24 21 40 23 24 21 40 23 24
+2026-06-05 16:38:22.469 | [debug][send:CL_GAMESERVER_CONNECT] dec=20 00 00 00 9e b1 01 00 02 00 00 00 01 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:22.469 | [10002] send CL_GAMESERVER_CONNECT character='peuw'
+2026-06-05 16:38:23.684 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] len=60 proto=LC_GSERV_CONNECT_SUCCESS key=7
+2026-06-05 16:38:23.684 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] raw=3c 00 00 00 70 1f 20 24 23 40 23 24 51 25 56 53 21 40 23 24 21 40 23 24 21 40 23 24 10 72 14 0a 10 6e 16 0a 15 71 23 04 01 60 03 04 10 47 23 24 de 19 48 0b 21 40 23 24 20 40 23 24
+2026-06-05 16:38:23.684 | [debug][recv:LC_GSERV_CONNECT_SUCCESS] dec=3c 00 00 00 51 5f 03 00 02 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 31 32 37 2e 31 2e 35 2e 34 31 00 20 20 20 20 20 31 07 00 00 ff 59 6b 2f 00 00 00 00 01 00 00 00
+2026-06-05 16:38:23.684 | [10002] recv proto=LC_GSERV_CONNECT_SUCCESS len=60
+2026-06-05 16:38:23.684 | [game] lobby returned 127.1.5.41:1841 character='peuw' seed=0x2F6B59FF
+2026-06-05 16:38:23.684 | [game] host map 127.1.5.41 -> 128.14.237.136
+2026-06-05 16:38:23.684 | [game] effective server 128.14.237.136:1841 character='peuw' seed=0x2F6B59FF
+2026-06-05 16:38:23.961 | [net] connected 128.14.237.136:1841
+2026-06-05 16:38:23.961 | [debug][send:CG_PLAY_START] len=12 proto=CG_PLAY_START xor=False
+2026-06-05 16:38:23.961 | [debug][send:CG_PLAY_START] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-05 16:38:23.961 | [debug][wire:CG_PLAY_START] len=24 raw=18 00 00 00 87 49 06 00 a4 74 32 ac 73 07 cc 4f 1b 06 d4 de 35 c7 04 fa
+2026-06-05 16:38:23.961 | [game] send CG_PLAY_START
+2026-06-05 16:38:23.961 | [debug][send:CG_ENTER] len=52 proto=CG_ENTER xor=False
+2026-06-05 16:38:23.961 | [debug][send:CG_ENTER] raw=34 00 00 00 7d 45 06 00 ff 59 6b 2f ee 3d dc 01 13 41 66 76 c8 c5 7c 00 00 00 00 00 00 00 00 00 00 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:23.961 | [debug][wire:CG_ENTER] len=64 raw=40 00 00 00 7d 45 06 00 7a 0b 72 1c 43 17 0b ae 52 cc fe be 38 4d a4 7b ad 6c 9b 1b b8 44 ef a7 2a 08 f1 52 b5 07 9a 91 91 4a 92 df a1 f5 55 72 11 0e 1b 12 5c f2 a4 0c a8 7e 17 46 16 1d 05 61
+2026-06-05 16:38:23.961 | [game] send CG_ENTER
+2026-06-05 16:38:24.615 | [debug][recv:game] chunk-len=9848 firstLen=48 firstProto=511416
+2026-06-05 16:38:24.615 | [debug][recv:game] raw=30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 30 00 00 00 b8 cd 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1c 00 00 00 34 ce 07 00 52 cd 96 03 00 00 00 00 14 00 00 00 02 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 3c 01 00 00 3f 00 00 00 03 03 00 00 14 00 00 00 fe 01 00 00 15 00 00 00 37 01 00 00 ...(+9688 bytes)
+2026-06-05 16:38:24.615 | [debug][recv:game] ascii=0..................................................
+2026-06-05 16:38:24.615 | [chat] status source from post-enter: player_id=0x0000005F map_id=8
+2026-06-05 16:38:24.968 | [debug][send:CG_INIT_411555] len=18 proto=CG_INIT_411555 xor=False
+2026-06-05 16:38:24.968 | [debug][send:CG_INIT_411555] raw=12 00 00 00 a3 47 06 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-05 16:38:24.968 | [debug][wire:CG_INIT_411555] len=32 raw=20 00 00 00 a3 47 06 00 d9 c8 f8 f6 0a 03 b2 f8 17 0e 96 7f 42 9e 61 e3 24 ad 66 c2 e3 19 2b 7f
+2026-06-05 16:38:24.968 | [game] send CG_INIT_411555
+2026-06-05 16:38:24.968 | [debug][send:CG_INIT_411589] len=20 proto=CG_INIT_411589 xor=False
+2026-06-05 16:38:24.968 | [debug][send:CG_INIT_411589] raw=14 00 00 00 c5 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-05 16:38:24.968 | [debug][wire:CG_INIT_411589] len=32 raw=20 00 00 00 c5 47 06 00 39 13 06 de 12 7c db 3c 5c b2 b9 f6 7e be 77 bf 46 31 f5 1b eb 53 b4 ff
+2026-06-05 16:38:24.968 | [game] send CG_INIT_411589
+2026-06-05 16:38:24.968 | [debug][send:CG_INIT_411595] len=20 proto=CG_INIT_411595 xor=False
+2026-06-05 16:38:24.968 | [debug][send:CG_INIT_411595] raw=14 00 00 00 cb 47 06 00 00 00 00 00 ff ff ff ff ff ff ff ff
+2026-06-05 16:38:24.968 | [debug][wire:CG_INIT_411595] len=32 raw=20 00 00 00 cb 47 06 00 39 13 06 de 12 7c db 3c 5c b2 b9 f6 7e be 77 bf 46 31 f5 1b eb 53 b4 ff
+2026-06-05 16:38:24.968 | [game] send CG_INIT_411595
+2026-06-05 16:38:24.988 | [debug][send:CG_PLAY_START_2] len=12 proto=CG_PLAY_START xor=False
+2026-06-05 16:38:24.988 | [debug][send:CG_PLAY_START_2] raw=0c 00 00 00 87 49 06 00 87 49 06 00
+2026-06-05 16:38:24.988 | [debug][wire:CG_PLAY_START_2] len=24 raw=18 00 00 00 87 49 06 00 03 c8 47 d9 15 4b ba 84 d1 b4 b8 62 bc a3 cf 1a
+2026-06-05 16:38:24.988 | [game] send CG_PLAY_START_2
+2026-06-05 16:38:25.009 | [debug][send:CG_POST_ENTER_411570] len=12 proto=CG_POST_ENTER_411570 xor=False
+2026-06-05 16:38:25.009 | [debug][send:CG_POST_ENTER_411570] raw=0c 00 00 00 b2 47 06 00 04 00 00 00
+2026-06-05 16:38:25.009 | [debug][wire:CG_POST_ENTER_411570] len=24 raw=18 00 00 00 b2 47 06 00 80 77 1c ca dc e6 d8 49 21 c8 84 2c 34 ca dc 9d
+2026-06-05 16:38:25.009 | [game] send CG_POST_ENTER_411570
+2026-06-05 16:38:25.306 | [net] connected 123.58.197.240:3000
+2026-06-05 16:38:25.306 | [chat] send login opcode=0x00004100 len=69 raw=45 00 00 41 00 00 70 70 32 32 32 32 00 00 00 00 00 00 00 00 00 00 00 61 73 64 71 77 65 00 00 00 00 00 00 00 00 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 1f ae 01 00 5f 00 00 00
+2026-06-05 16:38:25.306 | [chat] send map-status map=8 player=0x0000005F opcode=0x00004110 len=39 raw=27 00 10 41 00 00 08 00 00 00 08 00 00 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 5f 00 00 00
+2026-06-05 16:38:25.557 | [debug][send:CG_POST_ENTER_411625] len=12 proto=CG_POST_ENTER_411625 xor=False
+2026-06-05 16:38:25.557 | [debug][send:CG_POST_ENTER_411625] raw=0c 00 00 00 e9 47 06 00 00 00 00 00
+2026-06-05 16:38:25.557 | [debug][wire:CG_POST_ENTER_411625] len=24 raw=18 00 00 00 e9 47 06 00 ee c3 ec 04 00 85 43 84 ce 1b 09 e3 3f b4 52 79
+2026-06-05 16:38:25.557 | [game] send CG_POST_ENTER_411625
+2026-06-05 16:38:25.557 | [loop] online simulation is running; Ctrl+C to stop
+2026-06-05 16:38:25.557 | [debug][recv:game] chunk-len=26917 firstLen=0 firstProto=0
+2026-06-05 16:38:25.557 | [debug][recv:game] raw=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 43 00 00 00 ...(+26757 bytes)
+2026-06-05 16:38:25.557 | [debug][recv:game] ascii=...................................................
+2026-06-05 16:38:25.808 | [debug][recv:chat] chunk-len=61 firstLen=16842813 firstProto=1701838852
+2026-06-05 16:38:25.808 | [debug][recv:chat] raw=3d 00 01 01 04 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 45 54 43 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:25.808 | [debug][recv:chat] ascii==.....peuw.............ETC..................ETC....
+2026-06-05 16:38:26.059 | [debug][recv:chat] chunk-len=79 firstLen=16908315 firstProto=1701838852
+2026-06-05 16:38:26.059 | [debug][recv:chat] raw=1b 00 02 01 04 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 34 00 32 01 04 00 70 65 75 77 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:26.059 | [debug][recv:chat] ascii=......peuw.................4.2...peuw..............
+2026-06-05 16:38:26.560 | [debug][recv:game] chunk-len=1392 firstLen=44 firstProto=521023
+2026-06-05 16:38:26.560 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 90 1a 00 00 a6 00 00 00 00 00 00 00 10 00 00 00 9b ce 07 00 00 00 00 00 00 00 00 00 54 00 00 00 1b 22 08 00 3c 01 00 00 3f 00 00 00 03 03 00 00 14 00 00 00 fe 01 00 00 15 00 00 00 37 01 00 00 04 01 00 00 e0 15 00 00 1f 07 00 00 09 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 07 00 00 00 05 00 00 00 05 00 00 00 05 00 00 00 05 00 00 00 d4 01 00 00 7f ce 07 00 00 00 00 00 50 0d 03 00 ...(+1232 bytes)
+2026-06-05 16:38:26.560 | [debug][recv:game] ascii=,...?...b...............G...<......................
+2026-06-05 16:38:27.060 | [debug][recv:game] chunk-len=16 firstLen=16 firstProto=511611
+2026-06-05 16:38:27.060 | [debug][recv:game] raw=10 00 00 00 7b ce 07 00 60 00 00 00 7b 41 00 00
+2026-06-05 16:38:27.060 | [debug][recv:game] ascii=....{...`...{A..
+2026-06-05 16:38:27.311 | [debug][recv:game] chunk-len=44 firstLen=16 firstProto=511689
+2026-06-05 16:38:27.311 | [debug][recv:game] raw=10 00 00 00 c9 ce 07 00 60 00 00 00 00 00 00 00 1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 13 01 00 00 fc 00 00 00 14 01 00 00
+2026-06-05 16:38:27.311 | [debug][recv:game] ascii=........`...........8...A...................
+2026-06-05 16:38:27.561 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:27.561 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:27.561 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:28.563 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:28.563 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 dd 00 00 00 29 01 00 00 de 00 00 00 29 01 00 00
+2026-06-05 16:38:28.563 | [debug][recv:game] ascii=....8...........).......)...
+2026-06-05 16:38:29.564 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:29.564 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:29.564 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:30.567 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:30.567 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 f0 00 00 00 3e 01 00 00 f0 00 00 00 3f 01 00 00
+2026-06-05 16:38:30.567 | [debug][recv:game] ascii=....8...........>.......?...
+2026-06-05 16:38:32.069 | [debug][recv:game] chunk-len=84 firstLen=28 firstProto=511032
+2026-06-05 16:38:32.069 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 ed 00 00 00 28 01 00 00 ec 00 00 00 28 01 00 00 1c 00 00 00 38 cc 07 00 f8 08 00 00 03 01 00 00 2e 01 00 00 04 01 00 00 2d 01 00 00 1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:32.069 | [debug][recv:game] ascii=....8...........(.......(.......8..................
+2026-06-05 16:38:32.320 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:32.320 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f2 00 00 00 21 01 00 00 f2 00 00 00 22 01 00 00
+2026-06-05 16:38:32.320 | [debug][recv:game] ascii=....8...........!......."...
+2026-06-05 16:38:33.572 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:38:33.572 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 54 1a 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:38:33.572 | [debug][recv:game] ascii=,...?...b...............G...<...T...........
+2026-06-05 16:38:34.324 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:34.324 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fc 00 00 00 14 01 00 00 fb 00 00 00 14 01 00 00
+2026-06-05 16:38:34.324 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:38:35.576 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:38:35.576 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 18 1a 00 00 a6 00 00 00 02 00 00 00
+2026-06-05 16:38:35.576 | [debug][recv:game] ascii=,...?...b...............G...<...............
+2026-06-05 16:38:35.576 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:38:35.576 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:38:35.576 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 be 0e 9e 7b 58 46 de e9 b9 f9 f8 ac ef be a5 42
+2026-06-05 16:38:35.576 | [game] send CG_GAME_ALIVE
+2026-06-05 16:38:35.827 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:35.827 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 de 00 00 00 29 01 00 00 df 00 00 00 29 01 00 00
+2026-06-05 16:38:35.827 | [debug][recv:game] ascii=....8...........).......)...
+2026-06-05 16:38:37.329 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:37.329 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 ec 00 00 00 28 01 00 00 ed 00 00 00 27 01 00 00
+2026-06-05 16:38:37.329 | [debug][recv:game] ascii=....8...........(.......'...
+2026-06-05 16:38:37.580 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:38:37.580 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 f0 00 00 00 3f 01 00 00 ef 00 00 00 40 01 00 00 1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:37.580 | [debug][recv:game] ascii=....8...........?.......@.......P...b..............
+2026-06-05 16:38:38.581 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:38.581 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f2 00 00 00 22 01 00 00 f1 00 00 00 23 01 00 00
+2026-06-05 16:38:38.581 | [debug][recv:game] ascii=....8...........".......#...
+2026-06-05 16:38:39.582 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:38:39.582 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 dc 19 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:38:39.582 | [debug][recv:game] ascii=,...?...b...............G...<...............
+2026-06-05 16:38:40.583 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:40.583 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fb 00 00 00 14 01 00 00 fa 00 00 00 13 01 00 00
+2026-06-05 16:38:40.583 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:38:41.585 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:38:41.585 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 a0 19 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:38:41.585 | [debug][recv:game] ascii=,...?...b...............G...<...............
+2026-06-05 16:38:42.337 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:42.337 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 ed 00 00 00 27 01 00 00 ec 00 00 00 28 01 00 00
+2026-06-05 16:38:42.337 | [debug][recv:game] ascii=....8...........'.......(...
+2026-06-05 16:38:42.838 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:42.838 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 df 00 00 00 29 01 00 00 de 00 00 00 29 01 00 00
+2026-06-05 16:38:42.838 | [debug][recv:game] ascii=....8...........).......)...
+2026-06-05 16:38:43.589 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:43.589 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:43.589 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:44.340 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:44.340 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 04 01 00 00 2d 01 00 00 05 01 00 00 2c 01 00 00
+2026-06-05 16:38:44.340 | [debug][recv:game] ascii=....8...........-.......,...
+2026-06-05 16:38:44.590 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:44.590 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ef 00 00 00 40 01 00 00 ef 00 00 00 3f 01 00 00
+2026-06-05 16:38:44.590 | [debug][recv:game] ascii=....8...........@.......?...
+2026-06-05 16:38:44.841 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:44.841 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f1 00 00 00 23 01 00 00 f2 00 00 00 24 01 00 00
+2026-06-05 16:38:44.841 | [debug][recv:game] ascii=....8...........#.......$...
+2026-06-05 16:38:45.592 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:45.592 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:45.592 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:45.592 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:38:45.592 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:38:45.592 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 b3 8a ca c0 45 bf 98 a1 8b 71 27 7a fc a5 af cd
+2026-06-05 16:38:45.592 | [game] send CG_GAME_ALIVE
+2026-06-05 16:38:47.094 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:47.094 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fa 00 00 00 13 01 00 00 fb 00 00 00 12 01 00 00
+2026-06-05 16:38:47.094 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:38:47.595 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:47.595 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:47.595 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:47.845 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:47.845 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 ec 00 00 00 28 01 00 00 eb 00 00 00 29 01 00 00
+2026-06-05 16:38:47.845 | [debug][recv:game] ascii=....8...........(.......)...
+2026-06-05 16:38:48.095 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:48.095 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 de 00 00 00 29 01 00 00 dd 00 00 00 2a 01 00 00
+2026-06-05 16:38:48.095 | [debug][recv:game] ascii=....8...........).......*...
+2026-06-05 16:38:49.598 | [debug][recv:chat] chunk-len=146 firstLen=1114258 firstProto=65540
+2026-06-05 16:38:49.598 | [debug][recv:chat] raw=92 00 11 00 04 00 01 00 00 00 31 36 3a 33 38 3a 35 32 20 a8 b8 b4 63 a4 70 ab a2 a4 f1 20 a6 62 20 bf f2 b8 f1 b4 cb aa 4c 20 ad ab a5 cd a4 46 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:49.598 | [debug][recv:chat] ascii=..........16:38:52 ...c.p.... .b .......L .....F...
+2026-06-05 16:38:50.348 | [debug][recv:game] chunk-len=148 firstLen=28 firstProto=531024
+2026-06-05 16:38:50.348 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 78 00 00 00 36 cc 07 00 95 08 00 00 dc 00 00 00 37 01 00 00 8f 0a 00 00 05 00 00 00 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:38:50.348 | [debug][recv:game] ascii=....P...b...............G...x...6...........7......
+2026-06-05 16:38:51.349 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:38:51.349 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 05 01 00 00 2c 01 00 00 06 01 00 00 2c 01 00 00 1c 00 00 00 38 cc 07 00 9b 08 00 00 f2 00 00 00 24 01 00 00 f2 00 00 00 25 01 00 00
+2026-06-05 16:38:51.349 | [debug][recv:game] ascii=....8...........,.......,.......8...........$......
+2026-06-05 16:38:51.850 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:38:51.850 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 64 19 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:38:51.850 | [debug][recv:game] ascii=,...?...b...............G...<...d...........
+2026-06-05 16:38:52.350 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:52.350 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ef 00 00 00 3f 01 00 00 ee 00 00 00 3e 01 00 00
+2026-06-05 16:38:52.350 | [debug][recv:game] ascii=....8...........?.......>...
+2026-06-05 16:38:53.603 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:53.603 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fb 00 00 00 12 01 00 00 fc 00 00 00 11 01 00 00
+2026-06-05 16:38:53.603 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:38:53.853 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:53.853 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:53.853 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:54.354 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:54.354 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 dd 00 00 00 2a 01 00 00 de 00 00 00 29 01 00 00
+2026-06-05 16:38:54.354 | [debug][recv:game] ascii=....8...........*.......)...
+2026-06-05 16:38:54.855 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:54.855 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 eb 00 00 00 29 01 00 00 eb 00 00 00 2a 01 00 00
+2026-06-05 16:38:54.855 | [debug][recv:game] ascii=....8...........).......*...
+2026-06-05 16:38:55.607 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:38:55.607 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 28 19 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:38:55.607 | [debug][recv:game] ascii=,...?...b...............G...<...(...........
+2026-06-05 16:38:55.607 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:38:55.607 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:38:55.607 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 1e 07 1a 06 85 1a 18 3d f4 83 8a ac 05 78 9f 79
+2026-06-05 16:38:55.607 | [game] send CG_GAME_ALIVE
+2026-06-05 16:38:57.360 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:57.360 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 95 08 00 00 dc 00 00 00 37 01 00 00 dc 00 00 00 36 01 00 00
+2026-06-05 16:38:57.360 | [debug][recv:game] ascii=....8...........7.......6...
+2026-06-05 16:38:57.611 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:57.611 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:57.611 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:58.112 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:58.112 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 06 01 00 00 2c 01 00 00 06 01 00 00 2b 01 00 00
+2026-06-05 16:38:58.112 | [debug][recv:game] ascii=....8...........,.......+...
+2026-06-05 16:38:58.613 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:58.613 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f2 00 00 00 25 01 00 00 f2 00 00 00 26 01 00 00
+2026-06-05 16:38:58.613 | [debug][recv:game] ascii=....8...........%.......&...
+2026-06-05 16:38:59.615 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:38:59.615 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:38:59.615 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:38:59.865 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:38:59.865 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 de 00 00 00 29 01 00 00 df 00 00 00 28 01 00 00
+2026-06-05 16:38:59.865 | [debug][recv:game] ascii=....8...........).......(...
+2026-06-05 16:39:00.116 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:00.116 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ee 00 00 00 3e 01 00 00 ed 00 00 00 3e 01 00 00
+2026-06-05 16:39:00.116 | [debug][recv:game] ascii=....8...........>.......>...
+2026-06-05 16:39:00.867 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:00.867 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fc 00 00 00 11 01 00 00 fd 00 00 00 11 01 00 00
+2026-06-05 16:39:00.867 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:39:01.368 | [debug][recv:chat] chunk-len=6 firstLen=4294901766
+2026-06-05 16:39:01.368 | [debug][recv:chat] raw=06 00 ff ff 0f 00
+2026-06-05 16:39:01.368 | [debug][recv:chat] ascii=......
+2026-06-05 16:39:01.618 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:01.618 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:01.618 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:02.620 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:02.620 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 eb 00 00 00 2a 01 00 00 ec 00 00 00 2b 01 00 00
+2026-06-05 16:39:02.620 | [debug][recv:game] ascii=....8...........*.......+...
+2026-06-05 16:39:03.371 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:03.371 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 95 08 00 00 dc 00 00 00 36 01 00 00 dc 00 00 00 37 01 00 00
+2026-06-05 16:39:03.371 | [debug][recv:game] ascii=....8...........6.......7...
+2026-06-05 16:39:03.622 | [debug][recv:game] chunk-len=116 firstLen=28 firstProto=511000
+2026-06-05 16:39:03.622 | [debug][recv:game] raw=1c 00 00 00 18 cc 07 00 49 00 00 00 00 00 00 00 e8 00 00 00 3c 01 00 00 bc 02 00 00 10 00 00 00 cd cd 07 00 49 00 00 00 01 10 00 00 1c 00 00 00 56 cc 07 00 7a 00 00 00 49 00 00 00 05 00 00 00 e8 00 00 00 3c 01 00 00 2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 ec 18 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:39:03.622 | [debug][recv:game] ascii=........I...........<...............I..............
+2026-06-05 16:39:03.622 | [debug][recv:chat] chunk-len=146 firstLen=1114258 firstProto=65540
+2026-06-05 16:39:03.622 | [debug][recv:chat] raw=92 00 11 00 04 00 01 00 00 00 31 36 3a 33 39 3a 30 36 20 b5 e6 c0 59 aa ba a4 ec c0 4a a4 70 a7 cc 20 a6 62 20 a7 c6 ba b8 af 53 c3 e4 b9 d2 20 ad ab a5 cd a4 46 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+2026-06-05 16:39:03.622 | [debug][recv:chat] ascii=..........16:39:06 ...Y.....J.p.. .b .....S.... ...
+2026-06-05 16:39:03.873 | [debug][recv:game] chunk-len=80 firstLen=16 firstProto=511059
+2026-06-05 16:39:03.873 | [debug][recv:game] raw=10 00 00 00 53 cc 07 00 49 00 00 00 0c 00 00 00 10 00 00 00 7b ce 07 00 49 00 00 00 71 81 03 00 10 00 00 00 7b ce 07 00 49 00 00 00 71 81 03 00 20 00 00 00 61 f3 07 00 7a 00 00 00 49 00 00 00 49 00 00 00 1e 00 00 00 0c 00 00 00 40 77 1b 00
+2026-06-05 16:39:03.873 | [debug][recv:game] ascii=....S...I...........{...I...q.......{...I...q......
+2026-06-05 16:39:05.124 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:05.124 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 06 01 00 00 2b 01 00 00 07 01 00 00 2c 01 00 00
+2026-06-05 16:39:05.124 | [debug][recv:game] ascii=....8...........+.......,...
+2026-06-05 16:39:05.625 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:39:05.625 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:39:05.625 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 87 24 5d 8f 82 46 db 7d d3 93 f3 57 57 44 51 01
+2026-06-05 16:39:05.625 | [game] send CG_GAME_ALIVE
+2026-06-05 16:39:06.377 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=531024
+2026-06-05 16:39:06.377 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 1c 00 00 00 38 cc 07 00 9b 08 00 00 f2 00 00 00 26 01 00 00 f1 00 00 00 25 01 00 00
+2026-06-05 16:39:06.377 | [debug][recv:game] ascii=....P...b...............G.......8...........&......
+2026-06-05 16:39:06.628 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:06.628 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ed 00 00 00 3e 01 00 00 ee 00 00 00 3e 01 00 00
+2026-06-05 16:39:06.628 | [debug][recv:game] ascii=....8...........>.......>...
+2026-06-05 16:39:07.379 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:07.379 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 df 00 00 00 28 01 00 00 df 00 00 00 29 01 00 00
+2026-06-05 16:39:07.379 | [debug][recv:game] ascii=....8...........(.......)...
+2026-06-05 16:39:07.629 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:39:07.629 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 11 01 00 00 fd 00 00 00 12 01 00 00 1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:07.629 | [debug][recv:game] ascii=....8...A.......................P...b..............
+2026-06-05 16:39:08.381 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:08.381 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 95 08 00 00 dc 00 00 00 37 01 00 00 dd 00 00 00 36 01 00 00
+2026-06-05 16:39:08.381 | [debug][recv:game] ascii=....8...........7.......6...
+2026-06-05 16:39:09.633 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:39:09.633 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 b0 18 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:39:09.633 | [debug][recv:game] ascii=,...?...b...............G...<...............
+2026-06-05 16:39:10.635 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:10.635 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 ec 00 00 00 2b 01 00 00 eb 00 00 00 2a 01 00 00
+2026-06-05 16:39:10.635 | [debug][recv:game] ascii=....8...........+.......*...
+2026-06-05 16:39:11.636 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:11.636 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:11.636 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:12.638 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:12.638 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 12 01 00 00 fe 00 00 00 11 01 00 00
+2026-06-05 16:39:12.638 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:39:13.139 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:39:13.139 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f1 00 00 00 25 01 00 00 f2 00 00 00 26 01 00 00 1c 00 00 00 38 cc 07 00 f8 08 00 00 07 01 00 00 2c 01 00 00 06 01 00 00 2d 01 00 00
+2026-06-05 16:39:13.139 | [debug][recv:game] ascii=....8...........%.......&.......8...........,......
+2026-06-05 16:39:13.389 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:13.389 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ee 00 00 00 3e 01 00 00 ef 00 00 00 3e 01 00 00
+2026-06-05 16:39:13.389 | [debug][recv:game] ascii=....8...........>.......>...
+2026-06-05 16:39:13.640 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=531024
+2026-06-05 16:39:13.640 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 1c 00 00 00 38 cc 07 00 c4 08 00 00 df 00 00 00 29 01 00 00 e0 00 00 00 2a 01 00 00
+2026-06-05 16:39:13.640 | [debug][recv:game] ascii=....P...b...............G.......8...........)......
+2026-06-05 16:39:15.644 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:39:15.644 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:39:15.644 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 37 11 7b 22 9d f3 1e 60 10 92 b2 7c e4 a1 7b 60
+2026-06-05 16:39:15.644 | [game] send CG_GAME_ALIVE
+2026-06-05 16:39:16.144 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:16.144 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:16.144 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:16.896 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:16.896 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 95 08 00 00 dd 00 00 00 36 01 00 00 dd 00 00 00 35 01 00 00
+2026-06-05 16:39:16.896 | [debug][recv:game] ascii=....8...........6.......5...
+2026-06-05 16:39:17.647 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:17.647 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:17.647 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:18.398 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:18.398 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 eb 00 00 00 2a 01 00 00 eb 00 00 00 2b 01 00 00
+2026-06-05 16:39:18.398 | [debug][recv:game] ascii=....8...........*.......+...
+2026-06-05 16:39:18.649 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:18.649 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f2 00 00 00 26 01 00 00 f1 00 00 00 25 01 00 00
+2026-06-05 16:39:18.649 | [debug][recv:game] ascii=....8...........&.......%...
+2026-06-05 16:39:19.149 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=511032
+2026-06-05 16:39:19.149 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 06 01 00 00 2d 01 00 00 07 01 00 00 2c 01 00 00 1c 00 00 00 38 cc 07 00 c4 08 00 00 e0 00 00 00 2a 01 00 00 e1 00 00 00 2a 01 00 00
+2026-06-05 16:39:19.149 | [debug][recv:game] ascii=....8...........-.......,.......8...........*......
+2026-06-05 16:39:19.400 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:19.400 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fe 00 00 00 11 01 00 00 fd 00 00 00 11 01 00 00
+2026-06-05 16:39:19.400 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:39:19.650 | [debug][recv:game] chunk-len=56 firstLen=28 firstProto=531024
+2026-06-05 16:39:19.650 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 1c 00 00 00 38 cc 07 00 f6 08 00 00 ef 00 00 00 3e 01 00 00 ee 00 00 00 3f 01 00 00
+2026-06-05 16:39:19.650 | [debug][recv:game] ascii=....P...b...............G.......8...........>......
+2026-06-05 16:39:21.653 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:21.653 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:21.653 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:23.406 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:23.406 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 95 08 00 00 dd 00 00 00 35 01 00 00 dd 00 00 00 36 01 00 00
+2026-06-05 16:39:23.406 | [debug][recv:game] ascii=....8...........5.......6...
+2026-06-05 16:39:23.656 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:23.656 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:23.656 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:24.407 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:24.407 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 eb 00 00 00 2b 01 00 00 eb 00 00 00 2c 01 00 00
+2026-06-05 16:39:24.407 | [debug][recv:game] ascii=....8...........+.......,...
+2026-06-05 16:39:25.158 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:25.158 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 e1 00 00 00 2a 01 00 00 e0 00 00 00 29 01 00 00
+2026-06-05 16:39:25.158 | [debug][recv:game] ascii=....8...........*.......)...
+2026-06-05 16:39:25.659 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:25.659 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:25.659 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:25.659 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:39:25.659 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:39:25.659 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 39 42 43 33 d9 8a 62 52 8d 81 6b c5 d8 b5 31 f3
+2026-06-05 16:39:25.659 | [game] send CG_GAME_ALIVE
+2026-06-05 16:39:26.161 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:26.161 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ee 00 00 00 3f 01 00 00 ee 00 00 00 3e 01 00 00
+2026-06-05 16:39:26.161 | [debug][recv:game] ascii=....8...........?.......>...
+2026-06-05 16:39:26.411 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:26.411 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fd 00 00 00 11 01 00 00 fc 00 00 00 10 01 00 00
+2026-06-05 16:39:26.411 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:39:26.661 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:26.661 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f1 00 00 00 25 01 00 00 f0 00 00 00 25 01 00 00
+2026-06-05 16:39:26.661 | [debug][recv:game] ascii=....8...........%.......%...
+2026-06-05 16:39:27.663 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:27.663 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:27.663 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:29.667 | [debug][recv:game] chunk-len=44 firstLen=44 firstProto=521023
+2026-06-05 16:39:29.667 | [debug][recv:game] raw=2c 00 00 00 3f f3 07 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00 3c 00 00 00 74 18 00 00 a6 00 00 00 00 00 00 00
+2026-06-05 16:39:29.667 | [debug][recv:game] ascii=,...?...b...............G...<...t...........
+2026-06-05 16:39:29.917 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:29.917 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 eb 00 00 00 2c 01 00 00 ec 00 00 00 2d 01 00 00
+2026-06-05 16:39:29.917 | [debug][recv:game] ascii=....8...........,.......-...
+2026-06-05 16:39:30.919 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:30.919 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f8 08 00 00 07 01 00 00 2c 01 00 00 06 01 00 00 2b 01 00 00
+2026-06-05 16:39:30.919 | [debug][recv:game] ascii=....8...........,.......+...
+2026-06-05 16:39:31.169 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:31.169 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 95 08 00 00 dd 00 00 00 36 01 00 00 dc 00 00 00 35 01 00 00
+2026-06-05 16:39:31.169 | [debug][recv:game] ascii=....8...........6.......5...
+2026-06-05 16:39:31.670 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:31.670 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:31.670 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:31.921 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:31.921 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 f6 08 00 00 ee 00 00 00 3e 01 00 00 ef 00 00 00 3f 01 00 00
+2026-06-05 16:39:31.921 | [debug][recv:game] ascii=....8...........>.......?...
+2026-06-05 16:39:32.421 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:32.421 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 c4 08 00 00 e0 00 00 00 29 01 00 00 e1 00 00 00 28 01 00 00
+2026-06-05 16:39:32.421 | [debug][recv:game] ascii=....8...........).......(...
+2026-06-05 16:39:32.923 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:32.923 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 9b 08 00 00 f0 00 00 00 25 01 00 00 ef 00 00 00 24 01 00 00
+2026-06-05 16:39:32.923 | [debug][recv:game] ascii=....8...........%.......$...
+2026-06-05 16:39:33.674 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:33.674 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:33.674 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:33.925 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:33.925 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 41 09 00 00 fc 00 00 00 10 01 00 00 fd 00 00 00 0f 01 00 00
+2026-06-05 16:39:33.925 | [debug][recv:game] ascii=....8...A...................
+2026-06-05 16:39:35.427 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=511032
+2026-06-05 16:39:35.427 | [debug][recv:game] raw=1c 00 00 00 38 cc 07 00 b1 08 00 00 ec 00 00 00 2d 01 00 00 ec 00 00 00 2e 01 00 00
+2026-06-05 16:39:35.427 | [debug][recv:game] ascii=....8...........-...........
+2026-06-05 16:39:35.677 | [debug][recv:game] chunk-len=28 firstLen=28 firstProto=531024
+2026-06-05 16:39:35.677 | [debug][recv:game] raw=1c 00 00 00 50 1a 08 00 62 09 00 00 03 00 00 00 f6 00 00 00 1b 01 00 00 47 00 00 00
+2026-06-05 16:39:35.677 | [debug][recv:game] ascii=....P...b...............G...
+2026-06-05 16:39:35.677 | [debug][send:CG_GAME_ALIVE] len=12 proto=CG_GAME_ALIVE xor=False
+2026-06-05 16:39:35.677 | [debug][send:CG_GAME_ALIVE] raw=0c 00 00 00 a1 45 06 00 a1 45 06 00
+2026-06-05 16:39:35.677 | [debug][wire:CG_GAME_ALIVE] len=24 raw=18 00 00 00 a1 45 06 00 e7 0c 31 8f 7b df a7 1f 1a f2 df af 8b f3 60 3e
+2026-06-05 16:39:35.677 | [game] send CG_GAME_ALIVE
+2026-06-05 16:39:35.928 | [error] attempt 1 failed
+2026-06-05 16:39:35.928 | Traceback (most recent call last):
+2026-06-05 16:39:35.928 |   File "so3d_online_login_client.py", line 689, in run_forever
+2026-06-05 16:39:35.928 |     run_with_log(args, log_dir, console=console)
+2026-06-05 16:39:35.928 |   File "so3d_online_login_client.py", line 677, in run_with_log
+2026-06-05 16:39:35.928 |     run(args)
+2026-06-05 16:39:35.928 |   File "so3d_online_login_client.py", line 1617, in run
+2026-06-05 16:39:35.928 |     drain_socket(login, "lobby", enabled=debug)
+2026-06-05 16:39:35.928 |   File "so3d_online_login_client.py", line 1181, in drain_socket
+2026-06-05 16:39:35.928 |     readable, _writable, _errored = select.select([sock], [], [], 0)
+2026-06-05 16:39:35.928 |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-06-05 16:39:35.928 | ValueError: file descriptor cannot be a negative integer (-1)

@@ -1,6 +1,8 @@
 #include "RemoteControl.h"
 
 #include "../entity/CLocalPlayer.h"
+#include "../modules/AutoConfirmModule.h"
+#include "DisconnectWatchdog.h"
 #include "UserConfig.h"
 
 #include <spdlog/spdlog.h>
@@ -22,8 +24,10 @@ namespace
 // 默认 pipe 名（无 \\.\pipe\ 前缀；CreateFile 时拼上）。Broker 用同名 net.createServer。
 constexpr const char *kDefaultPipeName = "GGTB_BROKER";
 
-// status tick 间隔。Broker 用它做 keepalive，<2s 时挑足够频繁地刷 UI 上的金钱即可。
-constexpr DWORD kStatusTickMs = 1500;
+// status tick 间隔。Broker 用它做 keepalive + 同步跟随的坐标源。跟随延迟的最大头
+// 就是这个间隔(broker 手里的主角色坐标最旧能差一个 tick),所以压到 500ms 让副角色
+// 更跟手。走的是本地命名管道,不碰游戏服务器,不占正式服在线上限,只多花点本地 CPU。
+constexpr DWORD kStatusTickMs = 500;
 
 // 连不上 broker / 断线后的重连间隔。Broker 还没起的常见情况，3s 不会刷屏。
 constexpr DWORD kReconnectMs = 3000;
@@ -198,9 +202,12 @@ void HandleCommand(const nlohmann::json &cmd)
 struct StatusSnapshot
 {
     int64_t  money = 0;
-    int64_t  hp = 0;
+    int64_t  hp = -1;
+    int64_t  worldRecvIdleMs = -1;
     float    x = 0, y = 0, z = 0;
     uint32_t mapId = 0;
+    bool     hpKnown = false;
+    bool     clientClosing = false;
 };
 
 // 只跑 SEH-wrap 的引擎读取 — 不涉及任何带析构的局部，绕开 MSVC C2712。
@@ -210,16 +217,22 @@ StatusSnapshot ReadStatusSEH()
     __try
     {
         s.money = GGTB::GetLocalMoney();
-        s.hp    = GGTB::GetLocalHp();
+        s.hpKnown = GGTB::TryGetLocalHp(s.hp);
+        if (!s.hpKnown)
+            s.hp = -1;
         GGTB::GetLocalPosition(s.x, s.y, s.z);
         s.mapId = GGTB::GetCurrentMapId();
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
         s.money = 0;
+        s.hp = -1;
+        s.hpKnown = false;
         s.x = s.y = s.z = 0;
         s.mapId = 0;
     }
+    s.clientClosing = GGTB::DisconnectWatchdog::IsDisconnectCloseTriggered();
+    s.worldRecvIdleMs = GGTB::DisconnectWatchdog::GetWorldRecvIdleMs();
     return s;
 }
 
@@ -238,14 +251,17 @@ void TickThreadProc()
             {"pid",  g_pid},
             {"money", s.money},
             {"hp", s.hp},
+            {"hpKnown", s.hpKnown},
+            {"clientClosing", s.clientClosing},
+            {"worldRecvIdleMs", s.worldRecvIdleMs},
             {"posX", s.x}, {"posY", s.y}, {"posZ", s.z},
             {"mapId", s.mapId},
         };
         if (!name.empty())
             st["characterName"] = name;
         bool wroteOk = WriteJson(st);
-        // 头一次 + 每 ~30s(20 tick)打一行,方便定位 status 流是不是真的在跑
-        if (tickCount == 0 || (tickCount % 20) == 0)
+        // 头一次 + 每 ~30s(60 tick @ 500ms)打一行,方便定位 status 流是不是真的在跑
+        if (tickCount == 0 || (tickCount % 60) == 0)
         {
             spdlog::info("GGTB::RemoteControl: status tick #{} ok={} money={} name='{}'",
                          tickCount, wroteOk, s.money, name);
@@ -295,6 +311,9 @@ bool ConnectOnce(const std::string &path)
 
 void DisconnectAndCleanup()
 {
+    // A broker disconnect makes every in-flight workflow token unreachable.
+    // Revoke the local one-shot confirmer before allowing a reconnect.
+    AutoConfirmDetail::CancelDungeonEntryConfirmForShutdown();
     HANDLE h;
     {
         std::lock_guard<std::mutex> lk(g_writeMutex);
@@ -315,7 +334,9 @@ void WriteHello()
         {"type", "hello"},
         {"pid",  g_pid},
         {"protocol", 1},
-        {"dllVersion", "0.1"},
+        {"dllVersion", "0.14"},
+        {"nativeNpcUiBridgeReady", GGTB::IsNativeUiBridgeReady()},
+        {"nativeDropPickupReady", GGTB::IsNativeDropPickupReady()},
         {"hostExe", hostExe},
     };
     WriteJson(j);

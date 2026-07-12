@@ -1,0 +1,2205 @@
+{
+  "version": 1,
+  "workflows": [
+    {
+      "id": "sage-tower-another",
+      "name": "賢者之塔another",
+      "description": "已在賢者之塔任一層時直接繼續；否則從獅子城入場，免費次數用盡時最多自動使用一張 Another 額外入場券，再完成三層機關、清怪、BOSS 與過濾拾取。",
+      "startNodeId": "preflight_drop_query",
+      "maxTransitions": 300,
+      "maxRuntimeMs": 5400000,
+      "nodes": [
+        {
+          "id": "preflight_drop_query",
+          "type": "command",
+          "name": "啟動前確認掉落查詢能力",
+          "params": {
+            "action": "getNearbyDropItems",
+            "args": {
+              "maxDistance": 0,
+              "includeUnpickable": true,
+              "onlyFilterMatches": false,
+              "limit": 1
+            },
+            "saveAs": "dropQueryPreflight",
+            "parseJson": true
+          },
+          "next": "already_in_tower",
+          "onFailure": "fail_preflight",
+          "timeoutMs": 10000,
+          "retries": 2,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "already_in_tower",
+          "type": "condition",
+          "name": "啟動判斷：已在賢者之塔，按當前塔內入口繼續",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "onTrue": "tower_map_stable",
+          "onFalse": "revive_lion",
+          "onFailure": "fail_entry",
+          "timeoutMs": 10000,
+          "retries": 2,
+          "retryDelayMs": 500
+        },
+        {
+          "id": "revive_lion",
+          "type": "revive",
+          "name": "1. 復活傳送到獅子城",
+          "params": {
+            "safetyCheck": true,
+            "mode": 2,
+            "expectedMapId": 32,
+            "pollMs": 500
+          },
+          "next": "lion_map_stable",
+          "onFailure": "fail_entry",
+          "timeoutMs": 45000
+        },
+        {
+          "id": "lion_map_stable",
+          "type": "waitUntil",
+          "name": "確認獅子城載入穩定",
+          "params": {
+            "condition": {
+              "kind": "map",
+              "mapId": 32,
+              "operator": "eq"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1500
+          },
+          "next": "path_entry",
+          "onFailure": "fail_entry",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_entry",
+          "type": "pathTo",
+          "name": "2. 尋路到 226,145",
+          "params": {
+            "x": 226,
+            "y": 145,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_entry_pos",
+          "onFailure": "fail_entry",
+          "timeoutMs": 120000,
+          "retries": 2,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "confirm_entry_pos",
+          "type": "waitUntil",
+          "name": "確認已到 226,145",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 226,
+              "y": 145,
+              "distance": 1.5,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "wait_entry_npc",
+          "onFailure": "fail_entry",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "wait_entry_npc",
+          "type": "waitUntil",
+          "name": "確認 5 格內有次元修道士",
+          "params": {
+            "condition": {
+              "kind": "entity",
+              "maxDistance": 5,
+              "nameContains": "次元的修道士",
+              "isNpc": true,
+              "operator": "exists"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "enter_tower",
+          "onFailure": "fail_entry",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "enter_tower",
+          "type": "dungeonEntry",
+          "name": "3. 免費優先，必要時最多使用一張額外入場券",
+          "params": {
+            "maxDistance": 5,
+            "allVisible": false,
+            "nameContains": "次元的修道士",
+            "waitForNpcMs": 5000,
+            "nativeDialogTimeoutMs": 12000,
+            "nativeDialogMaxSteps": 10,
+            "pollMs": 300,
+            "option": 9575,
+            "sub": 1,
+            "autoUseExtraTicket": true,
+            "ticketItemId": 26419,
+            "confirmTextContains": "Another 額外入場券",
+            "expectedMapNameContains": "賢者之塔",
+            "mapStableDurationMs": 1500
+          },
+          "next": "tower_map_stable",
+          "onFailure": "fail_entry",
+          "timeoutMs": 60000,
+          "retries": 0
+        },
+        {
+          "id": "tower_map_stable",
+          "type": "waitUntil",
+          "name": "4. 確認已進入賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1500
+          },
+          "next": "path_gate_1",
+          "onFailure": "fail_entry",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "path_gate_1",
+          "type": "pathTo",
+          "name": "5. 尋路到 45,33",
+          "params": {
+            "x": 45,
+            "y": 33,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_gate_1",
+          "onFailure": "fail_route",
+          "timeoutMs": 120000,
+          "retries": 2,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "confirm_gate_1",
+          "type": "waitUntil",
+          "name": "確認已到 45,33",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 45,
+              "y": 33,
+              "distance": 1.5,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "dialog_9580",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "dialog_9580",
+          "type": "dialogSelect",
+          "name": "以最近 NPC 發送 opt 9580",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9580,
+            "sub": 1
+          },
+          "next": "confirm_46_49",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_46_49",
+          "type": "waitUntil",
+          "name": "6. 確認座標 46,49",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 46,
+              "y": 49,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "map_after_9580",
+          "onFailure": "fail_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "map_after_9580",
+          "type": "waitUntil",
+          "name": "確認仍在賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 500
+          },
+          "next": "path_gate_2",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_gate_2",
+          "type": "pathTo",
+          "name": "7. 尋路到 61,67",
+          "params": {
+            "x": 61,
+            "y": 67,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_gate_2",
+          "onFailure": "fail_route",
+          "timeoutMs": 120000,
+          "retries": 2,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "confirm_gate_2",
+          "type": "waitUntil",
+          "name": "確認已到 61,67",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 61,
+              "y": 67,
+              "distance": 1.5,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "dialog_9581",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "dialog_9581",
+          "type": "dialogSelect",
+          "name": "8. 以最近 NPC 發送 opt 9581",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9581,
+            "sub": 1
+          },
+          "next": "confirm_43_90",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_43_90",
+          "type": "waitUntil",
+          "name": "9. 確認座標 43,90",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 43,
+              "y": 90,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "map_after_9581",
+          "onFailure": "fail_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "map_after_9581",
+          "type": "waitUntil",
+          "name": "確認仍在賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 500
+          },
+          "next": "path_gate_3",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_gate_3",
+          "type": "pathTo",
+          "name": "10. 尋路到 123,133",
+          "params": {
+            "x": 123,
+            "y": 133,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_gate_3",
+          "onFailure": "fail_route",
+          "timeoutMs": 120000,
+          "retries": 2,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "confirm_gate_3",
+          "type": "waitUntil",
+          "name": "確認已到 123,133",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 123,
+              "y": 133,
+              "distance": 1.5,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "dialog_9584",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "dialog_9584",
+          "type": "dialogSelect",
+          "name": "11. 以最近 NPC 發送 opt 9584",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9584,
+            "sub": 1
+          },
+          "next": "confirm_82_161",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_82_161",
+          "type": "waitUntil",
+          "name": "12. 確認座標 82,161",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 82,
+              "y": 161,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "map_after_9584",
+          "onFailure": "fail_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "map_after_9584",
+          "type": "waitUntil",
+          "name": "確認仍在賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 500
+          },
+          "next": "path_gate_4",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_gate_4",
+          "type": "pathTo",
+          "name": "13. 尋路到 121,186",
+          "params": {
+            "x": 121,
+            "y": 186,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_gate_4",
+          "onFailure": "fail_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_gate_4",
+          "type": "waitUntil",
+          "name": "確認已到 121,186",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 121,
+              "y": 186,
+              "distance": 1.5,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "dialog_9587",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "dialog_9587",
+          "type": "dialogSelect",
+          "name": "14. 以最近 NPC 發送 opt 9587",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9587,
+            "sub": 1
+          },
+          "next": "confirm_473_57",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_473_57",
+          "type": "waitUntil",
+          "name": "15. 確認座標 473,57",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 473,
+              "y": 57,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "map_after_9587",
+          "onFailure": "fail_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "map_after_9587",
+          "type": "waitUntil",
+          "name": "確認仍在賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 500
+          },
+          "next": "path_combat_area",
+          "onFailure": "fail_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_combat_area",
+          "type": "pathTo",
+          "name": "16. 尋路到 474,69",
+          "params": {
+            "x": 474,
+            "y": 69,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_combat_area",
+          "onFailure": "fail_combat",
+          "timeoutMs": 120000,
+          "retries": 2,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "confirm_combat_area",
+          "type": "waitUntil",
+          "name": "確認已到 474,69",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 474,
+              "y": 69,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 500
+          },
+          "next": "clear_small_monsters",
+          "onFailure": "fail_combat",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "clear_small_monsters",
+          "type": "clearMonsters",
+          "name": "17. 清理視野內非 BOSS 小怪",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameNotContains": "[BOSS]",
+            "approachDistance": 3,
+            "pollMs": 500,
+            "reissueMs": 2000,
+            "emptyConfirmations": 3,
+            "emptyDurationMs": 5000
+          },
+          "next": "path_boss_check_point",
+          "onFailure": "fail_combat",
+          "timeoutMs": 900000
+        },
+        {
+          "id": "confirm_small_empty",
+          "type": "waitUntil",
+          "name": "18. 確認視野內小怪已清空",
+          "params": {
+            "condition": {
+              "kind": "entity",
+              "allVisible": true,
+              "maxDistance": 0,
+              "nameNotContains": "[BOSS]",
+              "attackable": true,
+              "hpGt": 0,
+              "operator": "notExists"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 3000
+          },
+          "next": "path_boss_check_point",
+          "onFailure": "fail_combat",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "path_boss_check_point",
+          "type": "pathTo",
+          "name": "清怪後移動到 BOSS 查詢點 473,72",
+          "params": {
+            "x": 473,
+            "y": 72,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "wait_boss",
+          "onFailure": "fail_combat",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "wait_boss",
+          "type": "killBoss",
+          "name": "19. 鎖定並擊殺高血量 BOSS（無則跳過）",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameContains": "[BOSS]",
+            "maxHpGt": 800000000,
+            "waitForAppearanceMs": 0,
+            "skipIfAbsent": true,
+            "approachDistance": 3,
+            "pollMs": 500,
+            "reissueMs": 2000,
+            "missingConfirmations": 3,
+            "missingDurationMs": 3000
+          },
+          "next": "read_pickup_filter",
+          "onFailure": "fail_combat",
+          "timeoutMs": 900000,
+          "retries": 0
+        },
+        {
+          "id": "read_pickup_filter",
+          "type": "command",
+          "name": "讀取目前生效的拾取過濾",
+          "params": {
+            "action": "getPickupFilterStatus",
+            "args": {},
+            "saveAs": "pickupFilterStatus",
+            "parseJson": true
+          },
+          "next": "collect_filtered_drops",
+          "onFailure": "collect_filtered_drops",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "collect_filtered_drops",
+          "type": "collectFilteredDrops",
+          "name": "按拾取過濾尋路拾取（最多100秒）",
+          "params": {
+            "maxDistance": 0,
+            "includeUnpickable": true,
+            "approachDistance": 2.5,
+            "pollMs": 500,
+            "emptyDurationMs": 5000,
+            "maxDurationMs": 100000
+          },
+          "next": "wait_second_passage",
+          "onFailure": "fail_loot",
+          "timeoutMs": 110000
+        },
+        {
+          "id": "wait_second_passage",
+          "type": "waitUntil",
+          "name": "21. 等待 NPC 第二層通路",
+          "params": {
+            "condition": {
+              "kind": "entity",
+              "allVisible": true,
+              "maxDistance": 0,
+              "name": "第二層通路",
+              "isNpc": true,
+              "operator": "exists"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1000
+          },
+          "next": "approach_second_passage",
+          "onFailure": "fail_exit",
+          "timeoutMs": 180000
+        },
+        {
+          "id": "approach_second_passage",
+          "type": "approachEntity",
+          "name": "走到第二層通路旁（不打開對話）",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "name": "第二層通路",
+            "isNpc": true,
+            "approachDistance": 3,
+            "pollMs": 300
+          },
+          "next": "dialog_9603",
+          "onFailure": "fail_exit",
+          "timeoutMs": 120000,
+          "retries": 1,
+          "retryDelayMs": 1000
+        },
+        {
+          "id": "dialog_9603",
+          "type": "dialogSelect",
+          "name": "以第二層通路動態 ID 發送 opt 9603",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "name": "第二層通路",
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9603,
+            "sub": 1
+          },
+          "next": "confirm_458_427",
+          "onFailure": "fail_exit",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_458_427",
+          "type": "waitUntil",
+          "name": "22. 確認座標 458,427",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 458,
+              "y": 427,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "confirm_final_tower_map",
+          "onFailure": "fail_exit",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "confirm_final_tower_map",
+          "type": "waitUntil",
+          "name": "確認第二層仍屬賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1500
+          },
+          "next": "path_floor2_442_469",
+          "onFailure": "fail_exit",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "path_floor2_442_469",
+          "type": "pathTo",
+          "name": "二層 1. 尋路到 442,469",
+          "params": {
+            "x": 442,
+            "y": 469,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_442_469",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_442_469",
+          "type": "waitUntil",
+          "name": "確認已到 442,469",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 442,
+              "y": 469,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9588",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9588",
+          "type": "dialogSelect",
+          "name": "二層 2. 以最近 NPC 發送 opt 9588",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9588,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "check_floor2_339_115",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "check_floor2_339_115",
+          "type": "condition",
+          "name": "二層 3. 判斷是否已到 339,115",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 339,
+              "y": 115,
+              "distance": 2,
+              "operator": "lte"
+            }
+          },
+          "onTrue": "confirm_floor2_339_115",
+          "onFalse": "path_floor2_339_115",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_339_115",
+          "type": "pathTo",
+          "name": "未到 339,115，改用尋路",
+          "params": {
+            "x": 339,
+            "y": 115,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_339_115",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_339_115",
+          "type": "waitUntil",
+          "name": "確認已到 339,115",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 339,
+              "y": 115,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9589",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9589",
+          "type": "dialogSelect",
+          "name": "二層 4. 以最近 NPC 發送 opt 9589",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9589,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "check_floor2_339_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "check_floor2_339_171",
+          "type": "condition",
+          "name": "二層 5. 判斷是否已到 339,171",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 339,
+              "y": 171,
+              "distance": 2,
+              "operator": "lte"
+            }
+          },
+          "onTrue": "confirm_floor2_339_171",
+          "onFalse": "path_floor2_339_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_339_171",
+          "type": "pathTo",
+          "name": "未到 339,171，改用尋路",
+          "params": {
+            "x": 339,
+            "y": 171,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_339_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_339_171",
+          "type": "waitUntil",
+          "name": "確認已到 339,171",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 339,
+              "y": 171,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9590",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9590",
+          "type": "dialogSelect",
+          "name": "二層 6. 以最近 NPC 發送 opt 9590",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9590,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "path_floor2_380_172",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_380_172",
+          "type": "pathTo",
+          "name": "二層 7. 尋路到 380,172",
+          "params": {
+            "x": 380,
+            "y": 172,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_380_172",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_380_172",
+          "type": "waitUntil",
+          "name": "確認已到 380,172",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 380,
+              "y": 172,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9591",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9591",
+          "type": "dialogSelect",
+          "name": "二層 8. 以最近 NPC 發送 opt 9591",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9591,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "path_floor2_421_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_421_171",
+          "type": "pathTo",
+          "name": "二層 9. 尋路到 421,171",
+          "params": {
+            "x": 421,
+            "y": 171,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_421_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_421_171",
+          "type": "waitUntil",
+          "name": "確認已到 421,171",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 421,
+              "y": 171,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9592",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9592",
+          "type": "dialogSelect",
+          "name": "二層 10. 以最近 NPC 發送 opt 9592",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9592,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "check_floor2_460_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "check_floor2_460_171",
+          "type": "condition",
+          "name": "二層 11. 判斷是否已到 460,171",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 460,
+              "y": 171,
+              "distance": 2,
+              "operator": "lte"
+            }
+          },
+          "onTrue": "confirm_floor2_460_171",
+          "onFalse": "path_floor2_460_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_460_171",
+          "type": "pathTo",
+          "name": "未到 460,171，改用尋路",
+          "params": {
+            "x": 460,
+            "y": 171,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_460_171",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_460_171",
+          "type": "waitUntil",
+          "name": "確認已到 460,171",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 460,
+              "y": 171,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9593",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9593",
+          "type": "dialogSelect",
+          "name": "二層 12. 以最近 NPC 發送 opt 9593",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9593,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "path_floor2_460_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_460_220",
+          "type": "pathTo",
+          "name": "二層 13. 尋路到 460,220",
+          "params": {
+            "x": 460,
+            "y": 220,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_460_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_460_220",
+          "type": "waitUntil",
+          "name": "確認已到 460,220",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 460,
+              "y": 220,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9594",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9594",
+          "type": "dialogSelect",
+          "name": "二層 14. 以最近 NPC 發送 opt 9594",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9594,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "check_floor2_420_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "check_floor2_420_220",
+          "type": "condition",
+          "name": "二層 15. 判斷是否已到 420,220",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 420,
+              "y": 220,
+              "distance": 2,
+              "operator": "lte"
+            }
+          },
+          "onTrue": "confirm_floor2_420_220",
+          "onFalse": "path_floor2_420_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_420_220",
+          "type": "pathTo",
+          "name": "未到 420,220，改用尋路",
+          "params": {
+            "x": 420,
+            "y": 220,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_420_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_420_220",
+          "type": "waitUntil",
+          "name": "確認已到 420,220",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 420,
+              "y": 220,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9595",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9595",
+          "type": "dialogSelect",
+          "name": "二層 16. 以最近 NPC 發送 opt 9595",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9595,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "check_floor2_380_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "check_floor2_380_220",
+          "type": "condition",
+          "name": "二層 17. 判斷是否已到 380,220",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 380,
+              "y": 220,
+              "distance": 2,
+              "operator": "lte"
+            }
+          },
+          "onTrue": "confirm_floor2_380_220",
+          "onFalse": "path_floor2_380_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_380_220",
+          "type": "pathTo",
+          "name": "未到 380,220，改用尋路",
+          "params": {
+            "x": 380,
+            "y": 220,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_380_220",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_380_220",
+          "type": "waitUntil",
+          "name": "確認已到 380,220",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 380,
+              "y": 220,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9596",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9596",
+          "type": "dialogSelect",
+          "name": "二層 18. 以最近 NPC 發送 opt 9596",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9596,
+            "sub": 1,
+            "settleMs": 1000
+          },
+          "next": "check_floor2_339_221",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "check_floor2_339_221",
+          "type": "condition",
+          "name": "二層 19. 判斷是否已到 339,221",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 339,
+              "y": 221,
+              "distance": 2,
+              "operator": "lte"
+            }
+          },
+          "onTrue": "confirm_floor2_339_221",
+          "onFalse": "path_floor2_339_221",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "path_floor2_339_221",
+          "type": "pathTo",
+          "name": "未到 339,221，改用尋路",
+          "params": {
+            "x": 339,
+            "y": 221,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_339_221",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_339_221",
+          "type": "waitUntil",
+          "name": "確認已到 339,221",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 339,
+              "y": 221,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9597",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9597",
+          "type": "dialogSelect",
+          "name": "二層 20. 以最近 NPC 發送 opt 9597",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9597,
+            "sub": 1
+          },
+          "next": "confirm_floor2_404_67",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_floor2_404_67",
+          "type": "waitUntil",
+          "name": "二層 21. 確認座標 404,67",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 404,
+              "y": 67,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "confirm_floor2_combat_map",
+          "onFailure": "fail_floor2_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "confirm_floor2_combat_map",
+          "type": "waitUntil",
+          "name": "確認第二層戰鬥區仍屬賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1000
+          },
+          "next": "clear_floor2_small",
+          "onFailure": "fail_floor2_combat",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "clear_floor2_small",
+          "type": "clearMonsters",
+          "name": "二層 22. 清理視野內非 BOSS 小怪",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameNotContains": "[BOSS]",
+            "approachDistance": 3,
+            "pollMs": 500,
+            "reissueMs": 2000,
+            "emptyConfirmations": 3,
+            "emptyDurationMs": 5000
+          },
+          "next": "read_pickup_filter_floor2_small",
+          "onFailure": "fail_floor2_combat",
+          "timeoutMs": 900000
+        },
+        {
+          "id": "confirm_floor2_small_empty",
+          "type": "waitUntil",
+          "name": "再次確認二層小怪已清空",
+          "params": {
+            "condition": {
+              "kind": "entity",
+              "allVisible": true,
+              "maxDistance": 0,
+              "nameNotContains": "[BOSS]",
+              "attackable": true,
+              "hpGt": 0,
+              "operator": "notExists"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 3000
+          },
+          "next": "read_pickup_filter_floor2_small",
+          "onFailure": "fail_floor2_combat",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "read_pickup_filter_floor2_small",
+          "type": "command",
+          "name": "讀取二層小怪拾取過濾",
+          "params": {
+            "action": "getPickupFilterStatus",
+            "args": {},
+            "saveAs": "pickupFilterStatusFloor2Small",
+            "parseJson": true
+          },
+          "next": "collect_floor2_small_drops",
+          "onFailure": "collect_floor2_small_drops",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "collect_floor2_small_drops",
+          "type": "collectFilteredDrops",
+          "name": "二層 23. 拾取小怪掉落（最多100秒）",
+          "params": {
+            "maxDistance": 0,
+            "includeUnpickable": true,
+            "approachDistance": 2.5,
+            "pollMs": 500,
+            "emptyDurationMs": 5000,
+            "maxDurationMs": 100000
+          },
+          "next": "path_floor2_boss_point",
+          "onFailure": "fail_floor2_loot",
+          "timeoutMs": 110000
+        },
+        {
+          "id": "path_floor2_boss_point",
+          "type": "pathTo",
+          "name": "二層 24. 尋路到 414,89",
+          "params": {
+            "x": 414,
+            "y": 89,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor2_414_89",
+          "onFailure": "fail_floor2_combat",
+          "timeoutMs": 180000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor2_414_89",
+          "type": "waitUntil",
+          "name": "確認已到 BOSS 點 414,89",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 414,
+              "y": 89,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "wait_floor2_boss",
+          "onFailure": "fail_floor2_combat",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "wait_floor2_boss",
+          "type": "killBoss",
+          "name": "二層 25. 鎖定並擊殺高血量 BOSS（無則跳過）",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameContains": "[BOSS]",
+            "maxHpGt": 800000000,
+            "waitForAppearanceMs": 0,
+            "skipIfAbsent": true,
+            "approachDistance": 3,
+            "pollMs": 500,
+            "reissueMs": 2000,
+            "missingConfirmations": 3,
+            "missingDurationMs": 5000
+          },
+          "next": "read_pickup_filter_floor2_boss",
+          "onFailure": "fail_floor2_combat",
+          "timeoutMs": 900000,
+          "retries": 0
+        },
+        {
+          "id": "read_pickup_filter_floor2_boss",
+          "type": "command",
+          "name": "讀取二層 BOSS 拾取過濾",
+          "params": {
+            "action": "getPickupFilterStatus",
+            "args": {},
+            "saveAs": "pickupFilterStatusFloor2Boss",
+            "parseJson": true
+          },
+          "next": "collect_floor2_boss_drops",
+          "onFailure": "collect_floor2_boss_drops",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "collect_floor2_boss_drops",
+          "type": "collectFilteredDrops",
+          "name": "二層 26. 拾取 BOSS 掉落（最多100秒）",
+          "params": {
+            "maxDistance": 0,
+            "includeUnpickable": true,
+            "approachDistance": 2.5,
+            "pollMs": 500,
+            "emptyDurationMs": 5000,
+            "maxDurationMs": 100000
+          },
+          "next": "wait_third_passage",
+          "onFailure": "fail_floor2_loot",
+          "timeoutMs": 110000
+        },
+        {
+          "id": "wait_third_passage",
+          "type": "waitUntil",
+          "name": "二層 27. 等待 NPC 第3層通道",
+          "params": {
+            "condition": {
+              "kind": "entity",
+              "allVisible": true,
+              "maxDistance": 0,
+              "nameContains": "第3層通道",
+              "isNpc": true,
+              "operator": "exists"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1000
+          },
+          "next": "approach_third_passage",
+          "onFailure": "fail_floor2_exit",
+          "timeoutMs": 180000
+        },
+        {
+          "id": "approach_third_passage",
+          "type": "approachEntity",
+          "name": "走到第3層通道旁（不打開對話）",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameContains": "第3層通道",
+            "isNpc": true,
+            "approachDistance": 3,
+            "pollMs": 300
+          },
+          "next": "dialog_9598",
+          "onFailure": "fail_floor2_exit",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "dialog_9598",
+          "type": "dialogSelect",
+          "name": "二層 28. 以第3層通道動態 ID 發送 opt 9598",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "nameContains": "第3層通道",
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9598,
+            "sub": 1
+          },
+          "next": "confirm_floor3_466_67",
+          "onFailure": "fail_floor2_exit",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_floor3_466_67",
+          "type": "waitUntil",
+          "name": "二層 29. 確認座標 466,67",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 466,
+              "y": 67,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "confirm_floor3_map",
+          "onFailure": "fail_floor2_exit",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "confirm_floor3_map",
+          "type": "waitUntil",
+          "name": "確認第三層仍屬賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1500
+          },
+          "next": "path_floor3_448_104",
+          "onFailure": "fail_floor2_exit",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "path_floor3_448_104",
+          "type": "pathTo",
+          "name": "三層 1. 尋路到 448,104",
+          "params": {
+            "x": 448,
+            "y": 104,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor3_448_104",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor3_448_104",
+          "type": "waitUntil",
+          "name": "確認已到 448,104",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 448,
+              "y": 104,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9599",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9599",
+          "type": "dialogSelect",
+          "name": "三層 2. 以最近 NPC 發送 opt 9599",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9599,
+            "sub": 1
+          },
+          "next": "confirm_floor3_15_90",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_floor3_15_90",
+          "type": "waitUntil",
+          "name": "三層 3. 確認座標 15,90",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 15,
+              "y": 90,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "confirm_floor3_map_after_9599",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "confirm_floor3_map_after_9599",
+          "type": "waitUntil",
+          "name": "確認 9599 後仍屬賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1000
+          },
+          "next": "path_floor3_194_57",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "path_floor3_194_57",
+          "type": "pathTo",
+          "name": "三層 4. 尋路到 194,57",
+          "params": {
+            "x": 194,
+            "y": 57,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor3_194_57",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor3_194_57",
+          "type": "waitUntil",
+          "name": "確認已到 194,57",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 194,
+              "y": 57,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "dialog_9600",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "dialog_9600",
+          "type": "dialogSelect",
+          "name": "三層 5. 以最近 NPC 發送 opt 9600",
+          "params": {
+            "raw": true,
+            "nearestNpc": true,
+            "maxDistance": 5,
+            "allVisible": false,
+            "waitForNpcMs": 5000,
+            "pollMs": 300,
+            "option": 9600,
+            "sub": 1
+          },
+          "next": "confirm_floor3_292_16",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "confirm_floor3_292_16",
+          "type": "waitUntil",
+          "name": "三層 6. 確認座標 292,16",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 292,
+              "y": 16,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "confirm_floor3_combat_map",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "confirm_floor3_combat_map",
+          "type": "waitUntil",
+          "name": "確認三層戰鬥區仍屬賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1000
+          },
+          "next": "clear_floor3_small",
+          "onFailure": "fail_floor3_combat",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "clear_floor3_small",
+          "type": "clearMonsters",
+          "name": "三層 7. 清理視野內非 BOSS 小怪",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameNotContains": "[BOSS]",
+            "approachDistance": 3,
+            "pollMs": 500,
+            "reissueMs": 2000,
+            "emptyConfirmations": 3,
+            "emptyDurationMs": 5000
+          },
+          "next": "read_pickup_filter_floor3_small",
+          "onFailure": "fail_floor3_combat",
+          "timeoutMs": 900000
+        },
+        {
+          "id": "confirm_floor3_small_empty",
+          "type": "waitUntil",
+          "name": "再次確認三層小怪已清空",
+          "params": {
+            "condition": {
+              "kind": "entity",
+              "allVisible": true,
+              "maxDistance": 0,
+              "nameNotContains": "[BOSS]",
+              "attackable": true,
+              "hpGt": 0,
+              "operator": "notExists"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 3000
+          },
+          "next": "read_pickup_filter_floor3_small",
+          "onFailure": "fail_floor3_combat",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "read_pickup_filter_floor3_small",
+          "type": "command",
+          "name": "讀取三層小怪拾取過濾",
+          "params": {
+            "action": "getPickupFilterStatus",
+            "args": {},
+            "saveAs": "pickupFilterStatusFloor3Small",
+            "parseJson": true
+          },
+          "next": "collect_floor3_small_drops",
+          "onFailure": "collect_floor3_small_drops",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "collect_floor3_small_drops",
+          "type": "collectFilteredDrops",
+          "name": "三層 8. 拾取小怪掉落（最多100秒）",
+          "params": {
+            "maxDistance": 0,
+            "includeUnpickable": true,
+            "approachDistance": 2.5,
+            "pollMs": 500,
+            "emptyDurationMs": 5000,
+            "maxDurationMs": 100000
+          },
+          "next": "path_floor3_boss_point",
+          "onFailure": "fail_floor3_loot",
+          "timeoutMs": 110000
+        },
+        {
+          "id": "path_floor3_boss_point",
+          "type": "pathTo",
+          "name": "三層 9. 尋路到 303,65",
+          "params": {
+            "x": 303,
+            "y": 65,
+            "action": 1,
+            "targetId": 0,
+            "pollMs": 300
+          },
+          "next": "confirm_floor3_303_65",
+          "onFailure": "fail_floor3_combat",
+          "timeoutMs": 120000,
+          "retries": 5,
+          "retryDelayMs": 1500
+        },
+        {
+          "id": "confirm_floor3_303_65",
+          "type": "waitUntil",
+          "name": "確認已到 BOSS 點 303,65",
+          "params": {
+            "condition": {
+              "kind": "position",
+              "x": 303,
+              "y": 65,
+              "distance": 2,
+              "operator": "lte"
+            },
+            "pollMs": 300,
+            "stableDurationMs": 1000
+          },
+          "next": "kill_floor3_boss",
+          "onFailure": "fail_floor3_combat",
+          "timeoutMs": 30000
+        },
+        {
+          "id": "kill_floor3_boss",
+          "type": "killBoss",
+          "name": "三層 10. 鎖定並擊殺高血量 BOSS（無則跳過）",
+          "params": {
+            "allVisible": true,
+            "maxDistance": 0,
+            "nameContains": "[BOSS]",
+            "maxHpGt": 800000000,
+            "waitForAppearanceMs": 0,
+            "skipIfAbsent": true,
+            "approachDistance": 3,
+            "pollMs": 500,
+            "reissueMs": 2000,
+            "missingConfirmations": 3,
+            "missingDurationMs": 5000
+          },
+          "next": "read_pickup_filter_floor3_boss",
+          "onFailure": "fail_floor3_combat",
+          "timeoutMs": 900000,
+          "retries": 0
+        },
+        {
+          "id": "read_pickup_filter_floor3_boss",
+          "type": "command",
+          "name": "讀取三層 BOSS 拾取過濾",
+          "params": {
+            "action": "getPickupFilterStatus",
+            "args": {},
+            "saveAs": "pickupFilterStatusFloor3Boss",
+            "parseJson": true
+          },
+          "next": "collect_floor3_boss_drops",
+          "onFailure": "collect_floor3_boss_drops",
+          "timeoutMs": 10000
+        },
+        {
+          "id": "collect_floor3_boss_drops",
+          "type": "collectFilteredDrops",
+          "name": "三層 11. 拾取 BOSS 掉落（最多100秒）",
+          "params": {
+            "maxDistance": 0,
+            "includeUnpickable": true,
+            "approachDistance": 2.5,
+            "pollMs": 500,
+            "emptyDurationMs": 5000,
+            "maxDurationMs": 100000
+          },
+          "next": "confirm_floor3_end_map",
+          "onFailure": "fail_floor3_loot",
+          "timeoutMs": 110000
+        },
+        {
+          "id": "confirm_floor3_end_map",
+          "type": "waitUntil",
+          "name": "確認流程結束時仍屬賢者之塔",
+          "params": {
+            "condition": {
+              "kind": "mapName",
+              "value": "賢者之塔",
+              "operator": "contains"
+            },
+            "pollMs": 500,
+            "stableDurationMs": 1000
+          },
+          "next": "success",
+          "onFailure": "fail_floor3_route",
+          "timeoutMs": 15000
+        },
+        {
+          "id": "success",
+          "type": "end",
+          "name": "流程完成",
+          "params": {
+            "success": true,
+            "message": "賢者之塔another 一、二、三層流程完成"
+          }
+        },
+        {
+          "id": "fail_floor3_route",
+          "type": "end",
+          "name": "第三層機關路線失敗",
+          "params": {
+            "success": false,
+            "message": "第三層機關路線失敗：發包、賢者之塔地圖名稱或座標後置條件未成立"
+          }
+        },
+        {
+          "id": "fail_floor3_combat",
+          "type": "end",
+          "name": "第三層戰鬥階段失敗",
+          "params": {
+            "success": false,
+            "message": "第三層戰鬥階段失敗：角色死亡、世界連線中斷、客戶端關閉、離開賢者之塔或已鎖定 BOSS 的戰鬥狀態異常"
+          }
+        },
+        {
+          "id": "fail_floor3_loot",
+          "type": "end",
+          "name": "第三層拾取上下文失效",
+          "params": {
+            "success": false,
+            "message": "第三層拾取上下文失效：角色死亡、離開本層、連線中斷或無法安全停止尋路"
+          }
+        },
+        {
+          "id": "fail_floor2_route",
+          "type": "end",
+          "name": "第二層機關路線失敗",
+          "params": {
+            "success": false,
+            "message": "第二層機關路線失敗：發包、賢者之塔地圖名稱或座標後置條件未成立"
+          }
+        },
+        {
+          "id": "fail_floor2_combat",
+          "type": "end",
+          "name": "第二層戰鬥階段失敗",
+          "params": {
+            "success": false,
+            "message": "第二層戰鬥階段失敗：角色死亡、世界連線中斷、客戶端關閉、離開賢者之塔或怪物狀態異常"
+          }
+        },
+        {
+          "id": "fail_floor2_loot",
+          "type": "end",
+          "name": "第二層拾取上下文失效",
+          "params": {
+            "success": false,
+            "message": "第二層拾取上下文失效：角色死亡、離開本層、連線中斷或無法安全停止尋路"
+          }
+        },
+        {
+          "id": "fail_floor2_exit",
+          "type": "end",
+          "name": "第3層通道失敗",
+          "params": {
+            "success": false,
+            "message": "第3層通道失敗：NPC、直接發包、466,67 或賢者之塔地圖名稱未確認"
+          }
+        },
+        {
+          "id": "fail_preflight",
+          "type": "end",
+          "name": "啟動能力預檢失敗",
+          "params": {
+            "success": false,
+            "message": "啟動能力預檢失敗：目前載入的 GGThreadBlock.dll 尚未提供 getNearbyDropItems，請先替換新 DLL 並重啟遊戲客戶端"
+          }
+        },
+        {
+          "id": "fail_entry",
+          "type": "end",
+          "name": "入口階段失敗",
+          "params": {
+            "success": false,
+            "message": "入口階段失敗：超越次元修道士原生對話入場後未能穩定進入賢者之塔"
+          }
+        },
+        {
+          "id": "fail_route",
+          "type": "end",
+          "name": "機關路線失敗",
+          "params": {
+            "success": false,
+            "message": "第一層機關路線失敗：座標或賢者之塔地圖名稱後置條件未成立"
+          }
+        },
+        {
+          "id": "fail_combat",
+          "type": "end",
+          "name": "戰鬥階段失敗",
+          "params": {
+            "success": false,
+            "message": "第一層戰鬥階段失敗：角色死亡、世界連線中斷、客戶端關閉、離開賢者之塔或怪物狀態異常"
+          }
+        },
+        {
+          "id": "fail_loot",
+          "type": "end",
+          "name": "拾取上下文失效",
+          "params": {
+            "success": false,
+            "message": "拾取上下文失效：角色死亡、離開本層、連線中斷或無法安全停止尋路"
+          }
+        },
+        {
+          "id": "fail_exit",
+          "type": "end",
+          "name": "第二層通路失敗",
+          "params": {
+            "success": false,
+            "message": "第二層通路失敗：NPC、直接發包、458,427 或賢者之塔地圖名稱未確認"
+          }
+        }
+      ],
+      "updatedAt": 1783766584917
+    }
+  ]
+}

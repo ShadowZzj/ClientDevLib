@@ -3,8 +3,12 @@
     {
       "characterName": "shadowpope",
       "autoRun": false,
-      "delayMinMin": 5,
-      "delayMinMax": 5,
+      "delayMinMin": 22,
+      "delayMinMax": 38,
+      "pauseOnNearbyGm": true,
+      "stuckReviveEnabled": false,
+      "stuckReviveMinutes": 10,
+      "scheduleWindows": [],
       "steps": [
         {
           "type": "reviveToTown",
@@ -15,8 +19,8 @@
         {
           "type": "reviveToTown",
           "delayMs": 1000,
-          "repeatCount": 60,
-          "repeatDelayMs": 100
+          "repeatCount": 10,
+          "repeatDelayMs": 500
         },
         {
           "type": "waitInTown",
@@ -54,13 +58,35 @@
           "repeatCount": 1,
           "repeatDelayMs": 0
         }
-      ]
+      ],
+      "farmX": 0,
+      "farmY": 0,
+      "farmPushEnabled": false
     },
     {
       "characterName": "shadowsing",
-      "autoRun": true,
+      "autoRun": false,
       "delayMinMin": 5,
       "delayMinMax": 5,
+      "pauseOnNearbyGm": true,
+      "stuckReviveEnabled": false,
+      "stuckReviveMinutes": 10,
+      "scheduleWindows": [
+        {
+          "enabled": true,
+          "start": "00:00",
+          "end": "08:00",
+          "delayMinMin": 60,
+          "delayMinMax": 90
+        },
+        {
+          "enabled": true,
+          "start": "08:00",
+          "end": "23:59",
+          "delayMinMin": 25,
+          "delayMinMax": 45
+        }
+      ],
       "steps": [
         {
           "type": "reviveToTown",
@@ -103,13 +129,20 @@
           "repeatCount": 1,
           "repeatDelayMs": 0
         }
-      ]
+      ],
+      "farmX": 259,
+      "farmY": 22,
+      "farmPushEnabled": true
     },
     {
       "characterName": "sharen2",
       "autoRun": true,
       "delayMinMin": 5,
       "delayMinMax": 5,
+      "pauseOnNearbyGm": false,
+      "stuckReviveEnabled": false,
+      "stuckReviveMinutes": 10,
+      "scheduleWindows": [],
       "steps": [
         {
           "type": "reviveToTown",
@@ -152,13 +185,18 @@
           "repeatCount": 1,
           "repeatDelayMs": 0
         }
-      ]
+      ],
+      "farmPushEnabled": false
     },
     {
       "characterName": "sharen01",
       "autoRun": true,
       "delayMinMin": 5,
       "delayMinMax": 5,
+      "pauseOnNearbyGm": false,
+      "stuckReviveEnabled": false,
+      "stuckReviveMinutes": 10,
+      "scheduleWindows": [],
       "steps": [
         {
           "type": "reviveToTown",
@@ -201,13 +239,18 @@
           "repeatCount": 1,
           "repeatDelayMs": 0
         }
-      ]
+      ],
+      "farmPushEnabled": false
     },
     {
       "characterName": "sharen03",
       "autoRun": true,
       "delayMinMin": 1,
       "delayMinMax": 1,
+      "pauseOnNearbyGm": false,
+      "stuckReviveEnabled": false,
+      "stuckReviveMinutes": 10,
+      "scheduleWindows": [],
       "steps": [
         {
           "type": "reviveToTown",
@@ -250,13 +293,26 @@
           "repeatCount": 1,
           "repeatDelayMs": 0
         }
-      ]
+      ],
+      "farmPushEnabled": false
     },
     {
       "characterName": "shadowdance",
       "autoRun": true,
       "delayMinMin": 5,
       "delayMinMax": 5,
+      "pauseOnNearbyGm": true,
+      "stuckReviveEnabled": false,
+      "stuckReviveMinutes": 3,
+      "scheduleWindows": [
+        {
+          "enabled": true,
+          "start": "00:00",
+          "end": "08:00",
+          "delayMinMin": 60,
+          "delayMinMax": 90
+        }
+      ],
       "steps": [
         {
           "type": "reviveToTown",
@@ -289,9 +345,132 @@
           "repeatCount": 1,
           "repeatDelayMs": 0
         }
-      ]
+      ],
+      "farmPushEnabled": false
     }
   ],
   "deadAt": {},
-  "scheduledAt": {}
+  "scheduledAt": {},
+  "stepTemplates": [
+    {
+      "id": "55858243-a0d5-4594-a549-9ee59412f8e6",
+      "name": "巧克力森林",
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10255,
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "pressHookedKey",
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false,
+          "delayMs": 1000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        }
+      ],
+      "farmX": 315,
+      "farmY": 141,
+      "farmPushEnabled": true
+    },
+    {
+      "id": "2eaf00f3-277e-4e5c-93f9-7ce800ed67eb",
+      "name": "废墟",
+      "steps": [
+        {
+          "type": "reviveToTown",
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "waitInTown",
+          "mapId": 11,
+          "timeoutMs": 5000,
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "moveTo",
+          "x": 252,
+          "y": 286,
+          "action": 1,
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "sendDialogSelectRaw",
+          "npcId": 19811,
+          "option": 10282,
+          "delayMs": 5000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        },
+        {
+          "type": "pressHookedKey",
+          "vkey": 87,
+          "alt": true,
+          "ctrl": false,
+          "shift": false,
+          "delayMs": 1000,
+          "repeatCount": 1,
+          "repeatDelayMs": 0
+        }
+      ],
+      "farmX": 315,
+      "farmY": 164,
+      "farmPushEnabled": true
+    }
+  ],
+  "dialogTemplates": [
+    {
+      "id": "bcd03aca-34f7-41b0-8b6c-eb4a2d2e30f1",
+      "name": "乐园-废墟",
+      "npcId": 19811,
+      "option": 10282
+    },
+    {
+      "id": "e022f352-3c94-4f6e-97bb-fc4c23eca2f4",
+      "name": "乐园-糖果村",
+      "npcId": 19811,
+      "option": 10254
+    },
+    {
+      "id": "a08d7089-0fd3-41f8-9842-aff3cf8a9b38",
+      "name": "乐园-巧克力森林",
+      "npcId": 19811,
+      "option": 10255
+    }
+  ]
 }

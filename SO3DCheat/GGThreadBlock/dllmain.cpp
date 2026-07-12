@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <intrin.h>
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -27,6 +28,8 @@
 #include "util/HwFpSpoof.h"
 #include "util/DisconnectWatchdog.h"
 #include "util/RemoteControl.h"
+#include "util/EnchantStoneControl.h"
+#include "util/DailyTaskControl.h"
 #include "util/InputInjector.h"
 #include "util/LoginBridge.h"
 #include "entity/CLocalPlayer.h"
@@ -37,8 +40,14 @@
 #include "modules/SpeedHackModule.h"
 #include "modules/ItemNoCDModule.h"
 #include "modules/AttackRangeModule.h"
-#include "modules/ActionMoveModule.h"
+#include "modules/AttackMoveModule.h"
+#include "modules/SkillMoveModule.h"
+#include "modules/NoShiftAttackModule.h"
+#include "modules/IgnoreCCModule.h"
+#include "modules/TeleportModule.h"
+#include "modules/WallHackModule.h"
 #include "modules/AutoPickupModule.h"
+#include "modules/AutoDecomposeGemModule.h"
 #include "modules/FireFullPowerModule.h"
 #include "modules/MakeBombDropModule.h"
 #include "modules/MultiCastModule.h"
@@ -46,17 +55,163 @@
 #include "modules/AutoDelegationModule.h"
 #include "modules/AutoMailModule.h"
 #include "modules/AutoTradeController.h"
+#include "modules/PickupFilter.h"
 #include "modules/NearbyPlayerGuardModule.h"
 #include "modules/PlayerESPModule.h"
 #include "modules/StationaryFarmModule.h"
 #include "modules/BlockLevelUpModule.h"
 #include "modules/MultiHitModule.h"
 #include "modules/AutoFleeModule.h"
+#include "modules/TeleportTownModule.h"
+#include "modules/AutoPathModule.h"
+#include "modules/FixedPointMoveModule.h"
+#include "modules/WarpCoordModule.h"
+#include "modules/OpenNearbyStallModule.h"
+#include "modules/MonsterListModule.h"
+#include "modules/ScreenOverlay.h"
 
 namespace GGTB
 {
 volatile LONG g_blockedThreadCount = 0;
 } // namespace GGTB
+
+// broker 远程控制 NPG:HackThread 注册模块后存下指针,setNpgConfig/getNpgConfig
+// handler 通过它下发开关 + 保持时长。Setting 按 shared_ptr 持有模块,生命周期
+// 比 handler 长;退出时 Uninstall handler 后再置空。
+static std::atomic<GGTB::NearbyPlayerGuardModule *> g_npgModule{nullptr};
+
+namespace
+{
+constexpr uint32_t kDungeonEntryTicketItemId = 26419;
+constexpr uint32_t kDungeonEntryTargetOpt = 9575;
+constexpr uint32_t kDungeonEntryExpectedWarpTableId = 564;
+constexpr size_t kDungeonEntryRequestTokenMaxLength = 80;
+
+bool ReadStrictJsonU32(const nlohmann::json &args, const char *name, uint32_t *value)
+{
+    if (!value) return false;
+    auto it = args.find(name);
+    if (it == args.end()) return false;
+    try
+    {
+        if (it->is_number_unsigned())
+        {
+            uint64_t parsed = it->get<uint64_t>();
+            if (parsed > UINT32_MAX) return false;
+            *value = static_cast<uint32_t>(parsed);
+            return true;
+        }
+        if (it->is_number_integer())
+        {
+            int64_t parsed = it->get<int64_t>();
+            if (parsed < 0 || parsed > static_cast<int64_t>(UINT32_MAX)) return false;
+            *value = static_cast<uint32_t>(parsed);
+            return true;
+        }
+    }
+    catch (...)
+    {
+    }
+    return false;
+}
+
+bool ReadStrictJsonBool(const nlohmann::json &args, const char *name, bool fallback,
+                        bool *value)
+{
+    if (!value) return false;
+    auto it = args.find(name);
+    if (it == args.end())
+    {
+        *value = fallback;
+        return true;
+    }
+    if (!it->is_boolean()) return false;
+    *value = it->get<bool>();
+    return true;
+}
+
+bool ReadStrictDungeonEntryToken(const nlohmann::json &args, std::string *token)
+{
+    if (!token) return false;
+    auto it = args.find("requestToken");
+    if (it == args.end() || !it->is_string()) return false;
+    *token = it->get<std::string>();
+    if (token->empty() || token->size() > kDungeonEntryRequestTokenMaxLength) return false;
+    for (unsigned char ch : *token)
+    {
+        if (ch <= 0x20 || ch >= 0x7F) return false;
+    }
+    return true;
+}
+
+uint32_t SnapshotDungeonEntryTickets(GGTB::AutoConfirmDetail::DungeonEntryTicketBaseline *outSlots,
+                                     size_t *outSlotCount)
+{
+    size_t slotCount = 0;
+    uint64_t total = 0;
+    for (const auto &item : GGTB::GetCashBagItems())
+    {
+        if (item.itemId != kDungeonEntryTicketItemId) continue;
+        total += item.count;
+        if (outSlots && slotCount < GGTB::AutoConfirmDetail::kDungeonEntryTicketSlotCapacity)
+        {
+            outSlots[slotCount++] = {item.bagId, item.count};
+        }
+    }
+    if (outSlotCount) *outSlotCount = slotCount;
+    return total > UINT32_MAX ? UINT32_MAX : static_cast<uint32_t>(total);
+}
+
+bool IsStrictDungeonTicketAck(const GGTB::NetLog::DungeonEntryEvent &event,
+                              const GGTB::AutoConfirmDetail::DungeonEntryConfirmSnapshot &snapshot)
+{
+    if (event.kind != GGTB::NetLog::DungeonEntryEventKind::CashSlotUpdate) return false;
+
+    for (size_t i = 0; i < snapshot.ticketSlotCount; ++i)
+    {
+        const auto &slot = snapshot.ticketSlots[i];
+        if (event.wireSlot != slot.bagId || slot.count == 0) continue;
+
+        if (event.itemId == kDungeonEntryTicketItemId && event.count == slot.count - 1) return true;
+
+        // The server clears the template id when the final ticket empties the
+        // slot. Preserve and recognize that authoritative 511325 form.
+        if (event.itemId == 0 && slot.count == 1 && event.count == 0) return true;
+    }
+    return false;
+}
+
+nlohmann::json DungeonEntryEventToJson(const GGTB::NetLog::DungeonEntryEvent &event)
+{
+    nlohmann::json result = {
+        {"seq", event.sequence},
+        {"proto", event.proto},
+        {"frameLen", event.frameLength},
+    };
+    switch (event.kind)
+    {
+        case GGTB::NetLog::DungeonEntryEventKind::InstanceRegister:
+            result["result"] = event.result;
+            result["nInsd"] = event.nInsd;
+            break;
+        case GGTB::NetLog::DungeonEntryEventKind::CashSlotUpdate:
+            result["wireSlot"] = event.wireSlot;
+            result["itemId"] = event.itemId;
+            result["packedCount"] = event.packedCount;
+            result["count"] = event.count;
+            result["extra"] = event.extra;
+            result["tailCode"] = event.tailCode;
+            break;
+        case GGTB::NetLog::DungeonEntryEventKind::NpcDialogConfirm:
+            result["opt"] = event.opt;
+            result["branch"] = event.branch;
+            result["rawAux"] = event.rawAux;
+            result["hasRawAux"] = event.hasRawAux;
+            break;
+    }
+    return result;
+}
+}  // namespace
 
 // ============================================================
 //  CreateThread detour — swallow GameGuardDll.dll worker threads
@@ -510,32 +665,123 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     GGTB::UserConfig::Bootstrap(hModule);
     spdlog::info("GGThreadBlock DLL Attached");
 
-    GGTB::PatternResolver::Init(hModule);
+    // Load cache/fallback addresses without scanning the still-changing image.
+    // Queue the complete stage-2 sequence before arming its one-shot WinMain
+    // signal: attach the order-sensitive hooks first, then scan stable .text
+    // and refresh the cache, all before DeleteFileA returns to WinMain.
+    GGTB::PatternResolver::Prepare(hModule);
+    bool nativeUiStage2Stable = false;
+    HANDLE stage2Ready = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (stage2Ready)
+    {
+        std::atomic<bool> stage2CallbackDone{false};
+        GGTB::NetLog::Install();
+        GGTB::HwFpSpoof::Install();
+        GGTB::Stage1Trigger::Register(
+            []() { GGTB::PatternResolver::ResolvePatterns(); });
+        GGTB::Stage1Trigger::Register([stage2Ready, &stage2CallbackDone]() {
+            BOOL  signaled    = SetEvent(stage2Ready);
+            DWORD signalError = signaled ? ERROR_SUCCESS : GetLastError();
+            stage2CallbackDone.store(true, std::memory_order_release);
+            if (!signaled)
+                spdlog::error("GGTB: failed to signal stage-2 completion: {}", signalError);
+        });
 
-    // Arm the shared DeleteFileA("error.txt") shim BEFORE any stage-2 module
-    // subscribes. Every module that needs to attach after the Winlicense
-    // unpacker finishes (NetLog, HwFpSpoof, ...) registers a callback here;
-    // the first error.txt delete in WinMain fires all of them in order.
-    GGTB::Stage1Trigger::Install();
+        if (GGTB::Stage1Trigger::Install())
+        {
+            for (;;)
+            {
+                DWORD waitResult = WaitForSingleObject(stage2Ready, 5000);
+                if (waitResult == WAIT_OBJECT_0)
+                {
+                    while (!stage2CallbackDone.load(std::memory_order_acquire))
+                        Sleep(0);
+                    nativeUiStage2Stable = true;
+                    break;
+                }
+                if (waitResult == WAIT_TIMEOUT)
+                {
+                    if (stage2CallbackDone.load(std::memory_order_acquire))
+                    {
+                        nativeUiStage2Stable = true;
+                        break;
+                    }
+                    if (GGTB::Stage1Trigger::CancelPending())
+                    {
+                        spdlog::error("GGTB: WinMain stage-2 signal not observed within 5s; "
+                                      "order-sensitive network/HW hooks disabled");
+                        // Five seconds is well past the observed unpack point;
+                        // resolve other modules, but never attach these hooks late.
+                        GGTB::PatternResolver::ResolvePatterns();
+                        nativeUiStage2Stable = true;
+                        break;
+                    }
+                    spdlog::warn("GGTB: WinMain stage-2 fired; waiting for callbacks to finish");
+                }
+                else
+                {
+                    DWORD waitError = GetLastError();
+                    if (GGTB::Stage1Trigger::CancelPending())
+                    {
+                        spdlog::error("GGTB: stage-2 wait failed before firing: {}; "
+                                      "order-sensitive hooks disabled", waitError);
+                        GGTB::PatternResolver::ResolvePatterns(false);
+                        break;
+                    }
+                    spdlog::error("GGTB: stage-2 wait failed after firing: {}; "
+                                  "waiting for callback completion", waitError);
+                    while (!stage2CallbackDone.load(std::memory_order_acquire))
+                        Sleep(1);
+                    nativeUiStage2Stable = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // Keep non-stage-2 modules usable when the sentinel detour itself
+            // cannot be installed. Network/HW hooks stay queued and inactive.
+            if (GGTB::Stage1Trigger::CancelPending())
+                GGTB::PatternResolver::ResolvePatterns(false);
+            else
+            {
+                // Defensive only: Install() cannot normally fail after firing,
+                // but never release callback-owned stack resources if it does.
+                while (!stage2CallbackDone.load(std::memory_order_acquire))
+                    Sleep(1);
+                nativeUiStage2Stable = true;
+            }
+        }
+        CloseHandle(stage2Ready);
+    }
+    else
+    {
+        spdlog::error("GGTB: CreateEvent for stage-2 coordination failed: {}",
+                      GetLastError());
+        // Without a completion barrier we cannot safely own callback lifetime.
+        // Keep fallback addresses, but do not arm or attach order-sensitive hooks.
+        GGTB::PatternResolver::ResolvePatterns(false);
+    }
 
-    // Net plaintext logger — depends on PatternResolver. Log files are opened
-    // lazily the first time UserConfig::IsReady() flips true (after the user
-    // selects a character), so pre-login auth traffic stays out of the per-
-    // character log.
-    GGTB::NetLog::Install();
-
-    // Hardware-fingerprint spoof — also stage-2 (shares the Stage1Trigger
-    // shim with NetLog) because sub_BCCBF0 lives inside Winlicense-packed
-    // .text that isn't resolved until WinMain runs. Seeded from <dll-dir>/
-    // GGConfig/_bootstrap/hwfp_seed.bin so the fake identity is stable across
-    // launches.
-    GGTB::HwFpSpoof::Install();
+    // The broker IO thread must never invoke NPC UI callbacks directly. These
+    // two hooks rendezvous one-shot requests with the real CSO3D::GameLoop and
+    // preserve the native dialog-update return/pending contract.
+    if (!nativeUiStage2Stable)
+        spdlog::error("GGTB: native NPC UI bridge not installed because stage-2 was not stable");
+    else if (!GGTB::InstallNativeUiBridge())
+        spdlog::error("GGTB: native NPC UI bridge unavailable; dungeon entry UI automation disabled");
 
     // Silent-disconnect watchdog — arms on first game-port recv (1842/1843),
     // then force-closes the process if both ports go quiet for 5 minutes.
     // Depends on NetLog's recv hook being live to feed OnRecv().
     GGTB::DisconnectWatchdog::Install();
     GGTB::LoginBridge::Install();
+
+    // Long-running wash orchestration lives in the broker. These handlers only
+    // expose one bounded query/send/wait step and are registered before the pipe
+    // connects so the broker cannot race an unknown-action window.
+    GGTB::EnchantStoneControl::RegisterHandlers();
+    GGTB::DailyTaskControl::RegisterHandlers();
 
     // Web 远控通道:HackThread 起 IO 线程主动连 \\.\pipe\GGTB_BROKER。Install 之
     // 前先把 sendMoneyMail handler 注册好,避免 broker 已经把 connect 后立刻派
@@ -592,6 +838,44 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                 });
             }
             return {true, arr.dump()};
+        });
+
+    // 列出背包里所有"可合成"的技能宝石,按等级键(gradeKey)分组。每组给出 gradeKey、
+    // 样本 itemId/名字、总件数,以及每"件"的 wire 槽(slotIndex+13)。broker 据此挑 3 个
+    // 同组宝石凑一次合成。返回 JSON 数组。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "listComposeGems",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            auto groups = GGTB::ListComposeGemGroups();
+            nlohmann::json arr = nlohmann::json::array();
+            for (auto &g : groups)
+            {
+                arr.push_back({
+                    {"gradeKey",     g.gradeKey},
+                    {"sampleItemId", g.sampleItemId},
+                    {"sampleName",   g.sampleName},
+                    {"totalCount",   g.totalCount},
+                    {"wireSlots",    g.wireSlots}, // 每件一个 slotIndex+13
+                });
+            }
+            return {true, arr.dump()};
+        });
+
+    // 发一次三合一:args = { slots: [a, b, c] },三个背包 arrayIndex(0..191)。可全相同
+    // (同堆叠)或同等级不同 itemId。只发包,不等回包/不校验数量 —— broker 在两次合成
+    // 之间重读 listComposeGems 确认件数下降。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "composeGems",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            if (!args.contains("slots") || !args["slots"].is_array() ||
+                args["slots"].size() != 3)
+                return {false, "args.slots must be an array of 3 slot indices"};
+            uint32_t s0 = args["slots"][0].get<uint32_t>();
+            uint32_t s1 = args["slots"][1].get<uint32_t>();
+            uint32_t s2 = args["slots"][2].get<uint32_t>();
+            std::string err;
+            bool ok = GGTB::ComposeSendRaw(s0, s1, s2, &err);
+            return {ok, ok ? std::string{} : err};
         });
 
     GGTB::RemoteControl::RegisterCommandHandler(
@@ -765,6 +1049,357 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                 return {false, "missing slotIndex"};
             bool ok = GGTB::UseCashItem(slot);
             return {ok, ok ? "sent" : "failed"};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "openNpcDialogFromWheel",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult
+        {
+            uint32_t npcId = 0;
+            if (!ReadStrictJsonU32(args, "npcId", &npcId) || npcId == 0)
+                return {false, "npcId must be a uint32 value greater than zero"};
+
+            auto result = GGTB::OpenNpcDialogFromInteractionWheel(npcId);
+            nlohmann::json detail = {
+                {"ok", result.ok},
+                {"retryable", result.retryable},
+                {"callbackInvoked", result.callbackInvoked},
+                {"alreadyOpen", result.alreadyOpen},
+                {"foregroundUiId", result.foregroundUiId},
+                {"npcId", result.npcId},
+                {"error", result.error},
+            };
+            return {result.ok, detail.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "advanceDialogTowardOpt",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult
+        {
+            uint32_t npcId = 0;
+            uint32_t targetOpt = 0;
+            bool allowAdvance = true;
+            if (!ReadStrictJsonU32(args, "npcId", &npcId) || npcId == 0 ||
+                !ReadStrictJsonU32(args, "targetOpt", &targetOpt) || targetOpt == 0 ||
+                !ReadStrictJsonBool(args, "allowAdvance", true, &allowAdvance))
+                return {false, "npcId/targetOpt must be uint32 values greater than zero"};
+
+            auto result = GGTB::AdvanceDialogTowardOpt(npcId, targetOpt, allowAdvance);
+            nlohmann::json detail = {
+                {"ok", result.ok},
+                {"retryable", result.retryable},
+                {"found", result.found},
+                {"advanced", result.advanced},
+                {"optionIndex", result.optionIndex},
+                {"warpKey", result.warpKey},
+                {"warpTableId", result.warpTableId},
+                {"error", result.error},
+            };
+            return {result.ok, detail.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "prepareDungeonEntry",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult
+        {
+            std::string requestToken;
+            uint32_t npcId = 0;
+            uint32_t opt = 0;
+            uint32_t sub = 0;
+            uint32_t dialogOptionIndex = 0;
+            uint32_t expectedWarpTableId = 0;
+            uint32_t ttlMs = 0;
+            bool autoUseExtraTicket = false;
+            if (!ReadStrictDungeonEntryToken(args, &requestToken) ||
+                !ReadStrictJsonU32(args, "npcId", &npcId) || npcId == 0 ||
+                !ReadStrictJsonU32(args, "opt", &opt) || opt != kDungeonEntryTargetOpt ||
+                !ReadStrictJsonU32(args, "sub", &sub) || sub != 1 ||
+                !ReadStrictJsonU32(args, "dialogOptionIndex", &dialogOptionIndex) ||
+                !ReadStrictJsonU32(args, "expectedWarpTableId", &expectedWarpTableId) ||
+                expectedWarpTableId != kDungeonEntryExpectedWarpTableId ||
+                !ReadStrictJsonU32(args, "ttlMs", &ttlMs) || ttlMs < 5000 || ttlMs > 120000 ||
+                !ReadStrictJsonBool(args, "autoUseExtraTicket", false, &autoUseExtraTicket))
+                return {false, "invalid targeted dungeon entry prepare arguments"};
+
+            if (!GGTB::AutoConfirmDetail::EnsureHooksInstalled())
+                return {false, "targeted confirm hooks unavailable"};
+
+            auto dialog = GGTB::GetDialogSnapshot();
+            auto selectedOption = std::find_if(
+                dialog.options.begin(), dialog.options.end(),
+                [dialogOptionIndex](const GGTB::DialogOption &entry) {
+                    return entry.index == dialogOptionIndex;
+                });
+            if (!dialog.open || dialog.npcInteractId != npcId ||
+                selectedOption == dialog.options.end() || selectedOption->opt != opt ||
+                selectedOption->warpKey == 0 ||
+                selectedOption->warpTableId != expectedWarpTableId)
+                return {false, "native NPC dialog target/warp context no longer matches"};
+
+            GGTB::AutoConfirmDetail::DungeonEntryPreparedContext context{
+                requestToken, npcId, opt, sub, dialogOptionIndex, expectedWarpTableId,
+                autoUseExtraTicket, static_cast<DWORD>(ttlMs)};
+            bool idempotent = false;
+            DWORD prepareTtlMs = static_cast<DWORD>(std::min<uint32_t>(ttlMs, 15000));
+            if (!GGTB::AutoConfirmDetail::PrepareDungeonEntryTransaction(
+                    context, prepareTtlMs, &idempotent))
+            {
+                nlohmann::json detail = {
+                    {"error", "another dungeon entry transaction is active or token conflicts"},
+                    {"requestToken", GGTB::AutoConfirmDetail::GetDungeonEntryRequestToken()},
+                    {"transactionState",
+                     GGTB::AutoConfirmDetail::DungeonEntryTransactionStateName(
+                         GGTB::AutoConfirmDetail::GetDungeonEntryTransactionState())},
+                };
+                return {false, detail.dump()};
+            }
+
+            nlohmann::json detail = {
+                {"requestToken", requestToken},
+                {"transactionState", "Prepared"},
+                {"idempotent", idempotent},
+                {"dialogOptionIndex", dialogOptionIndex},
+                {"warpKey", selectedOption->warpKey},
+                {"warpTableId", selectedOption->warpTableId},
+            };
+            return {true, detail.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "commitDungeonEntry",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult
+        {
+            std::string requestToken;
+            if (!ReadStrictDungeonEntryToken(args, &requestToken))
+                return {false, "invalid requestToken"};
+
+            GGTB::AutoConfirmDetail::DungeonEntryPreparedContext context{};
+            if (!GGTB::AutoConfirmDetail::GetDungeonEntryPreparedContext(requestToken, &context))
+                return {false, "dungeon entry transaction is not Prepared"};
+
+            auto dialog = GGTB::GetDialogSnapshot();
+            auto selectedOption = std::find_if(
+                dialog.options.begin(), dialog.options.end(),
+                [&context](const GGTB::DialogOption &entry) {
+                    return entry.index == context.dialogOptionIndex;
+                });
+            if (!dialog.open || dialog.npcInteractId != context.npcId ||
+                selectedOption == dialog.options.end() || selectedOption->opt != context.opt ||
+                selectedOption->warpKey == 0 ||
+                selectedOption->warpTableId != context.expectedWarpTableId)
+                return {false, "native NPC dialog changed before commit"};
+
+            GGTB::AutoConfirmDetail::DungeonEntryTicketBaseline
+                ticketSlots[GGTB::AutoConfirmDetail::kDungeonEntryTicketSlotCapacity]{};
+            size_t ticketSlotCount = 0;
+            uint32_t ticketCount = SnapshotDungeonEntryTickets(ticketSlots, &ticketSlotCount);
+            uint64_t baselineSequence = GGTB::NetLog::GetDungeonEntryLatestSequence();
+            uint64_t generation = 0;
+            GGTB::AutoConfirmDetail::DungeonEntryPreparedContext committedContext{};
+            if (!GGTB::AutoConfirmDetail::BeginDungeonEntryCommit(
+                    requestToken, baselineSequence, ticketCount, ticketSlots, ticketSlotCount,
+                    &generation, &committedContext))
+                return {false, "dungeon entry commit was already issued or cancelled"};
+
+            if (!GGTB::AutoConfirmDetail::ClaimDungeonEntryInitialSelect(requestToken, generation))
+            {
+                bool ignored = false;
+                GGTB::AutoConfirmDetail::CancelDungeonEntryConfirmByToken(requestToken, &ignored);
+                return {false, "dungeon entry initial select claim failed"};
+            }
+
+            bool selected = GGTB::SelectDialogOptionChecked(
+                committedContext.npcId, committedContext.opt,
+                committedContext.dialogOptionIndex, committedContext.expectedWarpTableId);
+            bool transactionCompleted =
+                GGTB::AutoConfirmDetail::CompleteDungeonEntryInitialSelect(
+                requestToken, generation, selected);
+            if (!selected || !transactionCompleted)
+            {
+                nlohmann::json detail = {
+                    {"requestToken", requestToken},
+                    {"generation", generation},
+                    {"transactionState",
+                     GGTB::AutoConfirmDetail::DungeonEntryTransactionStateName(
+                         GGTB::AutoConfirmDetail::GetDungeonEntryTransactionState())},
+                    {"error", selected
+                                  ? "native select completed after transaction cancellation; it will not be retried"
+                                  : "checked native dialog select failed; it will not be retried"},
+                };
+                return {false, detail.dump()};
+            }
+
+            nlohmann::json detail = {
+                {"requestToken", requestToken},
+                {"generation", generation},
+                {"baselineSeq", baselineSequence},
+                {"ticketCount", ticketCount},
+                {"autoUseExtraTicket", committedContext.autoUseExtraTicket},
+                {"dialogOptionIndex", committedContext.dialogOptionIndex},
+                {"expectedWarpTableId", committedContext.expectedWarpTableId},
+                {"transactionState", "Committed"},
+                {"state", GGTB::AutoConfirmDetail::DungeonEntryConfirmStateName(
+                              GGTB::AutoConfirmDetail::GetDungeonEntryConfirmState())},
+            };
+            return {true, detail.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "queryDungeonEntry",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult
+        {
+            GGTB::AutoConfirmDetail::DungeonEntryConfirmSnapshot snapshot{};
+            std::string requestToken;
+            uint64_t generation = 0;
+            bool found = false;
+            if (args.contains("requestToken"))
+            {
+                if (!ReadStrictDungeonEntryToken(args, &requestToken))
+                    return {false, "invalid requestToken"};
+                found = GGTB::AutoConfirmDetail::GetDungeonEntryConfirmSnapshotByToken(
+                    requestToken, &snapshot);
+            }
+            else
+            {
+                if (!args.contains("generation") || !args["generation"].is_number_unsigned())
+                    return {false, "missing requestToken/generation"};
+                generation = args["generation"].get<uint64_t>();
+                found = GGTB::AutoConfirmDetail::GetDungeonEntryConfirmSnapshot(
+                    generation, &snapshot);
+            }
+            if (!found)
+            {
+                nlohmann::json detail = {
+                    {"error", "dungeon entry request token/generation mismatch"},
+                    {"requestToken", requestToken},
+                    {"generation", generation},
+                    {"currentRequestToken",
+                     GGTB::AutoConfirmDetail::GetDungeonEntryRequestToken()},
+                    {"currentGeneration",
+                     GGTB::AutoConfirmDetail::GetDungeonEntryConfirmGeneration()},
+                    {"transactionState",
+                     GGTB::AutoConfirmDetail::DungeonEntryTransactionStateName(
+                         GGTB::AutoConfirmDetail::GetDungeonEntryTransactionState())},
+                };
+                return {false, detail.dump()};
+            }
+
+            uint64_t afterSequence = args.contains("afterSeq") ? args.value("afterSeq", uint64_t{0})
+                                                               : snapshot.baselineSequence;
+            std::vector<GGTB::NetLog::DungeonEntryEvent> events;
+            bool truncated = false;
+            uint64_t latestSequence =
+                GGTB::NetLog::QueryDungeonEntryEvents(afterSequence, events, &truncated);
+
+            // ACK evaluation always starts at this generation's immutable
+            // baseline, independent of the caller's pagination cursor.
+            std::vector<GGTB::NetLog::DungeonEntryEvent> ackEvents;
+            GGTB::NetLog::QueryDungeonEntryEvents(snapshot.baselineSequence, ackEvents, nullptr);
+            bool ticketAck = false;
+            uint64_t ticketAckSequence = 0;
+            for (const auto &event : ackEvents)
+            {
+                if (IsStrictDungeonTicketAck(event, snapshot))
+                {
+                    ticketAck = true;
+                    ticketAckSequence = event.sequence;
+                    break;
+                }
+            }
+
+            nlohmann::json eventArray = nlohmann::json::array();
+            for (const auto &event : events) eventArray.push_back(DungeonEntryEventToJson(event));
+
+            uint32_t currentTicketCount = SnapshotDungeonEntryTickets(nullptr, nullptr);
+            nlohmann::json detail = {
+                {"requestToken", snapshot.requestToken},
+                {"transactionState",
+                 GGTB::AutoConfirmDetail::DungeonEntryTransactionStateName(
+                     snapshot.transactionState)},
+                {"initialSelectClaimed", snapshot.initialSelectClaimed},
+                {"generation", snapshot.generation},
+                {"state", GGTB::AutoConfirmDetail::DungeonEntryConfirmStateName(snapshot.state)},
+                {"confirmState",
+                 GGTB::AutoConfirmDetail::DungeonEntryConfirmStateName(snapshot.state)},
+                {"autoUseExtraTicket", snapshot.autoUseExtraTicket},
+                {"autoUse", snapshot.autoUseExtraTicket},
+                {"baselineSeq", snapshot.baselineSequence},
+                {"baselineDialogSelectSeq", snapshot.baselineDialogSelectSequence},
+                {"latestSeq", latestSequence},
+                {"truncated", truncated},
+                {"ticketCount", snapshot.baselineTicketCount},
+                {"currentTicketCount", currentTicketCount},
+                {"remainingMs", snapshot.remainingMs},
+                {"dialogSeenCount", snapshot.dialogSeenCount},
+                {"lastDialogType", snapshot.lastDialogType},
+                {"lastDialogMatch",
+                 GGTB::AutoConfirmDetail::DungeonEntryDialogMatchKindName(
+                     snapshot.lastDialogMatch)},
+                {"lastDialogAuthorized", snapshot.lastDialogAuthorized},
+                {"towerPromptAccepted", snapshot.towerPromptAccepted},
+                {"ticketAck", ticketAck},
+                {"ticketAckSeq", ticketAckSequence},
+                {"events", std::move(eventArray)},
+            };
+            return {true, detail.dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "cancelDungeonEntry",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult
+        {
+            std::string requestToken;
+            uint64_t generation = 0;
+            bool cancelled = false;
+            bool matched = false;
+            if (args.contains("requestToken"))
+            {
+                if (!ReadStrictDungeonEntryToken(args, &requestToken))
+                    return {false, "invalid requestToken"};
+                matched = GGTB::AutoConfirmDetail::CancelDungeonEntryConfirmByToken(
+                    requestToken, &cancelled);
+            }
+            else
+            {
+                if (!args.contains("generation") || !args["generation"].is_number_unsigned())
+                    return {false, "missing requestToken/generation"};
+                generation = args["generation"].get<uint64_t>();
+                matched = GGTB::AutoConfirmDetail::CancelDungeonEntryConfirm(
+                    generation, &cancelled);
+            }
+            if (!matched)
+            {
+                nlohmann::json detail = {
+                    {"error", "dungeon entry request token/generation mismatch"},
+                    {"requestToken", requestToken},
+                    {"generation", generation},
+                    {"currentRequestToken",
+                     GGTB::AutoConfirmDetail::GetDungeonEntryRequestToken()},
+                    {"currentGeneration",
+                     GGTB::AutoConfirmDetail::GetDungeonEntryConfirmGeneration()},
+                    {"transactionState",
+                     GGTB::AutoConfirmDetail::DungeonEntryTransactionStateName(
+                         GGTB::AutoConfirmDetail::GetDungeonEntryTransactionState())},
+                };
+                return {false, detail.dump()};
+            }
+
+            GGTB::AutoConfirmDetail::DungeonEntryConfirmSnapshot snapshot{};
+            if (!requestToken.empty())
+                GGTB::AutoConfirmDetail::GetDungeonEntryConfirmSnapshotByToken(
+                    requestToken, &snapshot);
+            else
+                GGTB::AutoConfirmDetail::GetDungeonEntryConfirmSnapshot(generation, &snapshot);
+            nlohmann::json detail = {
+                {"requestToken", snapshot.requestToken},
+                {"generation", snapshot.generation},
+                {"transactionState",
+                 GGTB::AutoConfirmDetail::DungeonEntryTransactionStateName(
+                     snapshot.transactionState)},
+                {"state", GGTB::AutoConfirmDetail::DungeonEntryConfirmStateName(snapshot.state)},
+                {"cancelled", cancelled},
+            };
+            return {true, detail.dump()};
         });
 
     // ---------- 发条 (Magic Spring) 自动洗 ----------
@@ -1111,19 +1746,21 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             return {true, detail.dump()};
         });
 
-    // moveTo: 让角色走到世界坐标 (x, y)。走的是引擎自己的 CLocalUser::SetAfterAction
-    // 路径（跟点地走 UI 一模一样），所以一切寻路、避障、地形高度都是引擎自己算的,
-    // 这层不掺和。action=1 是「纯走路」,action=3 是「走过去再打目标」, 配合 targetId
-    // 使用。MoveTo 内部 SEH 包过,失败返回 {ok:false}.
+    // moveTo: 让角色走到世界坐标 (x, y)。单次 call 引擎的 CLocalUser::SetAfterAction
+    // (跟点地走 UI 一模一样)。注意:引擎只把目标存一份,TraceMove 朝它直线逐 tile
+    // 推进,撞到第一个阻挡 tile 就停,「不绕障」—— 所以这条只适合「近处、直线无遮挡」
+    // 的一跳。要走远 / 可能有障碍,用下面的 pathTo(DLL 内 worker 分段寻路)。
+    // action=1 是「纯走路」,action=3 是「走过去再打目标」, 配合 targetId 使用。
+    // MoveTo 内部 SEH 包过,失败返回 {ok:false}.
     //
     // args:
     //   {"x": 123.4, "y": 567.8}                 — 走到 (x, y)
     //   {"x": ..., "y": ..., "action": 3, "targetId": 42}  — 走过去再打 id=42
     //
     // 注意:SetAfterAction 内部有 m_bCanMove / stunTime / 动画锁 等 reject 闸,
-    // 在战斗/施法中可能拒绝。打开 ActionMoveModule 后 0x7539FE 处的 5 字节补丁
-    // 会把所有 reject 闸跳过去 —— 那时候任何状态都能走。是否打补丁由用户在
-    // 「攻击/技能时移动」开关里决定,这里不强制。
+    // 在战斗/施法中可能拒绝。普攻态(370C==0)走 0x753A80 闸,技能态(370C∈{3,5,8})
+    // 走 0x753A54 闸 —— 分别由「普攻移动」「技能移动」开关旁路。两个都开才能在任何
+    // 动作态下走;是否打补丁由用户在开关里决定,这里不强制。
     GGTB::RemoteControl::RegisterCommandHandler(
         "moveTo",
         [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
@@ -1136,7 +1773,65 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             if (action != 1 && action != 3)
                 return {false, "action must be 1 (walk) or 3 (walk+attack)"};
             bool ok = GGTB::MoveTo(x, y, action, targetId);
-            return {ok, ok ? std::string{} : std::string{"engine rejected (try enable ActionMove)"}};
+            return {ok, ok ? std::string{} : std::string{"engine rejected (try enable AttackMove/SkillMove)"}};
+        });
+
+    // pathTo: 远距离寻路走到 (x, y)。和 moveTo 的区别 —— moveTo 只 call 一次
+    // SetAfterAction,引擎朝目标直线推进,撞到第一个阻挡 tile 就停(TraceMove 无绕
+    // 障),所以远目标常常走两步就不动。pathTo 在 DLL 内起一条 worker 线程,自己在
+    // 碰撞表上跑网格 A* 算出绕障路径,string-pull 平滑后逐拐点 MoveTo,卡住就 replan。
+    // 凸障碍、U 型凹墙都能绕,只有真不可达/超出搜索框预算才放弃。
+    //
+    // args: {"x":.., "y":.., "action":1|3(可选), "targetId":..(可选,action=3 用)}
+    // 立即返回 {ok:true} 表示「已接受并开始走」(不阻塞);用 pathStatus 轮询进度,
+    // stopPath 取消。ok:false 仅当 g_pLocalUser 未就绪 / 起点不可走。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "pathTo",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            if (!args.contains("x") || !args.contains("y"))
+                return {false, "missing x/y"};
+            float    x        = args.value("x", 0.0f);
+            float    y        = args.value("y", 0.0f);
+            int      action   = args.value("action", 1);
+            uint32_t targetId = args.value("targetId", uint32_t{0});
+            if (action != 1 && action != 3)
+                return {false, "action must be 1 (walk) or 3 (walk+attack)"};
+            bool ok = GGTB::StartPathTo(x, y, action, targetId);
+            return {ok, ok ? std::string{} : std::string{"not ready (no local player / start tile blocked)"}};
+        });
+
+    // stopPath: 取消当前 pathTo 寻路。幂等。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "stopPath",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            GGTB::StopPath();
+            return {true, std::string{}};
+        });
+
+    // pathStatus: 读 pathTo 寻路进度。前端轮询用。
+    // 返回 {"state":"idle|walking|arrived|failed", "x":当前X,"y":当前Y,
+    //       "targetX":..,"targetY":..,"segments":已走段数,"error":失败原因}
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "pathStatus",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            auto pr = GGTB::GetPathProgress();
+            const char *st = "idle";
+            switch (pr.state)
+            {
+            case GGTB::PathState::Walking: st = "walking"; break;
+            case GGTB::PathState::Arrived: st = "arrived"; break;
+            case GGTB::PathState::Failed:  st = "failed";  break;
+            case GGTB::PathState::Idle:    st = "idle";    break;
+            }
+            nlohmann::json j;
+            j["state"]    = st;
+            j["x"]        = pr.curX;
+            j["y"]        = pr.curY;
+            j["targetX"]  = pr.targetX;
+            j["targetY"]  = pr.targetY;
+            j["segments"] = pr.segments;
+            j["error"]    = pr.error;
+            return {true, j.dump()};
         });
 
     // 配套的位置读取 —— 前端「读取当前位置」按钮用。也方便测试 MoveTo 是否成功
@@ -1152,6 +1847,22 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             j["y"] = y;
             j["z"] = z;
             return {true, j.dump()};
+        });
+
+    // warpTo: 直接传送到地图格坐标 (x, y) —— 发 CG 411597,复刻引擎街摊「传送到摊主」
+    // 的发包(见 GGTB::WarpToCoordinate)。和 moveTo/pathTo 不同,这是瞬移不走路。
+    // x/y 是整数地图格坐标;前端「填当前」走 getLocalPosition 取浮点再 round,所以这里
+    // 收到的可能是带小数的数,统一 lround 成整数格再发。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "warpTo",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            if (!args.contains("x") || !args.contains("y"))
+                return {false, "missing x/y"};
+            int  x  = static_cast<int>(std::lround(args.value("x", 0.0)));
+            int  y  = static_cast<int>(std::lround(args.value("y", 0.0)));
+            bool ok = GGTB::WarpToCoordinate(x, y);
+            nlohmann::json j{{"x", x}, {"y", y}};
+            return {ok, ok ? j.dump() : std::string{"warp send failed (no local player / pattern unresolved)"}};
         });
 
     // setStationaryFarm: broker 自动复活页面「推送坐标到游戏」用。把定点挂机的锁定
@@ -1219,20 +1930,38 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             return {true, j.dump()};
         });
 
-    // talkOrAttack: 「点 NPC / 怪物」统一入口 —— DLL 内部读 monsterTblId 调
-    // 引擎自己的 Npc__LoadDialogScript 判断:
-    //   有对话脚本(NPC) -> 走过去 (action=1) 然后开 dialog UI (本地调用,不发包)
-    //   没对话脚本(怪) -> 复刻 OnTargetCreatureClick_TalkOrAttack:
-    //                     g_TargetCreatureId=id, intent=3, SetAfterAction(action=3) 走过去开打
-    // 跟手动鼠标点 creature 一样的行为,前端单按钮就行。
+    // talkOrAttack: mirror the real world-click dispatcher. Queue action=5 for
+    // an NPC or action=3 for a monster; the game loop opens the dialog or starts
+    // combat on its own thread after reaching interaction range.
     GGTB::RemoteControl::RegisterCommandHandler(
         "talkOrAttack",
         [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
             uint32_t creatureId = args.value("creatureId", uint32_t{0});
             if (creatureId == 0)
                 return {false, "missing creatureId"};
-            bool ok = GGTB::TalkOrAttack(creatureId);
-            return {ok, ok ? std::string{} : std::string{"engine rejected or creature not found"}};
+            std::string error;
+            bool ok = GGTB::TalkOrAttackOnGameThread(creatureId, &error);
+            return {ok, ok ? std::string{} : error};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "selectMonsterForAttack",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t creatureId = args.value("creatureId", uint32_t{0});
+            if (creatureId == 0)
+                return {false, "missing creatureId"};
+            GGTB::MonsterTargetSelectionResult selection;
+            std::string error;
+            if (!GGTB::SelectMonsterForAttack(creatureId, selection, &error))
+                return {false, error};
+            nlohmann::json detail{
+                {"creatureId", selection.creatureId},
+                {"creatureType", selection.creatureType},
+                {"hp", selection.hp},
+                {"targetSelected", selection.targetSelected},
+                {"attackQueued", selection.attackQueued},
+            };
+            return {true, detail.dump()};
         });
 
     // 兼容老 talkToNpc handler -> 内部转发到 talkOrAttack。
@@ -1242,12 +1971,13 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             uint32_t npcId = args.value("npcId", uint32_t{0});
             if (npcId == 0)
                 return {false, "missing npcId"};
-            bool ok = GGTB::TalkOrAttack(npcId);
-            return {ok, ok ? std::string{} : std::string{"engine rejected or creature not found"}};
+            std::string error;
+            bool ok = GGTB::TalkOrAttackOnGameThread(npcId, &error);
+            return {ok, ok ? std::string{} : error};
         });
 
-    // 列出附近所有 NPC + 怪物。每条带 hasDialog 字段(由引擎 Npc__LoadDialogScript
-    // 判定),前端用这个分类显示而不是 monsterTblId 区段猜测。
+    // 列出附近所有 NPC + 怪物。attackable 保留现有攻击流程语义；
+    // buffGateMonster 是独立的普通敌怪判定,只供 buff keeper 闸门使用。
     GGTB::RemoteControl::RegisterCommandHandler(
         "getNearbyNpcs",
         [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
@@ -1260,15 +1990,17 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                     {"id",           n.creatureId},
                     {"kind",         n.kind},
                     {"monsterTblId", n.monsterTblId},
-                    {"hasDialog",    n.hasDialog},
+                    {"isNpc",        n.isNpc},       // type==3 —— 对话 vs 攻击
+                    {"attackable",   n.attackable},  // legacy attack-selection verdict
+                    {"buffGateMonster", n.buffGateMonster}, // conservative ordinary enemy
                     {"level",        n.level},
                     {"distance",     n.distance},
                     {"x",            n.x},
                     {"y",            n.y},
                     {"z",            n.z},
                     {"hp",           n.hp},
+                    {"maxHp",        n.maxHp},
                     {"name",         n.name},
-                    {"isNpc",        n.hasDialog},  // 兼容老前端字段 — 现在就是 hasDialog 别名
                 });
             }
             return {true, arr.dump()};
@@ -1332,7 +2064,9 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
                     {"index", o.index},
                     {"text",  o.text},
                     {"tag",   o.tag},
-                    {"opt",   o.opt},  // *(*(option+396)+12)+332 = 真正发给服务器的 opt 值
+                    {"opt",   o.opt},
+                    {"warpKey", o.warpKey},
+                    {"warpTableId", o.warpTableId},
                 });
             }
             j["options"] = opts;
@@ -1346,6 +2080,12 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
         "selectDialogOption",
         [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
             uint32_t option = args.value("option", uint32_t{0});
+            auto dialog = GGTB::GetDialogSnapshot();
+            auto selected = std::find_if(
+                dialog.options.begin(), dialog.options.end(),
+                [option](const GGTB::DialogOption &entry) { return entry.index == option; });
+            if (selected != dialog.options.end() && selected->opt == kDungeonEntryTargetOpt)
+                return {false, "opt=9575 is reserved for the targeted dungeon entry command"};
             bool ok = GGTB::SelectDialogOption(option);
             return {ok, ok ? std::string{} : std::string{"no dialog open or send failed"}};
         });
@@ -1354,6 +2094,9 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     GGTB::RemoteControl::RegisterCommandHandler(
         "confirmDialog",
         [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            auto dialog = GGTB::GetDialogSnapshot();
+            if (!dialog.options.empty() && dialog.options.front().opt == kDungeonEntryTargetOpt)
+                return {false, "opt=9575 is reserved for the targeted dungeon entry command"};
             bool ok = GGTB::ConfirmDialog();
             return {ok, ok ? std::string{} : std::string{"not in confirm mode"}};
         });
@@ -1371,10 +2114,17 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
         "getStatus",
         [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
             nlohmann::json j;
-            j["hp"]     = GGTB::GetLocalHp();
-            j["isDead"] = GGTB::IsLocalDead();
+            int64_t hp = 0;
+            const bool hpKnown = GGTB::TryGetLocalHp(hp);
+            const uint32_t userId = GGTB::GetLocalUserId();
+            j["hp"]          = hpKnown ? hp : int64_t{-1};
+            j["hpKnown"]     = hpKnown;
+            j["playerReady"] = hpKnown && userId != 0;
+            j["isDead"]      = hpKnown && hp == 0;
+            j["clientClosing"] = GGTB::DisconnectWatchdog::IsDisconnectCloseTriggered();
+            j["worldRecvIdleMs"] = GGTB::DisconnectWatchdog::GetWorldRecvIdleMs();
             j["mapId"]  = GGTB::GetCurrentMapId();
-            j["userId"] = GGTB::GetLocalUserId();
+            j["userId"] = userId;
             // 坐标:broker 端「位置卡住自动复活」要靠它判定 X 分钟没移动。
             // GetLocalPosition 内部处理空指针,解析不出来就保持 0。
             float px = 0, py = 0, pz = 0;
@@ -1418,6 +2168,8 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             uint32_t sub   = args.value("sub",    uint32_t{1});
             if (npcId == 0)
                 return {false, "npcId required (>0)"};
+            if (opt == kDungeonEntryTargetOpt)
+                return {false, "raw opt=9575 is reserved for the targeted dungeon entry command"};
             bool ok = GGTB::SendDialogSelect(npcId, opt, sub);
             return {ok, ok ? std::string{} : std::string{"pattern unresolved or SEH"}};
         });
@@ -1644,6 +2396,200 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             return {true, GGTB::AutoTradeController::Instance().GetStatus().dump()};
         });
 
+    // 自动拾取过滤: 配置全由 broker 下发,所有角色共用一份(mode + itemId 白名单)。
+    // AutoPickupModule 的 worker 每轮发拾取包前查 PickupFilter::ShouldPick。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "setPickupFilter",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            GGTB::PickupFilter::Instance().SetConfig(args);
+            return {true, GGTB::PickupFilter::Instance().GetStatus().dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getPickupFilterStatus",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            return {true, GGTB::PickupFilter::Instance().GetStatus().dump()};
+        });
+
+    // 工作流拾取只读快照: 不直接发拾取包，只暴露当前 AOI 掉落坐标以及与
+    // AutoPickup 完全相同的 live 过滤结果。maxDistance<=0 表示当前可见 AOI 全部。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getNearbyDropItems",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            float maxDist          = args.value("maxDistance", 0.0f);
+            bool includeUnpickable = args.value("includeUnpickable", false);
+            bool onlyMatches       = args.value("onlyFilterMatches", false);
+            int  limit             = (std::max)(1, (std::min)(args.value("limit", 512), 2048));
+
+            bool ready = false;
+            auto drops = GGTB::GetNearbyDropItems(maxDist, includeUnpickable, &ready);
+            if (!ready)
+                return {false, "drop container or local position not ready"};
+
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto &drop : drops)
+            {
+                bool filterMatch = GGTB::PickupFilter::Instance().ShouldPick(drop.itemId);
+                if (onlyMatches && !filterMatch)
+                    continue;
+                arr.push_back({
+                    {"dropId",                  drop.dropId},
+                    {"itemId",                  drop.itemId},
+                    {"distance",                drop.distance},
+                    {"x",                       drop.x},
+                    {"y",                       drop.y},
+                    {"z",                       drop.z},
+                    {"canPick",                 drop.canPick},
+                    {"matchesPickupFilter",     filterMatch},
+                });
+                if (static_cast<int>(arr.size()) >= limit)
+                    break;
+            }
+            return {true, arr.dump()};
+        });
+
+    // 精确 dropId 状态。Missing 只来自引擎 LookupDropItemById 的空结果，不能被
+    // 掉落链表中途读取失败伪造成“已拾取”。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getDropItemState",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t dropId = args.value("dropId", uint32_t{0});
+            if (!dropId)
+                return {false, "missing dropId"};
+
+            GGTB::DropItemInfo drop{};
+            auto state = GGTB::QueryDropItemById(dropId, drop);
+            if (state == GGTB::DropItemLookupState::Unavailable)
+                return {false, "exact drop lookup unavailable"};
+
+            nlohmann::json detail{
+                {"dropId", dropId},
+                {"present", state == GGTB::DropItemLookupState::Present},
+            };
+            if (state == GGTB::DropItemLookupState::Present)
+            {
+                detail.update({
+                    {"itemId", drop.itemId},
+                    {"distance", drop.distance},
+                    {"x", drop.x},
+                    {"y", drop.y},
+                    {"z", drop.z},
+                    {"canPick", drop.canPick},
+                    {"matchesPickupFilter",
+                     GGTB::PickupFilter::Instance().ShouldPick(drop.itemId)},
+                });
+            }
+            return {true, detail.dump()};
+        });
+
+    // 游戏原生掉落点击。只在 GameLoop 选择一次 action=4；是否拾取成功由调用方
+    // 继续观察精确 dropId，绝不把 SetAfterAction 的返回值当作入包确认。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "selectDropForPickup",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t dropId = args.value("dropId", uint32_t{0});
+            uint32_t itemId = args.value("expectedItemId", uint32_t{0});
+            uint32_t mapId = args.value("expectedMapId", uint32_t{0});
+            float maxDistance = args.value("maxDistance", 6.0f);
+            if (!dropId || !itemId || !mapId)
+                return {false, "dropId, expectedItemId, and expectedMapId are required"};
+            maxDistance = (std::max)(0.5f, (std::min)(maxDistance, 50.0f));
+
+            auto result = GGTB::SelectDropForPickupOnGameThread(
+                dropId, itemId, mapId, maxDistance);
+            nlohmann::json detail{
+                {"ok", result.ok},
+                {"alreadyGone", result.alreadyGone},
+                {"actionQueued", result.actionQueued},
+                {"executionAmbiguous", result.executionAmbiguous},
+                {"dropId", result.dropId},
+                {"itemId", result.itemId},
+                {"distance", result.distance},
+                {"error", result.error},
+            };
+            return {true, detail.dump()};
+        });
+
+    // 附近玩家停手 (NPG): 开关 + 保持停手时长全由 broker 下发,所有角色共用一份。
+    // 模块在下方 RegisterModule 时才创建,所以 handler 里判空(早期连上可能还没就绪,
+    // 返回 ok=false 让 broker 重推)。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "setNpgConfig",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            auto *npg = g_npgModule.load();
+            if (!npg)
+                return {false, "NPG module not ready"};
+            bool enabled     = args.value("enabled", true);
+            int  holdSeconds = args.value("holdSeconds", 300);
+            npg->ApplyRemoteConfig(enabled, holdSeconds);
+            return {true, npg->RemoteStatus().dump()};
+        });
+
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getNpgConfig",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            auto *npg = g_npgModule.load();
+            if (!npg)
+                return {false, "NPG module not ready"};
+            return {true, npg->RemoteStatus().dump()};
+        });
+
+    // ---------- 组队列表 / 自动组队 (auto-team) ----------
+    // getPartyList: 本角色打开组队列表(本地开窗+发 0x4400/0x4402),抓全所有页返回。
+    //   web「刷新队伍列表」用一个在线角色拉一次,展示创建人/分配/人数。同步在命令线程跑
+    //   (内部 ~秒级轮询等回流),broker 侧给足 timeout。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "getPartyList",
+        [](const nlohmann::json &) -> GGTB::RemoteControl::CmdResult {
+            GGTB::PartyBoardSnapshot snap = GGTB::FetchPartyBoard();
+            nlohmann::json o;
+            o["ok"]      = snap.ok;
+            o["curPage"] = snap.curPage;
+            o["maxPage"] = snap.maxPage;
+            nlohmann::json arr = nlohmann::json::array();
+            for (const auto &e : snap.entries)
+            {
+                nlohmann::json je;
+                je["partyId"]      = e.partyId;
+                je["distribution"] = e.distribution;
+                je["curMembers"]   = e.curMembers;
+                je["maxMembers"]   = e.maxMembers;
+                je["mapId"]        = e.mapId;
+                je["partyName"]    = e.partyName;
+                je["leaderName"]   = e.leaderName;
+                arr.push_back(std::move(je));
+            }
+            o["parties"] = std::move(arr);
+            return {true, o.dump()};
+        });
+
+    // joinPartyByLeader { leaderName }: 抓列表 -> 找创建人(队长)名匹配的队伍 -> 发加入包。
+    //   web「加入」对每个选中角色各下发一次。也支持直接 { partyId } 跳过名字解析。
+    GGTB::RemoteControl::RegisterCommandHandler(
+        "joinPartyByLeader",
+        [](const nlohmann::json &args) -> GGTB::RemoteControl::CmdResult {
+            uint32_t partyId = JsonU32Arg(args, "partyId", 0);
+            if (partyId != 0)
+            {
+                bool ok = GGTB::SendJoinPartyById(partyId);
+                nlohmann::json o;
+                o["ok"]      = ok;
+                o["partyId"] = partyId;
+                return {ok, o.dump()};
+            }
+
+            std::string leaderName = args.value("leaderName", std::string{});
+            uint32_t    joinedId   = 0;
+            std::string err;
+            bool ok = GGTB::JoinPartyByLeaderName(leaderName, &joinedId, &err);
+            nlohmann::json o;
+            o["ok"]         = ok;
+            o["leaderName"] = leaderName;
+            o["partyId"]    = joinedId;
+            o["error"]      = err;
+            return {ok, o.dump()};
+        });
+
     // 会落空。InputInjector::Install 跟 RemoteControl::Install 顺序无强依赖 — 注入
     // 器只 hook user32 API,不依赖 broker / pipe / 引擎符号。
     GGTB::InputInjector::Install();
@@ -1659,8 +2605,16 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     setting->RegisterModule(std::make_shared<GGTB::SpeedHackModule>());
     setting->RegisterModule(std::make_shared<GGTB::ItemNoCDModule>());
     setting->RegisterModule(std::make_shared<GGTB::AttackRangeModule>());
-    setting->RegisterModule(std::make_shared<GGTB::ActionMoveModule>());
+    setting->RegisterModule(std::make_shared<GGTB::AttackMoveModule>());
+    setting->RegisterModule(std::make_shared<GGTB::SkillMoveModule>());
+    setting->RegisterModule(std::make_shared<GGTB::NoShiftAttackModule>());
+    setting->RegisterModule(std::make_shared<GGTB::IgnoreCCModule>());
+    // 点击瞬移 / 穿墙:暂时隐藏并关闭(不注册 = UI 不显示、不加载配置、hook 永不安装)。
+    // 需要时取消下面两行注释即可恢复。
+    // setting->RegisterModule(std::make_shared<GGTB::TeleportModule>());
+    // setting->RegisterModule(std::make_shared<GGTB::WallHackModule>());
     setting->RegisterModule(std::make_shared<GGTB::AutoPickupModule>());
+    setting->RegisterModule(std::make_shared<GGTB::AutoDecomposeGemModule>());
     auto firePowerMod = std::make_shared<GGTB::FireFullPowerModule>();
     setting->RegisterModule(firePowerMod);
     auto multiCastMod = std::make_shared<GGTB::MultiCastModule>();
@@ -1679,25 +2633,43 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     setting->RegisterModule(std::make_shared<GGTB::BlockLevelUpModule>());
     setting->RegisterModule(std::make_shared<GGTB::MultiHitModule>());
     setting->RegisterModule(std::make_shared<GGTB::AutoFleeModule>());
+    // 城镇传送(樂園鎮/獅子城):进「传送」标签页,原右上角常驻按钮已移除。
+    setting->RegisterModule(std::make_shared<GGTB::TeleportTownModule>());
+    setting->RegisterModule(std::make_shared<GGTB::AutoPathModule>());
+    // 定点移动:Ctrl+K 设当前坐标为定点,偏离就自动寻路走回。CanAutoPause=false 不受 NPG 影响。
+    auto fixedMoveMod = std::make_shared<GGTB::FixedPointMoveModule>();
+    setting->RegisterModule(fixedMoveMod);
+    setting->RegisterModule(std::make_shared<GGTB::WarpCoordModule>());
     // Guard registered LAST so it sees every other module via Setting::GetModules().
     // ESP 在 Guard 之后注册,这样 ESP 显示在 NPG 下方,且 CanAutoPause=false 不受 NPG 影响。
     auto espMod = std::make_shared<GGTB::PlayerESPModule>();
-    setting->RegisterModule(std::make_shared<GGTB::NearbyPlayerGuardModule>(setting.get(), espMod.get()));
+    auto npgMod = std::make_shared<GGTB::NearbyPlayerGuardModule>(setting.get(), espMod.get());
+    setting->RegisterModule(npgMod);
+    g_npgModule.store(npgMod.get());
     setting->RegisterModule(espMod);
+
+    // 打开最近摆摊:勾选后 Ctrl+L 打开最近摊位(热键在下方 HackThread 泵里处理)。
+    auto openStallMod = std::make_shared<GGTB::OpenNearbyStallModule>();
+    setting->RegisterModule(openStallMod);
+
+    // 周围怪物列表:只读内存,独占「怪物」标签页。
+    setting->RegisterModule(std::make_shared<GGTB::MonsterListModule>());
 
     try
     {
         zzj::D3D::D3D9Hook::SetupOptions menuOptions{};
         menuOptions.windowClassName = "GGTB.ExternalMenu";
         menuOptions.windowName = "GGThreadBlock";
-        menuOptions.width = 460;
-        menuOptions.height = 430;
+        menuOptions.width = 840;
+        menuOptions.height = 520;
         zzj::D3D::D3D9Hook::Setup(setting, menuOptions);
 
         DWORD lastTickMs = GetTickCount();
         bool  endWasDown = false;
         bool  fireWasDown = false;
         bool  menuWasDown = false;
+        bool  ctrlLWasDown = false;
+        bool  ctrlKWasDown = false;
         const DWORD menuToggleKey = setting->GetToggleMenuKey();
 
         while (true)
@@ -1708,6 +2680,8 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             const bool endDown  = IsKeyDown(VK_END);
             const bool fireDown = IsKeyDown('N');
             const bool menuDown = IsKeyDown(menuToggleKey);
+            const bool ctrlLDown = IsKeyDown(VK_CONTROL) && IsKeyDown('L');
+            const bool ctrlKDown = IsKeyDown(VK_CONTROL) && IsKeyDown('K');
             const bool remoteUnload =
                 InterlockedCompareExchange(&g_remoteUnloadRequested, 0, 0) != 0;
 
@@ -1717,27 +2691,42 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
             if (menuDown && !menuWasDown && focused)
                 zzj::D3D::D3D9Hook::ToggleOpen();
 
-            // N: toggle FireFullPower. Skip while NPG has us paused — otherwise
-            // the user re-enabling mid-guard would re-apply the patch and leak
-            // the effect to the nearby player (same reason the checkbox is
-            // disabled in the UI while guarded).
-            if (fireDown && !fireWasDown && focused && firePowerMod &&
-                !firePowerMod->IsPausedByGuard())
+            // N: toggle 多重施法 (MultiCast). Skip while NPG has us paused —
+            // otherwise the user re-enabling mid-guard would re-install the
+            // hook and leak the packet burst to the nearby player (same reason
+            // the checkbox is disabled in the UI while guarded).
+            if (fireDown && !fireWasDown && focused && multiCastMod &&
+                !multiCastMod->IsPausedByGuard())
             {
-                const bool wasEnabled = firePowerMod->IsEnabled();
-                firePowerMod->SetEnabled(!wasEnabled);
+                const bool wasEnabled = multiCastMod->IsEnabled();
+                multiCastMod->SetEnabled(!wasEnabled);
                 if (!wasEnabled)
-                    firePowerMod->OnResume();
+                    multiCastMod->OnResume();
                 else
-                    firePowerMod->OnShutdown();
-                GGTB::UserConfig::MarkDirty();
-                spdlog::info("GGTB: hotkey N -> FireFullPower {}",
-                             firePowerMod->IsEnabled() ? "ON" : "OFF");
+                    multiCastMod->OnShutdown();
+                // 不再 MarkDirty:模块状态只在点「保存」时落盘(仅点保存时写入)。
+                // 这次热键切换会让 UI 显示"有未保存改动",由用户决定是否保存。
+                const bool nowOn = multiCastMod->IsEnabled();
+                GGTB::ScreenOverlay::ShowToast(
+                    nowOn ? u8"多重施法：开" : u8"多重施法：关", 3000);
+                spdlog::info("GGTB: hotkey N -> MultiCast {}", nowOn ? "ON" : "OFF");
             }
+
+            // Ctrl+L: 打开最近的摆摊玩家店铺。OpenNearest 自身用勾选框 gate
+            // (未勾选不动作) 并弹自己的 toast,所以这里只做边沿 + 焦点判断。
+            if (ctrlLDown && !ctrlLWasDown && focused && openStallMod)
+                openStallMod->OpenNearest();
+
+            // Ctrl+K: toggle 定点移动。CanAutoPause=false,不受 NPG 影响,也不需要
+            // gate IsPausedByGuard(NPG 永远不会拍停它)。Toggle 内部自己弹 toast。
+            if (ctrlKDown && !ctrlKWasDown && focused && fixedMoveMod)
+                fixedMoveMod->Toggle();
 
             endWasDown = endDown;
             fireWasDown = fireDown;
             menuWasDown = menuDown;
+            ctrlLWasDown = ctrlLDown;
+            ctrlKWasDown = ctrlKDown;
 
             const DWORD now = GetTickCount();
             if (now - lastTickMs >= 100)
@@ -1755,9 +2744,11 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
         MessageBoxA(nullptr, e.what(), "GGThreadBlock Error", MB_OK | MB_ICONERROR);
     }
 
-    // Persist current state BEFORE setting->End() — OnShutdown may reset
-    // enabled_/slider values and we want to save what the user actually had.
-    GGTB::UserConfig::SaveModuleStates(setting.get());
+    // Flush per-character meta (active profile + whitelist) so a pending
+    // debounced write isn't lost on exit. Module states are NOT saved here —
+    // they only reach disk on an explicit「保存」(SaveProfile); exit never
+    // auto-persists them (仅点保存时写入).
+    GGTB::UserConfig::FlushConfigMeta(setting.get());
 
     setting->End();
     // Detach in reverse install order. HwFpSpoof and NetLog no longer hold
@@ -1766,9 +2757,21 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     // happen after End() but kept for symmetry) has something to run on.
     // RemoteControl 早于 NetLog 卸,让 best-effort bye 帧的 send 走正常 socket。
     GGTB::LoginBridge::Uninstall();
+    // Stop accepting before RemoteControl joins its IO thread. Any queued waiter
+    // is cancelled now; an already executing GameLoop click remains one-shot.
+    GGTB::StopNativeUiBridge();
+    // 寻路 worker 先停(join) —— 它会调 MoveTo/读 g_pLocalUser,必须在卸载引擎相关
+    // 钩子和 D3D9Hook::Destroy 之前停掉,否则卸载时 worker 还在跑引擎代码会崩。
+    GGTB::PathWalkerShutdown();
     // 自动交易 worker 先停(join),之后 NetLog hook 卸了它也不会再轮询到。
     GGTB::AutoTradeController::Instance().Stop();
     GGTB::RemoteControl::Uninstall();
+    bool nativeUiDetached = GGTB::UninstallNativeUiBridge();
+    // No command can enter after RemoteControl stops. Detach the scoped/global
+    // dialog hooks before NetLog removes the protocol observer they consult.
+    GGTB::AutoConfirmDetail::UninstallHooks();
+    // handler 已经摘掉,不会再有人通过裸指针访问 NPG 模块,置空。
+    g_npgModule.store(nullptr);
     // InputInjector 卸在 RemoteControl 之后 — 不会再有命令进来要注入了。
     GGTB::InputInjector::Uninstall();
     GGTB::DisconnectWatchdog::Uninstall();
@@ -1779,9 +2782,14 @@ static DWORD WINAPI HackThread(LPVOID lpParam)
     zzj::D3D::D3D9Hook::Destroy();
     setting.reset();
 
-    spdlog::info("GGThreadBlock unloaded");
+    if (nativeUiDetached)
+        spdlog::info("GGThreadBlock unloaded");
+    else
+        spdlog::critical(
+            "GGThreadBlock remains resident because native UI hooks could not be safely drained");
     spdlog::shutdown();
 
+    if (!nativeUiDetached) return 0;
     FreeLibraryAndExitThread(hModule, 0);
     return 0;
 }
@@ -1823,6 +2831,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID)
         CloseHandle(CreateThread(nullptr, 0, NPmsgPatcherThread, nullptr, 0, nullptr));
         break;
     case DLL_PROCESS_DETACH:
+        GGTB::RequestNativeUiBridgeStopNoWait();
         UninstallDetour();
         break;
     }
