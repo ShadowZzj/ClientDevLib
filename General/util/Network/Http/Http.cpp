@@ -12,6 +12,46 @@
 #else
 #include <curl/mac/curl.h>
 #endif
+
+namespace
+{
+std::string SanitizeUrlForLog(const std::string &url)
+{
+    auto sensitivePartPos = url.find('?');
+    const auto fragmentPos = url.find('#');
+    if (sensitivePartPos == std::string::npos ||
+        (fragmentPos != std::string::npos && fragmentPos < sensitivePartPos))
+    {
+        sensitivePartPos = fragmentPos;
+    }
+
+    std::string sanitizedUrl = url.substr(0, sensitivePartPos);
+    const auto schemeEnd     = sanitizedUrl.find("://");
+    if (schemeEnd == std::string::npos)
+        return sanitizedUrl;
+
+    const auto authorityStart = schemeEnd + 3;
+    const auto authorityEnd   = sanitizedUrl.find('/', authorityStart);
+    const auto userInfoEnd    = sanitizedUrl.rfind('@', authorityEnd);
+    if (userInfoEnd != std::string::npos && userInfoEnd >= authorityStart)
+    {
+        sanitizedUrl.erase(authorityStart, userInfoEnd - authorityStart + 1);
+    }
+    return sanitizedUrl;
+}
+
+void LogHttpRequestFailure(const char *method, const std::string &url, const std::string &logTag,
+                           int result, CURLcode curlCode, const char *errorBuffer)
+{
+    const char *error = errorBuffer != nullptr && errorBuffer[0] != '\0'
+                            ? errorBuffer
+                            : curl_easy_strerror(curlCode);
+    spdlog::error("HTTP request failed: tag={} method={} url={} result={} curlCode={} error=\"{}\"",
+                  logTag.empty() ? "-" : logTag, method, SanitizeUrlForLog(url), result,
+                  static_cast<int>(curlCode), error);
+}
+}  // namespace
+
 size_t WriteDataFile(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t written = fwrite(ptr, size, nmemb, stream);
@@ -145,19 +185,20 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
         CURL *curl = curl_easy_init();
         curl_mime *form = NULL;
         curl_mimepart *field = NULL;
-        CURLcode res;
+        CURLcode res = CURLE_OK;
         int result = 0;
-        char errBuf[CURL_ERROR_SIZE];
+        char errBuf[CURL_ERROR_SIZE] = {0};
         struct curl_slist *http_headers = NULL;
         retString = "";
         std::string postRetContent;
         std::string bodyData;
         std::string cert;
         std::string keypasswd;
+        std::string requestUrl;
+        std::string logTag;
 
         DEFER
         {
-            if (0 != result) spdlog::error("Http post result {},ret :{} ", result, errBuf);
             curl_slist_free_all(http_headers);
             curl_easy_cleanup(curl);
             curl_mime_free(form);
@@ -175,8 +216,10 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             result = -3;
             return result;
         }
-        std::string url = setting["url"];
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        requestUrl = setting["url"];
+        if (setting.find("logTag") != setting.end() && setting["logTag"].is_string())
+            logTag = setting["logTag"].get<std::string>();
+        curl_easy_setopt(curl, CURLOPT_URL, requestUrl.c_str());
         if (setting.find("headers") != setting.end())
         {
             nlohmann::json headers = setting["headers"];
@@ -337,8 +380,8 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
 
         if (res != CURLE_OK)
         {
-            spdlog::error("Http post error {}", errBuf);
             result = -3;
+            LogHttpRequestFailure("POST", requestUrl, logTag, result, res, errBuf);
             return result;
         }
         double time;
@@ -367,18 +410,19 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         CURL *curl = curl_easy_init();
         curl_mime *form = NULL;
         curl_mimepart *field = NULL;
-        CURLcode res;
+        CURLcode res = CURLE_OK;
         int result = 0;
-        char errBuf[CURL_ERROR_SIZE];
+        char errBuf[CURL_ERROR_SIZE] = {0};
         struct curl_slist *http_headers = NULL;
         retString = "";
         std::string postRetContent;
         std::string bodyData;
         std::string cert;
         std::string keypasswd;
+        std::string requestUrl;
+        std::string logTag;
         DEFER
         {
-            if (0 != result) spdlog::error("Http get result {},ret :{} ", result, errBuf);
             curl_slist_free_all(http_headers);
             curl_easy_cleanup(curl);
             curl_mime_free(form);
@@ -395,8 +439,10 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             result = -3;
             return result;
         }
-        std::string url = setting["url"];
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        requestUrl = setting["url"];
+        if (setting.find("logTag") != setting.end() && setting["logTag"].is_string())
+            logTag = setting["logTag"].get<std::string>();
+        curl_easy_setopt(curl, CURLOPT_URL, requestUrl.c_str());
         if (setting.find("body") != setting.end())
         {
             nlohmann::json body = setting["body"];
@@ -557,8 +603,8 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
 
         if (res != CURLE_OK)
         {
-            spdlog::error("Http post error {}", errBuf);
             result = -3;
+            LogHttpRequestFailure("GET", requestUrl, logTag, result, res, errBuf);
             return result;
         }
         double time;
