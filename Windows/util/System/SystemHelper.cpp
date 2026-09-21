@@ -127,7 +127,8 @@ std::optional<zzj::SystemInfo::VersionInfo> zzj::SystemInfo::GetWindowsVersion()
 {
     std::string vname;
     typedef void(__stdcall * NTPROC)(DWORD *, DWORD *, DWORD *);
-    HINSTANCE hinst = LoadLibraryA("ntdll.dll");
+    HINSTANCE hinst = GetModuleHandleW(L"ntdll.dll");
+    if (!hinst) return {};
     DWORD dwMajor, dwMinor, dwBuildNumber;
     NTPROC proc = (NTPROC)GetProcAddress(hinst, "RtlGetNtVersionNumbers");
     if (!proc) return {};

@@ -1,4 +1,5 @@
 #pragma once
+#include "CommandExecution.h"
 #include <chrono>
 #include <map>
 #include <mutex>
@@ -222,17 +223,4 @@ class ProcessV2
     StatisticCycle statisticCycle;
 };
 
-class CommandHelper
-{
-   public:
-    struct CommandResult
-    {
-        int exitCode;
-        std::string stdoutStr;
-        std::string stderrStr;
-    };
-    static CommandResult ExecuteCommand(const std::string &command);
-    static CommandResult ExecuteCurrentUserCommand(const std::string &command);
-    static CommandResult ExecuteRootCommand(const std::string &command);
-};
 };  // namespace zzj

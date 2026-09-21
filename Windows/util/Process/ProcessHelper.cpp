@@ -9,6 +9,7 @@
 #include <strsafe.h>
 #include <vector>
 #include <windows.h>
+#include <shellapi.h>
 using namespace zzj;
 #pragma comment(lib, "Userenv.lib")
 #pragma comment(lib, "Wtsapi32.lib")

@@ -62,6 +62,8 @@ function(GenerateGeneralUtil)
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/Http.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/Http.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/NetworkDiagnostics.h"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/NetworkDiagnostics.cpp"
 		)
 		list(REMOVE_ITEM GENERAL_UTIL_FILES ${FEATURE_FILES})
 	else()

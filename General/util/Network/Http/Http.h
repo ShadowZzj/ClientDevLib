@@ -5,11 +5,15 @@
 #include <string>
 #include <vector>
 #include <curl/curl.h>
+#include <General/util/Network/NetworkDiagnostics.h>
 namespace zzj
 {
 class Http
 {
    public:
+    // Direct HTTP(S), verified TLS, no redirects, ambient credentials or automatic retry.
+    // Caller owns authorization/confirmation. Network failures are returned as data.
+    static HttpResponse RequestBounded(const HttpRequestOptions &options);
     static std::string DecodeUri(const std::string &uri);
     static std::string DownloadFromUrl(std::string url, std::string path,
                                        int connectionTimeOut = 60, int timeout = 300);
