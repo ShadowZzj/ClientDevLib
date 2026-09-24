@@ -4,6 +4,7 @@
 #include <General/util/Process/CommandExecutionInternal.h>
 #include <General/util/Crypto/Base64.hpp>
 #include "ProcessHelper.h"
+#include "ProcessLaunchSupport.h"
 #include <UserEnv.h>
 #include <sddl.h>
 #include <array>
@@ -15,28 +16,13 @@ namespace zzj
 {
 namespace
 {
-struct Handle
-{
-    HANDLE value = nullptr;
-    Handle() = default;
-    explicit Handle(HANDLE value) : value(value) {}
-    Handle(const Handle &) = delete;
-    Handle &operator=(const Handle &) = delete;
-    ~Handle() { Close(); }
-    void Close() { if (value && value != INVALID_HANDLE_VALUE) CloseHandle(value); value = nullptr; }
-};
+using process_detail::Handle;
+using process_detail::Wide;
+using process_detail::Quote;
+using process_detail::Attributes;
 [[noreturn]] void Fail(const char *operation)
 {
     throw CommandExecutionError("UNAVAILABLE", std::string(operation) + " failed (Win32 " + std::to_string(GetLastError()) + ")");
-}
-std::wstring Wide(const std::string &s)
-{
-    if (s.empty()) return {};
-    const int n = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, s.data(), static_cast<int>(s.size()), nullptr, 0);
-    if (!n) throw CommandExecutionError("INVALID_ARGUMENT", "Command text must be UTF-8");
-    std::wstring r(n, 0);
-    MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, s.data(), static_cast<int>(s.size()), r.data(), n);
-    return r;
 }
 std::string Utf8(const std::wstring &s)
 {
@@ -45,20 +31,6 @@ std::string Utf8(const std::wstring &s)
     std::string r(n, 0);
     WideCharToMultiByte(CP_UTF8, 0, s.data(), static_cast<int>(s.size()), r.data(), n, nullptr, nullptr);
     return r;
-}
-std::wstring Quote(const std::wstring &arg)
-{
-    std::wstring result = L"\"";
-    size_t slashes = 0;
-    for (const auto c : arg)
-    {
-        if (c == L'\\') { ++slashes; continue; }
-        result.append(slashes * (c == L'"' ? 2 : 1), L'\\');
-        if (c == L'"') result += L'\\';
-        result += c; slashes = 0;
-    }
-    result.append(slashes * 2, L'\\');
-    return result + L'"';
 }
 std::string SystemPath(const wchar_t *suffix)
 {
@@ -127,12 +99,6 @@ struct Environment
 {
     void *value = nullptr;
     ~Environment() { if (value) DestroyEnvironmentBlock(value); }
-};
-struct Attributes
-{
-    std::vector<char> memory;
-    LPPROC_THREAD_ATTRIBUTE_LIST value = nullptr;
-    ~Attributes() { if (value) DeleteProcThreadAttributeList(value); }
 };
 void Drain(HANDLE pipe, std::string &output, size_t limit, bool &truncated)
 {

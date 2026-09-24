@@ -8,6 +8,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
+#include <regex>
+#include <sys/event.h>
+#include <unistd.h>
 
 std::string PlistTemplate = R"(<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -112,10 +115,36 @@ int zzj::Service::Start()
 }
 int zzj::Service::Stop()
 {
-    std::string cmd = "launchctl unload ";
-    cmd += GetPlistFileFullName();
-    system(cmd.c_str());
-    return 0;
+    std::wstring output;
+    const int query = zzj::Process::CreateProcess("/bin/launchctl", {"list", serviceName}, output, true);
+    if (query) return query;
+    std::wsmatch match;
+    int events = -1;
+    if (std::regex_search(output, match, std::wregex(L"\\\"PID\\\"\\s*=\\s*([0-9]+)")))
+    {
+        const auto pid = static_cast<pid_t>(std::stol(match[1].str()));
+        events = kqueue();
+        if (events < 0) return errno;
+        struct kevent change;
+        EV_SET(&change, pid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, nullptr);
+        if (kevent(events, &change, 1, nullptr, 0, nullptr) < 0)
+        {
+            const auto error = errno;
+            close(events); events = -1;
+            if (error != ESRCH) return error;
+        }
+    }
+    const auto stopped = zzj::Process::CreateProcess("/bin/launchctl", {"unload", GetPlistFileFullName()}, true);
+    int result = stopped.error ? stopped.error : stopped.returnVal;
+    if (!result && events >= 0)
+    {
+        struct kevent event;
+        const struct timespec timeout{30, 0};
+        const auto count = kevent(events, nullptr, 0, &event, 1, &timeout);
+        if (count != 1 || !(event.fflags & NOTE_EXIT)) result = count < 0 ? errno : ETIMEDOUT;
+    }
+    if (events >= 0) close(events);
+    return result;
 }
 int zzj::Service::IsServiceBinExist(bool &isExist)
 {

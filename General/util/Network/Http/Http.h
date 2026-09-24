@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <functional>
 #include <curl/curl.h>
 #include <General/util/Network/NetworkDiagnostics.h>
 namespace zzj
@@ -17,6 +18,9 @@ class Http
     static std::string DecodeUri(const std::string &uri);
     static std::string DownloadFromUrl(std::string url, std::string path,
                                        int connectionTimeOut = 60, int timeout = 300);
+    // Fixed destination, verified HTTPS, bounded streaming, cancellation, and HTTP status checking.
+    static bool DownloadFile(const std::string &url, const std::string &destination,
+                             size_t maxBytes, const std::function<bool()> &cancelled = {});
     static int Post(const char *apiPath, const char *str, std::string &ret, bool setSSL = false);
     static int PostFile(const std::string &apiPath, std::map<std::string, std::string> headers,
                         std::map<std::string, std::string> bodyParam, const std::string &fileKey,

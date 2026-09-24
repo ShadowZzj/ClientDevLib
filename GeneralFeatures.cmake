@@ -62,6 +62,7 @@ function(GenerateGeneralUtil)
 		file(GLOB FEATURE_FILES
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/Http.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/Http.cpp"
+		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/Http/HttpDownload.cpp"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/NetworkDiagnostics.h"
 		"${GENERAL_FEATURES_CMAKE_DIR}/General/util/Network/NetworkDiagnostics.cpp"
 		)

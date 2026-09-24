@@ -357,56 +357,48 @@ bool WinService::MyStartService(const char *serviceName)
 }
 bool WinService::StopService(const char *serviceName, uint16_t waitSecond)
 {
-    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_EXECUTE);
-    if (hSC == NULL) return false;
-
-    SC_HANDLE hSvc =
-        ::OpenServiceA(hSC, serviceName, SERVICE_START | SERVICE_QUERY_STATUS | SERVICE_STOP);
-    if (hSvc == NULL)
-    {
-        ::CloseServiceHandle(hSC);
-        return false;
-    }
-
-    SERVICE_STATUS status;
-    if (::QueryServiceStatus(hSvc, &status) == FALSE)
-    {
-        ::CloseServiceHandle(hSvc);
-        ::CloseServiceHandle(hSC);
-        return false;
-    }
-
-    if (status.dwCurrentState == SERVICE_RUNNING)
-    {
-        if (::ControlService(hSvc, SERVICE_CONTROL_STOP, &status) == FALSE)
+    SC_HANDLE manager = OpenSCManagerA(nullptr, nullptr, SC_MANAGER_CONNECT);
+    if (!manager) return false;
+    SC_HANDLE service = OpenServiceA(manager, serviceName, SERVICE_QUERY_STATUS | SERVICE_STOP);
+    if (!service) { CloseServiceHandle(manager); return false; }
+    HANDLE process = nullptr;
+    const ULONGLONG deadline = GetTickCount64() + static_cast<ULONGLONG>(waitSecond) * 1000;
+    auto remaining = [&]() -> DWORD {
+        const auto now = GetTickCount64();
+        return now < deadline ? static_cast<DWORD>(deadline - now) : 0;
+    };
+    const auto stopAndWait = [&]() -> bool {
+        bool requested = false;
+        while (true)
         {
-            ::CloseServiceHandle(hSvc);
-            ::CloseServiceHandle(hSC);
-            return false;
-        }
-
-        int waitCount = 0;
-        while (::QueryServiceStatus(hSvc, &status) == TRUE)
-        {
-            ::Sleep(1000);
-            if (status.dwCurrentState == SERVICE_STOPPED)
-            {
-                ::CloseServiceHandle(hSvc);
-                ::CloseServiceHandle(hSC);
-                return true;
-            }
-            waitCount++;
-            if (waitCount >= waitSecond)
-            {
-                ::CloseServiceHandle(hSvc);
-                ::CloseServiceHandle(hSC);
+            SERVICE_STATUS_PROCESS status{};
+            DWORD needed = 0;
+            if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, reinterpret_cast<LPBYTE>(&status), sizeof(status), &needed))
                 return false;
+            if (!process && status.dwProcessId)
+            {
+                process = OpenProcess(SYNCHRONIZE, FALSE, status.dwProcessId);
+                if (!process && GetLastError() != ERROR_INVALID_PARAMETER) return false;
             }
+            if (status.dwCurrentState == SERVICE_STOPPED)
+                return !process || WaitForSingleObject(process, remaining()) == WAIT_OBJECT_0;
+            if (!remaining()) return false;
+            if ((status.dwCurrentState == SERVICE_RUNNING || status.dwCurrentState == SERVICE_PAUSED) && !requested)
+            {
+                SERVICE_STATUS ignored{};
+                if (!ControlService(service, SERVICE_CONTROL_STOP, &ignored) && GetLastError() != ERROR_SERVICE_NOT_ACTIVE)
+                    return false;
+                requested = true;
+            }
+            // STOP_PENDING must also be awaited; a successful control request is not process exit.
+            Sleep(100);
         }
-    }
-    ::CloseServiceHandle(hSvc);
-    ::CloseServiceHandle(hSC);
-    return true;
+    };
+    const bool stopped = stopAndWait();
+    if (process) CloseHandle(process);
+    CloseServiceHandle(service);
+    CloseServiceHandle(manager);
+    return stopped;
 }
 
 bool WinService::UninstallService(const char *serviceName)

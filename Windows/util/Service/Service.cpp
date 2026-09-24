@@ -53,7 +53,7 @@ int zzj::Service::Start()
 }
 int zzj::Service::Stop()
 {
-    bool res = WinService::StopService(serviceName.c_str(), 15);
+    bool res = WinService::StopService(serviceName.c_str(), 30);
     int result = !res;
     return result;
 }
