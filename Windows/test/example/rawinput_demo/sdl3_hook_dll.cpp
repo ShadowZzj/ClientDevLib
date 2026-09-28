@@ -218,6 +218,7 @@ enum class PipeCmd : uint16_t {
 
     SetBlockRealInput    = 100, // payload: uint8 block (0/1)
     ToggleBlockRealInput = 101, // payload: empty
+    GetBlockRealInputState = 102, // payload: empty; response: uint8 block (0/1)
 
     KeyDown  = 10,       // payload: uint8 name_len, char[name_len]
     KeyUp    = 11,       // payload: uint8 name_len, char[name_len]
@@ -265,6 +266,20 @@ static bool ReadExact(HANDLE h, void* buf, DWORD len)
             return false;
         p += got;
         len -= got;
+    }
+    return true;
+}
+
+static bool WriteExact(HANDLE h, const void* buf, DWORD len)
+{
+    const uint8_t* p = (const uint8_t*)buf;
+    DWORD written = 0;
+    while (len > 0)
+    {
+        if (!WriteFile(h, p, len, &written, nullptr) || written == 0)
+            return false;
+        p += written;
+        len -= written;
     }
     return true;
 }
@@ -511,6 +526,31 @@ static DWORD WINAPI PipeServerThread(LPVOID)
                     g_blockRealInput = !g_blockRealInput;
                     if (g_logger)
                         g_logger->info("[INPUT-BLOCK] toggled via pipe: {}", g_blockRealInput ? "BLOCKED" : "ALLOWED");
+                }
+                break;
+            case PipeCmd::GetBlockRealInputState:
+                if (hdr.size == 0)
+                {
+                    // 构造响应：header + 状态字节
+                    PipeMsgHeader respHdr{};
+                    respHdr.magic = kPipeMagic;
+                    respHdr.type = (uint16_t)PipeCmd::GetBlockRealInputState;
+                    respHdr.size = sizeof(uint8_t);
+                    
+                    uint8_t state = g_blockRealInput ? 1 : 0;
+                    
+                    if (WriteExact(g_pipeHandle, &respHdr, sizeof(respHdr)) && 
+                        WriteExact(g_pipeHandle, &state, sizeof(state)))
+                    {
+                        if (g_logger)
+                            g_logger->info("[INPUT-BLOCK] State queried via pipe: {}", g_blockRealInput ? "BLOCKED" : "ALLOWED");
+                    }
+                    else
+                    {
+                        if (g_logger)
+                            g_logger->warn("[INPUT-BLOCK] Failed to write state response");
+                        break; // 写失败，断开连接
+                    }
                 }
                 break;
             case PipeCmd::KeyDown:
