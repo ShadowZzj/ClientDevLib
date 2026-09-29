@@ -15,13 +15,16 @@
 #define LOGMAXSIZE "max_size"
 #define LOGMAXFILES "max_files"
 
-#define TRACE "trace"
-#define DEBUG "debug"
-#define INFO "info"
-#define WARN "warn"
-#define ERR "err"
-#define CRITICAL "critical"
-#define OFF "off"
+namespace redpass_log_level
+{
+inline constexpr char trace[]    = "trace";
+inline constexpr char debug[]    = "debug";
+inline constexpr char info[]     = "info";
+inline constexpr char warn[]     = "warn";
+inline constexpr char err[]      = "err";
+inline constexpr char critical[] = "critical";
+inline constexpr char off[]      = "off";
+}
 #define FILE_NAME std::filesystem::path(__FILE__).filename().string()
 
 
@@ -120,10 +123,13 @@ class SPDLogHelp
 
    private:
     inline static std::unordered_map<std::string, spdlog::level::level_enum> m_SPDLevelMap = {
-        {TRACE, spdlog::level::level_enum::trace}, {DEBUG, spdlog::level::level_enum::debug},
-        {INFO, spdlog::level::level_enum::info},   {WARN, spdlog::level::level_enum::warn},
-        {ERR, spdlog::level::level_enum::info},    {CRITICAL, spdlog::level::level_enum::critical},
-        {OFF, spdlog::level::level_enum::off}};
+        {redpass_log_level::trace, spdlog::level::level_enum::trace},
+        {redpass_log_level::debug, spdlog::level::level_enum::debug},
+        {redpass_log_level::info, spdlog::level::level_enum::info},
+        {redpass_log_level::warn, spdlog::level::level_enum::warn},
+        {redpass_log_level::err, spdlog::level::level_enum::info},
+        {redpass_log_level::critical, spdlog::level::level_enum::critical},
+        {redpass_log_level::off, spdlog::level::level_enum::off}};
 };
 
 #define SPDHELP SPDLogHelp::CreateInstance()

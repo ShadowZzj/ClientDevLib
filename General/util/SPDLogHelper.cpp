@@ -41,7 +41,7 @@ int SPDLogHelp::_getJson(std::string &cfgFileName, nlohmann::json &json)
         }
         else
         {
-            json[LEVEL] = INFO;
+            json[LEVEL] = redpass_log_level::info;
         }
     }
     catch (const std::exception &)
