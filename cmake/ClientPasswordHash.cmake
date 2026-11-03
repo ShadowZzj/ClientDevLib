@@ -1,0 +1,13 @@
+include_guard(GLOBAL)
+get_filename_component(_client_password_root "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+find_package(Qt6 REQUIRED COMPONENTS Core Network)
+add_library(clientdev_password_hash STATIC
+    "${_client_password_root}/General/util/Security/Qt/PasswordHash.cpp")
+add_library(ClientDevLib::PasswordHash ALIAS clientdev_password_hash)
+target_include_directories(clientdev_password_hash PUBLIC "${_client_password_root}")
+target_compile_features(clientdev_password_hash PUBLIC cxx_std_17)
+target_link_libraries(clientdev_password_hash PUBLIC Qt6::Core Qt6::Network)
+if(MSVC)
+    target_compile_options(clientdev_password_hash PRIVATE /utf-8)
+endif()
+unset(_client_password_root)

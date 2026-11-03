@@ -6,6 +6,17 @@ function(GenerateGeneralUtil)
 	"${GENERAL_FEATURES_CMAKE_DIR}/General/util/*.cpp" 
 	"${GENERAL_FEATURES_CMAKE_DIR}/General/util/*.hpp"
 	)
+	# These independent modules are selected through cmake/Client*Network.cmake.
+	# Keep their sources and dependencies out of the legacy recursive build.
+	list(FILTER GENERAL_UTIL_FILES EXCLUDE REGEX
+		"/General/util/Network/(Qt/|(DnsWire|DomainName|IpAddress)\\.(h|cpp)$)")
+	# Header-only Qt JSON helpers are opt-in and must not trigger legacy AUTOMOC.
+	list(FILTER GENERAL_UTIL_FILES EXCLUDE REGEX "/General/util/Json/Qt/")
+	# Qt password hashing is selected explicitly through cmake/ClientPasswordHash.cmake.
+	list(FILTER GENERAL_UTIL_FILES EXCLUDE REGEX "/General/util/Security/Qt/")
+	# SQLite versioned JSON storage is an opt-in CMake target, including when
+	# the legacy build has FEATURE_SQLITE3PP disabled.
+	list(FILTER GENERAL_UTIL_FILES EXCLUDE REGEX "/General/util/Persistence/VersionedJsonStore\\.(h|cpp)$")
 	
 	if ((NOT DEFINED FEATURE_CRYPTO) OR (NOT ${FEATURE_CRYPTO}))
 		file(GLOB FEATURE_FILES

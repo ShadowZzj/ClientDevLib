@@ -18,16 +18,25 @@ void __stdcall WinService::ServiceMain(DWORD dwNumServicesArgs, LPSTR *lpService
     winService->ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 0, 0, 3000);
 
     winService->eventStop = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (!winService->eventStop)
+    {
+        winService->ReportSvcStatus(SERVICE_STOPPED, GetLastError(), 0, 0, 0);
+        return;
+    }
 
     if (!winService->OnInit())
     {
-        winService->ReportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0, 0, 0);
+        winService->ReportSvcStatus(SERVICE_STOPPED, ERROR_SERVICE_SPECIFIC_ERROR, ERROR_INVALID_DATA, 0, 0);
+        CloseHandle(winService->eventStop);
+        winService->eventStop = nullptr;
         return;
     }
 
     winService->ReportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0, 0, 0);
     winService->Run();
     winService->ReportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0, 0, 0);
+    CloseHandle(winService->eventStop);
+    winService->eventStop = nullptr;
 
     return;
 }
@@ -151,22 +160,22 @@ void WinService::Start()
 
 void WinService::InternalOnStop()
 {
-    OnStop();
     ReportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 0, 5000);
+    OnStop();
     ::SetEvent(eventStop);
 }
 
 void WinService::InternalOnShutdown()
 {
-    OnShutdown();
     ReportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 0, 5000);
+    OnShutdown();
     ::SetEvent(eventStop);
 }
 
 void WinService::InternalOnPreShutdown()
 {
-    OnPreShutDown();
     ReportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 0, 5000);
+    OnPreShutDown();
     ::SetEvent(eventStop);
 }
 
@@ -276,7 +285,7 @@ exit:
 }
 
 bool WinService::InstallKernelService(const char *binaryPath, const char *serviceName,
-                                      const char *display, const char *description)
+                                      const char *display, const char *description, DWORD startType)
 {
     SC_HANDLE sch = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (!sch)
@@ -284,11 +293,12 @@ bool WinService::InstallKernelService(const char *binaryPath, const char *servic
         return FALSE;
     }
     SC_HANDLE schNewSrv = CreateServiceA(
-        sch, serviceName, display, SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER, SERVICE_BOOT_START,
+        sch, serviceName, display, SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER, startType,
         SERVICE_ERROR_NORMAL, binaryPath, NULL, NULL, NULL, NULL, NULL);
 
     if (!schNewSrv)
     {
+        CloseServiceHandle(sch);
         return FALSE;
     }
 

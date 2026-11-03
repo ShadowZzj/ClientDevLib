@@ -30,7 +30,7 @@ class WinService
     static int InstallService(const char *serviceName, const char *displayName, const char *description,
                               const char *binPath);
     static bool InstallKernelService(const char *binaryPath, const char *serviceName, const char *displayName,
-                                     const char *description);
+                                     const char *description, DWORD startType = SERVICE_BOOT_START);
     static bool MyStartService(const char *serviceName);
     static bool StopService(const char *serviceName, uint16_t waitSecond = 5);
     static bool UninstallService(const char *serviceName);
@@ -49,7 +49,7 @@ class WinService
 
   private:
     DWORD serviceType = SERVICE_WIN32_OWN_PROCESS;
-    SERVICE_STATUS_HANDLE statusHandle;
+    SERVICE_STATUS_HANDLE statusHandle = nullptr;
     HANDLE eventStop = NULL;
     SERVICE_TABLE_ENTRYA entry[2];
     void InternalOnStop();

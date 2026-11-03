@@ -7,6 +7,10 @@ function(GenerateWindowsUtil)
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.hpp"
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/*.asm"
 	)
+	# These independent modules are selected through cmake/Client*Network.cmake.
+	# Keep Qt and WFP dependencies out of the legacy recursive build.
+	list(FILTER WINDOWS_UTIL_FILES EXCLUDE REGEX
+		"/Windows/util/(Network/(Qt|Wfp)/|IPC/(NamedPipeSecurity|QtNamedPipeServer)\\.(h|cpp)$)")
 	file(GLOB_RECURSE TEST_FILES_TO_REMOVE
 	"${WINDOWS_FEATURES_CMAKE_DIR}/Windows/util/Application/test/*.cpp"
 	)
