@@ -33,10 +33,10 @@ DWORD FindProcessId(const std::wstring &processName)
 }
 void EnviromentChanger()
 {
-    // »ñÈ¡µ±Ç°½ø³ÌµÄ»·¾³¿é
+    // è·å–å½“å‰è¿›ç¨‹çš„ç¯å¢ƒå—
     LPTCH lpvEnv = GetEnvironmentStrings();
 
-    // ¼ì²é 'test' »·¾³±äÁ¿ÊÇ·ñ´æÔÚ
+    // æ£€æŸ¥ 'test' ç¯å¢ƒå˜é‡æ˜¯å¦å­˜åœ¨
     LPTSTR lpszVariable;
     bool testExists = false;
     for (lpszVariable = (LPTSTR)lpvEnv; *lpszVariable; lpszVariable++)
@@ -53,7 +53,7 @@ void EnviromentChanger()
         }
     }
 
-    // Èç¹û 'test' »·¾³±äÁ¿²»´æÔÚ£¬ÉèÖÃËü
+    // å¦‚æœ 'test' ç¯å¢ƒå˜é‡ä¸å­˜åœ¨ï¼Œè®¾ç½®å®ƒ
     if (!testExists)
     {
         if(!SetEnvironmentVariableW(L"_NO_DEBUG_HEAP", L"1"))
@@ -82,17 +82,17 @@ int main()
     std::wstring cmdLine = zzj::str::ansi2w(executablePath.string()) + L" \"^xhlrmxgkrhtlvdjdyTTdirmsgkrltlfjdy^\"";
 
     // std::wstring cmdLine =L"notepad.exe";
-    //  ´´½¨½ø³Ì²¢¿ªÊ¼µ÷ÊÔ
-    if (!CreateProcessW(NULL,                    // ¿ÉÖ´ĞĞÎÄ¼şÂ·¾¶
-                        (LPWSTR)cmdLine.c_str(), // ÃüÁîĞĞ²ÎÊı
-                        NULL,                    // ½ø³Ì°²È«ÊôĞÔ
-                        NULL,                    // Ïß³Ì°²È«ÊôĞÔ
-                        FALSE,                   // ¾ä±ú¼Ì³ĞÑ¡Ïî
-                        DEBUG_ONLY_THIS_PROCESS | CREATE_UNICODE_ENVIRONMENT, // ´´½¨±êÖ¾£¬Ö»µ÷ÊÔÕâ¸ö½ø³Ì
-                        NULL,                    // Ê¹ÓÃ¸¸½ø³ÌµÄ»·¾³¿é
-                        NULL,                    // Ê¹ÓÃ¸¸½ø³ÌµÄÆğÊ¼Ä¿Â¼
-                        &si,                     // STARTUPINFO Ö¸Õë
-                        &pi                      // PROCESS_INFORMATION Ö¸Õë
+    //  åˆ›å»ºè¿›ç¨‹å¹¶å¼€å§‹è°ƒè¯•
+    if (!CreateProcessW(NULL,                    // å¯æ‰§è¡Œæ–‡ä»¶è·¯å¾„
+                        (LPWSTR)cmdLine.c_str(), // å‘½ä»¤è¡Œå‚æ•°
+                        NULL,                    // è¿›ç¨‹å®‰å…¨å±æ€§
+                        NULL,                    // çº¿ç¨‹å®‰å…¨å±æ€§
+                        FALSE,                   // å¥æŸ„ç»§æ‰¿é€‰é¡¹
+                        DEBUG_ONLY_THIS_PROCESS | CREATE_UNICODE_ENVIRONMENT, // åˆ›å»ºæ ‡å¿—ï¼Œåªè°ƒè¯•è¿™ä¸ªè¿›ç¨‹
+                        NULL,                    // ä½¿ç”¨çˆ¶è¿›ç¨‹çš„ç¯å¢ƒå—
+                        NULL,                    // ä½¿ç”¨çˆ¶è¿›ç¨‹çš„èµ·å§‹ç›®å½•
+                        &si,                     // STARTUPINFO æŒ‡é’ˆ
+                        &pi                      // PROCESS_INFORMATION æŒ‡é’ˆ
                         ))
     {
         std::cerr << "CreateProcess failed (" << GetLastError() << ")\n";
@@ -110,15 +110,15 @@ int main()
     while (WaitForDebugEvent(&debugEvent, INFINITE))
     {
         DWORD continueStatus = DBG_CONTINUE;
-        // ¼ì²éÊÂ¼şÀàĞÍ
+        // æ£€æŸ¥äº‹ä»¶ç±»å‹
         switch (debugEvent.dwDebugEventCode)
         {
         case CREATE_PROCESS_DEBUG_EVENT: {
-            //// »ñÈ¡Èë¿ÚµãµØÖ·
+            //// è·å–å…¥å£ç‚¹åœ°å€
             entryPoint = debugEvent.u.CreateProcessInfo.lpStartAddress;
-            //// ±£´æÔ­Ê¼×Ö½Ú
+            //// ä¿å­˜åŸå§‹å­—èŠ‚
             ReadProcessMemory(pi.hProcess, entryPoint, &originalByte, 1, NULL);
-            // Ğ´ÈëINT3¶Ïµã
+            // å†™å…¥INT3æ–­ç‚¹
             BYTE int3 = 0xCC;
             WriteProcessMemory(pi.hProcess, entryPoint, &int3, 1, NULL);
             break;
@@ -146,7 +146,7 @@ int main()
                         CONTEXT context;
                         context.ContextFlags = CONTEXT_CONTROL;
                         bool res             = GetThreadContext(threadHandle, &context);
-                        context.Eip--; // »ØÍËEIPÒÔÖ¸Ïò¶ÏµãÎ»ÖÃ
+                        context.Eip--; // å›é€€EIPä»¥æŒ‡å‘æ–­ç‚¹ä½ç½®
                         res = SetThreadContext(threadHandle, &context);
                         CloseHandle(threadHandle);
 
@@ -165,7 +165,7 @@ int main()
             break;
         }
 
-        // ¼ÌĞøµ÷ÊÔ½ø³Ì
+        // ç»§ç»­è°ƒè¯•è¿›ç¨‹
         ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, continueStatus);
     }
     return 0;

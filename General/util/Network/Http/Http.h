@@ -12,6 +12,11 @@ namespace zzj
 class Http
 {
    public:
+    // Optional synchronous phase notifications on the request thread; existing calls can omit the observer.
+    // Keep diagnostics lightweight. Observer exceptions are ignored to preserve request and cleanup behavior.
+    // "http.complete" means cleanup finished, not request success; check the return value and HTTP status.
+    using RequestPhaseObserver = std::function<void(const char *)>;
+
     // Direct HTTP(S), verified TLS, no redirects, ambient credentials or automatic retry.
     // Caller owns authorization/confirmation. Network failures are returned as data.
     static HttpResponse RequestBounded(const HttpRequestOptions &options);
@@ -31,8 +36,10 @@ class Http
                               std::string personalCertificateFile, std::string passwd);
     static int Get(const char *apiPath, std::string &ret);
     static int Put(const char *apiPath, const char *str, std::string &ret);
-    static int PostWithJsonSetting(const std::string &jsonSetting, std::string &retString);
-    static int GetWithJsonSetting(const std::string &jsonSetting, std::string &retString);
+    static int PostWithJsonSetting(const std::string &jsonSetting, std::string &retString,
+                                   const RequestPhaseObserver &observer = {});
+    static int GetWithJsonSetting(const std::string &jsonSetting, std::string &retString,
+                                  const RequestPhaseObserver &observer = {});
     static CURLsslset CurlSelectSSLBackend(curl_sslbackend backend);
 
    private:

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(ClientDevLibNetworkTests LANGUAGES CXX)
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/ClientSourceEncoding.cmake")
 include(CTest)
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/ClientNetwork.cmake")
 add_executable(client_network_tests NetworkTests.cpp)

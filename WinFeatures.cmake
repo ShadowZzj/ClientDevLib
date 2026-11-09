@@ -1,4 +1,5 @@
 set(WINDOWS_FEATURES_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/ClientSourceEncoding.cmake")
 enable_language(ASM_MASM)
 function(GenerateWindowsUtil)
 	file(GLOB_RECURSE WINDOWS_UTIL_FILES 

@@ -59,7 +59,7 @@ void SimpleLogger::error(const char* info, ...) {
 char* SimpleLogger::GetDateInfo() {
 	using namespace std;
 	time_t now = time(0);
-	//²úÉú¡°YYYY-MM-DD hh:mm:ss¡±¸ñÊ½µÄ×Ö·û´®¡£
+	//äº§ç”Ÿâ€œYYYY-MM-DD hh:mm:ssâ€æ ¼å¼çš„å­—ç¬¦ä¸²ã€‚
 	char s[32];
 	tm tmmm;
 	localtime_s(&tmmm, &now);

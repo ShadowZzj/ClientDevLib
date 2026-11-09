@@ -15,6 +15,20 @@
 
 namespace
 {
+void NotifyRequestPhase(const zzj::Http::RequestPhaseObserver &observer, const char *phase) noexcept
+{
+    if (!observer)
+        return;
+    try
+    {
+        observer(phase);
+    }
+    catch (...)
+    {
+        // Diagnostics must not change the request result or throw during cleanup and stack unwinding.
+    }
+}
+
 std::string SanitizeUrlForLog(const std::string &url)
 {
     auto sensitivePartPos = url.find('?');
@@ -178,10 +192,12 @@ exit:
     return ret;
 }
 #include <iostream>
-int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &retString)
+int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &retString,
+                                  const RequestPhaseObserver &observer)
 {
     try
     {
+        NotifyRequestPhase(observer, "http.init");
         CURL *curl = curl_easy_init();
         curl_mime *form = NULL;
         curl_mimepart *field = NULL;
@@ -196,12 +212,19 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
         std::string keypasswd;
         std::string requestUrl;
         std::string logTag;
+        // curl_easy_cleanup may invoke callbacks, so userdata must remain alive until it returns.
+        // Declare callback state before DEFER so reverse destruction order cleans up curl first.
+        nlohmann::json postRetHeader;
 
+        // Scope cleanup covers success, validation failures, early returns, and exceptions.
         DEFER
         {
-            curl_slist_free_all(http_headers);
+            NotifyRequestPhase(observer, "http.cleanup");
+            // Keep MIME and request headers alive until cleanup releases the easy handle's references.
             curl_easy_cleanup(curl);
             curl_mime_free(form);
+            curl_slist_free_all(http_headers);
+            NotifyRequestPhase(observer, "http.complete");
         };
         if (!curl)
         {
@@ -209,6 +232,7 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             return result;
         }
 
+        NotifyRequestPhase(observer, "http.configure");
         nlohmann::json setting = nlohmann::json::parse(jsonSetting);
         if (setting.find("url") == setting.end())
         {
@@ -369,14 +393,15 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
             }
         }
         int responseCode = 0;
-        nlohmann::json postRetHeader;
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &postRetContent);
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuf);
         // get response header
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteHeader);
         curl_easy_setopt(curl, CURLOPT_HEADERDATA, &postRetHeader);
+        NotifyRequestPhase(observer, "http.perform");
         res = curl_easy_perform(curl);
+        NotifyRequestPhase(observer, "http.response");
 
         if (res != CURLE_OK)
         {
@@ -403,10 +428,12 @@ int zzj::Http::PostWithJsonSetting(const std::string &jsonSetting, std::string &
         return -2;
     }
 }
-int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &retString)
+int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &retString,
+                                 const RequestPhaseObserver &observer)
 {
     try
     {
+        NotifyRequestPhase(observer, "http.init");
         CURL *curl = curl_easy_init();
         curl_mime *form = NULL;
         curl_mimepart *field = NULL;
@@ -421,17 +448,25 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
         std::string keypasswd;
         std::string requestUrl;
         std::string logTag;
+        // curl_easy_cleanup may invoke callbacks, so userdata must remain alive until it returns.
+        // Declare callback state before DEFER so reverse destruction order cleans up curl first.
+        nlohmann::json postRetHeader;
+        // Scope cleanup covers success, validation failures, early returns, and exceptions.
         DEFER
         {
-            curl_slist_free_all(http_headers);
+            NotifyRequestPhase(observer, "http.cleanup");
+            // Keep MIME and request headers alive until cleanup releases the easy handle's references.
             curl_easy_cleanup(curl);
             curl_mime_free(form);
+            curl_slist_free_all(http_headers);
+            NotifyRequestPhase(observer, "http.complete");
         };
         if (!curl)
         {
             result = -1;
             return result;
         }
+        NotifyRequestPhase(observer, "http.configure");
         nlohmann::json setting = nlohmann::json::parse(jsonSetting);
         if (setting.find("url") == setting.end())
         {
@@ -592,14 +627,15 @@ int zzj::Http::GetWithJsonSetting(const std::string &jsonSetting, std::string &r
             }
         }
         int responseCode = -1;
-        nlohmann::json postRetHeader;
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &postRetContent);
         curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuf);
         // get response header
         curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteHeader);
         curl_easy_setopt(curl, CURLOPT_HEADERDATA, &postRetHeader);
+        NotifyRequestPhase(observer, "http.perform");
         res = curl_easy_perform(curl);
+        NotifyRequestPhase(observer, "http.response");
 
         if (res != CURLE_OK)
         {

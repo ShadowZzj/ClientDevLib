@@ -1,0 +1,11 @@
+root = true
+
+[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,inl,ipp,ixx,cppm,m,mm,cmake}]
+charset = utf-8
+
+[{CMakeLists.txt,CmakeLists.txt}]
+charset = utf-8
+
+# Keep vendored source encodings under their own control.
+[General/ThirdParty/**]
+charset = unset
