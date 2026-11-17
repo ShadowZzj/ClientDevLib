@@ -1,6 +1,7 @@
 #include "WinService.h"
 #include <General/util/BaseUtil.hpp>
 #include <functional>
+#include <spdlog/spdlog.h>
 
 WinService *winService = nullptr;
 
@@ -367,10 +368,23 @@ bool WinService::MyStartService(const char *serviceName)
 }
 bool WinService::StopService(const char *serviceName, uint16_t waitSecond)
 {
+    DWORD failureError = ERROR_SUCCESS;
+    const auto fail = [&](const char *operation, DWORD error, DWORD processId = 0) -> bool {
+        failureError = error;
+        spdlog::error("Failed to stop service '{}': {} failed, process_id={}, error={}",
+                      serviceName, operation, processId, error);
+        SetLastError(error);
+        return false;
+    };
     SC_HANDLE manager = OpenSCManagerA(nullptr, nullptr, SC_MANAGER_CONNECT);
-    if (!manager) return false;
+    if (!manager) return fail("OpenSCManagerA", GetLastError());
     SC_HANDLE service = OpenServiceA(manager, serviceName, SERVICE_QUERY_STATUS | SERVICE_STOP);
-    if (!service) { CloseServiceHandle(manager); return false; }
+    if (!service)
+    {
+        const DWORD error = GetLastError();
+        CloseServiceHandle(manager);
+        return fail("OpenServiceA", error);
+    }
     HANDLE process = nullptr;
     const ULONGLONG deadline = GetTickCount64() + static_cast<ULONGLONG>(waitSecond) * 1000;
     auto remaining = [&]() -> DWORD {
@@ -384,20 +398,33 @@ bool WinService::StopService(const char *serviceName, uint16_t waitSecond)
             SERVICE_STATUS_PROCESS status{};
             DWORD needed = 0;
             if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, reinterpret_cast<LPBYTE>(&status), sizeof(status), &needed))
-                return false;
+                return fail("QueryServiceStatusEx", GetLastError());
             if (!process && status.dwProcessId)
             {
                 process = OpenProcess(SYNCHRONIZE, FALSE, status.dwProcessId);
-                if (!process && GetLastError() != ERROR_INVALID_PARAMETER) return false;
+                if (!process)
+                {
+                    const DWORD error = GetLastError();
+                    if (error != ERROR_INVALID_PARAMETER) return fail("OpenProcess(SYNCHRONIZE)", error, status.dwProcessId);
+                }
             }
             if (status.dwCurrentState == SERVICE_STOPPED)
-                return !process || WaitForSingleObject(process, remaining()) == WAIT_OBJECT_0;
-            if (!remaining()) return false;
+            {
+                if (!process) return true;
+                const DWORD waitResult = WaitForSingleObject(process, remaining());
+                if (waitResult == WAIT_OBJECT_0) return true;
+                if (waitResult == WAIT_FAILED) return fail("WaitForSingleObject (WAIT_FAILED)", GetLastError(), status.dwProcessId);
+                return fail("WaitForSingleObject (process exit timeout)", ERROR_TIMEOUT, status.dwProcessId);
+            }
+            if (!remaining()) return fail("service stop deadline", ERROR_TIMEOUT, status.dwProcessId);
             if ((status.dwCurrentState == SERVICE_RUNNING || status.dwCurrentState == SERVICE_PAUSED) && !requested)
             {
                 SERVICE_STATUS ignored{};
-                if (!ControlService(service, SERVICE_CONTROL_STOP, &ignored) && GetLastError() != ERROR_SERVICE_NOT_ACTIVE)
-                    return false;
+                if (!ControlService(service, SERVICE_CONTROL_STOP, &ignored))
+                {
+                    const DWORD error = GetLastError();
+                    if (error != ERROR_SERVICE_NOT_ACTIVE) return fail("ControlService(STOP)", error, status.dwProcessId);
+                }
                 requested = true;
             }
             // STOP_PENDING must also be awaited; a successful control request is not process exit.
@@ -408,6 +435,8 @@ bool WinService::StopService(const char *serviceName, uint16_t waitSecond)
     if (process) CloseHandle(process);
     CloseServiceHandle(service);
     CloseServiceHandle(manager);
+    // Preserve the failing API's error across logging and handle cleanup.
+    if (!stopped) SetLastError(failureError);
     return stopped;
 }
 
