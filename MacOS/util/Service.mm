@@ -1,13 +1,16 @@
 #include "Service.h"
-#include <plist/Plist.hpp>
 #import "FileUtil.h"
 #import "Process.h"
 #import <Foundation/Foundation.h>
 #include <map>
+#include <plist/Plist.hpp>
 #include <spdlog/spdlog.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
+#include <regex>
+#include <sys/event.h>
+#include <unistd.h>
 
 std::string PlistTemplate = R"(<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -50,26 +53,15 @@ std::string PlistTemplate = R"(<?xml version="1.0" encoding="UTF-8"?>
 </dict>*/
 zzj::Service *runningService = nullptr;
 using namespace std;
-int zzj::Service::GetMutex()
-{
-    return 0;
-}
+int zzj::Service::GetMutex() { return 0; }
 
-int zzj::Service::ReleaseMutex()
-{
-    return 0;
-}
+int zzj::Service::ReleaseMutex() { return 0; }
 
-int zzj::Service::CloseMutex()
-{
-    return 0;
-}
+int zzj::Service::CloseMutex() { return 0; }
 int zzj::Service::Install(ServiceInterface *otherService)
 {
-
     int result = 0;
-    if (otherService != nullptr)
-        return otherService->Install();
+    if (otherService != nullptr) return otherService->Install();
     char curPath[512] = {0};
     string path;
     string exeName;
@@ -82,14 +74,17 @@ int zzj::Service::Install(ServiceInterface *otherService)
     try
     {
         Plist::readPlist(PlistTemplate.c_str(), PlistTemplate.length(), rootDict);
-        rootDict["Label"]            = serviceName;
-        programArgs                  = boost::any_cast<decltype(programArgs)>(rootDict["ProgramArguments"]);
-        programArgs[0]               = exeName;
+        rootDict["Label"] = serviceName;
+        programArgs = boost::any_cast<decltype(programArgs)>(rootDict["ProgramArguments"]);
+        programArgs[0] = exeName;
         rootDict["ProgramArguments"] = programArgs;
 
         path = GetPlistFileFullName();
-        if ([[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithUTF8String:path.c_str()]])
-            [[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithUTF8String:path.c_str()] error:nil];
+        if ([[NSFileManager defaultManager]
+                fileExistsAtPath:[NSString stringWithUTF8String:path.c_str()]])
+            [[NSFileManager defaultManager]
+                removeItemAtPath:[NSString stringWithUTF8String:path.c_str()]
+                           error:nil];
         Plist::writePlistXML(path.c_str(), rootDict);
         chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     }
@@ -106,8 +101,9 @@ exit:
 int zzj::Service::Uninstall()
 {
     Stop();
-    [[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithUTF8String:GetPlistFileFullName().c_str()]
-                                               error:nil];
+    [[NSFileManager defaultManager]
+        removeItemAtPath:[NSString stringWithUTF8String:GetPlistFileFullName().c_str()]
+                   error:nil];
     return 0;
 }
 int zzj::Service::Start()
@@ -119,10 +115,36 @@ int zzj::Service::Start()
 }
 int zzj::Service::Stop()
 {
-    std::string cmd = "launchctl unload ";
-    cmd += GetPlistFileFullName();
-    system(cmd.c_str());
-    return 0;
+    std::wstring output;
+    const int query = zzj::Process::CreateProcess("/bin/launchctl", {"list", serviceName}, output, true);
+    if (query) return query;
+    std::wsmatch match;
+    int events = -1;
+    if (std::regex_search(output, match, std::wregex(L"\\\"PID\\\"\\s*=\\s*([0-9]+)")))
+    {
+        const auto pid = static_cast<pid_t>(std::stol(match[1].str()));
+        events = kqueue();
+        if (events < 0) return errno;
+        struct kevent change;
+        EV_SET(&change, pid, EVFILT_PROC, EV_ADD | EV_ONESHOT, NOTE_EXIT, 0, nullptr);
+        if (kevent(events, &change, 1, nullptr, 0, nullptr) < 0)
+        {
+            const auto error = errno;
+            close(events); events = -1;
+            if (error != ESRCH) return error;
+        }
+    }
+    const auto stopped = zzj::Process::CreateProcess("/bin/launchctl", {"unload", GetPlistFileFullName()}, true);
+    int result = stopped.error ? stopped.error : stopped.returnVal;
+    if (!result && events >= 0)
+    {
+        struct kevent event;
+        const struct timespec timeout{30, 0};
+        const auto count = kevent(events, nullptr, 0, &event, 1, &timeout);
+        if (count != 1 || !(event.fflags & NOTE_EXIT)) result = count < 0 ? errno : ETIMEDOUT;
+    }
+    if (events >= 0) close(events);
+    return result;
 }
 int zzj::Service::IsServiceBinExist(bool &isExist)
 {
@@ -135,7 +157,7 @@ int zzj::Service::IsServiceInstalled(bool &isInstlled)
     @autoreleasepool
     {
         NSString *plistFile;
-        plistFile  = [NSString stringWithUTF8String:GetPlistFileFullName().c_str()];
+        plistFile = [NSString stringWithUTF8String:GetPlistFileFullName().c_str()];
         isInstlled = [[NSFileManager defaultManager] fileExistsAtPath:plistFile];
         return 0;
     }
@@ -153,12 +175,24 @@ int zzj::Service::IsServiceRunning(bool &isRunning)
         if (0 != result)
         {
             spdlog::error("Protect launchctl error {}", result);
-            result = -1;
-            goto exit;
+            return result;
         }
-        // is running
-        isRunning = (!standardOut.empty()) && (standardOut.find(L"PID") != std::wstring::npos);
-    exit:
+        if (standardOut.empty())
+        {
+            isRunning = false;
+            return result;
+        }
+        if (standardOut.find(L"\"OnDemand\" = true") != std::wstring::npos)
+        {
+            isRunning = true;
+            return result;
+        }
+        else if (standardOut.find(L"PID") != std::wstring::npos)
+        {
+            isRunning = true;
+            return result;
+        }
+        isRunning = false;
         return result;
     }
 }
@@ -166,8 +200,9 @@ void zzj::Service::Run()
 {
     runningService = this;
     signal(SIGTERM, SIG_IGN);
-    dispatch_queue_t queue   = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-    dispatch_source_t source = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, SIGTERM, 0, queue);
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_source_t source =
+        dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, SIGTERM, 0, queue);
     if (source)
     {
         dispatch_source_set_event_handler(source, ^{
@@ -181,8 +216,7 @@ void zzj::Service::Run()
 
 void zzj::Service::TermHandler()
 {
-    if (nullptr == runningService)
-        exit(-1);
+    if (nullptr == runningService) exit(-1);
 
     std::unique_lock<std::mutex> lck(runningService->m_mutex);
     runningService->requestStop = true;
@@ -192,7 +226,227 @@ void zzj::Service::TermHandler()
 zzj::Service::ControlStatus zzj::Service::CheckSafeStop(int seconds)
 {
     std::unique_lock<std::mutex> lck(m_mutex);
-    bool res = m_cv.wait_for(lck, std::chrono::seconds(seconds),
-                                               [this]() { return this->requestStop; });
+    bool res =
+        m_cv.wait_for(lck, std::chrono::seconds(seconds), [this]() { return this->requestStop; });
     return res == false ? ControlStatus::Timeout : ControlStatus::RequestStop;
+}
+
+int zzj::Service::EnableService()
+{
+    std::string cmd = "launchctl enable system/";
+    cmd = cmd + serviceName;
+    return system(cmd.c_str());
+}
+int zzj::Service::DisableService()
+{
+    std::string cmd = "launchctl disable system/";
+    cmd = cmd + serviceName;
+    return system(cmd.c_str());
+}
+int zzj::Service::GetServiceStartType(StartUpType &startType)
+{
+    std::map<std::string, boost::any> rootDict;
+    std::ifstream plistFile(GetPlistFileFullName());
+    std::ostringstream plistStream;
+
+    if (plistFile.is_open())
+    {
+        plistStream << plistFile.rdbuf();
+        plistFile.close();
+    }
+    else
+    {
+        std::cerr << "Unable to open file: " << GetPlistFileFullName() << std::endl;
+        return -2;
+    }
+    try
+    {
+        std::string content = plistStream.str();
+        Plist::readPlist(content.c_str(), content.size(), rootDict);
+
+        if (rootDict.find("KeepAlive") != rootDict.end())
+        {
+            bool keepAlive = boost::any_cast<bool>(rootDict["KeepAlive"]);
+
+            if (keepAlive)
+            {
+                startType = zzj::ServiceInterface::StartUpType::Auto;
+            }
+            else
+            {
+                startType = zzj::ServiceInterface::StartUpType::Manual;
+            }
+        }
+        else
+        {
+            startType = zzj::ServiceInterface::StartUpType::Disabled;
+        }
+    }
+    catch (...)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
+int zzj::Service::SetServiceStartType(zzj::ServiceInterface::StartUpType startType)
+{
+    std::map<string, boost::any> rootDict;
+    // declare string ostream
+    std::ostringstream oldPlistStream;
+    std::ostringstream newPlistStream;
+    int result = 0;
+
+    try
+    {
+        Plist::readPlist(PlistTemplate.c_str(), PlistTemplate.length(), rootDict);
+        Plist::writePlistXML(oldPlistStream, rootDict);
+
+        switch (startType)
+        {
+            case zzj::ServiceInterface::StartUpType::Auto:
+                rootDict["KeepAlive"] = true;
+                Plist::writePlistXML(newPlistStream, rootDict);
+                PlistTemplate = newPlistStream.str();
+                result = Install();
+                if (0 != result)
+                {
+                    result = -1;
+                    break;
+                }
+                result = EnableService();
+                if (0 != result)
+                {
+                    result = -2;
+                    break;
+                }
+                break;
+            case zzj::ServiceInterface::StartUpType::Manual:
+                rootDict["KeepAlive"] = false;
+                Plist::writePlistXML(newPlistStream, rootDict);
+                PlistTemplate = newPlistStream.str();
+                result = Install();
+                if (0 != result)
+                {
+                    result = -3;
+                    break;
+                }
+                result = EnableService();
+                if (0 != result)
+                {
+                    result = -4;
+                    break;
+                }
+                break;
+            case zzj::ServiceInterface::StartUpType::Disabled:
+                result = DisableService();
+                if (0 != result)
+                {
+                    result = -5;
+                    break;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    catch (...)
+    {
+        if (!oldPlistStream.str().empty()) PlistTemplate = oldPlistStream.str();
+        return -6;
+    }
+    if (!oldPlistStream.str().empty()) PlistTemplate = oldPlistStream.str();
+    return result;
+}
+
+std::string zzj::Service::GetServiceBinPath()
+{
+    std::map<std::string, boost::any> rootDict;
+    std::ifstream plistFile(GetPlistFileFullName());
+    std::ostringstream plistStream;
+
+    if (plistFile.is_open())
+    {
+        plistStream << plistFile.rdbuf();
+        plistFile.close();
+    }
+    else
+    {
+        std::cerr << "Unable to open file: " << GetPlistFileFullName() << std::endl;
+        return "";
+    }
+
+    try
+    {
+        std::string content = plistStream.str();
+        Plist::readPlist(content.c_str(), content.size(), rootDict);
+        std::vector<boost::any> programArgs =
+            boost::any_cast<std::vector<boost::any>>(rootDict["ProgramArguments"]);
+        return boost::any_cast<std::string>(programArgs[0]);
+    }
+    catch (...)
+    {
+        return "";
+    }
+}
+
+int zzj::Service::SetServiceBinPath(const std::string &binPath)
+{
+    std::map<std::string, boost::any> rootDict;
+    std::ifstream plistFile(GetPlistFileFullName());
+    std::ostringstream plistStream;
+
+    if (plistFile.is_open())
+    {
+        plistStream << plistFile.rdbuf();
+        plistFile.close();
+    }
+    else
+    {
+        std::cerr << "Unable to open file: " << GetPlistFileFullName() << std::endl;
+        return -2;
+    }
+
+    try {
+        std::string content = plistStream.str();
+        Plist::readPlist(content.c_str(), content.size(), rootDict);
+        // 检查 ProgramArguments 是否为 std::vector<boost::any>
+        const boost::any& programArgsAny = rootDict["ProgramArguments"];
+ 
+        if (programArgsAny.type() == typeid(std::vector<boost::any>)) {
+            // 将 std::vector<boost::any> 转换为 std::vector<std::string>
+            std::vector<boost::any> programArgsAnyVector = boost::any_cast<std::vector<boost::any>>(programArgsAny);
+            std::vector<std::string> programArgs;
+
+            for (const auto& arg : programArgsAnyVector) {
+                // 将 boost::any 转换为 std::string
+                programArgs.push_back(boost::any_cast<std::string>(arg));
+            }
+
+            // 修改第一个参数
+            programArgsAnyVector[0] = binPath;
+ 
+            // 将修改后的 std::vector<std::string> 放回字典中
+            rootDict["ProgramArguments"] = programArgsAnyVector;
+            auto path = GetPlistFileFullName();
+            if ([[NSFileManager defaultManager]
+                    fileExistsAtPath:[NSString stringWithUTF8String:path.c_str()]])
+                [[NSFileManager defaultManager]
+                    removeItemAtPath:[NSString stringWithUTF8String:path.c_str()]
+                               error:nil];
+            Plist::writePlistXML(path.c_str(), rootDict);
+            chmod(path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        } else {
+            // 如果 ProgramArguments 不是 std::vector<boost::any>
+            std::cerr << "ProgramArguments type mismatch." << std::endl;
+            return -1;
+        }
+    } catch (boost::bad_any_cast &e) {
+        std::cerr << "Bad any_cast: " << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error occurred." << std::endl;
+        return -1;
+    }
 }

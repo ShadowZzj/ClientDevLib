@@ -1,0 +1,40 @@
+type = "x86"
+arch = "Windows"
+author = "Daniel Quintela"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "LuaTask - Multitasking support Library"
+version = "1.6.4"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\task.dll]],
+}
+,
+Documentation = {
+[[share\luatask\doc\\DirLayout.txt]],
+[[share\luatask\doc\\LuaTask.odt]],
+[[share\luatask\doc\\LuaTaskRG.odt]],
+}
+,
+Data = {
+[[share\luatask\LICENSE]],
+[[share\luatask\README]],
+}
+,
+Example = {
+[[share\luatask\example\\README]],
+[[share\luatask\example\\test.lua]],
+[[share\luatask\example\\test2.lua]],
+[[share\luatask\example\\test3.lua]],
+[[share\luatask\example\\test4.lua]],
+[[share\luatask\example\\test5.lua]],
+}
+,
+}
+
+license = "MIT"
+url = "http://luatask.luaforge.net/"
+name = "luatask"

@@ -1,0 +1,29 @@
+type = "x86"
+arch = "Windows"
+author = "Jean-loup Gailly and Mark Adler"
+desc = "zlib is a general purpose data compression library."
+name = "zlib"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[bin\libzlib.dll]],
+}
+,
+Documentation = {
+[[share\zlib\doc\man\man3\zlib.3]],
+}
+,
+Library = {
+[[lib\libzlib.dll.a]],
+}
+,
+Header = {
+[[include\zconf.h]],
+[[include\zlib.h]],
+}
+,
+}
+
+license = "zlib license"
+version = "1.2.6"
+url = "http://zlib.net"

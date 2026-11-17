@@ -1,0 +1,38 @@
+type = "x86"
+arch = "Windows"
+author = "Roberto Ierusalimschy, Tomás Guisasola"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Create new Lua states from within Lua"
+version = "1.2.3"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\rings.dll]],
+[[lib\lua\stable.lua]],
+}
+,
+Documentation = {
+[[share\rings\doc\\us\index.html]],
+[[share\rings\doc\\us\license.html]],
+[[share\rings\doc\\us\manual.html]],
+[[share\rings\doc\\us\rings.png]],
+}
+,
+Data = {
+[[share\rings\README]],
+}
+,
+Test = {
+[[share\rings\test\\sample.lua]],
+[[share\rings\test\\sample_state.lua]],
+[[share\rings\test\\test.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.keplerproject.org/rings/"
+name = "rings"

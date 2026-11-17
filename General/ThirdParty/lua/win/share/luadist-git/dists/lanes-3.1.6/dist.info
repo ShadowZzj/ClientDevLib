@@ -1,0 +1,69 @@
+type = "x86"
+arch = "Windows"
+author = "Asko Kauppi, Benoit Germain"
+depends = {
+[[lua >= 5.1]],
+}
+
+desc = "Lanes is a lightweight, native, lazy evaluating multithreading library for Lua 5.1."
+version = "3.1.6"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\lanes\core.dll]],
+[[lib\lua\lanes-keeper.lua]],
+[[lib\lua\lanes.lua]],
+}
+,
+Documentation = {
+[[share\lanes\doc\\comparison.html]],
+[[share\lanes\doc\\index.html]],
+[[share\lanes\doc\\Lua multithreading choices.graffle]],
+[[share\lanes\doc\\Lua multithreading choices.svg]],
+[[share\lanes\doc\\multi.png]],
+[[share\lanes\doc\\performance.ods]],
+}
+,
+Data = {
+[[share\lanes\ABOUT]],
+[[share\lanes\BUGS]],
+[[share\lanes\COPYRIGHT]],
+[[share\lanes\CHANGES]],
+[[share\lanes\README]],
+[[share\lanes\TODO]],
+}
+,
+Test = {
+[[share\lanes\test\\appendud.lua]],
+[[share\lanes\test\\argtable.lua]],
+[[share\lanes\test\\assert.lua]],
+[[share\lanes\test\\atexit.lua]],
+[[share\lanes\test\\atomic.lua]],
+[[share\lanes\test\\basic.lua]],
+[[share\lanes\test\\cyclic.lua]],
+[[share\lanes\test\\ehynes.lua]],
+[[share\lanes\test\\errhangtest.lua]],
+[[share\lanes\test\\error.lua]],
+[[share\lanes\test\\fibonacci.lua]],
+[[share\lanes\test\\fifo.lua]],
+[[share\lanes\test\\finalizer.lua]],
+[[share\lanes\test\\func_is_string.lua]],
+[[share\lanes\test\\hangtest.lua]],
+[[share\lanes\test\\irayo_closure.lua]],
+[[share\lanes\test\\irayo_recursive.lua]],
+[[share\lanes\test\\keeper.lua]],
+[[share\lanes\test\\launchtest.lua]],
+[[share\lanes\test\\linda_perf.lua]],
+[[share\lanes\test\\objects.lua]],
+[[share\lanes\test\\perftest.lua]],
+[[share\lanes\test\\protectproxy.lua]],
+[[share\lanes\test\\recursive.lua]],
+[[share\lanes\test\\require.lua]],
+[[share\lanes\test\\timer.lua]],
+}
+,
+}
+
+license = "MIT"
+url = "https://github.com/LuaLanes/lanes"
+name = "lanes"

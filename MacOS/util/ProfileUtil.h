@@ -1,3 +1,5 @@
+#ifndef _MAC_PROFILEUTIL_H
+#define _MAC_PROFILEUTIL_H
 #include <optional>
 #include <string>
 namespace zzj
@@ -12,3 +14,4 @@ class Profile
     static std::optional<bool> IsSystemProfileInstalled(const std::string &profileIdentifier);
 };
 }; // namespace zzj
+#endif

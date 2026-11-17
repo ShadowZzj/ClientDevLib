@@ -1,0 +1,7 @@
+include_guard(GLOBAL)
+get_filename_component(_client_json_root "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+add_library(clientdev_json INTERFACE)
+add_library(ClientDevLib::Json ALIAS clientdev_json)
+target_include_directories(clientdev_json INTERFACE "${_client_json_root}")
+target_compile_features(clientdev_json INTERFACE cxx_std_17)
+unset(_client_json_root)

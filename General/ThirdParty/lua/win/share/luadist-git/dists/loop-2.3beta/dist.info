@@ -1,0 +1,117 @@
+type = "x86"
+arch = "Windows"
+author = "Renato Maia"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "LOOP stands for Lua Object-Oriented Programming and is a set of packages for supporting different models of object-oriented programming in the Lua language"
+version = "2.3beta"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\loop\base.lua]],
+[[lib\lua\loop\cached.lua]],
+[[lib\lua\loop\collection\MapWithArrayOfKeys.lua]],
+[[lib\lua\loop\collection\ObjectCache.lua]],
+[[lib\lua\loop\collection\OrderedSet.lua]],
+[[lib\lua\loop\collection\PriorityQueue.lua]],
+[[lib\lua\loop\collection\UnorderedArray.lua]],
+[[lib\lua\loop\collection\UnorderedArraySet.lua]],
+[[lib\lua\loop\compiler\Arguments.lua]],
+[[lib\lua\loop\compiler\Conditional.lua]],
+[[lib\lua\loop\compiler\Expression.lua]],
+[[lib\lua\loop\component\base.lua]],
+[[lib\lua\loop\component\contained.lua]],
+[[lib\lua\loop\component\dynamic.lua]],
+[[lib\lua\loop\component\intercepted.lua]],
+[[lib\lua\loop\component\wrapped.lua]],
+[[lib\lua\loop\debug\Inspector.lua]],
+[[lib\lua\loop\debug\Matcher.lua]],
+[[lib\lua\loop\debug\Verbose.lua]],
+[[lib\lua\loop\debug\Viewer.lua]],
+[[lib\lua\loop\multiple.lua]],
+[[lib\lua\loop\object\Exception.lua]],
+[[lib\lua\loop\object\Publisher.lua]],
+[[lib\lua\loop\object\Wrapper.lua]],
+[[lib\lua\loop\scoped.lua]],
+[[lib\lua\loop\serial\FileStream.lua]],
+[[lib\lua\loop\serial\Serializer.lua]],
+[[lib\lua\loop\serial\SocketStream.lua]],
+[[lib\lua\loop\serial\StringStream.lua]],
+[[lib\lua\loop\simple.lua]],
+[[lib\lua\loop\table.lua]],
+[[lib\lua\loop\thread\CoSocket.lua]],
+[[lib\lua\loop\thread\IOScheduler.lua]],
+[[lib\lua\loop\thread\Scheduler.lua]],
+[[lib\lua\loop\thread\SocketScheduler.lua]],
+[[lib\lua\loop\thread\Timer.lua]],
+[[bin\precompiler.exe]],
+[[bin\preloader.exe]],
+}
+,
+Documentation = {
+[[share\loop\doc\\doc\contact.html]],
+[[share\loop\doc\\doc\index.html]],
+[[share\loop\doc\\doc\latests.html]],
+[[share\loop\doc\\doc\layout1.css]],
+[[share\loop\doc\\doc\layout2.css]],
+[[share\loop\doc\\doc\layout3.css]],
+[[share\loop\doc\\doc\library\collection\MapWithArrayOfKeys.html]],
+[[share\loop\doc\\doc\library\collection\ObjectCache.html]],
+[[share\loop\doc\\doc\library\collection\OrderedSet.html]],
+[[share\loop\doc\\doc\library\collection\PriorityQueue.html]],
+[[share\loop\doc\\doc\library\collection\UnorderedArray.html]],
+[[share\loop\doc\\doc\library\collection\UnorderedArraySet.html]],
+[[share\loop\doc\\doc\library\compiler\Arguments.html]],
+[[share\loop\doc\\doc\library\compiler\Conditional.html]],
+[[share\loop\doc\\doc\library\compiler\Expression.html]],
+[[share\loop\doc\\doc\library\debug\Inspector.html]],
+[[share\loop\doc\\doc\library\debug\Matcher.html]],
+[[share\loop\doc\\doc\library\debug\Verbose.html]],
+[[share\loop\doc\\doc\library\debug\Viewer.html]],
+[[share\loop\doc\\doc\library\index.html]],
+[[share\loop\doc\\doc\library\object\Exception.html]],
+[[share\loop\doc\\doc\library\object\Publisher.html]],
+[[share\loop\doc\\doc\library\object\Wrapper.html]],
+[[share\loop\doc\\doc\library\overview.html]],
+[[share\loop\doc\\doc\library\serial\FileStream.html]],
+[[share\loop\doc\\doc\library\serial\Serializer.html]],
+[[share\loop\doc\\doc\library\serial\SocketStream.html]],
+[[share\loop\doc\\doc\library\serial\StringStream.html]],
+[[share\loop\doc\\doc\library\thread\CoSocket.html]],
+[[share\loop\doc\\doc\library\thread\IOScheduler.html]],
+[[share\loop\doc\\doc\library\thread\Scheduler.html]],
+[[share\loop\doc\\doc\library\thread\SocketScheduler.html]],
+[[share\loop\doc\\doc\library\thread\Timer.html]],
+[[share\loop\doc\\doc\loop.css]],
+[[share\loop\doc\\doc\manual\basics.html]],
+[[share\loop\doc\\doc\manual\classops.html]],
+[[share\loop\doc\\doc\manual\components.html]],
+[[share\loop\doc\\doc\manual\contained.jpg]],
+[[share\loop\doc\\doc\manual\index.html]],
+[[share\loop\doc\\doc\manual\intro.html]],
+[[share\loop\doc\\doc\manual\models.html]],
+[[share\loop\doc\\doc\news.html]],
+[[share\loop\doc\\doc\release\changes.html]],
+[[share\loop\doc\\doc\release\index.html]],
+[[share\loop\doc\\doc\release\preload.html]],
+[[share\loop\doc\\doc\release\previous.html]],
+[[share\loop\doc\\doc\small.gif]],
+}
+,
+Data = {
+[[share\loop\LICENSE]],
+[[share\loop\RELEASE]],
+}
+,
+Other = {
+[[share\loop\etc\precompiler.lua]],
+[[share\loop\etc\preloader.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://loop.luaforge.net/"
+name = "loop"

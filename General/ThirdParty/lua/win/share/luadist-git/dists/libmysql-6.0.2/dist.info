@@ -1,0 +1,97 @@
+type = "x86"
+arch = "Windows"
+author = "MySQL"
+depends = {
+[[zlib >= 1.2]],
+[[openssl >= 0.9.0]],
+}
+
+desc = "libmysql provides C interface to MySQL. Also known as mysql-connector-c."
+version = "6.0.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[bin\libmysql.dll]],
+}
+,
+Header = {
+[[include\base64.h]],
+[[include\config-win.h]],
+[[include\decimal.h]],
+[[include\errmsg.h]],
+[[include\hash.h]],
+[[include\keycache.h]],
+[[include\lf.h]],
+[[include\myisampack.h]],
+[[include\mysql.h]],
+[[include\mysqld_error.h]],
+[[include\mysql_com.h]],
+[[include\mysql_time.h]],
+[[include\mysql_version.h]],
+[[include\mysys_err.h]],
+[[include\my_aes.h]],
+[[include\my_alarm.h]],
+[[include\my_alloc.h]],
+[[include\my_atomic.h]],
+[[include\my_attribute.h]],
+[[include\my_base.h]],
+[[include\my_bit.h]],
+[[include\my_bitmap.h]],
+[[include\my_charsets.h]],
+[[include\my_config.h]],
+[[include\my_dbug.h]],
+[[include\my_dir.h]],
+[[include\my_getopt.h]],
+[[include\my_global.h]],
+[[include\my_libwrap.h]],
+[[include\my_list.h]],
+[[include\my_md5.h]],
+[[include\my_net.h]],
+[[include\my_nosys.h]],
+[[include\my_no_pthread.h]],
+[[include\my_pthread.h]],
+[[include\my_stacktrace.h]],
+[[include\my_sys.h]],
+[[include\my_time.h]],
+[[include\my_tree.h]],
+[[include\my_trie.h]],
+[[include\my_uctype.h]],
+[[include\my_vle.h]],
+[[include\my_xml.h]],
+[[include\m_ctype.h]],
+[[include\m_string.h]],
+[[include\queues.h]],
+[[include\service_versions.h]],
+[[include\sha1.h]],
+[[include\sha2.h]],
+[[include\sql_common.h]],
+[[include\sslopt-case.h]],
+[[include\sslopt-longopts.h]],
+[[include\sslopt-vars.h]],
+[[include\thr_alarm.h]],
+[[include\thr_lock.h]],
+[[include\typelib.h]],
+[[include\t_ctype.h]],
+[[include\violite.h]],
+[[include\waiting_threads.h]],
+[[include\wqueue.h]],
+}
+,
+Library = {
+[[lib\libmysql.dll.a]],
+}
+,
+Unspecified = {
+[[bin\mysql_config.exe]],
+}
+,
+Data = {
+[[share\libmysql\README]],
+[[share\libmysql\COPYING]],
+}
+,
+}
+
+license = "GPL"
+url = "http://www.mysql.com"
+name = "libmysql"

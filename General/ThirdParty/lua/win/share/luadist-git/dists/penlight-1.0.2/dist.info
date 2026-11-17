@@ -1,0 +1,136 @@
+type = "x86"
+arch = "Windows"
+author = "Steve Donovan, David Manura"
+depends = {
+[[lua >= 5.1]],
+[[luafilesystem >= 1.5]],
+Windows = {
+[[alien >= 0.4]],
+}
+,
+}
+
+desc = "A portable, pure-Lua standard library covering common patterns."
+version = "1.0.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\pl\app.lua]],
+[[lib\lua\pl\array2d.lua]],
+[[lib\lua\pl\class.lua]],
+[[lib\lua\pl\comprehension.lua]],
+[[lib\lua\pl\config.lua]],
+[[lib\lua\pl\data.lua]],
+[[lib\lua\pl\Date.lua]],
+[[lib\lua\pl\dir.lua]],
+[[lib\lua\pl\file.lua]],
+[[lib\lua\pl\func.lua]],
+[[lib\lua\pl\init.lua]],
+[[lib\lua\pl\input.lua]],
+[[lib\lua\pl\lapp.lua]],
+[[lib\lua\pl\lexer.lua]],
+[[lib\lua\pl\List.lua]],
+[[lib\lua\pl\luabalanced.lua]],
+[[lib\lua\pl\Map.lua]],
+[[lib\lua\pl\MultiMap.lua]],
+[[lib\lua\pl\operator.lua]],
+[[lib\lua\pl\OrderedMap.lua]],
+[[lib\lua\pl\path.lua]],
+[[lib\lua\pl\permute.lua]],
+[[lib\lua\pl\platf\luajava.lua]],
+[[lib\lua\pl\pretty.lua]],
+[[lib\lua\pl\seq.lua]],
+[[lib\lua\pl\Set.lua]],
+[[lib\lua\pl\sip.lua]],
+[[lib\lua\pl\strict.lua]],
+[[lib\lua\pl\stringio.lua]],
+[[lib\lua\pl\stringx.lua]],
+[[lib\lua\pl\tablex.lua]],
+[[lib\lua\pl\template.lua]],
+[[lib\lua\pl\test.lua]],
+[[lib\lua\pl\text.lua]],
+[[lib\lua\pl\utils.lua]],
+[[lib\lua\pl\xml.lua]],
+}
+,
+Test = {
+[[share\penlight\test\run.lua]],
+[[share\penlight\test\\lua\bar.lua]],
+[[share\penlight\test\\lua\foo\args.lua]],
+[[share\penlight\test\\test-args.lua]],
+[[share\penlight\test\\test-array.lua]],
+[[share\penlight\test\\test-class.lua]],
+[[share\penlight\test\\test-compare-no-order.lua]],
+[[share\penlight\test\\test-comprehension.lua]],
+[[share\penlight\test\\test-config.lua]],
+[[share\penlight\test\\test-data.lua]],
+[[share\penlight\test\\test-date.lua]],
+[[share\penlight\test\\test-dir.lua]],
+[[share\penlight\test\\test-fenv.lua]],
+[[share\penlight\test\\test-func.lua]],
+[[share\penlight\test\\test-job-query.lua]],
+[[share\penlight\test\\test-lapp.lua]],
+[[share\penlight\test\\test-lexer.lua]],
+[[share\penlight\test\\test-map.lua]],
+[[share\penlight\test\\test-move.lua]],
+[[share\penlight\test\\test-path.lua]],
+[[share\penlight\test\\test-pretty-number.lua]],
+[[share\penlight\test\\test-pretty.lua]],
+[[share\penlight\test\\test-pylib.lua]],
+[[share\penlight\test\\test-relpath.lua]],
+[[share\penlight\test\\test-seq.lua]],
+[[share\penlight\test\\test-set.lua]],
+[[share\penlight\test\\test-sip.lua]],
+[[share\penlight\test\\test-strict.lua]],
+[[share\penlight\test\\test-stringio.lua]],
+[[share\penlight\test\\test-stringx.lua]],
+[[share\penlight\test\\test-substitute.lua]],
+[[share\penlight\test\\test-tablex.lua]],
+[[share\penlight\test\\test-text.lua]],
+[[share\penlight\test\\test-vector.lua]],
+[[share\penlight\test\\test-xml.lua]],
+[[share\penlight\test\\testp.lua]],
+}
+,
+Example = {
+[[share\penlight\example\\seesubst.lua]],
+[[share\penlight\example\\sipscan.lua]],
+[[share\penlight\example\\symbols.lua]],
+[[share\penlight\example\\test-cmp.lua]],
+[[share\penlight\example\\test-listcallbacks.lua]],
+[[share\penlight\example\\test-pretty.lua]],
+[[share\penlight\example\\test-symbols.lua]],
+[[share\penlight\example\\testapp.lua]],
+[[share\penlight\example\\testclone.lua]],
+[[share\penlight\example\\testconfig.lua]],
+[[share\penlight\example\\testglobal.lua]],
+[[share\penlight\example\\testinputfields.lua]],
+[[share\penlight\example\\testinputfields2.lua]],
+[[share\penlight\example\\testxml.lua]],
+[[share\penlight\example\\which.lua]],
+}
+,
+Data = {
+[[share\penlight\CHANGES.txt]],
+[[share\penlight\LICENCE.txt]],
+[[share\penlight\README.txt]],
+}
+,
+Documentation = {
+[[share\penlight\doc\\config.ld]],
+[[share\penlight\doc\\manual\01-introduction.md]],
+[[share\penlight\doc\\manual\02-arrays.md]],
+[[share\penlight\doc\\manual\03-strings.md]],
+[[share\penlight\doc\\manual\04-paths.md]],
+[[share\penlight\doc\\manual\05-dates.md]],
+[[share\penlight\doc\\manual\06-data.md]],
+[[share\penlight\doc\\manual\07-functional.md]],
+[[share\penlight\doc\\manual\08-additional.md]],
+[[share\penlight\doc\\manual\09-discussion.md]],
+}
+,
+}
+
+url = "https://github.com/stevedonovan/Penlight"
+license = "MIT"
+name = "penlight"

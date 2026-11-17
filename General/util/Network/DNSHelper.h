@@ -1,18 +1,19 @@
-
-#ifndef DNSHELPER_H
-#define DNSHELPER_H
-
+#pragma once
 #include "Common.h"
+#include <string>
+#include <tuple>
+namespace zzj
+{
 
-namespace zzj {
-
-struct DNSQuery {
+struct DNSQuery
+{
     unsigned char *m_query;
     uint16_t m_type;
     uint16_t m_class;
 };
 
-struct DNSQuestion {
+struct DNSQuestion
+{
     uint16_t m_transation;
     uint16_t m_flags;
     uint16_t m_questions;
@@ -21,7 +22,8 @@ struct DNSQuestion {
     uint16_t m_additional;
 };
 
-struct DNSAnswer {
+struct DNSAnswer
+{
     uint16_t m_name;
     uint16_t m_type;
     uint16_t m_class;
@@ -29,6 +31,17 @@ struct DNSAnswer {
     uint16_t data_length;
     uint16_t m_address[4];
 };
-}
 
-#endif // DNSHELPER_H
+class DNSRelolver
+{
+  public:
+    enum class Error
+    {
+        Success,
+        NoHost,
+        Fail
+    };
+    static std::tuple<Error, std::string> ResolveARecord(const std::string &domain);
+};
+
+} // namespace zzj

@@ -1,0 +1,47 @@
+type = "x86"
+arch = "Windows"
+author = "Reuben Thomas"
+depends = {
+[[lua >= 5.1]],
+}
+
+desc = "General Lua libraries"
+version = "29"
+maintainer = "Peter Drahos"
+files = {
+Runtime = {
+[[lib\lua\base.lua]],
+[[lib\lua\bin.lua]],
+[[lib\lua\debug_ext.lua]],
+[[lib\lua\debug_init.lua]],
+[[lib\lua\fstable.lua]],
+[[lib\lua\getopt.lua]],
+[[lib\lua\io_ext.lua]],
+[[lib\lua\lcs.lua]],
+[[lib\lua\list.lua]],
+[[lib\lua\math_ext.lua]],
+[[lib\lua\mbox.lua]],
+[[lib\lua\modules.lua]],
+[[lib\lua\object.lua]],
+[[lib\lua\package_ext.lua]],
+[[lib\lua\parser.lua]],
+[[lib\lua\set.lua]],
+[[lib\lua\strbuf.lua]],
+[[lib\lua\strict.lua]],
+[[lib\lua\string_ext.lua]],
+[[lib\lua\table_ext.lua]],
+[[lib\lua\tree.lua]],
+[[lib\lua\xml.lua]],
+[[lib\lua\std.lua]],
+}
+,
+Data = {
+[[share\lua-stdlib\AUTHORS]],
+[[share\lua-stdlib\README]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://luaforge.net/projects/stdlib/"
+name = "lua-stdlib"

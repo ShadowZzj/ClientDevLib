@@ -1,0 +1,116 @@
+type = "x86"
+arch = "Windows"
+author = "Diego Nehab"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Network support for the Lua language"
+version = "2.0.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\socket\core.dll]],
+[[lib\lua\mime\core.dll]],
+[[lib\lua\ltn12.lua]],
+[[lib\lua\mime.lua]],
+[[lib\lua\socket.lua]],
+[[lib\lua\socket\ftp.lua]],
+[[lib\lua\socket\http.lua]],
+[[lib\lua\socket\smtp.lua]],
+[[lib\lua\socket\tp.lua]],
+[[lib\lua\socket\url.lua]],
+}
+,
+Documentation = {
+[[share\luasocket\doc\\dns.html]],
+[[share\luasocket\doc\\ftp.html]],
+[[share\luasocket\doc\\http.html]],
+[[share\luasocket\doc\\index.html]],
+[[share\luasocket\doc\\installation.html]],
+[[share\luasocket\doc\\introduction.html]],
+[[share\luasocket\doc\\ltn12.html]],
+[[share\luasocket\doc\\lua05.ppt]],
+[[share\luasocket\doc\\luasocket.png]],
+[[share\luasocket\doc\\mime.html]],
+[[share\luasocket\doc\\reference.css]],
+[[share\luasocket\doc\\reference.html]],
+[[share\luasocket\doc\\smtp.html]],
+[[share\luasocket\doc\\socket.html]],
+[[share\luasocket\doc\\tcp.html]],
+[[share\luasocket\doc\\udp.html]],
+[[share\luasocket\doc\\url.html]],
+}
+,
+Test = {
+[[share\luasocket\test\\auth\.htpasswd]],
+[[share\luasocket\test\\auth\index.html]],
+[[share\luasocket\test\\cgi\cat]],
+[[share\luasocket\test\\cgi\cat-index-html]],
+[[share\luasocket\test\\cgi\env]],
+[[share\luasocket\test\\cgi\query-string]],
+[[share\luasocket\test\\cgi\redirect-loop]],
+[[share\luasocket\test\\cgi\request-uri]],
+[[share\luasocket\test\\dicttest.lua]],
+[[share\luasocket\test\\excepttest.lua]],
+[[share\luasocket\test\\ftptest.lua]],
+[[share\luasocket\test\\httptest.lua]],
+[[share\luasocket\test\\index.html]],
+[[share\luasocket\test\\ltn12test.lua]],
+[[share\luasocket\test\\luasocket.png]],
+[[share\luasocket\test\\mimetest.lua]],
+[[share\luasocket\test\\README]],
+[[share\luasocket\test\\smtptest.lua]],
+[[share\luasocket\test\\stufftest.lua]],
+[[share\luasocket\test\\testclnt.lua]],
+[[share\luasocket\test\\testmesg.lua]],
+[[share\luasocket\test\\testsrvr.lua]],
+[[share\luasocket\test\\testsupport.lua]],
+[[share\luasocket\test\\tftptest.lua]],
+[[share\luasocket\test\\unixclnt.lua]],
+[[share\luasocket\test\\unixsrvr.lua]],
+[[share\luasocket\test\\upload.html]],
+[[share\luasocket\test\\urltest.lua]],
+[[share\luasocket\test\\utestclnt.lua]],
+[[share\luasocket\test\\utestsrvr.lua]],
+}
+,
+Example = {
+[[share\luasocket\example\\cddb.lua]],
+[[share\luasocket\example\\daytimeclnt.lua]],
+[[share\luasocket\example\\echoclnt.lua]],
+[[share\luasocket\example\\echosrvr.lua]],
+[[share\luasocket\example\\listener.lua]],
+[[share\luasocket\example\\lpr.lua]],
+[[share\luasocket\example\\README]],
+[[share\luasocket\example\\talker.lua]],
+[[share\luasocket\example\\tinyirc.lua]],
+}
+,
+Data = {
+[[share\luasocket\README]],
+[[share\luasocket\NEW]],
+[[share\luasocket\LICENSE]],
+}
+,
+Other = {
+[[share\luasocket\etc\\b64.lua]],
+[[share\luasocket\etc\\check-links.lua]],
+[[share\luasocket\etc\\check-memory.lua]],
+[[share\luasocket\etc\\dict.lua]],
+[[share\luasocket\etc\\dispatch.lua]],
+[[share\luasocket\etc\\eol.lua]],
+[[share\luasocket\etc\\forward.lua]],
+[[share\luasocket\etc\\get.lua]],
+[[share\luasocket\etc\\links]],
+[[share\luasocket\etc\\lp.lua]],
+[[share\luasocket\etc\\qp.lua]],
+[[share\luasocket\etc\\README]],
+[[share\luasocket\etc\\tftp.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://luaforge.net/projects/luasocket/"
+name = "luasocket"

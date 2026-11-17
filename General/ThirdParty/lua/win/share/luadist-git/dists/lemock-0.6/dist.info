@@ -1,0 +1,30 @@
+type = "x86"
+arch = "Windows"
+author = "Tommy Petterson"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "Mock creation module intended for use together with a unit test framework such as lunit or lunity."
+version = "0.6"
+maintainer = "Peter Drahos"
+files = {
+Runtime = {
+[[lib\lua\lemock.lua]],
+}
+,
+Documentation = {
+[[share\lemock\doc\\COPYRIGHT.html]],
+[[share\lemock\doc\\DEVEL.html]],
+[[share\lemock\doc\\HISTORY.html]],
+[[share\lemock\doc\\index.html]],
+[[share\lemock\doc\\README.html]],
+[[share\lemock\doc\\style.css]],
+[[share\lemock\doc\\userguide.html]],
+}
+,
+}
+
+license = "MIT"
+url = "http://lemock.luaforge.net"
+name = "lemock"

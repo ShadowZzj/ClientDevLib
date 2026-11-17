@@ -1,0 +1,40 @@
+type = "x86"
+arch = "Windows"
+author = "Roberto Ierusalimschy, Marcela Ozório Suarez, Tomás Guisasola, Fábio Mascarenhas"
+depends = {
+[[lua ~> 5.1]],
+}
+
+desc = "MD5 offers basic cryptographic facilities for Lua 5.1: a hash (digest) function, and a pair crypt/decrypt."
+version = "1.1.2"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[lib\lua\md5\core.dll]],
+[[lib\lua\des56.dll]],
+[[lib\lua\md5.lua]],
+}
+,
+Documentation = {
+[[share\md5\doc\\us\index.html]],
+[[share\md5\doc\\us\license.html]],
+[[share\md5\doc\\us\manual.html]],
+[[share\md5\doc\\us\md5.png]],
+}
+,
+Data = {
+[[share\md5\README]],
+}
+,
+Test = {
+[[share\md5\test\\DES56\fdemo.c]],
+[[share\md5\test\\DES56\ftest.c]],
+[[share\md5\test\\DES56\Makefile]],
+[[share\md5\test\\test.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.keplerproject.org/md5/"
+name = "md5"

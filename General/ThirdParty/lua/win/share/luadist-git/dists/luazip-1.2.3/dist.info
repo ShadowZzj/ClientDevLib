@@ -1,0 +1,44 @@
+type = "x86"
+arch = "Windows"
+author = "Danilo Tuler"
+depends = {
+[[lua ~> 5.1]],
+[[zlib >=1.2.3]],
+[[libzzip >=0.13]],
+}
+
+desc = "LuaZip is a lightweight Lua extension library used to read files stored inside zip files."
+version = "1.2.3"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\zip.dll]],
+}
+,
+Documentation = {
+[[share\luazip\doc\\us\examples.html]],
+[[share\luazip\doc\\us\index.html]],
+[[share\luazip\doc\\us\license.html]],
+[[share\luazip\doc\\us\luazip-128.png]],
+[[share\luazip\doc\\us\manual.html]],
+}
+,
+Data = {
+[[share\luazip\README]],
+}
+,
+Test = {
+[[share\luazip\test\\tests\a\b\c.zip]],
+[[share\luazip\test\\tests\a2\b2.ext2]],
+[[share\luazip\test\\tests\a2\b2.zip]],
+[[share\luazip\test\\tests\a3.ext3]],
+[[share\luazip\test\\tests\a3.zip]],
+[[share\luazip\test\\tests\luazip.zip]],
+[[share\luazip\test\\tests\test_zip.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.keplerproject.org/luazip/"
+name = "luazip"

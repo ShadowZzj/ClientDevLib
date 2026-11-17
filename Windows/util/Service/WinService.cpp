@@ -1,0 +1,702 @@
+#include "WinService.h"
+#include <General/util/BaseUtil.hpp>
+#include <functional>
+#include <spdlog/spdlog.h>
+
+WinService *winService = nullptr;
+
+void __stdcall WinService::ServiceMain(DWORD dwNumServicesArgs, LPSTR *lpServiceArgVectors)
+{
+    if (!winService) return;
+    SERVICE_STATUS_HANDLE _statusHandle = ::RegisterServiceCtrlHandlerExA(
+        winService->name.c_str(), (LPHANDLER_FUNCTION_EX)ServiceHandler, NULL);
+    if (NULL == _statusHandle)
+    {
+        return;
+    }
+
+    winService->statusHandle = _statusHandle;
+    winService->ReportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 0, 0, 3000);
+
+    winService->eventStop = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (!winService->eventStop)
+    {
+        winService->ReportSvcStatus(SERVICE_STOPPED, GetLastError(), 0, 0, 0);
+        return;
+    }
+
+    if (!winService->OnInit())
+    {
+        winService->ReportSvcStatus(SERVICE_STOPPED, ERROR_SERVICE_SPECIFIC_ERROR, ERROR_INVALID_DATA, 0, 0);
+        CloseHandle(winService->eventStop);
+        winService->eventStop = nullptr;
+        return;
+    }
+
+    winService->ReportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0, 0, 0);
+    winService->Run();
+    winService->ReportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0, 0, 0);
+    CloseHandle(winService->eventStop);
+    winService->eventStop = nullptr;
+
+    return;
+}
+
+void __stdcall WinService::ServiceHandler(DWORD dwControl, DWORD dwEventType, LPVOID lpEventData,
+                                          LPVOID lpContext)
+{
+    switch (dwControl)
+    {
+        case SERVICE_CONTROL_INTERROGATE:
+            return;
+        case SERVICE_CONTROL_STOP:
+            winService->InternalOnStop();
+            return;
+        case SERVICE_CONTROL_SHUTDOWN:
+            winService->InternalOnShutdown();
+            return;
+        case SERVICE_CONTROL_PRESHUTDOWN:
+            winService->InternalOnPreShutdown();
+            return;
+        case SERVICE_CONTROL_SESSIONCHANGE: {
+            zzj::Session::SessionMessage message = zzj::Session::SessionMessage::None;
+            switch (dwEventType)
+            {
+                case WTS_CONSOLE_CONNECT:
+                    message = zzj::Session::SessionMessage::SessionConsoleConnect;
+                    break;
+                case WTS_CONSOLE_DISCONNECT:
+                    message = zzj::Session::SessionMessage::SessionConsoleDisconnect;
+                    break;
+                case WTS_REMOTE_CONNECT:
+                    message = zzj::Session::SessionMessage::SessionRemoteConnect;
+                    break;
+                case WTS_REMOTE_DISCONNECT:
+                    message = zzj::Session::SessionMessage::SessionRemoteDisconnect;
+                    break;
+                case WTS_SESSION_LOGON:
+                    message = zzj::Session::SessionMessage::SessionLogon;
+                    break;
+                case WTS_SESSION_LOGOFF:
+                    message = zzj::Session::SessionMessage::SessionLogoff;
+                    break;
+                case WTS_SESSION_LOCK:
+                    message = zzj::Session::SessionMessage::SessionLock;
+                    break;
+                case WTS_SESSION_UNLOCK:
+                    message = zzj::Session::SessionMessage::SessionUnlock;
+                    break;
+                case WTS_SESSION_REMOTE_CONTROL:
+                    message = zzj::Session::SessionMessage::SessionRemoteControl;
+                    break;
+                case WTS_SESSION_CREATE:
+                    message = zzj::Session::SessionMessage::SessionCreate;
+                    break;
+                case WTS_SESSION_TERMINATE:
+                    message = zzj::Session::SessionMessage::SessionTerminate;
+                    break;
+                default:
+                    break;
+            }
+            if (message != zzj::Session::SessionMessage::None)
+            {
+                zzj::Session session;
+                session.sessionId = std::to_string(
+                    reinterpret_cast<WTSSESSION_NOTIFICATION *>(lpEventData)->dwSessionId);
+                winService->OnSessionChange(message, session);
+            }
+            return;
+        }
+        default:
+            return;
+    }
+}
+
+BOOL WinService::ReportSvcStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode, DWORD dwSvcExitCode,
+                                 DWORD dwCheckPoint, DWORD dwWaitHint)
+{
+    SERVICE_STATUS svcStatus = {0};
+    svcStatus.dwServiceType = serviceType;
+    svcStatus.dwCurrentState = dwCurrentState;
+    svcStatus.dwWin32ExitCode = dwWin32ExitCode;
+    svcStatus.dwServiceSpecificExitCode = dwSvcExitCode;
+    svcStatus.dwCheckPoint = dwCheckPoint;
+    svcStatus.dwWaitHint = dwWaitHint;
+    switch (dwCurrentState)
+    {
+        case SERVICE_START_PENDING:
+            svcStatus.dwControlsAccepted = 0;
+            break;
+        case SERVICE_STOP_PENDING:
+            svcStatus.dwControlsAccepted = 0;
+            break;
+        case SERVICE_STOPPED:
+            svcStatus.dwControlsAccepted = 0;
+            break;
+        case SERVICE_RUNNING:
+            svcStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN |
+                                           SERVICE_ACCEPT_PRESHUTDOWN | SERVICE_ACCEPT_POWEREVENT;
+            break;
+        default:
+            break;
+    }
+
+    if (NULL == statusHandle) return FALSE;
+
+    return ::SetServiceStatus(statusHandle, &svcStatus);
+}
+
+void WinService::Start()
+{
+    winService = this;
+
+    entry[0].lpServiceName = (LPSTR)name.c_str();
+    entry[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTIONA)ServiceMain;
+
+    entry[1].lpServiceName = NULL;
+    entry[1].lpServiceProc = NULL;
+
+    StartServiceCtrlDispatcherA(entry);
+}
+
+void WinService::InternalOnStop()
+{
+    ReportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 0, 5000);
+    OnStop();
+    ::SetEvent(eventStop);
+}
+
+void WinService::InternalOnShutdown()
+{
+    ReportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 0, 5000);
+    OnShutdown();
+    ::SetEvent(eventStop);
+}
+
+void WinService::InternalOnPreShutdown()
+{
+    ReportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0, 0, 5000);
+    OnPreShutDown();
+    ::SetEvent(eventStop);
+}
+
+WinService::WinService(std::string name, std::string description, std::string displayName)
+{
+    this->name = name;
+    this->description = description;
+    this->displayName = displayName;
+    eventStop = NULL;
+}
+
+bool WinService::InstallService()
+{
+    char DirBuf[1024] = {0};
+    bool ret = FALSE;
+    SC_HANDLE sch = NULL;
+    SC_HANDLE schNewSrv = NULL;
+    const char *serviceName = name.c_str();
+    const char *display = displayName.c_str();
+
+    GetModuleFileNameA(NULL, DirBuf, sizeof(DirBuf));
+    sch = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!sch)
+    {
+        ret = FALSE;
+        goto exit;
+    }
+    schNewSrv = CreateServiceA(sch, serviceName, display, SERVICE_ALL_ACCESS,
+                               SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+                               DirBuf, NULL, NULL, NULL, NULL, NULL);
+
+    if (!schNewSrv)
+    {
+        ret = false;
+        goto exit;
+    }
+
+    SERVICE_DESCRIPTIONA sd;
+    sd.lpDescription = (LPSTR)description.c_str();
+
+    ChangeServiceConfig2A(schNewSrv, SERVICE_CONFIG_DESCRIPTION, &sd);
+    ret = TRUE;
+
+exit:
+    if (schNewSrv) CloseServiceHandle(schNewSrv);
+    if (sch) CloseServiceHandle(sch);
+
+    return ret;
+}
+
+bool WinService::UninstallService() { return UninstallService(name.c_str()); }
+
+int WinService::CheckSafeStop(int sleepSeconds)
+{
+    DWORD res;
+    if (NULL == eventStop)
+    {
+        Sleep(sleepSeconds * 1000);
+        res = WAIT_TIMEOUT;
+    }
+    else
+    {
+        res = WaitForSingleObject(eventStop, sleepSeconds * 1000);
+    }
+    if (WAIT_TIMEOUT == res)
+        return 0;
+    else if (WAIT_OBJECT_0 == res)
+        return 1;
+    else
+        return -1;
+}
+
+int WinService::InstallService(const char *serviceName, const char *displayName,
+                               const char *description, const char *binPath)
+{
+    int ret = 0;
+    SC_HANDLE sch = NULL;
+    SC_HANDLE schNewSrv = NULL;
+
+    sch = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!sch)
+    {
+        ret = -1;
+        goto exit;
+    }
+    schNewSrv = CreateServiceA(sch, serviceName, displayName, SERVICE_ALL_ACCESS,
+                               SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
+                               binPath, NULL, NULL, NULL, NULL, NULL);
+
+    if (!schNewSrv)
+    {
+        ret = -2;
+        goto exit;
+    }
+
+    SERVICE_DESCRIPTIONA sd;
+    sd.lpDescription = (LPSTR)description;
+
+    ChangeServiceConfig2A(schNewSrv, SERVICE_CONFIG_DESCRIPTION, &sd);
+    ret = 0;
+
+exit:
+    if (schNewSrv) CloseServiceHandle(schNewSrv);
+    if (sch) CloseServiceHandle(sch);
+
+    return ret;
+}
+
+bool WinService::InstallKernelService(const char *binaryPath, const char *serviceName,
+                                      const char *display, const char *description, DWORD startType)
+{
+    SC_HANDLE sch = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!sch)
+    {
+        return FALSE;
+    }
+    SC_HANDLE schNewSrv = CreateServiceA(
+        sch, serviceName, display, SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER, startType,
+        SERVICE_ERROR_NORMAL, binaryPath, NULL, NULL, NULL, NULL, NULL);
+
+    if (!schNewSrv)
+    {
+        CloseServiceHandle(sch);
+        return FALSE;
+    }
+
+    SERVICE_DESCRIPTIONA sd;
+    sd.lpDescription = (LPSTR)description;
+
+    ChangeServiceConfig2A(schNewSrv, SERVICE_CONFIG_DESCRIPTION, &sd);
+    CloseServiceHandle(schNewSrv);
+    CloseServiceHandle(sch);
+
+    return TRUE;
+}
+
+bool WinService::MyStartService(const char *serviceName)
+{
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_EXECUTE);
+    if (hSC == NULL) return false;
+
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, serviceName, SERVICE_START | SERVICE_QUERY_STATUS);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return false;
+    }
+
+    SERVICE_STATUS status;
+    if (::QueryServiceStatus(hSvc, &status) == FALSE)
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return false;
+    }
+
+    if (status.dwCurrentState == SERVICE_STOPPED)
+    {
+        if (::StartService(hSvc, NULL, NULL) == FALSE)
+        {
+            ::CloseServiceHandle(hSvc);
+            ::CloseServiceHandle(hSC);
+            return false;
+        }
+
+        int waitCount = 0;
+        while (::QueryServiceStatus(hSvc, &status) == TRUE)
+        {
+            ::Sleep(1000);
+            if (status.dwCurrentState == SERVICE_RUNNING)
+            {
+                ::CloseServiceHandle(hSvc);
+                ::CloseServiceHandle(hSC);
+                return true;
+            }
+            waitCount++;
+            if (waitCount >= 5)
+            {
+                ::CloseServiceHandle(hSvc);
+                ::CloseServiceHandle(hSC);
+                return false;
+            }
+        }
+    }
+
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return true;
+}
+bool WinService::StopService(const char *serviceName, uint16_t waitSecond)
+{
+    DWORD failureError = ERROR_SUCCESS;
+    const auto fail = [&](const char *operation, DWORD error, DWORD processId = 0) -> bool {
+        failureError = error;
+        spdlog::error("Failed to stop service '{}': {} failed, process_id={}, error={}",
+                      serviceName, operation, processId, error);
+        SetLastError(error);
+        return false;
+    };
+    SC_HANDLE manager = OpenSCManagerA(nullptr, nullptr, SC_MANAGER_CONNECT);
+    if (!manager) return fail("OpenSCManagerA", GetLastError());
+    SC_HANDLE service = OpenServiceA(manager, serviceName, SERVICE_QUERY_STATUS | SERVICE_STOP);
+    if (!service)
+    {
+        const DWORD error = GetLastError();
+        CloseServiceHandle(manager);
+        return fail("OpenServiceA", error);
+    }
+    HANDLE process = nullptr;
+    const ULONGLONG deadline = GetTickCount64() + static_cast<ULONGLONG>(waitSecond) * 1000;
+    auto remaining = [&]() -> DWORD {
+        const auto now = GetTickCount64();
+        return now < deadline ? static_cast<DWORD>(deadline - now) : 0;
+    };
+    const auto stopAndWait = [&]() -> bool {
+        bool requested = false;
+        while (true)
+        {
+            SERVICE_STATUS_PROCESS status{};
+            DWORD needed = 0;
+            if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, reinterpret_cast<LPBYTE>(&status), sizeof(status), &needed))
+                return fail("QueryServiceStatusEx", GetLastError());
+            if (!process && status.dwProcessId)
+            {
+                process = OpenProcess(SYNCHRONIZE, FALSE, status.dwProcessId);
+                if (!process)
+                {
+                    const DWORD error = GetLastError();
+                    if (error != ERROR_INVALID_PARAMETER) return fail("OpenProcess(SYNCHRONIZE)", error, status.dwProcessId);
+                }
+            }
+            if (status.dwCurrentState == SERVICE_STOPPED)
+            {
+                if (!process) return true;
+                const DWORD waitResult = WaitForSingleObject(process, remaining());
+                if (waitResult == WAIT_OBJECT_0) return true;
+                if (waitResult == WAIT_FAILED) return fail("WaitForSingleObject (WAIT_FAILED)", GetLastError(), status.dwProcessId);
+                return fail("WaitForSingleObject (process exit timeout)", ERROR_TIMEOUT, status.dwProcessId);
+            }
+            if (!remaining()) return fail("service stop deadline", ERROR_TIMEOUT, status.dwProcessId);
+            if ((status.dwCurrentState == SERVICE_RUNNING || status.dwCurrentState == SERVICE_PAUSED) && !requested)
+            {
+                SERVICE_STATUS ignored{};
+                if (!ControlService(service, SERVICE_CONTROL_STOP, &ignored))
+                {
+                    const DWORD error = GetLastError();
+                    if (error != ERROR_SERVICE_NOT_ACTIVE) return fail("ControlService(STOP)", error, status.dwProcessId);
+                }
+                requested = true;
+            }
+            // STOP_PENDING must also be awaited; a successful control request is not process exit.
+            Sleep(100);
+        }
+    };
+    const bool stopped = stopAndWait();
+    if (process) CloseHandle(process);
+    CloseServiceHandle(service);
+    CloseServiceHandle(manager);
+    // Preserve the failing API's error across logging and handle cleanup.
+    if (!stopped) SetLastError(failureError);
+    return stopped;
+}
+
+bool WinService::UninstallService(const char *serviceName)
+{
+    SC_HANDLE scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!scm) return FALSE;
+
+    SC_HANDLE scml = OpenServiceA(scm, serviceName, SC_MANAGER_ALL_ACCESS);
+    if (!scml)
+    {
+        CloseServiceHandle(scm);
+        return FALSE;
+    }
+
+    if (!StopService(serviceName))
+    {
+        CloseServiceHandle(scml);
+        CloseServiceHandle(scm);
+        return FALSE;
+    }
+
+    if (!DeleteService(scml))
+    {
+        CloseServiceHandle(scml);
+        CloseServiceHandle(scm);
+        return FALSE;
+    }
+
+    CloseServiceHandle(scml);
+    CloseServiceHandle(scm);
+    return TRUE;
+}
+int WinService::SetServiceStartUpType(const char *serviceName, int startupType)
+{
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_EXECUTE);
+    if (hSC == NULL) return -1;
+
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, serviceName, SERVICE_CHANGE_CONFIG | SERVICE_QUERY_STATUS);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return -2;
+    }
+
+    SERVICE_STATUS status;
+    if (::QueryServiceStatus(hSvc, &status) == FALSE)
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -3;
+    }
+
+    // change service to auto start
+    if (!ChangeServiceConfigA(hSvc, SERVICE_NO_CHANGE, startupType, SERVICE_NO_CHANGE, NULL, NULL,
+                              NULL, NULL, NULL, NULL, NULL))
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -4;
+    }
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return 0;
+}
+
+int WinService::GetServiceStartUpType(const char *serviceName, int &startupType)
+{
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_READ);
+    if (hSC == NULL) return -1;
+
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, serviceName, SERVICE_QUERY_CONFIG);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return -2;
+    }
+
+    DWORD bytesNeeded;
+    QUERY_SERVICE_CONFIGA *serviceConfig = nullptr;
+
+    if (!::QueryServiceConfigA(hSvc, nullptr, 0, &bytesNeeded) &&
+        ::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        serviceConfig = (QUERY_SERVICE_CONFIGA *)new char[bytesNeeded];
+        if (::QueryServiceConfigA(hSvc, serviceConfig, bytesNeeded, &bytesNeeded))
+        {
+            startupType = serviceConfig->dwStartType;
+        }
+        delete[] serviceConfig;
+    }
+    else
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -3;
+    }
+
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return 0;
+}
+
+int WinService::IsServiceInstalled(const char *serviceName, bool &installed)
+{
+    int result = 0;
+    int errCode;
+    SC_HANDLE scml = NULL;
+    SC_HANDLE scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!scm)
+    {
+        errCode = GetLastError();
+        result = -1;
+        goto exit;
+    }
+
+    scml = OpenServiceA(scm, serviceName, SC_MANAGER_ALL_ACCESS);
+    if (!scml)
+    {
+        if (GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
+        {
+            result = 0;
+            installed = false;
+        }
+        else
+            result = -2;
+        goto exit;
+    }
+
+    installed = true;
+    result = 0;
+exit:
+    if (scm) CloseServiceHandle(scm);
+    if (scml) CloseServiceHandle(scml);
+    return result;
+}
+
+int WinService::IsServiceRunning(const char *serviceName, bool &running)
+{
+    int result = 0;
+    int errCode;
+    SC_HANDLE scml = NULL;
+    SC_HANDLE scm = NULL;
+    SERVICE_STATUS ss;
+
+    scm = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    if (!scm)
+    {
+        errCode = GetLastError();
+        result = -1;
+        goto exit;
+    }
+
+    scml = OpenServiceA(scm, serviceName, SC_MANAGER_ALL_ACCESS);
+    if (!scml)
+    {
+        if (GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST)
+        {
+            result = 0;
+            running = false;
+            goto exit;
+        }
+        else
+        {
+            result = -2;
+            goto exit;
+        }
+    }
+
+    if (!QueryServiceStatus(scml, &ss))
+    {
+        result = -3;
+        goto exit;
+    }
+
+    if (ss.dwCurrentState == SERVICE_RUNNING)
+    {
+        running = true;
+        result = 0;
+        goto exit;
+    }
+
+    running = false;
+    result = 0;
+    goto exit;
+
+exit:
+    if (scm) CloseServiceHandle(scm);
+    if (scml) CloseServiceHandle(scml);
+    return result;
+}
+
+std::string WinService::GetServiceBinPath(const char *serviceName)
+{
+    std::string binPath;
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_READ);
+    if (hSC == NULL) return "";
+
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, serviceName, SERVICE_QUERY_CONFIG);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return "";
+    }
+
+    DWORD bytesNeeded;
+    QUERY_SERVICE_CONFIGA *serviceConfig = nullptr;
+
+    if (!::QueryServiceConfigA(hSvc, nullptr, 0, &bytesNeeded) &&
+        ::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        serviceConfig = (QUERY_SERVICE_CONFIGA *)new char[bytesNeeded];
+        if (::QueryServiceConfigA(hSvc, serviceConfig, bytesNeeded, &bytesNeeded))
+        {
+            binPath = serviceConfig->lpBinaryPathName;
+        }
+        delete[] serviceConfig;
+    }
+    else
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return "";
+    }
+
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return binPath;
+}
+
+int WinService::SetServiceBinPath(const char *serviceName, const char *binPath)
+{
+    int result = 0;
+    SC_HANDLE hSC = ::OpenSCManagerA(NULL, NULL, GENERIC_EXECUTE);
+    if (hSC == NULL) return -1;
+
+    SC_HANDLE hSvc = ::OpenServiceA(hSC, serviceName, SERVICE_CHANGE_CONFIG | SERVICE_QUERY_STATUS);
+    if (hSvc == NULL)
+    {
+        ::CloseServiceHandle(hSC);
+        return -2;
+    }
+
+    SERVICE_STATUS status;
+    if (::QueryServiceStatus(hSvc, &status) == FALSE)
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -3;
+    }
+
+    // change service to auto start
+    if (!ChangeServiceConfigA(hSvc, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE, SERVICE_NO_CHANGE,
+                              binPath, NULL, NULL, NULL, NULL, NULL, NULL))
+    {
+        ::CloseServiceHandle(hSvc);
+        ::CloseServiceHandle(hSC);
+        return -4;
+    }
+    ::CloseServiceHandle(hSvc);
+    ::CloseServiceHandle(hSC);
+    return 0;
+}

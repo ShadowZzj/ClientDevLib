@@ -1,0 +1,11 @@
+libcurl 7.74.0 
+
+mac/arm:
+export CFLAGS="-arch  arm64 -isysroot $(xcrun -sdk macosx --show-sdk-path) -mmacosx-version-min=10.13"
+./configure --host=arm-apple-darwin   --prefix=/Users/zhuzhengjia/libcurltest_arm --without-brotli --without-zstd  --disable-ldap --without-librtmp  --without-libidn2 --without-nghttp2 --without-zlib --enable-symbol-hiding  --with-ssl=/Users/zhuzhengjia/openssl-1.1.1k-arm
+make
+make install
+
+mac/x64:
+修改arm 中arm64以及arm为x86_64
+

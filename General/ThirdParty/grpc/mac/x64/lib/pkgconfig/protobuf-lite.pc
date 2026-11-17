@@ -1,0 +1,11 @@
+prefix=/Users/vbb/Desktop/grpc/cmake/build/static
+exec_prefix=/Users/vbb/Desktop/grpc/cmake/build/static
+libdir=/Users/vbb/Desktop/grpc/cmake/build/static/lib
+includedir=/Users/vbb/Desktop/grpc/cmake/build/static/include
+
+Name: Protocol Buffers
+Description: Google's Data Interchange Format
+Version: 3.18.1.0
+Libs: -L${libdir} -lprotobuf-lite 
+Cflags: -I${includedir}
+Conflicts: protobuf

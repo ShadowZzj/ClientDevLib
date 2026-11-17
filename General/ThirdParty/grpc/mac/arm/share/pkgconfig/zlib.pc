@@ -1,0 +1,13 @@
+prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0
+exec_prefix=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0
+libdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0/lib
+sharedlibdir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0/lib
+includedir=/Users/zhuzhengjia/Desktop/grpc/cmake/build/static_1.42.0/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.11
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

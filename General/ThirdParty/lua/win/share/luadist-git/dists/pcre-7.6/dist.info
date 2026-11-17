@@ -1,0 +1,77 @@
+type = "x86"
+arch = "Windows"
+author = "Philip Hazel"
+desc = "Perl-compatible regular expression library"
+name = "pcre"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[bin\libpcre.dll]],
+[[bin\libpcreposix.dll]],
+[[bin\pcregrep.exe]],
+[[bin\pcretest.exe]],
+[[bin\libpcrecpp.dll]],
+}
+,
+Documentation = {
+[[share\pcre\doc\index.html]],
+[[share\pcre\doc\pcre-config.html]],
+[[share\pcre\doc\pcre.html]],
+[[share\pcre\doc\pcreapi.html]],
+[[share\pcre\doc\pcrebuild.html]],
+[[share\pcre\doc\pcrecallout.html]],
+[[share\pcre\doc\pcrecompat.html]],
+[[share\pcre\doc\pcrecpp.html]],
+[[share\pcre\doc\pcregrep.html]],
+[[share\pcre\doc\pcrematching.html]],
+[[share\pcre\doc\pcrepartial.html]],
+[[share\pcre\doc\pcrepattern.html]],
+[[share\pcre\doc\pcreperform.html]],
+[[share\pcre\doc\pcreposix.html]],
+[[share\pcre\doc\pcreprecompile.html]],
+[[share\pcre\doc\pcresample.html]],
+[[share\pcre\doc\pcrestack.html]],
+[[share\pcre\doc\pcresyntax.html]],
+[[share\pcre\doc\pcretest.html]],
+[[share\pcre\doc\pcre_compile.html]],
+[[share\pcre\doc\pcre_compile2.html]],
+[[share\pcre\doc\pcre_config.html]],
+[[share\pcre\doc\pcre_copy_named_substring.html]],
+[[share\pcre\doc\pcre_copy_substring.html]],
+[[share\pcre\doc\pcre_dfa_exec.html]],
+[[share\pcre\doc\pcre_exec.html]],
+[[share\pcre\doc\pcre_free_substring.html]],
+[[share\pcre\doc\pcre_free_substring_list.html]],
+[[share\pcre\doc\pcre_fullinfo.html]],
+[[share\pcre\doc\pcre_get_named_substring.html]],
+[[share\pcre\doc\pcre_get_stringnumber.html]],
+[[share\pcre\doc\pcre_get_stringtable_entries.html]],
+[[share\pcre\doc\pcre_get_substring.html]],
+[[share\pcre\doc\pcre_get_substring_list.html]],
+[[share\pcre\doc\pcre_info.html]],
+[[share\pcre\doc\pcre_maketables.html]],
+[[share\pcre\doc\pcre_refcount.html]],
+[[share\pcre\doc\pcre_study.html]],
+[[share\pcre\doc\pcre_version.html]],
+}
+,
+Library = {
+[[lib\libpcre.dll.a]],
+[[lib\libpcreposix.dll.a]],
+[[lib\libpcrecpp.dll.a]],
+}
+,
+Header = {
+[[include\pcre.h]],
+[[include\pcreposix.h]],
+[[include\pcrecpp.h]],
+[[include\pcre_scanner.h]],
+[[include\pcrecpparg.h]],
+[[include\pcre_stringpiece.h]],
+}
+,
+}
+
+license = "BSD"
+version = "7.6"
+url = "http://www.pcre.org"

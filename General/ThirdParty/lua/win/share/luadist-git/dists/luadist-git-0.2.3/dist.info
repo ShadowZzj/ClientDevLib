@@ -1,0 +1,50 @@
+type = "x86"
+arch = "Windows"
+author = "Marek Srank, Peter Drahoš"
+depends = {
+[[lua ~> 5.1]],
+[[luafilesystem >= 1.4.1]],
+[[srlua >= 5.1]],
+[[lua-git >= 0.4]],
+}
+
+desc = "Git based deployment of LuaDist modules."
+conflicts = {
+[[luadist]],
+}
+
+version = "0.2.3"
+maintainer = "Marek Srank"
+files = {
+Runtime = {
+[[bin\luadist.exe]],
+[[lib\lua\dist\config.lua]],
+[[lib\lua\dist\constraints.lua]],
+[[lib\lua\dist\depends.lua]],
+[[lib\lua\dist\git.lua]],
+[[lib\lua\dist\init.lua]],
+[[lib\lua\dist\manifest.lua]],
+[[lib\lua\dist\package.lua]],
+[[lib\lua\dist\sys.lua]],
+[[lib\lua\dist\utils.lua]],
+}
+,
+Test = {
+[[share\luadist-git\test\\test_depends.lua]],
+[[share\luadist-git\test\\test_sys.lua]],
+}
+,
+Data = {
+[[share\luadist-git\COPYRIGHT.TXT]],
+[[share\luadist-git\README.md]],
+}
+,
+Other = {
+[[share\luadist-git\etc\luadist.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://www.luadist.org"
+name = "luadist-git"

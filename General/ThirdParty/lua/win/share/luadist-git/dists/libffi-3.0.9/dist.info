@@ -1,0 +1,38 @@
+type = "x86"
+arch = "Windows"
+author = "Anthony Green"
+desc = "FFI stands for Foreign Function Interface. A foreign function interface is the popular name for the interface that allows code written in one language to call code written in another language."
+name = "libffi"
+maintainer = "Peter Drahos"
+files = {
+Runtime = {
+[[bin\libffi.dll]],
+}
+,
+Header = {
+[[include\ffi.h]],
+[[include\fficonfig.h]],
+[[include\ffitarget.h]],
+}
+,
+Documentation = {
+[[share\libffi\doc\\libffi.info]],
+[[share\libffi\doc\\libffi.texi]],
+[[share\libffi\doc\\stamp-vti]],
+[[share\libffi\doc\\version.texi]],
+}
+,
+Data = {
+[[share\libffi\LICENSE]],
+[[share\libffi\README]],
+}
+,
+Library = {
+[[lib\libffi.dll.a]],
+}
+,
+}
+
+license = "MIT"
+version = "3.0.9"
+url = "http://sourceware.org/libffi/"

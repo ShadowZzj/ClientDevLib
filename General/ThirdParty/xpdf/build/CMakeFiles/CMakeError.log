@@ -1,0 +1,89 @@
+Determining if the function mkstemp exists failed with the following output:
+Change Dir: D:/Project/xpdf-4.03/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe cmTC_7c069.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:m && 用于 .NET Framework 的 Microsoft (R) 生成引擎版本 16.11.0+0538acc04
+版权所有(C) Microsoft Corporation。保留所有权利。
+
+  用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.29.30133 版
+  版权所有(C) Microsoft Corporation。保留所有权利。
+  CheckFunctionExists.c
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=mkstemp /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_7c069.dir\Debug\\" /Fd"cmTC_7c069.dir\Debug\vc142.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.21\Modules\CheckFunctionExists.c"
+CheckFunctionExists.obj : error LNK2019: 无法解析的外部符号 mkstemp，函数 main 中引用了该符号 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_7c069.vcxproj]
+D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\Debug\cmTC_7c069.exe : fatal error LNK1120: 1 个无法解析的外部命令 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_7c069.vcxproj]
+
+
+
+Determining if the function mkstemps exists failed with the following output:
+Change Dir: D:/Project/xpdf-4.03/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe cmTC_13feb.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:m && 用于 .NET Framework 的 Microsoft (R) 生成引擎版本 16.11.0+0538acc04
+版权所有(C) Microsoft Corporation。保留所有权利。
+
+  用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.29.30133 版
+  版权所有(C) Microsoft Corporation。保留所有权利。
+  CheckFunctionExists.c
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=mkstemps /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_13feb.dir\Debug\\" /Fd"cmTC_13feb.dir\Debug\vc142.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.21\Modules\CheckFunctionExists.c"
+CheckFunctionExists.obj : error LNK2019: 无法解析的外部符号 mkstemps，函数 main 中引用了该符号 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_13feb.vcxproj]
+D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\Debug\cmTC_13feb.exe : fatal error LNK1120: 1 个无法解析的外部命令 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_13feb.vcxproj]
+
+
+
+Determining if the function popen exists failed with the following output:
+Change Dir: D:/Project/xpdf-4.03/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe cmTC_2a356.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:m && 用于 .NET Framework 的 Microsoft (R) 生成引擎版本 16.11.0+0538acc04
+版权所有(C) Microsoft Corporation。保留所有权利。
+
+  用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.29.30133 版
+  版权所有(C) Microsoft Corporation。保留所有权利。
+  CheckFunctionExists.c
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=popen /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_2a356.dir\Debug\\" /Fd"cmTC_2a356.dir\Debug\vc142.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.21\Modules\CheckFunctionExists.c"
+CheckFunctionExists.obj : error LNK2019: 无法解析的外部符号 popen，函数 main 中引用了该符号 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_2a356.vcxproj]
+D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\Debug\cmTC_2a356.exe : fatal error LNK1120: 1 个无法解析的外部命令 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_2a356.vcxproj]
+
+
+
+Determining if the function fseeko exists failed with the following output:
+Change Dir: D:/Project/xpdf-4.03/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe cmTC_09655.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:m && 用于 .NET Framework 的 Microsoft (R) 生成引擎版本 16.11.0+0538acc04
+版权所有(C) Microsoft Corporation。保留所有权利。
+
+  用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.29.30133 版
+  版权所有(C) Microsoft Corporation。保留所有权利。
+  CheckFunctionExists.c
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=fseeko /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_09655.dir\Debug\\" /Fd"cmTC_09655.dir\Debug\vc142.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.21\Modules\CheckFunctionExists.c"
+CheckFunctionExists.obj : error LNK2019: 无法解析的外部符号 fseeko，函数 main 中引用了该符号 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_09655.vcxproj]
+D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\Debug\cmTC_09655.exe : fatal error LNK1120: 1 个无法解析的外部命令 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_09655.vcxproj]
+
+
+
+Determining if the function fseek64 exists failed with the following output:
+Change Dir: D:/Project/xpdf-4.03/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe cmTC_33787.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:m && 用于 .NET Framework 的 Microsoft (R) 生成引擎版本 16.11.0+0538acc04
+版权所有(C) Microsoft Corporation。保留所有权利。
+
+  用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.29.30133 版
+  版权所有(C) Microsoft Corporation。保留所有权利。
+  CheckFunctionExists.c
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D CHECK_FUNCTION_EXISTS=fseek64 /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_33787.dir\Debug\\" /Fd"cmTC_33787.dir\Debug\vc142.pdb" /external:W3 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.21\Modules\CheckFunctionExists.c"
+CheckFunctionExists.obj : error LNK2019: 无法解析的外部符号 fseek64，函数 main 中引用了该符号 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_33787.vcxproj]
+D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\Debug\cmTC_33787.exe : fatal error LNK1120: 1 个无法解析的外部命令 [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_33787.vcxproj]
+
+
+
+Determining if the include file pthread.h exists failed with the following output:
+Change Dir: D:/Project/xpdf-4.03/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Professional/MSBuild/Current/Bin/MSBuild.exe cmTC_69c95.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=16.0 /v:m && 用于 .NET Framework 的 Microsoft (R) 生成引擎版本 16.11.0+0538acc04
+版权所有(C) Microsoft Corporation。保留所有权利。
+
+  用于 x64 的 Microsoft (R) C/C++ 优化编译器 19.29.30133 版
+  版权所有(C) Microsoft Corporation。保留所有权利。
+  CheckIncludeFile.c
+  cl /c /Zi /W3 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_69c95.dir\Debug\\" /Fd"cmTC_69c95.dir\Debug\vc142.pdb" /external:W3 /Gd /TC /errorReport:queue "D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\CheckIncludeFile.c"
+D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\CheckIncludeFile.c(1,10): fatal error C1083: 无法打开包括文件: “pthread.h”: No such file or directory [D:\Project\xpdf-4.03\build\CMakeFiles\CMakeTmp\cmTC_69c95.vcxproj]
+
+
+

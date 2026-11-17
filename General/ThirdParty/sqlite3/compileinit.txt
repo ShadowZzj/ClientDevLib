@@ -1,0 +1,24 @@
+用下面的cmake编译 改为CMakeLists.txt
+
+
+
+cmake_minimum_required(VERSION 3.15)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "" FORCE)
+set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
+set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
+project(sqlite)
+
+
+add_library(
+  ${PROJECT_NAME}
+   SHARED "sqlite3.c")
+
+   set_target_properties(${PROJECT_NAME}
+  PROPERTIES XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "YES")
+set_property(
+  TARGET ${PROJECT_NAME}
+  APPEND_STRING
+  PROPERTY COMPILE_FLAGS "-fobjc-arc")
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+

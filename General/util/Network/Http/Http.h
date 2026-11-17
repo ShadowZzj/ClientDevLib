@@ -1,0 +1,49 @@
+#ifndef _G_HTTP_H_
+#define _G_HTTP_H_
+
+#include <map>
+#include <string>
+#include <vector>
+#include <functional>
+#include <curl/curl.h>
+#include <General/util/Network/NetworkDiagnostics.h>
+namespace zzj
+{
+class Http
+{
+   public:
+    // Optional synchronous phase notifications on the request thread; existing calls can omit the observer.
+    // Keep diagnostics lightweight. Observer exceptions are ignored to preserve request and cleanup behavior.
+    // "http.complete" means cleanup finished, not request success; check the return value and HTTP status.
+    using RequestPhaseObserver = std::function<void(const char *)>;
+
+    // Direct HTTP(S), verified TLS, no redirects, ambient credentials or automatic retry.
+    // Caller owns authorization/confirmation. Network failures are returned as data.
+    static HttpResponse RequestBounded(const HttpRequestOptions &options);
+    static std::string DecodeUri(const std::string &uri);
+    static std::string DownloadFromUrl(std::string url, std::string path,
+                                       int connectionTimeOut = 60, int timeout = 300);
+    // Fixed destination, verified HTTPS, bounded streaming, cancellation, and HTTP status checking.
+    static bool DownloadFile(const std::string &url, const std::string &destination,
+                             size_t maxBytes, const std::function<bool()> &cancelled = {});
+    static int Post(const char *apiPath, const char *str, std::string &ret, bool setSSL = false);
+    static int PostFile(const std::string &apiPath, std::map<std::string, std::string> headers,
+                        std::map<std::string, std::string> bodyParam, const std::string &fileKey,
+                        const std::string &fileName, std::string &ret, bool setSSL = false,
+                        int timeout = 60, std::string personalCertificateFile = "",
+                        std::string passwd = "");
+    static int PostMutualAuth(const char *apiPath, const char *str, std::string &ret,
+                              std::string personalCertificateFile, std::string passwd);
+    static int Get(const char *apiPath, std::string &ret);
+    static int Put(const char *apiPath, const char *str, std::string &ret);
+    static int PostWithJsonSetting(const std::string &jsonSetting, std::string &retString,
+                                   const RequestPhaseObserver &observer = {});
+    static int GetWithJsonSetting(const std::string &jsonSetting, std::string &retString,
+                                  const RequestPhaseObserver &observer = {});
+    static CURLsslset CurlSelectSSLBackend(curl_sslbackend backend);
+
+   private:
+};
+};  // namespace zzj
+
+#endif

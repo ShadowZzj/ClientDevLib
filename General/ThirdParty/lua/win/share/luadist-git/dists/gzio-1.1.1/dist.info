@@ -1,0 +1,36 @@
+type = "x86"
+arch = "Windows"
+author = "Judge Maygarden"
+depends = {
+[[lua ~> 5.1]],
+[[zlib >=1.2.3]],
+}
+
+desc = "The Lua gzip file I/O module emulates the standard I/O module, but operates on compressed gzip format files."
+version = "1.1.1"
+maintainer = "Peter Kapec"
+files = {
+Runtime = {
+[[lib\lua\gzio.dll]],
+[[lib\lua\tar.lua]],
+}
+,
+Data = {
+[[share\gzio\README]],
+}
+,
+Test = {
+[[share\gzio\test\\lar.lua]],
+[[share\gzio\test\\lartest.lua]],
+[[share\gzio\test\\tartest.lua]],
+[[share\gzio\test\\test.lua]],
+[[share\gzio\test\\test.txt]],
+[[share\gzio\test\\testdir.lar]],
+[[share\gzio\test\\testdir.tar.gz]],
+}
+,
+}
+
+license = "MIT"
+url = "https://github.com/jmaygarden/gzio"
+name = "gzio"

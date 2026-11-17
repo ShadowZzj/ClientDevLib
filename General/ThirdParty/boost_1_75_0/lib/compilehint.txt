@@ -1,0 +1,19 @@
+boost-1-75-0
+
+mac/arm:
+    ./bootstrap.sh --with-toolset=clang --with-libraries=filesystem
+    static:
+        ./b2  cxxflags="-arch arm64 -mmacosx-version-min=10.13 " toolset=darwin -a link=static
+    shared:
+        ./b2  cxxflags="-arch arm64 -mmacosx-version-min=10.13 " toolset=darwin -a link=shared
+        g++ ...... -arch arm64 //g++会失败，最后是一个g++命令失败，说ld找不到armv4架构，根本原因是linkflags的arm64会写在最后，被之前的arm覆盖,需要手动执行g++，最后的arm替换成arm64。
+        拷贝上一步生成的libboost_filesystem.dylib到目标地点
+
+mac/x64:
+    static:
+    arm64改为x86_64
+    shared:
+    arm64改为x86_64，会直接编译成功
+
+mac/universal:
+    用lipo

@@ -1,0 +1,65 @@
+type = "x86"
+arch = "Windows"
+author = "Danilo Tuler, Tomás Guisasola"
+depends = {
+[[lua ~> 5.1]],
+[[lualogging >= 1.1.3]],
+[[luafilesystem >= 1.2.1]],
+}
+
+desc = "LuaDoc is a documentation tool for Lua source code"
+version = "3.0.1"
+maintainer = "Peter Drahoš"
+files = {
+Runtime = {
+[[bin\luadoc.exe]],
+[[lib\lua\luadoc\config.lua]],
+[[lib\lua\luadoc\doclet\debug.lua]],
+[[lib\lua\luadoc\doclet\formatter.lua]],
+[[lib\lua\luadoc\doclet\html\file.lp]],
+[[lib\lua\luadoc\doclet\html\function.lp]],
+[[lib\lua\luadoc\doclet\html\index.lp]],
+[[lib\lua\luadoc\doclet\html\luadoc.css]],
+[[lib\lua\luadoc\doclet\html\menu.lp]],
+[[lib\lua\luadoc\doclet\html\module.lp]],
+[[lib\lua\luadoc\doclet\html\table.lp]],
+[[lib\lua\luadoc\doclet\html.lua]],
+[[lib\lua\luadoc\doclet\raw.lua]],
+[[lib\lua\luadoc\init.lua]],
+[[lib\lua\luadoc\lp.lua]],
+[[lib\lua\luadoc\taglet\standard\tags.lua]],
+[[lib\lua\luadoc\taglet\standard.lua]],
+[[lib\lua\luadoc\util.lua]],
+}
+,
+Test = {
+[[share\luadoc\test\\trailing_hash_test.lua]],
+}
+,
+Documentation = {
+[[share\luadoc\doc\\us\architecture.html]],
+[[share\luadoc\doc\\us\architecture.vsd]],
+[[share\luadoc\doc\\us\architecture_h.png]],
+[[share\luadoc\doc\\us\architecture_v.png]],
+[[share\luadoc\doc\\us\email.png]],
+[[share\luadoc\doc\\us\examples\lfs\lfs.luadoc]],
+[[share\luadoc\doc\\us\examples.html]],
+[[share\luadoc\doc\\us\index.html]],
+[[share\luadoc\doc\\us\license.html]],
+[[share\luadoc\doc\\us\lua.png]],
+[[share\luadoc\doc\\us\manual.html]],
+}
+,
+Data = {
+[[share\luadoc\README]],
+}
+,
+Other = {
+[[share\luadoc\etc\luadoc.lua]],
+}
+,
+}
+
+license = "MIT/X11"
+url = "http://luadoc.luaforge.net/"
+name = "luadoc"
