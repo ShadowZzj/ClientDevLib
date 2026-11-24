@@ -1,13 +1,11 @@
 #include <General/util/Application/Software.h>
 #include <General/util/StrUtil.h>
+#include <Windows/util/Registry/WinReg.hpp>
 #include <windows.h>
 std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSoftware()
 {
     std::vector<SoftInfo> softInfos;
-    HKEY RootKey;         // A primary key
-    HKEY hkResult = NULL; // Handle to the key to be opened
-    HKEY hkRKey;
-    LONG lReturn; // Record whether the registry was read successfully
+    HKEY RootKey; // A primary key
     std::string strBuffer;
     std::string strMidReg;
     char szKeyName[255]             = {0}; // Registry key name
@@ -22,10 +20,12 @@ std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSo
     int i = 0;
     for (auto key : subKey)
     {
-        DWORD index = 0;
-        lReturn     = RegOpenKeyExA(RootKey, key.c_str(), 0, KEY_READ, &hkResult);
-        if (lReturn != ERROR_SUCCESS)
+        HKEY hkResult = nullptr;
+        if (RegOpenKeyExA(RootKey, key.c_str(), 0, KEY_READ, &hkResult) != ERROR_SUCCESS)
             return {-1, {}};
+        const winreg::RegKey uninstallKey(hkResult);
+
+        DWORD index = 0;
         while (1)
         {
             SoftInfo softinfo;
@@ -39,8 +39,10 @@ std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSo
                 continue;
 
             strMidReg = (std::string)key + "\\" + strBuffer;
+            HKEY hkRKey = nullptr;
             if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, strMidReg.c_str(), 0, KEY_READ, &hkRKey) != ERROR_SUCCESS)
                 continue;
+            const winreg::RegKey softwareKey(hkRKey);
 
             RegQueryValueExA(hkRKey, "DisplayName", 0, &dwType, (LPBYTE)szBuffer, &dwNameLen);
             softinfo.m_strSoftName = zzj::str::ansi2utf8(szBuffer);
@@ -88,7 +90,6 @@ std::tuple<int, std::vector<zzj::SoftInfo>> zzj::SoftInfoManager::GetInstalledSo
                 }
             }
         }
-        RegCloseKey(hkResult);
     }
     return {0, softInfos};
 }
